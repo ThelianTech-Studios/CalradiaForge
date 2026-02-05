@@ -98,3 +98,9 @@ CalradiaForge is currently in active development toward a Version 1.0 release.
 Copyright © 2026 ThelianTech™
 
 ThelianTech is the trade name of the author and publisher of this software.
+
+A copy of the software license can be found here:
+ ###### [![GitHub Repo][CalradiaForge-License-Shield]][CalradiaForge-License]
+<!-- Listed below are the links to the shields above -->
+[CalradiaForge-License]:https://github.com/ThelianTech-Studios/CalradiaForge/blob/master_docs/LICENSE.md
+[CalradiaForge-License-Shield]: https://img.shields.io/badge/CalradiaForge-License?style=plastic&label=LICENSE&labelColor=blue&color=green

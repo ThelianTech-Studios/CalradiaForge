@@ -6,7 +6,7 @@
 
 ## Copyright Notice
 
-**Copyright © 2026 ThelianTech™**  
+**Copyright © 2026 ThelianTech™**
 ThelianTech is the trade name of the author and publisher of this software.
 
 All rights reserved.
@@ -19,8 +19,8 @@ All rights reserved.
 
 **“Official Distribution Sources”** refers exclusively to:
 
-- GitHub Repository: [GITHUB_LINK_HERE]
-- NexusMods Page: [NEXUSMODS_LINK_HERE]
+ [![GitHub Repo][CalradiaForge-Github-Shield]][CalradiaForge-Repo]
+ [![NexusMods][CalradiaForge-Nexus-Shield]][CalradiaForge-Nexus]
 
 **“User”** refers to any individual who downloads, installs, views, uses, or interacts with the Software.
 
@@ -66,8 +66,8 @@ All distribution must occur only through the Official Distribution Sources.
 
 You may **only** share links to:
 
-- [GITHUB_LINK_HERE]
-- [NEXUSMODS_LINK_HERE]
+[![GitHub Repo][CalradiaForge-Github-Shield]][CalradiaForge-Repo]
+[![NexusMods][CalradiaForge-Nexus-Shield]][CalradiaForge-Nexus]
 
 You may not upload, mirror, or redistribute the Software files anywhere else.
 
@@ -117,7 +117,7 @@ By submitting a pull request or contribution, you agree that:
 
 ## 9. No Plugins, Extensions, or External Modifications
 
-CalradiaForge is not designed to support external plugins or extensions.  
+CalradiaForge is not designed to support external plugins or extensions.
 All requested functionality must be contributed directly to the main project via the contribution process.
 
 ---
@@ -148,7 +148,7 @@ This license does not grant ownership rights to any user.
 
 ## 13. Disclaimer of Warranty
 
-The Software is provided **“AS IS”**, without warranty of any kind.  
+The Software is provided **“AS IS”**, without warranty of any kind.
 ThelianTech is not liable for any damages, data loss, or issues arising from use of the Software.
 
 ---
@@ -178,3 +178,8 @@ By downloading, installing, or using CalradiaForge, you agree to the terms of th
 ---
 
 ### End of License
+<!-- Listed below are the links to the shields above -->
+[CalradiaForge-Repo]: https://github.com/ThelianTech-Studios/CalradiaForge
+[CalradiaForge-Github-Shield]: https://img.shields.io/badge/CalradiaForge-Repo?style=plastic&logo=github&logoColor=%23181717&label=GitHub&color=blue
+[CalradiaForge-Nexus]: chrome://network-error/-106
+[CalradiaForge-Nexus-Shield]: https://img.shields.io/badge/CalradiaForge-Nexus?style=plastic&label=NexusMods&labelColor=Black&color=orange
