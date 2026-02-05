@@ -1,0 +1,24 @@
+﻿# Visual Studio cache
+.vs/
+
+# Visual Studio solution file
+*.slnx
+*.sln
+*.csproj
+
+
+# Build output
+bin/
+obj/
+
+# User-specific files
+*.user
+*.suo
+*.userprefs
+
+# Rider / VS Code (just in case)
+.idea/
+.vscode/
+
+# Debug / logs
+*.log
