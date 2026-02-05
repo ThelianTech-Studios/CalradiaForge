@@ -5,7 +5,7 @@ A modern mod launcher for **Mount & Blade II: Bannerlord**.
 
 CalradiaForge streamlines mod installation, load order management, preset sharing, and game launching into a single purpose-built desktop application.
 
-> Built by players, for players.
+> *`CalradiaForge was built by players, for players.`*
 
 ---
 
@@ -51,7 +51,7 @@ CalradiaForge provides a reliable workflow for:
 
 CalradiaForge is built using a two-layer architecture with the MVVM design pattern.
 
-**Presentation Layer (WPF)** handles UI, navigation, and user interaction.  
+**Presentation Layer (WPF)** handles UI, navigation, and user interaction.
 **Business Logic Layer (.NET Class Library)** handles file operations, mod processing, preset management, and game launch control.
 
 Primary libraries include MahApps.Metro, Newtonsoft.Json, and SharpCompress.
