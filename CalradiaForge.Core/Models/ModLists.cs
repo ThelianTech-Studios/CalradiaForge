@@ -26,7 +26,7 @@
 		public List<ModListItem>? ListItems { get; set; }
 
 		public void AddModToList(ModListItem item) {
-			if (item != null && !ListItems.Exists(x => x.Id == item.Id)) {
+			if (item != null && !ListItems.Exists(x => x.ModId == item.ModId)) {
 				ListItems.Add(item);
 				UpdateLastUpdated();
 
@@ -35,7 +35,7 @@
 
 		public void RemoveModFromList(ModListItem item) {
 			if (item != null) {
-				ListItems.RemoveAll(x => x.Id == item.Id);
+				ListItems.RemoveAll(x => x.ModId == item.ModId);
 			}
 		}
 

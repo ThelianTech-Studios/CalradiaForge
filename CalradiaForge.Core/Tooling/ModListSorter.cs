@@ -6,7 +6,7 @@
 
 	public class ModListSorter {
 
-		public static void Sort<T>(ObservableCollection<T> collection,Comparison<T> comparison) {
+		public static void LoadOrderSort<T>(ObservableCollection<T> collection,Comparison<T> comparison) {
 			List<T> list = new List<T>(collection);
 			list.Sort(comparison);
 			for (int i = 0; i < list.Count; i++) {

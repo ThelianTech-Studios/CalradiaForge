@@ -1,11 +1,11 @@
 ﻿# Visual Studio cache
 .vs/
 
-# Visual Studio solution file
+# Visual Studio files
 *.slnx
 *.sln
 *.csproj
-
+*.editorconfig
 
 # Build output
 bin/
