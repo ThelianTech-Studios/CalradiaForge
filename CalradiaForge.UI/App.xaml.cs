@@ -1,18 +1,17 @@
 ﻿namespace CalradiaForge.UI {
-	using System.IO;
 	using System.Windows;
 	using System.Windows.Threading;
-	using System.Reflection;
 
 	using CalradiaForge.Core.Infra.Config;
 	using CalradiaForge.Core.Infra.Logging;
+	using CalradiaForge.Core.Infra.Paths;
 
 	/// <summary>
 	/// Interaction logic for App.xaml
 	/// </summary>
 	public partial class App : Application {
 		private static Logger _logger = Logger.Instance;
-		public static AppConfigSettings Config { get; private set; } = null!;
+		public static AppConfigSettings AppConfig { get; private set; } = null!;
 		public App() {
 			InitializeComponent();
 		}
@@ -25,15 +24,9 @@
 			InitializeConfiguration();
 		}
 		private void InitializeConfiguration() {
-			var directoryName = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-			var configFolder = Path.Combine(directoryName,"Config");
-			if (!Directory.Exists(configFolder)) {
-				Directory.CreateDirectory(configFolder);
-			}
-			var configFilePath = Path.Combine(configFolder,"config.json");
-			var appConfig = new AppConfig(configFilePath);
+			var appConfig = new AppConfig(AppPaths.ConfigFilePath);
 			appConfig.Load();
-			Config = new AppConfigSettings(appConfig);
+			AppConfig = new AppConfigSettings(appConfig);
 		}
 
 		private void SetupExceptionHandeling() {
@@ -49,10 +42,7 @@
 				e.SetObserved();
 			};
 		}
-
-
-
-		private void LogUnhadledException(Exception ex0, string source) {
+		public void LogUnhadledException(Exception ex0, string source) {
 			string text = $"Unhandled exception from {source}";
 			try {
 				var name = System.Reflection.Assembly.GetExecutingAssembly().GetName();

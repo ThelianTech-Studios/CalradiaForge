@@ -8,10 +8,11 @@
 			<ResourceDictionary.MergedDictionaries>
 				<ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Controls.xaml" />
 				<ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Fonts.xaml" />
-				<ResourceDictionary Source="Resources/Fonts.xaml"/>
-				<ResourceDictionary Source="Resources/NavMenu.xaml"/>
+				<ResourceDictionary Source="Resources/Theme.xaml"/>
 				<ResourceDictionary Source="Resources/TextStyles.xaml"/>
 				<ResourceDictionary Source="Resources/TitleBar.xaml"/>
+				<ResourceDictionary Source="Resources/NavMenu.xaml"/>
+				<ResourceDictionary Source="Resources/ModsPageStyles.xaml"/>
 			</ResourceDictionary.MergedDictionaries>
 		</ResourceDictionary>
 	</Application.Resources>
