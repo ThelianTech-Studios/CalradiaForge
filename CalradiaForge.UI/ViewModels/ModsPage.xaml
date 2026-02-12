@@ -9,10 +9,129 @@
 			xmlns:dd="urn:gong-wpf-dragdrop"
 			mc:Ignorable="d"
 			AllowDrop="True"
-			Title="Mods-Page">
-	
-	
-	
-	
-	
+			Title="Mods"
+			Drop="Page_Drop"
+			Background="Transparent">
+
+	<Grid AllowDrop="True" Drop="Page_Drop" Margin="20,10,20,10">
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="Auto" />
+		</Grid.RowDefinitions>
+
+		<!--Row 0: ModList Selection & Action Buttons-->
+		<Grid Grid.Row="0" Margin="0,0,0,18">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="Auto" />
+				<ColumnDefinition Width="*" />
+				<ColumnDefinition Width="Auto" />
+			</Grid.ColumnDefinitions>
+			<TextBlock Grid.Column="0" Text="ModPacks:"
+								 Style="{StaticResource ModsPageModListLabel}" />
+			<ComboBox x:Name="ModListComboBox" Grid.Column="1" MinWidth="120"
+								Style="{StaticResource ModsPageComboBox}"
+								DisplayMemberPath="ModListName"
+								ItemsSource="{Binding ModListOptions}"
+								SelectedIndex="{Binding CurrentSelectedModListIndex}"
+								SelectionChanged="ModPack_SelectionChanged" />
+			<StackPanel Grid.Column="2" Orientation="Horizontal">
+				<Button Content="Install Mods" Margin="8,0,0,0"
+								Style="{StaticResource ModsPageActionButton}"
+								ToolTip="Install mods from an archive or folder"
+								Click="InstallModsButton_Click" />
+				<Button Content="Unblock DLLs" Margin="8,0,0,0"
+								Style="{StaticResource ModsPageActionButton}"
+								ToolTip="Unblock all DLL files in the modules folder"
+								Click="UnblockDllsButton_Click" />
+			</StackPanel>
+		</Grid>
+
+		<!--Row 1: List Headers & Search-->
+		<Grid Grid.Row="1" Margin="0,0,0,5">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="*" />
+				<ColumnDefinition Width="*" />
+			</Grid.ColumnDefinitions>
+			<TextBlock Grid.Column="0" Text="Load Order"
+								 Style="{StaticResource ModsListHeader}" />
+			<Grid Grid.Column="1">
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="*" />
+					<ColumnDefinition Width="200" />
+					<ColumnDefinition Width="Auto" />
+				</Grid.ColumnDefinitions>
+				<TextBlock Grid.Column="0" Text="Available Mods"
+									 Style="{StaticResource ModsListHeader}" />
+				<TextBox x:Name="SearchBox" Grid.Column="1"
+								 Style="{StaticResource ModsPageSearchBox}"
+								 Margin="0,0,10,0"
+								 TextChanged="SearchBox_TextChanged"
+								 GotFocus="SearchBox_GotFocus" />
+				<Button Grid.Column="2" Width="35" Height="35"
+								Background="Transparent" BorderThickness="0"
+								Cursor="Hand" ToolTip="Refresh Mods"
+								Click="RefreshModsButton_Click">
+					<mahIcons:PackIconMaterial Kind="Refresh" Width="20" Height="20"
+																		 Foreground="{StaticResource TB.Txt.Bright}" />
+				</Button>
+			</Grid>
+		</Grid>
+
+		<!--Row 2: Dual Mod Lists with Drag & Drop-->
+		<Grid Grid.Row="2" MinHeight="200" AllowDrop="True" Drop="Page_Drop">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="*" />
+				<ColumnDefinition Width="*" />
+			</Grid.ColumnDefinitions>
+			<ListBox x:Name="LoadOrderListBox" Grid.Column="0" Margin="0,0,10,0"
+							 dd:DragDrop.IsDragSource="True"
+							 dd:DragDrop.IsDropTarget="True"
+							 Style="{StaticResource ModsListBox}"
+							 ItemTemplate="{StaticResource ModsModItemTemplate}"
+							 ItemsSource="{Binding LoadOrderView}" />
+			<ListBox x:Name="AvailableModsListBox" Grid.Column="1" Margin="10,0,0,0"
+							 dd:DragDrop.IsDragSource="True"
+							 dd:DragDrop.IsDropTarget="True"
+							 Style="{StaticResource ModsListBox}"
+							 ItemTemplate="{StaticResource ModsModItemTemplate}"
+							 ItemsSource="{Binding AvailableModsView}" />
+		</Grid>
+
+		<!--Row 3: Missing Mods & Dependency Warnings-->
+		<ScrollViewer Grid.Row="3" MaxHeight="150" Margin="0,5,0,0"
+									AllowDrop="True" Drop="Page_Drop">
+			<Grid>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="*" />
+					<ColumnDefinition Width="*" />
+				</Grid.ColumnDefinitions>
+				<TextBlock Grid.Column="0" TextWrapping="Wrap"
+									 Foreground="{StaticResource TB.Acc.Amber}"
+									 Text="{Binding DependencyWarningText}" />
+				<ListView x:Name="MissingModsList" Grid.Column="1" Margin="10,0,0,0"
+									ScrollViewer.CanContentScroll="True"
+									Background="Transparent" BorderThickness="0"
+									Foreground="{StaticResource TB.Txt.Bright}"
+									ItemsSource="{Binding MissingModList}">
+					<ItemsControl.ItemTemplate>
+						<DataTemplate>
+							<TextBlock Text="{Binding}" TextWrapping="Wrap"
+												 Foreground="{StaticResource TB.Txt.Mid}" />
+						</DataTemplate>
+					</ItemsControl.ItemTemplate>
+				</ListView>
+			</Grid>
+		</ScrollViewer>
+
+		<!--Row 4: Play Button-->
+		<!--Future: Replace with MahApps SplitButton for launch option dropdown (Vanilla / Script Extender)-->
+		<Button Grid.Row="4" Content="Play"
+						Style="{StaticResource ModsPagePlayButton}"
+						HorizontalAlignment="Center" Margin="0,8,0,0"
+						IsEnabled="{Binding CanStart}"
+						Click="PlayButton_Click" />
+	</Grid>
 </Page>
