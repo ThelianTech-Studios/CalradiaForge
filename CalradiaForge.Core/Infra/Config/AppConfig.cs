@@ -8,18 +8,15 @@
 		private Dictionary<string, string> _configValues = new();
 		private readonly string _configFilePath;
 		public AppConfig(string filePath) {
-			if (string.IsNullOrWhiteSpace(filePath)) { 
-			throw new ArgumentException("File path cannot be null or whitespace.", nameof(filePath));
+			if (string.IsNullOrWhiteSpace(filePath)) {
+				throw new ArgumentException("File path cannot be null or whitespace.", nameof(filePath));
 			}
 			_configFilePath = filePath;
-			var dir = Path.GetDirectoryName(_configFilePath);
-			if (!Directory.Exists(dir)) {
-				Directory.CreateDirectory(dir!);
-			}
 		}
 
 		public string this[string key] {
-			get { 				lock (_lock) {
+			get {
+				lock (_lock) {
 					return _configValues.TryGetValue(key, out var value) ? value : string.Empty;
 				}
 			}
