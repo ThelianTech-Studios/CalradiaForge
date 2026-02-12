@@ -1,6 +1,10 @@
 ﻿namespace CalradiaForge.Core.Infra.Logging {
 	using System;
 	using System.Diagnostics;
+	using System.IO;
+
+	using CalradiaForge.Core.Infra.Paths;
+
 	public sealed class Logger {
 		public enum LogLevel {
 			Debug,
@@ -18,8 +22,7 @@
 		public bool MirrorToDebug { get; set; } = true;
 
 		private Logger() {
-			LogFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"Logs");
-			Directory.CreateDirectory(LogFolder);
+			LogFolder = AppPaths.LogsDirectory;
 		}
 		public void Log(string message,LogLevel level) {
 			string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
@@ -37,6 +40,7 @@
 		public void Info(string message) => Log(message,LogLevel.Info);
 		public void Warning(string message) => Log(message,LogLevel.Warning);
 		public void Error(string message) => Log(message,LogLevel.Error);
+		public void Error(string message, Exception ex) => Log(message + Environment.NewLine + ex.Message,LogLevel.Error);
 		public void Error(Exception ex,params string[] additionalInfo) {
 			string errorMessage = ex.ToString();
 			if (additionalInfo.Length > 0) {
