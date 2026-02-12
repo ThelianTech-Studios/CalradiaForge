@@ -1,6 +1,10 @@
 ﻿namespace CalradiaForge.UI {
+	using System;
 	using System.Windows;
+	using System.Windows.Controls;
 	using System.Windows.Input;
+
+	using CalradiaForge.UI.pages;
 
 	using MahApps.Metro.Controls;
 
@@ -8,8 +12,13 @@
 	/// Interaction logic for MainWindow.xaml
 	/// </summary>
 	public partial class MainWindow : Window {
+		private readonly Page[] _pages;
 		public MainWindow() {
 			InitializeComponent();
+			_pages = [
+				new ModsPage(),
+			];
+			MainContentFrame.Navigate(_pages[0]);
 		}
 		private void MinimizeButton_Click(object sender,RoutedEventArgs e) {
 			this.WindowState = WindowState.Minimized;
@@ -40,11 +49,14 @@
 			try {
 				this.DragMove();
 			} catch (Exception ex) {
-				throw new InvalidOperationException("Failed to move the window. This can happen if the mouse is released outside the window bounds during dragging.", ex);
+				throw new InvalidOperationException("Failed to move the window. This can happen if the mouse is released outside the window bounds during dragging.",ex);
 			}
 		}
 		private void NavBarControler_OnItemInvoked(object sender,HamburgerMenuItemInvokedEventArgs e) {
-
+			int index = NavBarControler.SelectedIndex;
+			if (index >= 0 && index < _pages.Length) {
+				MainContentFrame.Navigate(_pages[index]);
+			}
 		}
 	}
 }

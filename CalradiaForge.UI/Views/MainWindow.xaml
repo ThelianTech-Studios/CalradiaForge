@@ -6,23 +6,23 @@
 				xmlns:local="clr-namespace:CalradiaForge.UI"
 				xmlns:ma="http://metro.mahapps.com/winfx/xaml/controls"
         xmlns:maIcons="http://metro.mahapps.com/winfx/xaml/iconpacks"
+				xmlns:h="clr-namespace:CalradiaForge.UI.Helpers"
         mc:Ignorable="d"
         Title="CalradiaForge Launcher"
         Height="700" Width="1200" MinHeight="400" MinWidth="700"
         WindowStartupLocation="CenterScreen" WindowStyle="None" AllowsTransparency="True"
         ResizeMode="CanResizeWithGrip">
 	<Control.Background>
-    <LinearGradientBrush StartPoint="0,1" EndPoint="0,0">
-      <GradientStop Color="#841617" Offset="0.0" />
-      <GradientStop Color="#65181B" Offset="0.1" />
-      <GradientStop Color="#581719" Offset="0.2" />
-      <GradientStop Color="#451B1C" Offset="0.3" />
-      <GradientStop Color="#3B181B" Offset="0.4" />
-      <GradientStop Color="#2F1B1A" Offset="0.5" />
-      <GradientStop Color="#281A1B" Offset="0.6" />
-      <GradientStop Color="#1A1B1A" Offset="1.0" />
+		<LinearGradientBrush StartPoint="0,1" EndPoint="0,0">
+			<GradientStop Color="{StaticResource TC.Bg.Lightest}" Offset="0.0" />
+      <GradientStop Color="{StaticResource TC.Bg.Lighter}" Offset="0.1" />
+      <GradientStop Color="{StaticResource TC.Bg.Light}" Offset="0.2" />
+      <GradientStop Color="{StaticResource TC.Bg.MedLight}" Offset="0.3" />
+      <GradientStop Color="{StaticResource TC.Bg.Med}" Offset="0.4" />
+      <GradientStop Color="{StaticResource TC.Bg.MedDark}" Offset="0.5" />
+      <GradientStop Color="{StaticResource TC.Bg.Dark}" Offset="0.6" />
+      <GradientStop Color="{StaticResource TC.Bg.Darkest}" Offset="1.0" />
     </LinearGradientBrush>
-
   </Control.Background>
   <Grid>
     <Grid Margin="0">
@@ -34,7 +34,8 @@
         <ColumnDefinition Width="Auto" />
         <ColumnDefinition Width="*" />
       </Grid.ColumnDefinitions>
-			<Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" VerticalAlignment="Stretch" Background="#451B1C">
+			<Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" VerticalAlignment="Stretch"
+						Background="{StaticResource TB.Bg.Lighter}">
 				<Grid.ColumnDefinitions>
 					<ColumnDefinition Width="Auto" />
 					<ColumnDefinition Width="*" />
@@ -44,51 +45,46 @@
                     Margin="10,0,5,0">
 					<Image Source="/resources/App_Icon.png" Width="45" Height="45" Margin="-7,0,10,0" />
 					<TextBlock Text="CalradiaForge" HorizontalAlignment="Center" VerticalAlignment="Center"
-                     Margin="0,5,0,0" FontSize="35" FontWeight="Bold" FontFamily="Gabriola" Foreground="#C6CFD4" />
+                     Margin="0,5,0,0" FontSize="35" FontWeight="Bold"
+										 FontFamily="{StaticResource Font.Primary}"
+										 Foreground="{StaticResource TB.Txt.Bright}" />
 				</StackPanel>
 				<Border Grid.Column="1" Background="Transparent" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown" />
 				<StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center"
                     Margin="0,0,1,0">
-					<Button x:Name="MinimizeButton" Click="MinimizeButton_Click" Style="{StaticResource TitleBarMinimizeButton}"
-                  ToolTip="Minimize Window">
-						<Path Width="45" HorizontalAlignment="Center" Data="M2,8 L12,8"
-                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
-                  StrokeThickness="3" Stretch="Uniform" StrokeStartLineCap="Round" StrokeEndLineCap="Round">
-							<Path.RenderTransform>	
-								<TranslateTransform Y="15" />
-							</Path.RenderTransform>
-						</Path>
-					</Button>
-					<Button x:Name="CloseButton" Click="CloseButton_Click" Style="{StaticResource TitleBarCloseButton}"
-                  ToolTip="Close Window">
-						<Path Width="35" Height="35" HorizontalAlignment="Center" VerticalAlignment="Center"
-                  Data="M3,3 L11,11 M11,3 L3,11"
-                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
-                  StrokeThickness="3" Stretch="Uniform" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-					</Button>
+					<Button x:Name="MinimizeButton" Click="MinimizeButton_Click"
+									Style="{StaticResource TitleBarMinimizeButton}"
+									ToolTip="Minimize Window" />
+					<Button x:Name="CloseButton" Click="CloseButton_Click"
+									Style="{StaticResource TitleBarCloseButton}"
+									ToolTip="Close Window" />
 				</StackPanel>
 			</Grid>
-			<!--ItemInvoked="NavBarControler_OnItemInvoked"-->
 			<ma:HamburgerMenu x:Name="NavBarControler"  Grid.Column="0" Grid.Row="1"
-												DisplayMode="CompactInline" MinWidth="50" Width="50"
+												DisplayMode="CompactInline" MinWidth="50" Width="75"
 												ItemInvoked="NavBarControler_OnItemInvoked"
-												ItemTemplate="{StaticResource HamburgerMenuItem}" HamburgerVisibility="Collapsed"
-												OptionsItemTemplate="{StaticResource HamburgerMenuItem}"
+												ItemContainerStyle="{StaticResource HamburgerItemContainer}" HamburgerVisibility="Collapsed"
+												OptionsItemContainerStyle="{StaticResource HamburgerItemContainer}"
 												SelectedIndex="0" IsPaneOpen="True" CompactPaneLength="50"
-												PaneBackground="#65181B" Foreground="#C6CFD4" Background="Transparent">
+												PaneBackground="{StaticResource TB.Bg.MedLight.50}"
+												Foreground="{StaticResource TB.Txt.Bright}"
+												Background="Transparent">
 				<ma:HamburgerMenu.ItemsSource>
 					<ma:HamburgerMenuItemCollection>
-						<ma:HamburgerMenuIconItem Label=" Mods">
+						<ma:HamburgerMenuIconItem Label="Mods"
+																			h:NavMenuProperties.TextMargin="0,5,0,0">
 							<ma:HamburgerMenuIconItem.Icon>
 								<maIcons:PackIconMaterial Kind="Home" Width="35" Height="35" />
 							</ma:HamburgerMenuIconItem.Icon>
 						</ma:HamburgerMenuIconItem>
-						<ma:HamburgerMenuIconItem Label="Presets">
+						<ma:HamburgerMenuIconItem Label="Mod Packs"
+																			h:NavMenuProperties.TextMargin="0,5,0,0">
 							<ma:HamburgerMenuIconItem.Icon>
 								<maIcons:PackIconMaterial Kind="FormatListBulleted" Width="35" Height="35" />
 							</ma:HamburgerMenuIconItem.Icon>
 						</ma:HamburgerMenuIconItem>
-						<ma:HamburgerMenuIconItem Label="  F.A.Q.">
+						<ma:HamburgerMenuIconItem Label="F.A.Q."
+																			h:NavMenuProperties.TextMargin="0,5,0,0">
 							<ma:HamburgerMenuIconItem.Icon>
 								<maIcons:PackIconMaterial Kind="ChatQuestion" Width="35" Height="35" />
 							</ma:HamburgerMenuIconItem.Icon>
@@ -97,7 +93,8 @@
 				</ma:HamburgerMenu.ItemsSource>
 				<ma:HamburgerMenu.OptionsItemsSource>
 					<ma:HamburgerMenuItemCollection>
-						<ma:HamburgerMenuIconItem Label="Settings">
+						<ma:HamburgerMenuIconItem Label="Settings"
+																			h:NavMenuProperties.TextMargin="0,5,0,0">
 							<ma:HamburgerMenuIconItem.Icon>
 								<maIcons:PackIconMaterial Kind="Cog" Width="35" Height="35" />
 							</ma:HamburgerMenuIconItem.Icon>
@@ -105,6 +102,9 @@
 					</ma:HamburgerMenuItemCollection>
 				</ma:HamburgerMenu.OptionsItemsSource>
 			</ma:HamburgerMenu>
+			<!--Page Content Frame-->
+			<Frame x:Name="MainContentFrame" Grid.Row="1" Grid.Column="1"
+						 NavigationUIVisibility="Hidden" Margin="8,0,0,0" />
 		</Grid>
   </Grid>
 </Window>
