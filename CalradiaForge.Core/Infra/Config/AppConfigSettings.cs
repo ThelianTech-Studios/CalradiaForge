@@ -41,6 +41,8 @@
 		#region Config Settings Not Json
 		public bool IsGameFromSteam => GameProvider == GameProvider.Steam;
 
+		public string ModulesDirectoryPath => !string.IsNullOrWhiteSpace(GameFolderPath) ? Path.Combine(GameFolderPath, "Modules") : string.Empty;
+
 		#endregion
 		#region Default Config Json Settings
 		public GameProvider GameProvider {
