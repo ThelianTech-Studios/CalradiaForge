@@ -40,6 +40,8 @@ You are granted a limited, non-exclusive, non-transferable, revocable license to
 
 ## 3. Non-Commercial Use
 
+Voluntary donations, tips, sponsorships, or gratuities made to the author in appreciation of the Software are permitted, provided that no payment is required to access, download, install, or use the Software or any of its features.
+
 You may not sell, license, rent, lease, bundle, or otherwise commercially exploit the Software.
 
 ### Content Creation Exception
