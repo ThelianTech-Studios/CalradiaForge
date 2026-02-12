@@ -1,4 +1,21 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    
+
+	<!--App Wide Font Style Defaults-->
+	<FontFamily x:Key="Font.Primary">Gabriola</FontFamily>
+	<FontFamily x:Key="Font.Secondary">Segoe UI</FontFamily>
+	<FontFamily x:Key="Font.Monospace">Consolas</FontFamily>
+
+	<!--NavMenuTextStyle-->
+	<Style x:Key="NavMenuTextStyle" TargetType="{x:Type TextBlock}">
+		<Setter Property="Foreground" Value="{StaticResource TB.Txt.Bright}" />
+		<Setter Property="FontFamily" Value="{StaticResource Font.Primary}" />
+		<Setter Property="FontSize" Value="18" />
+		<Setter Property="FontWeight" Value="SemiBold" />
+		<Setter Property="TextWrapping" Value="Wrap"/>
+		<Setter Property="TextAlignment" Value="Justify"/>
+		<Setter Property="LineHeight" Value="16"/>
+		<Setter Property="LineStackingStrategy" Value="BlockLineHeight"/>
+	</Style>
+
 </ResourceDictionary>
