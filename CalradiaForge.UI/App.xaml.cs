@@ -4,6 +4,8 @@
 
 	using CalradiaForge.Core.Infra.Config;
 	using CalradiaForge.Core.Infra.Logging;
+	using CalradiaForge.Core.Infra.Modpacks;
+	using CalradiaForge.Core.Infra.Mods;
 	using CalradiaForge.Core.Infra.Paths;
 
 	/// <summary>
@@ -12,21 +14,38 @@
 	public partial class App : Application {
 		private static Logger _logger = Logger.Instance;
 		public static AppConfigSettings AppConfig { get; private set; } = null!;
+		public static ModService ModService { get; private set; } = null!;
+		public static ModInstaller ModInstaller { get; private set; } = null!;
+		public static ModpackService ModpackService { get; private set; } = null!;
 		public App() {
 			InitializeComponent();
 		}
 
 		protected override void OnStartup(StartupEventArgs e) {
 			base.OnStartup(e);
-			var date = DateTime.Now;
-			_logger.Info("Application Starting" + date);
+			_logger.Info("Application Starting");
 			SetupExceptionHandeling();
 			InitializeConfiguration();
+			InitializeModServices();
+			InitializeModpackServices();
 		}
 		private void InitializeConfiguration() {
 			var appConfig = new AppConfig(AppPaths.ConfigFilePath);
 			appConfig.Load();
 			AppConfig = new AppConfigSettings(appConfig);
+		}
+
+		private void InitializeModServices() {
+			var modsData = new ModsData(AppPaths.ModsCurrentFilePath, AppPaths.ModsBackupFilePath);
+			ModService = new ModService(AppConfig, modsData);
+			ModService.LoadFromCache();
+			ModInstaller = new ModInstaller(AppConfig);
+		}
+
+		private void InitializeModpackServices() {
+			var modpackData = new ModpackData(AppPaths.ModpacksDirectory, AppPaths.LastUsedModsFilePath);
+			ModpackService = new ModpackService(modpackData);
+			ModpackService.LoadAll();
 		}
 
 		private void SetupExceptionHandeling() {

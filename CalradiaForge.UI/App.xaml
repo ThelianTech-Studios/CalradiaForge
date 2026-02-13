@@ -13,6 +13,7 @@
 				<ResourceDictionary Source="Resources/TitleBar.xaml"/>
 				<ResourceDictionary Source="Resources/NavMenu.xaml"/>
 				<ResourceDictionary Source="Resources/ModsPageStyles.xaml"/>
+				<ResourceDictionary Source="Resources/ModpacksPageStyles.xaml"/>
 			</ResourceDictionary.MergedDictionaries>
 		</ResourceDictionary>
 	</Application.Resources>
