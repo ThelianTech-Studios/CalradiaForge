@@ -23,3 +23,6 @@ obj/
 # Debug / logs
 *.log
 /CalradiaForge.Core/GlobalSuppressions.cs
+
+# Internal docs
+CalradiaForge.UI/Docs/
