@@ -1,9 +1,11 @@
-﻿namespace CalradiaForge.Core.Infra.Paths {
+﻿namespace CalradiaForge.Core.Infra.Paths
+	{
 
-	public enum GameProvider {
+	public enum GameProvider
+		{
 		StandAlone,
 		Steam,
 		EpicGames,
 		NotInitialized
+		}
 	}
-}
