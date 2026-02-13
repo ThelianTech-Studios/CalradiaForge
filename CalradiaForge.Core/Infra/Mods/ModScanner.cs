@@ -8,11 +8,11 @@
 		{
 		private static readonly Logger _logger = Logger.Instance;
 
-		public static async Task<List<ModuleModel>> ScanForModsAsync(AppConfigSettings config, CancellationToken token = default, List<ModuleModel>? allMods = null) {
-			allMods ??= new List<ModuleModel>();
+		public static async Task<List<ModuleModel>> ScanForModsAsync(AppConfigSettings config,CancellationToken token = default,List<ModuleModel>? allMods = null) {
+			allMods??=new List<ModuleModel>();
 			string modulesDirectory = config.ModulesDirectoryPath;
 			if (!string.IsNullOrWhiteSpace(modulesDirectory)&&Directory.Exists(modulesDirectory)) {
-				List<ModuleModel> gameModules = await Task.Run( () => ScanDirectory(modulesDirectory,token),token);
+				List<ModuleModel> gameModules = await Task.Run(() => ScanDirectory(modulesDirectory,token),token);
 				allMods.AddRange(gameModules);
 				} else {
 				_logger.Warning($"ModScanner: Modules directory '{modulesDirectory}' not found or not configured.");
