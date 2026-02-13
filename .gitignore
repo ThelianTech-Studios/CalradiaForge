@@ -26,3 +26,6 @@ obj/
 
 # Internal docs
 CalradiaForge.UI/Docs/
+
+# Auto-generated
+CalradiaForge.UI/Properties/AssemblyInfo.cs
