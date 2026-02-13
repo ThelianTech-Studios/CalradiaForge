@@ -1,18 +1,20 @@
-﻿namespace CalradiaForge.Core.Models {
+﻿namespace CalradiaForge.Core.Models
+	{
 	using System.Collections.Generic;
 
 	using Newtonsoft.Json;
-	public class ModuleModel {
+	public class ModuleModel
+		{
 
 		public ModuleModel(string modName,string modVersion,string modId,string modUrl,string installPath,bool isModSp,List<DependenciesModulesModel> dependencies) {
-			ModuleName = modName;
-			ModuleVersion = modVersion;
-			ModuleId = modId;
-			ModuleURL = modUrl;
-			InstallPath = installPath;
-			IsSinglePlayerMod = isModSp;
-			DependencyModules = dependencies;
-		}
+			ModuleName=modName;
+			ModuleVersion=modVersion;
+			ModuleId=modId;
+			ModuleURL=modUrl;
+			InstallPath=installPath;
+			IsSinglePlayerMod=isModSp;
+			DependencyModules=dependencies;
+			}
 
 		public ModuleModel() { }
 
@@ -37,6 +39,6 @@
 		[JsonProperty("dependency_mods_list")]
 		public List<DependenciesModulesModel>? DependencyModules { get; set; }
 
-		
+
+		}
 	}
-}
