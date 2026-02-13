@@ -1,0 +1,421 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:mahIcons="http://metro.mahapps.com/winfx/xaml/iconpacks">
+
+	<!-- ══════════════════════════════════════════════════════
+	     Page Header
+	     ══════════════════════════════════════════════════════ -->
+	<Style x:Key="ModpacksPageHeader" TargetType="TextBlock">
+		<Setter Property="Foreground" Value="{StaticResource TB.Txt.Bright}" />
+		<Setter Property="FontFamily" Value="{StaticResource Font.Secondary}" />
+		<Setter Property="FontSize" Value="22" />
+		<Setter Property="FontWeight" Value="Bold" />
+		<Setter Property="HorizontalAlignment" Value="Left" />
+		<Setter Property="VerticalAlignment" Value="Center" />
+	</Style>
+
+	<!-- ══════════════════════════════════════════════════════
+	     Section Header (Load Order, etc.)
+	     ══════════════════════════════════════════════════════ -->
+	<Style x:Key="ModpacksSectionHeader" TargetType="TextBlock">
+		<Setter Property="Foreground" Value="{StaticResource TB.Txt.Bright}" />
+		<Setter Property="FontFamily" Value="{StaticResource Font.Secondary}" />
+		<Setter Property="FontSize" Value="15" />
+		<Setter Property="FontWeight" Value="SemiBold" />
+		<Setter Property="VerticalAlignment" Value="Center" />
+	</Style>
+
+	<!-- ══════════════════════════════════════════════════════
+	     Metadata Label (Created By, Last Updated)
+	     ══════════════════════════════════════════════════════ -->
+	<Style x:Key="ModpacksMetaLabel" TargetType="TextBlock">
+		<Setter Property="Foreground" Value="{StaticResource TB.Txt.Mid}" />
+		<Setter Property="FontFamily" Value="{StaticResource Font.Secondary}" />
+		<Setter Property="FontSize" Value="12" />
+		<Setter Property="FontWeight" Value="SemiBold" />
+		<Setter Property="VerticalAlignment" Value="Center" />
+	</Style>
+
+	<!-- ══════════════════════════════════════════════════════
+	     Metadata Value
+	     ══════════════════════════════════════════════════════ -->
+	<Style x:Key="ModpacksMetaValue" TargetType="TextBlock">
+		<Setter Property="Foreground" Value="{StaticResource TB.Txt.Bright}" />
+		<Setter Property="FontFamily" Value="{StaticResource Font.Secondary}" />
+		<Setter Property="FontSize" Value="12" />
+		<Setter Property="VerticalAlignment" Value="Center" />
+		<Setter Property="Margin" Value="4,0,0,0" />
+	</Style>
+
+	<!-- ══════════════════════════════════════════════════════
+	     Action Button (Save, Export)
+	     ══════════════════════════════════════════════════════ -->
+	<ControlTemplate x:Key="ModpacksActionButtonTemplate" TargetType="Button">
+		<Border x:Name="ButtonBorder"
+						Background="{StaticResource TB.Acc.Orange}"
+						BorderThickness="0" CornerRadius="6"
+						Padding="{TemplateBinding Padding}"
+						SnapsToDevicePixels="True">
+			<ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+												RecognizesAccessKey="True" />
+		</Border>
+		<ControlTemplate.Triggers>
+			<Trigger Property="IsMouseOver" Value="True">
+				<Setter TargetName="ButtonBorder" Property="Background"
+								Value="{StaticResource TB.Acc.Amber}" />
+			</Trigger>
+			<Trigger Property="IsPressed" Value="True">
+				<Setter TargetName="ButtonBorder" Property="Opacity" Value="0.85" />
+			</Trigger>
+			<Trigger Property="IsEnabled" Value="False">
+				<Setter TargetName="ButtonBorder" Property="Opacity" Value="0.4" />
+			</Trigger>
+		</ControlTemplate.Triggers>
+	</ControlTemplate>
+
+	<Style x:Key="ModpacksActionButton" TargetType="Button">
+		<Setter Property="Template" Value="{StaticResource ModpacksActionButtonTemplate}" />
+		<Setter Property="Foreground" Value="{StaticResource TB.Txt.Dark}" />
+		<Setter Property="FontFamily" Value="{StaticResource Font.Secondary}" />
+		<Setter Property="FontSize" Value="13" />
+		<Setter Property="Padding" Value="14,6" />
+		<Setter Property="Height" Value="34" />
+		<Setter Property="Cursor" Value="Hand" />
+	</Style>
+
+	<!-- ══════════════════════════════════════════════════════
+	     Split Button — Left half (Create New label)
+	     Rounded on left, flat on right to conjoin with dropdown
+	     ══════════════════════════════════════════════════════ -->
+	<ControlTemplate x:Key="SplitButtonLeftTemplate" TargetType="Button">
+		<Border x:Name="ButtonBorder"
+						Background="{StaticResource TB.Acc.Orange}"
+						BorderThickness="0"
+						CornerRadius="6,0,0,6"
+						Padding="{TemplateBinding Padding}"
+						SnapsToDevicePixels="True">
+			<ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+												RecognizesAccessKey="True" />
+		</Border>
+		<ControlTemplate.Triggers>
+			<Trigger Property="IsMouseOver" Value="True">
+				<Setter TargetName="ButtonBorder" Property="Background"
+								Value="{StaticResource TB.Acc.Amber}" />
+			</Trigger>
+			<Trigger Property="IsPressed" Value="True">
+				<Setter TargetName="ButtonBorder" Property="Opacity" Value="0.85" />
+			</Trigger>
+		</ControlTemplate.Triggers>
+	</ControlTemplate>
+
+	<Style x:Key="SplitButtonLeft" TargetType="Button">
+		<Setter Property="Template" Value="{StaticResource SplitButtonLeftTemplate}" />
+		<Setter Property="Foreground" Value="{StaticResource TB.Txt.Dark}" />
+		<Setter Property="FontFamily" Value="{StaticResource Font.Secondary}" />
+		<Setter Property="FontSize" Value="13" />
+		<Setter Property="Padding" Value="14,6" />
+		<Setter Property="Height" Value="34" />
+		<Setter Property="Cursor" Value="Hand" />
+	</Style>
+
+	<!-- ══════════════════════════════════════════════════════
+	     Split Button — Right half (Dropdown chevron)
+	     Rounded on right, flat on left to conjoin with label
+	     Has 1px left border as divider
+	     ══════════════════════════════════════════════════════ -->
+	<ControlTemplate x:Key="SplitButtonRightTemplate" TargetType="Button">
+		<Border x:Name="ButtonBorder"
+						Background="{StaticResource TB.Acc.Orange}"
+						BorderThickness="1,0,0,0"
+						BorderBrush="{StaticResource TB.Acc.DeepOrange}"
+						CornerRadius="0,6,6,0"
+						Padding="{TemplateBinding Padding}"
+						SnapsToDevicePixels="True">
+			<ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+		</Border>
+		<ControlTemplate.Triggers>
+			<Trigger Property="IsMouseOver" Value="True">
+				<Setter TargetName="ButtonBorder" Property="Background"
+								Value="{StaticResource TB.Acc.Amber}" />
+			</Trigger>
+			<Trigger Property="IsPressed" Value="True">
+				<Setter TargetName="ButtonBorder" Property="Opacity" Value="0.85" />
+			</Trigger>
+		</ControlTemplate.Triggers>
+	</ControlTemplate>
+
+	<Style x:Key="SplitButtonRight" TargetType="Button">
+		<Setter Property="Template" Value="{StaticResource SplitButtonRightTemplate}" />
+		<Setter Property="Foreground" Value="{StaticResource TB.Txt.Dark}" />
+		<Setter Property="Width" Value="28" />
+		<Setter Property="Height" Value="34" />
+		<Setter Property="Padding" Value="0" />
+		<Setter Property="Cursor" Value="Hand" />
+	</Style>
+
+	<!-- ══════════════════════════════════════════════════════
+	     Styled ContextMenu (dropdown background + border)
+	     ══════════════════════════════════════════════════════ -->
+	<Style x:Key="ModpacksContextMenu" TargetType="ContextMenu">
+		<Setter Property="SnapsToDevicePixels" Value="True" />
+		<Setter Property="OverridesDefaultStyle" Value="True" />
+		<Setter Property="HasDropShadow" Value="True" />
+		<Setter Property="Template">
+			<Setter.Value>
+				<ControlTemplate TargetType="ContextMenu">
+					<Border x:Name="MenuBorder"
+									Background="{StaticResource TB.Sfc.MedDark}"
+									BorderBrush="{StaticResource TB.Sfc.Lighter.75}"
+									BorderThickness="1" CornerRadius="6"
+									Padding="2,4"
+									SnapsToDevicePixels="True">
+						<StackPanel IsItemsHost="True"
+												KeyboardNavigation.DirectionalNavigation="Cycle" />
+					</Border>
+				</ControlTemplate>
+			</Setter.Value>
+		</Setter>
+	</Style>
+
+	<!-- ══════════════════════════════════════════════════════
+	     Styled MenuItem (hover highlight, selection text change)
+	     ══════════════════════════════════════════════════════ -->
+	<Style x:Key="ModpacksMenuItem" TargetType="MenuItem">
+		<Setter Property="Foreground" Value="{StaticResource TB.Txt.Bright}" />
+		<Setter Property="FontFamily" Value="{StaticResource Font.Secondary}" />
+		<Setter Property="FontSize" Value="13" />
+		<Setter Property="Cursor" Value="Hand" />
+		<Setter Property="OverridesDefaultStyle" Value="True" />
+		<Setter Property="Template">
+			<Setter.Value>
+				<ControlTemplate TargetType="MenuItem">
+					<Border x:Name="ItemBorder"
+									Background="Transparent"
+									BorderBrush="Transparent"
+									BorderThickness="1"
+									CornerRadius="4"
+									Padding="12,6"
+									Margin="2,1"
+									SnapsToDevicePixels="True">
+						<ContentPresenter x:Name="ItemText"
+															ContentSource="Header"
+															HorizontalAlignment="Left"
+															VerticalAlignment="Center" />
+					</Border>
+					<ControlTemplate.Triggers>
+						<Trigger Property="IsHighlighted" Value="True">
+							<Setter TargetName="ItemBorder" Property="Background"
+											Value="{StaticResource TB.Sfc.Med}" />
+							<Setter TargetName="ItemBorder" Property="BorderBrush"
+											Value="{StaticResource TB.Acc.Gold}" />
+							<Setter Property="Foreground"
+											Value="{StaticResource TB.Acc.Gold}" />
+						</Trigger>
+						<Trigger Property="IsPressed" Value="True">
+							<Setter TargetName="ItemBorder" Property="Background"
+											Value="{StaticResource TB.Sfc.Light}" />
+							<Setter Property="Foreground"
+											Value="{StaticResource TB.Acc.Amber}" />
+						</Trigger>
+					</ControlTemplate.Triggers>
+				</ControlTemplate>
+			</Setter.Value>
+		</Setter>
+	</Style>
+
+	<!-- ══════════════════════════════════════════════════════
+	     Cancel / Secondary Button
+	     ══════════════════════════════════════════════════════ -->
+	<ControlTemplate x:Key="ModpacksCancelButtonTemplate" TargetType="Button">
+		<Border x:Name="ButtonBorder"
+						Background="{StaticResource TB.Sfc.MedDark}"
+						BorderThickness="0" CornerRadius="6"
+						Padding="{TemplateBinding Padding}"
+						SnapsToDevicePixels="True">
+			<ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+												RecognizesAccessKey="True" />
+		</Border>
+		<ControlTemplate.Triggers>
+			<Trigger Property="IsMouseOver" Value="True">
+				<Setter TargetName="ButtonBorder" Property="Background"
+								Value="{StaticResource TB.Sfc.Med}" />
+			</Trigger>
+			<Trigger Property="IsPressed" Value="True">
+				<Setter TargetName="ButtonBorder" Property="Opacity" Value="0.85" />
+			</Trigger>
+		</ControlTemplate.Triggers>
+	</ControlTemplate>
+
+	<Style x:Key="ModpacksCancelButton" TargetType="Button">
+		<Setter Property="Template" Value="{StaticResource ModpacksCancelButtonTemplate}" />
+		<Setter Property="Foreground" Value="{StaticResource TB.Txt.Bright}" />
+		<Setter Property="FontFamily" Value="{StaticResource Font.Secondary}" />
+		<Setter Property="FontSize" Value="13" />
+		<Setter Property="Padding" Value="14,6" />
+		<Setter Property="Height" Value="34" />
+		<Setter Property="Cursor" Value="Hand" />
+	</Style>
+
+	<!-- ══════════════════════════════════════════════════════
+	     Load Order ListBox
+	     Forces each ListBoxItem to stretch its content
+	     to the full width of the list so the Grid columns
+	     in the DataTemplate can pin version + trash right.
+	     ══════════════════════════════════════════════════════ -->
+	<Style x:Key="ModpacksListBox" TargetType="ListBox">
+		<Setter Property="Foreground" Value="{StaticResource TB.Txt.Bright}" />
+		<Setter Property="ScrollViewer.CanContentScroll" Value="True" />
+		<Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+		<Setter Property="HorizontalContentAlignment" Value="Stretch" />
+		<Setter Property="SnapsToDevicePixels" Value="True" />
+		<Setter Property="OverridesDefaultStyle" Value="True" />
+		<Setter Property="ItemContainerStyle">
+			<Setter.Value>
+				<Style TargetType="ListBoxItem">
+					<Setter Property="HorizontalContentAlignment" Value="Stretch" />
+					<Setter Property="Padding" Value="0" />
+					<Setter Property="Margin" Value="0" />
+					<Setter Property="Template">
+						<Setter.Value>
+							<ControlTemplate TargetType="ListBoxItem">
+								<Border x:Name="ItemBorder"
+												Background="Transparent"
+												BorderBrush="Transparent"
+												BorderThickness="1"
+												CornerRadius="4"
+												Padding="4,2"
+												Margin="1"
+												SnapsToDevicePixels="True">
+									<ContentPresenter HorizontalAlignment="Stretch" />
+								</Border>
+								<ControlTemplate.Triggers>
+									<Trigger Property="IsMouseOver" Value="True">
+										<Setter TargetName="ItemBorder" Property="Background"
+														Value="{StaticResource TB.Sfc.Med.25}" />
+									</Trigger>
+									<Trigger Property="IsSelected" Value="True">
+										<Setter TargetName="ItemBorder" Property="Background"
+														Value="{StaticResource TB.Sfc.Med.50}" />
+										<Setter TargetName="ItemBorder" Property="BorderBrush"
+														Value="{StaticResource TB.Acc.Gold}" />
+									</Trigger>
+								</ControlTemplate.Triggers>
+							</ControlTemplate>
+						</Setter.Value>
+					</Setter>
+				</Style>
+			</Setter.Value>
+		</Setter>
+		<Setter Property="Template">
+			<Setter.Value>
+				<ControlTemplate TargetType="ListBox">
+					<Border x:Name="Border"
+									Background="{StaticResource TB.Sfc.MedLight.50}"
+									BorderBrush="{StaticResource TB.Sfc.Lighter.75}"
+									BorderThickness="1" CornerRadius="8"
+									Padding="2"
+									SnapsToDevicePixels="True">
+						<Border CornerRadius="7" ClipToBounds="True">
+							<ScrollViewer Focusable="False"
+														CanContentScroll="{TemplateBinding ScrollViewer.CanContentScroll}"
+														HorizontalScrollBarVisibility="{TemplateBinding ScrollViewer.HorizontalScrollBarVisibility}"
+														VerticalScrollBarVisibility="{TemplateBinding ScrollViewer.VerticalScrollBarVisibility}">
+								<StackPanel IsItemsHost="True" Margin="2" />
+							</ScrollViewer>
+						</Border>
+					</Border>
+				</ControlTemplate>
+			</Setter.Value>
+		</Setter>
+	</Style>
+
+	<!-- ══════════════════════════════════════════════════════
+	     Load Order Entry DataTemplate
+	     Name stretches to fill, version + trash pinned right.
+	     ══════════════════════════════════════════════════════ -->
+	<DataTemplate x:Key="ModpackLoadOrderItemTemplate">
+		<Grid>
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="*" />
+				<ColumnDefinition Width="Auto" />
+				<ColumnDefinition Width="28" />
+			</Grid.ColumnDefinitions>
+			<TextBlock Grid.Column="0" Text="{Binding ModuleName}"
+								 Foreground="{StaticResource TB.Txt.Bright}"
+								 FontFamily="{StaticResource Font.Secondary}" FontSize="13"
+								 VerticalAlignment="Center"
+								 TextTrimming="CharacterEllipsis" />
+			<TextBlock Grid.Column="1" Text="{Binding RequiredVersion}"
+								 Foreground="{StaticResource TB.Txt.Mid}"
+								 FontFamily="{StaticResource Font.Secondary}" FontSize="12"
+								 VerticalAlignment="Center"
+								 Margin="12,0,0,0" />
+			<mahIcons:PackIconMaterial x:Name="DeleteIcon" Grid.Column="2"
+																Kind="TrashCan" Width="14" Height="14"
+																Foreground="{StaticResource TB.Acc.Red}"
+																HorizontalAlignment="Center" VerticalAlignment="Center"
+																Cursor="Hand" Opacity="0.5"
+																ToolTip="Remove from load order" />
+		</Grid>
+		<DataTemplate.Triggers>
+			<Trigger SourceName="DeleteIcon" Property="IsMouseOver" Value="True">
+				<Setter TargetName="DeleteIcon" Property="Opacity" Value="1.0" />
+			</Trigger>
+		</DataTemplate.Triggers>
+	</DataTemplate>
+
+	<!-- ══════════════════════════════════════════════════════
+	     TextBox — Input fields
+	     ══════════════════════════════════════════════════════ -->
+	<Style x:Key="ModpacksInputTextBox" TargetType="TextBox">
+		<Setter Property="Foreground" Value="{StaticResource TB.Txt.Bright}" />
+		<Setter Property="CaretBrush" Value="{StaticResource TB.Txt.Bright}" />
+		<Setter Property="FontFamily" Value="{StaticResource Font.Secondary}" />
+		<Setter Property="FontSize" Value="13" />
+		<Setter Property="VerticalContentAlignment" Value="Center" />
+		<Setter Property="SnapsToDevicePixels" Value="True" />
+		<Setter Property="OverridesDefaultStyle" Value="True" />
+		<Setter Property="AllowDrop" Value="False" />
+		<Setter Property="Template">
+			<Setter.Value>
+				<ControlTemplate TargetType="TextBox">
+					<Border x:Name="Border"
+									Background="{StaticResource TB.Sfc.Dark.50}"
+									BorderBrush="{StaticResource TB.Sfc.MedDark.50}"
+									BorderThickness="1" CornerRadius="6"
+									Padding="8,4"
+									SnapsToDevicePixels="True">
+						<ScrollViewer x:Name="PART_ContentHost"
+													Focusable="False"
+													HorizontalScrollBarVisibility="Hidden"
+													VerticalScrollBarVisibility="Hidden"
+													VerticalAlignment="Center" />
+					</Border>
+					<ControlTemplate.Triggers>
+						<Trigger Property="IsMouseOver" Value="True">
+							<Setter TargetName="Border" Property="BorderBrush"
+											Value="{StaticResource TB.Sfc.MedLight}" />
+						</Trigger>
+						<Trigger Property="IsKeyboardFocused" Value="True">
+							<Setter TargetName="Border" Property="BorderBrush"
+											Value="{StaticResource TB.Acc.Gold}" />
+						</Trigger>
+					</ControlTemplate.Triggers>
+				</ControlTemplate>
+			</Setter.Value>
+		</Setter>
+	</Style>
+
+	<!-- ══════════════════════════════════════════════════════
+	     Status Text
+	     ══════════════════════════════════════════════════════ -->
+	<Style x:Key="ModpacksStatusText" TargetType="TextBlock">
+		<Setter Property="Foreground" Value="{StaticResource TB.Acc.Amber}" />
+		<Setter Property="FontFamily" Value="{StaticResource Font.Secondary}" />
+		<Setter Property="FontSize" Value="12" />
+		<Setter Property="TextWrapping" Value="Wrap" />
+		<Setter Property="VerticalAlignment" Value="Center" />
+	</Style>
+
+	<!--End of ModpacksPage Resources-->
+</ResourceDictionary>
