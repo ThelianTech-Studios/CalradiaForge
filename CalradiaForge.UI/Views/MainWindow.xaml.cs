@@ -1,10 +1,10 @@
-﻿namespace CalradiaForge.UI {
+﻿namespace CalradiaForge.UI.Views {
 	using System;
 	using System.Windows;
 	using System.Windows.Controls;
 	using System.Windows.Input;
 
-	using CalradiaForge.UI.pages;
+	using CalradiaForge.UI.Pages;
 
 	using MahApps.Metro.Controls;
 
@@ -17,6 +17,7 @@
 			InitializeComponent();
 			_pages = [
 				new ModsPage(),
+				new ModpacksPage(),
 			];
 			MainContentFrame.Navigate(_pages[0]);
 		}
