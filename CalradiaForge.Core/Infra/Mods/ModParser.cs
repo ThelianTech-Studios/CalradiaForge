@@ -24,7 +24,8 @@
 				string moduleID = GetValueAttribute(moduleElement,"Id")??string.Empty;
 				string moduleName = GetValueAttribute(moduleElement,"Name")??moduleID;
 				string moduleVersion = GetValueAttribute(moduleElement,"Version")??"0.0.0";
-				string? moduleURL = GetValueAttribute(moduleElement,"URL");
+				string? moduleURL = GetValueAttribute(moduleElement,"Url")
+					?? GetValueAttribute(moduleElement,"URL");
 				bool isSinglePlayer = ParseSPFlag(moduleElement);
 				List<DependenciesModulesModel> dependencies = ParseDependencies(moduleElement);
 
@@ -44,9 +45,21 @@
 			}
 
 
-		private static string? GetValueAttribute(XElement parent,string elementName) {
+		private static string? GetValueAttribute(XElement parent, string elementName) {
 			XElement? child = parent.Element(elementName);
-			return child?.Attribute("Value")?.Value;
+			if (child is null) {
+				return null;
+			}
+			// Primary: check for "Value" attribute (case-insensitive)
+			string? attrValue = child.Attributes()
+				.FirstOrDefault(a => string.Equals(a.Name.LocalName, "Value", StringComparison.OrdinalIgnoreCase))
+				?.Value;
+			if (!string.IsNullOrWhiteSpace(attrValue)) {
+				return attrValue;
+			}
+			// Fallback: use inner text if no Value attribute exists
+			string innerText = child.Value.Trim();
+			return string.IsNullOrEmpty(innerText) ? null : innerText;
 			}
 		private static bool ParseSPFlag(XElement moduleElement) {
 			string? spValue = GetValueAttribute(moduleElement,"SingleplayerModule");
@@ -58,7 +71,7 @@
 		private static List<DependenciesModulesModel> ParseDependencies(XElement moduleElement) {
 			List<DependenciesModulesModel> dependencies = new List<DependenciesModulesModel>();
 			HashSet<string> seenIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-			XElement? metadatas = (XElement?)moduleElement.Elements("DependedModuleMetadatas");
+			XElement? metadatas = (XElement?)moduleElement.Element("DependedModuleMetadatas");
 			if (metadatas is not null) {
 				foreach (XElement dep in metadatas.Elements("DependedModuleMetadata")) {
 					string depId = dep.Attribute("id")?.Value??string.Empty;
@@ -70,7 +83,7 @@
 						}
 					}
 				}
-			XElement? legacyDeps = (XElement?)moduleElement.Elements("DependedModules");
+			XElement? legacyDeps = (XElement?)moduleElement.Element("DependedModules");
 			if (legacyDeps is not null) {
 				foreach (XElement dep in legacyDeps.Elements("DependedModule")) {
 					string depId = dep.Attribute("id")?.Value??string.Empty;
