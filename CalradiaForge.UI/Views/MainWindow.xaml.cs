@@ -13,13 +13,19 @@
 	/// </summary>
 	public partial class MainWindow : Window {
 		private readonly Page[] _pages;
+		private readonly SettingsPage _settingsPage;
 		public MainWindow() {
 			InitializeComponent();
 			_pages = [
 				new ModsPage(),
 				new ModpacksPage(),
+				new Page(), // Placeholder — FaqPage (TODO: item #2)
 			];
+			_settingsPage = new SettingsPage();
 			MainContentFrame.Navigate(_pages[0]);
+
+			// Wire the Options item (Settings) — separate from ItemsSource
+			NavBarControler.OptionsItemClick += NavBarControler_OnOptionsItemClick;
 		}
 		private void MinimizeButton_Click(object sender,RoutedEventArgs e) {
 			this.WindowState = WindowState.Minimized;
@@ -56,8 +62,26 @@
 		private void NavBarControler_OnItemInvoked(object sender,HamburgerMenuItemInvokedEventArgs e) {
 			int index = NavBarControler.SelectedIndex;
 			if (index >= 0 && index < _pages.Length) {
+				Page targetPage = _pages[index];
+				// Sync modpack data when navigating back to ModsPage
+				if (targetPage is ModsPage modspage) {
+					modspage.RefreshModpackList();
+					}
 				MainContentFrame.Navigate(_pages[index]);
-			}
+				}
+				
+		}
+
+		/// <summary>
+		/// Handles the Settings item click from the HamburgerMenu OptionsItemsSource.
+		/// OptionsItemsSource is separate from ItemsSource — it does not participate
+		/// in SelectedIndex and fires its own OptionsItemClick event.
+		/// Navigates to the SettingsPage which is held as a standalone instance.
+		/// </summary>
+		private void NavBarControler_OnOptionsItemClick(object sender, ItemClickEventArgs e) {
+			// Deselect the main nav so Settings appears as the active context
+			NavBarControler.SelectedIndex = -1;
+			MainContentFrame.Navigate(_settingsPage);
 		}
 	}
 }
