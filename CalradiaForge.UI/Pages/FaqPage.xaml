@@ -34,7 +34,7 @@
              FAQ Content — Scrollable list of Q&A sections
              ════════════════════════════════════════════════════ -->
         <ScrollViewer Grid.Row="1"
-                                    VerticalScrollBarVisibility="Auto"
+                                    VerticalScrollBarVisibility="Visible"
                                     HorizontalScrollBarVisibility="Disabled">
             <StackPanel Margin="4,0">
 
