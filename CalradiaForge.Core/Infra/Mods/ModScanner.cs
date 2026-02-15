@@ -48,6 +48,10 @@
 				token.ThrowIfCancellationRequested();
 				ModuleModel? mod = TryParseModuleFromDirectory(subDir);
 				if (mod is not null) {
+					if (!mod.IsSinglePlayerMod) {
+						_logger.Info($"ModScanner: Skipping multiplayer-only mod '{mod.ModuleName}' ({mod.ModuleId}).");
+						continue;
+						}
 					mods.Add(mod);
 					}
 				}
