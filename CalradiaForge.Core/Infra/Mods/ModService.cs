@@ -124,6 +124,26 @@
 
 		#endregion
 
+		#region Cache Management
+
+		/// <summary>
+		/// Clears the mod cache files to force a fresh directory scan on next launch.
+		/// Delegates to <see cref="ModsData.ClearCache"/> which owns the file I/O.
+		/// </summary>
+		/// <returns><c>true</c> when the cache was cleared successfully.</returns>
+		public bool ClearCache() {
+			bool result = _modsData.ClearCache();
+			if (result) {
+				CurrentMods = [];
+				PreviousMods = [];
+				AddedMods = [];
+				RemovedMods = [];
+			}
+			return result;
+		}
+
+		#endregion
+
 		#region Change Detection
 
 		/// <summary>
