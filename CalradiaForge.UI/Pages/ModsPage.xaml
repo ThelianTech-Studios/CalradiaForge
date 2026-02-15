@@ -8,12 +8,10 @@
 			xmlns:mahIcons="http://metro.mahapps.com/winfx/xaml/iconpacks"
 			xmlns:dd="urn:gong-wpf-dragdrop"
 			mc:Ignorable="d"
-			AllowDrop="True"
 			Title="Mods"
-			Drop="Page_Drop"
 			Background="Transparent">
 
-	<Grid AllowDrop="True" Drop="Page_Drop" Margin="20,10,20,10">
+	<Grid Margin="20,10,20,10">
 		<Grid.RowDefinitions>
 			<RowDefinition Height="Auto" />
 			<RowDefinition Height="Auto" />
@@ -42,10 +40,6 @@
 								Style="{StaticResource ModsPageActionButton}"
 								ToolTip="Install mods from an archive or folder"
 								Click="InstallModsButton_Click" />
-				<Button Content="Unblock DLLs" Margin="8,0,0,0"
-								Style="{StaticResource ModsPageActionButton}"
-								ToolTip="Unblock all DLL files in the modules folder"
-								Click="UnblockDllsButton_Click" />
 			</StackPanel>
 		</Grid>
 
@@ -81,7 +75,7 @@
 		</Grid>
 
 		<!--Row 2: Dual Mod Lists with Drag & Drop-->
-		<Grid Grid.Row="2" MinHeight="200" AllowDrop="True" Drop="Page_Drop">
+		<Grid Grid.Row="2" MinHeight="200">
 			<Grid.ColumnDefinitions>
 				<ColumnDefinition Width="*" />
 				<ColumnDefinition Width="*" />
@@ -89,12 +83,14 @@
 			<ListBox x:Name="LoadOrderListBox" Grid.Column="0" Margin="0,0,10,0"
 							 dd:DragDrop.IsDragSource="True"
 							 dd:DragDrop.IsDropTarget="True"
+							 dd:DragDrop.DropHandler="{Binding}"
 							 Style="{StaticResource ModsListBox}"
 							 ItemTemplate="{StaticResource ModsModItemTemplate}"
 							 ItemsSource="{Binding LoadOrderView}" />
 			<ListBox x:Name="AvailableModsListBox" Grid.Column="1" Margin="10,0,0,0"
 							 dd:DragDrop.IsDragSource="True"
 							 dd:DragDrop.IsDropTarget="True"
+							 dd:DragDrop.DropHandler="{Binding}"
 							 Style="{StaticResource ModsListBox}"
 							 ItemTemplate="{StaticResource ModsModItemTemplate}"
 							 ItemsSource="{Binding AvailableModsView}" />

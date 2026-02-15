@@ -6,12 +6,18 @@
 	using System.Runtime.CompilerServices;
 	using System.Windows;
 	using System.Windows.Controls;
+	using System.Windows.Input;
+	using System.Windows.Media;
 
 	using CalradiaForge.Core.Infra.Modpacks;
 	using CalradiaForge.Core.Models;
 
+	using MahApps.Metro.IconPacks;
+
+	using Microsoft.Win32;
+
 	/// <summary>
-	/// Modpacks management page. Handles creating, saving modpacks,
+	/// Modpacks management page. Handles creating, saving, importing modpacks,
 	/// viewing and editing their load order entries.
 	/// </summary>
 	public partial class ModpacksPage : Page, INotifyPropertyChanged {
@@ -136,6 +142,9 @@
 
 			_modpackService = App.ModpackService;
 			PopulateModpackList();
+
+			// Wire trash icon clicks via the ListBox's tunneling event
+			LoadOrderListBox.PreviewMouseLeftButtonUp += LoadOrderListBox_PreviewMouseLeftButtonUp;
 		}
 		#endregion
 
@@ -263,12 +272,90 @@
 		}
 
 		/// <summary>
+		/// Intercepts mouse clicks on the LoadOrderListBox and checks whether
+		/// the click target is the trash can icon (PackIconMaterial with Kind == TrashCan).
+		/// If so, resolves the bound ModpackEntryModel from the DataContext
+		/// and removes it from the editable load order.
+		/// This avoids wiring events inside the ResourceDictionary DataTemplate.
+		/// </summary>
+		private void LoadOrderListBox_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e) {
+			if (e.OriginalSource is not DependencyObject source) {
+				return;
+			}
+
+			// Walk up the visual tree looking for the DeleteIcon
+			PackIconMaterial? icon = FindAncestor<PackIconMaterial>(source);
+			if (icon is null || icon.Kind != PackIconMaterialKind.TrashCan) {
+				return;
+			}
+
+			// Resolve the data context from the icon's templated parent chain
+			if (icon.DataContext is ModpackEntryModel entry) {
+				RemoveEntryAtIndex(entry);
+				e.Handled = true;
+			}
+		}
+
+		/// <summary>
+		/// Walks up the visual tree from the given element looking for
+		/// an ancestor of the specified type.
+		/// </summary>
+		private static T? FindAncestor<T>(DependencyObject current) where T : DependencyObject {
+			while (current is not null) {
+				if (current is T match) {
+					return match;
+				}
+				current = VisualTreeHelper.GetParent(current);
+			}
+			return null;
+		}
+
+		/// <summary>
 		/// Removes a load order entry when the trash can icon is clicked.
 		/// </summary>
 		internal void RemoveEntryAtIndex(ModpackEntryModel entry) {
 			EditableLoadOrder.Remove(entry);
 			ClearEditPanel();
 			StatusText = $"Removed '{entry.ModuleName}'. Click Save to persist.";
+		}
+
+		#endregion
+
+		#region Import
+
+		/// <summary>
+		/// Opens a file dialog for importing a CalradiaForge modpack (.json)
+		/// or a Novus Launcher preset (.xml). Delegates parsing and saving
+		/// to <see cref="ModpackService.Import"/>, then selects the newly
+		/// imported modpack in the ComboBox.
+		/// </summary>
+		private void ImportButton_Click(object sender, RoutedEventArgs e) {
+			OpenFileDialog dialog = new() {
+				Title = "Import Modpack or Novus Preset",
+				Filter = "All Supported|*.json;*.xml|CalradiaForge Modpack (*.json)|*.json|Novus Launcher Preset (*.xml)|*.xml",
+				Multiselect = false,
+				CheckFileExists = true
+			};
+
+			if (dialog.ShowDialog() != true || string.IsNullOrWhiteSpace(dialog.FileName)) {
+				return;
+			}
+
+			var (success, modpack, message) = _modpackService.Import(dialog.FileName);
+			StatusText = message;
+
+			if (success && modpack is not null) {
+				PopulateModpackList();
+
+				// Select the newly imported modpack
+				int newIndex = ModpackList
+					.Select((m, i) => new { m, i })
+					.FirstOrDefault(x => string.Equals(x.m.ModpackName, modpack.ModpackName, StringComparison.OrdinalIgnoreCase))?.i ?? -1;
+				if (newIndex >= 0) {
+					SelectedModpackIndex = newIndex;
+					LoadSelectedModpackData();
+				}
+			}
 		}
 
 		#endregion

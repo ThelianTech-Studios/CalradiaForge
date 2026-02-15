@@ -10,21 +10,27 @@ namespace CalradiaForge.UI.Pages {
 	using System.Windows.Controls;
 	using System.Windows.Data;
 
+	using CalradiaForge.Core.Infra.Launch;
 	using CalradiaForge.Core.Infra.Modpacks;
 	using CalradiaForge.Core.Infra.Mods;
 	using CalradiaForge.Core.Models;
+
+	using GongSolutions.Wpf.DragDrop;
 
 	using Microsoft.Win32;
 
 	/// <summary>
 	/// Mods dashboard page. Manages active load order, available mods,
 	/// modpack selection, search filtering, and game launch readiness.
+	/// Implements <see cref="IDropTarget"/> for GongSolutions drag-and-drop
+	/// between the LoadOrder and AvailableMods lists.
 	/// </summary>
-	public partial class ModsPage : Page, INotifyPropertyChanged {
+	public partial class ModsPage : Page, INotifyPropertyChanged, IDropTarget {
 		#region Fields
 		private readonly ModService _modService;
 		private readonly ModInstaller _modInstaller;
 		private readonly ModpackService _modpackService;
+		private readonly GameLauncher _gameLauncher;
 		private bool _canStart;
 		private bool _isRefreshing;
 		private bool _isInstalling;
@@ -116,6 +122,7 @@ namespace CalradiaForge.UI.Pages {
 			_modService = App.ModService;
 			_modInstaller = App.ModInstaller;
 			_modpackService = App.ModpackService;
+			_gameLauncher = App.GameLauncher;
 
 			LoadOrderView = CollectionViewSource.GetDefaultView(CurrentLoadOrder);
 			LoadOrderView.Filter = ModSearchFilter;
@@ -125,6 +132,7 @@ namespace CalradiaForge.UI.Pages {
 
 			PopulateAvailableModsFromCache();
 			PopulateModpackList();
+			UpdateCanStart();
 		}
 		#endregion
 
@@ -226,6 +234,7 @@ namespace CalradiaForge.UI.Pages {
 
 			if (SelectedModpackIndex < 0 || SelectedModpackIndex >= ModpackList.Count) {
 				_selectedModpack = null;
+				UpdateCanStart();
 				return;
 			}
 
@@ -268,8 +277,89 @@ namespace CalradiaForge.UI.Pages {
 			AvailableModsView.Refresh();
 
 			// Update the service's working copy for cross-page access
-			_modpackService.CurrentLoadOrderEntries =
-				ModpackService.BuildEntryListFromModules(CurrentLoadOrder.ToList());
+			SyncLoadOrderToService();
+			UpdateCanStart();
+		}
+
+		#endregion
+
+		#region Drag and Drop — IDropTarget
+
+		/// <summary>
+		/// Called by GongSolutions during a drag hover to decide whether the drop is valid.
+		/// Allows reordering within the same list and moving items between the two lists.
+		/// </summary>
+		void IDropTarget.DragOver(IDropInfo dropInfo) {
+			if (dropInfo.Data is not ModuleModel) {
+				return;
+			}
+
+			dropInfo.DropTargetAdorner = DropTargetAdorners.Insert;
+			dropInfo.Effects = DragDropEffects.Move;
+		}
+
+		/// <summary>
+		/// Called by GongSolutions when the user releases a dragged item.
+		/// Handles reordering within a list and moving items between lists.
+		/// After any change, syncs the working load order to the service.
+		/// </summary>
+		void IDropTarget.Drop(IDropInfo dropInfo) {
+			if (dropInfo.Data is not ModuleModel mod) {
+				return;
+			}
+
+			ObservableCollection<ModuleModel>? sourceCollection = GetOwningCollection(dropInfo.DragInfo.SourceCollection);
+			ObservableCollection<ModuleModel>? targetCollection = GetOwningCollection(dropInfo.TargetCollection);
+
+			if (sourceCollection is null || targetCollection is null) {
+				return;
+			}
+
+			int removeIndex = sourceCollection.IndexOf(mod);
+			if (removeIndex < 0) {
+				return;
+			}
+
+			sourceCollection.RemoveAt(removeIndex);
+
+			int insertIndex = dropInfo.InsertIndex;
+
+			// Clamp insert index when moving within the same collection
+			// because the removal shifted indices
+			if (ReferenceEquals(sourceCollection, targetCollection) && insertIndex > removeIndex) {
+				insertIndex--;
+			}
+
+			if (insertIndex < 0) {
+				insertIndex = 0;
+			}
+			if (insertIndex > targetCollection.Count) {
+				insertIndex = targetCollection.Count;
+			}
+
+			targetCollection.Insert(insertIndex, mod);
+
+			// Refresh filtered views so search still works
+			LoadOrderView.Refresh();
+			AvailableModsView.Refresh();
+
+			// Keep the service in sync after every drag operation
+			SyncLoadOrderToService();
+			UpdateCanStart();
+		}
+
+		/// <summary>
+		/// Resolves the underlying <see cref="ObservableCollection{ModuleModel}"/>
+		/// from a GongSolutions collection reference (which may be a CollectionView).
+		/// </summary>
+		private ObservableCollection<ModuleModel>? GetOwningCollection(System.Collections.IEnumerable? collection) {
+			if (collection == LoadOrderView || collection == CurrentLoadOrder) {
+				return CurrentLoadOrder;
+			}
+			if (collection == AvailableModsView || collection == AvailableModsList) {
+				return AvailableModsList;
+			}
+			return null;
 		}
 
 		#endregion
@@ -389,25 +479,6 @@ namespace CalradiaForge.UI.Pages {
 		}
 
 		/// <summary>
-		/// Manually unblocks all DLL files in the game's Modules directory.
-		/// </summary>
-		private async void UnblockDllsButton_Click(object sender, RoutedEventArgs e) {
-			string modulesPath = App.AppConfig.ModulesDirectoryPath;
-			if (string.IsNullOrWhiteSpace(modulesPath) || !Directory.Exists(modulesPath)) {
-				DependencyWarningText = "Modules folder not found. Please check your Settings.";
-				return;
-			}
-
-			try {
-				DependencyWarningText = "Unblocking DLL files...";
-				UnblockResult result = await DLLUnblocker.UnblockAllAsync(modulesPath);
-				DependencyWarningText = result.ToSummaryString();
-			} catch (Exception ex) {
-				DependencyWarningText = $"Unblock failed: {ex.Message}";
-			}
-		}
-
-		/// <summary>
 		/// Refreshes the mod list by performing a full async directory scan.
 		/// </summary>
 		private async void RefreshModsButton_Click(object sender, RoutedEventArgs e) {
@@ -436,21 +507,49 @@ namespace CalradiaForge.UI.Pages {
 				IsRefreshing = false;
 			}
 		}
-
-		/// <summary>
-		/// Handles file/folder drag-drop onto the page for mod installation.
-		/// </summary>
-		private void Page_Drop(object sender, DragEventArgs e) {
-			// TODO: Extract dropped archive/folder and install mod
-		}
 		#endregion
 
 		#region Game Launch
+
 		/// <summary>
-		/// Launches the game with the current load order.
+		/// Saves the current load order, persists the selected modpack,
+		/// and launches Bannerlord via the <see cref="GameLauncher"/> service.
 		/// </summary>
 		private void PlayButton_Click(object sender, RoutedEventArgs e) {
-			// TODO: Save last-used modpack and start game with CurrentLoadOrder
+			// Save last-used load order
+			List<ModpackEntryModel> currentEntries =
+				ModpackService.BuildEntryListFromModules(CurrentLoadOrder.ToList());
+			_modpackService.SaveLastUsed(currentEntries);
+
+			// Persist which modpack was selected
+			if (_selectedModpack is not null) {
+				App.AppConfig.LastSelectedModpack = _selectedModpack.ModpackName;
+			}
+
+			// Launch the game
+			GameLaunchResult result = _gameLauncher.Launch(CurrentLoadOrder.ToList());
+			DependencyWarningText = result.Message;
+		}
+
+		/// <summary>
+		/// Updates <see cref="CanStart"/> based on whether
+		/// the load order has mods and the game config is valid.
+		/// </summary>
+		private void UpdateCanStart() {
+			CanStart = CurrentLoadOrder.Count > 0 && _gameLauncher.CanLaunch(out _);
+		}
+
+		#endregion
+
+		#region Helpers
+
+		/// <summary>
+		/// Pushes the current <see cref="CurrentLoadOrder"/> into the
+		/// <see cref="ModpackService.CurrentLoadOrderEntries"/> for cross-page access.
+		/// </summary>
+		private void SyncLoadOrderToService() {
+			_modpackService.CurrentLoadOrderEntries =
+				ModpackService.BuildEntryListFromModules(CurrentLoadOrder.ToList());
 		}
 		#endregion
 	}

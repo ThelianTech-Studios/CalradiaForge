@@ -59,6 +59,11 @@
 						</Button.ContextMenu>
 					</Button>
 				</StackPanel>
+				<Button Content="Import"
+								Style="{StaticResource ModpacksActionButton}"
+								ToolTip="Import a CalradiaForge modpack (.json) or Novus Launcher preset (.xml)"
+								Margin="0,0,8,0"
+								Click="ImportButton_Click" />
 				<Button Content="Save"
 								Style="{StaticResource ModpacksActionButton}"
 								ToolTip="Save changes to the selected modpack"
