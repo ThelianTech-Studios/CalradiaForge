@@ -330,7 +330,7 @@
 	</Style>
 
 	<!-- ══════════════════════════════════════════════════════
-	     Load Order Entry DataTemplate
+	     Load Order Entry DataTemplate (Editable — with trash icon)
 	     Name stretches to fill, version + trash pinned right.
 	     ══════════════════════════════════════════════════════ -->
 	<DataTemplate x:Key="ModpackLoadOrderItemTemplate">
@@ -362,6 +362,30 @@
 				<Setter TargetName="DeleteIcon" Property="Opacity" Value="1.0" />
 			</Trigger>
 		</DataTemplate.Triggers>
+	</DataTemplate>
+
+	<!-- ══════════════════════════════════════════════════════
+	     Active Load Order Entry DataTemplate (Read-Only)
+	     Matches the editable template layout but without the
+	     trash icon. Used for the active load order preview.
+	     ══════════════════════════════════════════════════════ -->
+	<DataTemplate x:Key="ModpackActiveLoadOrderItemTemplate">
+		<Grid>
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="*" />
+				<ColumnDefinition Width="Auto" />
+			</Grid.ColumnDefinitions>
+			<TextBlock Grid.Column="0" Text="{Binding ModuleName}"
+								 Foreground="{StaticResource TB.Txt.Bright}"
+								 FontFamily="{StaticResource Font.Secondary}" FontSize="13"
+								 VerticalAlignment="Center"
+								 TextTrimming="CharacterEllipsis" />
+			<TextBlock Grid.Column="1" Text="{Binding RequiredVersion}"
+								 Foreground="{StaticResource TB.Txt.Mid}"
+								 FontFamily="{StaticResource Font.Secondary}" FontSize="12"
+								 VerticalAlignment="Center"
+								 Margin="12,0,0,0" />
+		</Grid>
 	</DataTemplate>
 
 	<!-- ══════════════════════════════════════════════════════

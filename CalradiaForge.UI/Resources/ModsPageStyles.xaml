@@ -280,14 +280,14 @@
 	     ══════════════════════════════════════════════════════ -->
 	<ControlTemplate x:Key="ModsPagePlayButtonTemplate" TargetType="Button">
 		<Border x:Name="ButtonBorder"
-						Background="{StaticResource TB.Sfc.MedDark}"
+						Background="{StaticResource TB.Acc.Gold}"
 						BorderThickness="0" CornerRadius="6"
 						Padding="{TemplateBinding Padding}"
 						SnapsToDevicePixels="True">
 			<StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
 									VerticalAlignment="Center">
 				<mahIcons:PackIconMaterial x:Name="PlayIcon" Kind="Play" Width="16" Height="16"
-																	Foreground="{StaticResource TB.Txt.Bright}"
+																	Foreground="{StaticResource TB.Txt.Dark}"
 																	VerticalAlignment="Center" Margin="0,0,6,0" />
 				<ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
 													RecognizesAccessKey="True" />
@@ -296,20 +296,24 @@
 		<ControlTemplate.Triggers>
 			<Trigger Property="IsMouseOver" Value="True">
 				<Setter TargetName="ButtonBorder" Property="Background"
-								Value="{StaticResource TB.Sfc.Med}" />
+								Value="{StaticResource TB.Acc.Gold}" />
 			</Trigger>
 			<Trigger Property="IsPressed" Value="True">
 				<Setter TargetName="ButtonBorder" Property="Opacity" Value="0.85" />
 			</Trigger>
 			<Trigger Property="IsEnabled" Value="False">
+				<Setter TargetName="ButtonBorder" Property="Background"
+								Value="{StaticResource TB.Acc.Amber}" />
 				<Setter TargetName="ButtonBorder" Property="Opacity" Value="0.4" />
+				<Setter TargetName="PlayIcon" Property="Foreground"
+								Value="{StaticResource TB.Txt.Dim}" />
 			</Trigger>
 		</ControlTemplate.Triggers>
 	</ControlTemplate>
 
 	<Style x:Key="ModsPagePlayButton" TargetType="Button">
 		<Setter Property="Template" Value="{StaticResource ModsPagePlayButtonTemplate}" />
-		<Setter Property="Foreground" Value="{StaticResource TB.Txt.Bright}" />
+		<Setter Property="Foreground" Value="{StaticResource TB.Txt.Dark}" />
 		<Setter Property="FontFamily" Value="{StaticResource Font.Secondary}" />
 		<Setter Property="FontSize" Value="14" />
 		<Setter Property="FontWeight" Value="SemiBold" />
@@ -333,13 +337,54 @@
 
 	<!-- ══════════════════════════════════════════════════════
 	     ListBox
+	     Forces each ListBoxItem to stretch its content
+	     to the full width of the list so the Grid columns
+	     in the DataTemplate can pin version text right.
 	     ══════════════════════════════════════════════════════ -->
 	<Style x:Key="ModsListBox" TargetType="ListBox">
 		<Setter Property="Foreground" Value="{StaticResource TB.Txt.Bright}" />
 		<Setter Property="ScrollViewer.CanContentScroll" Value="True" />
 		<Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+		<Setter Property="HorizontalContentAlignment" Value="Stretch" />
 		<Setter Property="SnapsToDevicePixels" Value="True" />
 		<Setter Property="OverridesDefaultStyle" Value="True" />
+		<Setter Property="ItemContainerStyle">
+			<Setter.Value>
+				<Style TargetType="ListBoxItem">
+					<Setter Property="HorizontalContentAlignment" Value="Stretch" />
+					<Setter Property="Padding" Value="0" />
+					<Setter Property="Margin" Value="0" />
+					<Setter Property="Template">
+						<Setter.Value>
+							<ControlTemplate TargetType="ListBoxItem">
+								<Border x:Name="ItemBorder"
+												Background="Transparent"
+												BorderBrush="Transparent"
+												BorderThickness="1"
+												CornerRadius="4"
+												Padding="4,2"
+												Margin="1"
+												SnapsToDevicePixels="True">
+									<ContentPresenter HorizontalAlignment="Stretch" />
+								</Border>
+								<ControlTemplate.Triggers>
+									<Trigger Property="IsMouseOver" Value="True">
+										<Setter TargetName="ItemBorder" Property="Background"
+														Value="{StaticResource TB.Sfc.Med.25}" />
+									</Trigger>
+									<Trigger Property="IsSelected" Value="True">
+										<Setter TargetName="ItemBorder" Property="Background"
+														Value="{StaticResource TB.Sfc.Med.50}" />
+										<Setter TargetName="ItemBorder" Property="BorderBrush"
+														Value="{StaticResource TB.Acc.Gold}" />
+									</Trigger>
+								</ControlTemplate.Triggers>
+							</ControlTemplate>
+						</Setter.Value>
+					</Setter>
+				</Style>
+			</Setter.Value>
+		</Setter>
 		<Setter Property="Template">
 			<Setter.Value>
 				<ControlTemplate TargetType="ListBox">
@@ -370,13 +415,19 @@
 		<Grid>
 			<Grid.ColumnDefinitions>
 				<ColumnDefinition Width="*" />
-				<ColumnDefinition Width="60" />
+				<ColumnDefinition Width="Auto" />
 			</Grid.ColumnDefinitions>
 			<TextBlock Grid.Column="0" Text="{Binding ModuleName}"
-								 Foreground="{StaticResource TB.Txt.Bright}" />
+								 Foreground="{StaticResource TB.Txt.Bright}"
+								 FontFamily="{StaticResource Font.Secondary}" FontSize="13"
+								 VerticalAlignment="Center"
+								 TextTrimming="CharacterEllipsis" />
 			<TextBlock Grid.Column="1" Text="{Binding ModuleVersion}"
 								 Foreground="{StaticResource TB.Txt.Mid}"
-								 HorizontalAlignment="Right" />
+								 FontFamily="{StaticResource Font.Secondary}" FontSize="12"
+								 VerticalAlignment="Center"
+								 HorizontalAlignment="Right"
+								 Margin="12,0,0,0" />
 		</Grid>
 	</DataTemplate>
 
