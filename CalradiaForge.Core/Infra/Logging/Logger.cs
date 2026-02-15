@@ -1,9 +1,5 @@
 ﻿namespace CalradiaForge.Core.Infra.Logging
 	{
-	using System;
-	using System.Diagnostics;
-	using System.IO;
-
 	using CalradiaForge.Core.Infra.Paths;
 
 	public sealed class Logger
@@ -25,6 +21,15 @@
 		public string LogFolder { get; private set; }
 		public bool MirrorToDebug { get; set; } = true;
 
+		/// <summary>
+		/// The minimum log level that will be written to the log file.
+		/// Messages below this level are silently discarded.
+		/// Set to <see cref="LogLevel.Debug"/> to capture everything,
+		/// or <see cref="LogLevel.Info"/> to suppress debug noise in release.
+		/// Controlled by the DebugMode toggle in Settings.
+		/// </summary>
+		public LogLevel MinimumLevel { get; set; } = LogLevel.Info;
+
 		private Logger() {
 			LogFolder=AppPaths.LogsDirectory;
 			_sessionId=DateTime.Now.ToString("yyyy-MM-dd HH-mm");
@@ -33,6 +38,9 @@
 			CleanupOldLogs(maxAgeDays: 14);
 			}
 		public void Log(string message,LogLevel level) {
+			if (level < MinimumLevel) {
+				return;
+			}
 			string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
 			string logEntry = $"[{timestamp}] [{level}] {message}";
 			try {
@@ -40,12 +48,20 @@
 					File.AppendAllText(_sessionLogFilePath,logEntry+Environment.NewLine);
 					}
 				} catch (Exception ex) {
-				Debug.WriteLine($"[Logger] Failed to write log: {ex.Message}");
+				System.Diagnostics.Debug.WriteLine($"[Logger] Failed to write log: {ex.Message}");
 				}
 			if (MirrorToDebug) {
-				Debug.WriteLine(logEntry);
+				System.Diagnostics.Debug.WriteLine(logEntry);
 				}
 			}
+
+		/// <summary>
+		/// Logs a verbose diagnostic message. Only written when
+		/// <see cref="MinimumLevel"/> is set to <see cref="LogLevel.Debug"/>
+		/// (i.e. when the user enables Debug Mode in Settings).
+		/// Use for granular operational detail that would be too noisy for normal use.
+		/// </summary>
+		public void Debug(string message) => Log(message,LogLevel.Debug);
 		public void Info(string message) => Log(message,LogLevel.Info);
 		public void Warning(string message) => Log(message,LogLevel.Warning);
 		public void Error(string message) => Log(message,LogLevel.Error);
@@ -66,7 +82,7 @@
 						}
 					}
 				} catch (Exception ex) {
-				Debug.WriteLine($"[Logger] Failed to write log: {ex.Message}");
+				System.Diagnostics.Debug.WriteLine($"[Logger] Failed to cleanup logs: {ex.Message}");
 				}
 			}
 		}
