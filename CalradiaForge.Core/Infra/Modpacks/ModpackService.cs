@@ -165,56 +165,56 @@
 				}
 			return result;
 			}
-
-		#endregion
-
-		#region Delete
-
-		/// <summary>
-		/// Deletes a modpack file from disk by its sanitized filename.
-		/// The built-in "Vanilla" modpack cannot be deleted.
-		/// </summary>
-		/// <param name="modpack">The modpack to delete.</param>
-		/// <returns><c>true</c> when deleted; <c>false</c> if deletion failed or was blocked.</returns>
-		public bool Delete(ModpackModel modpack) {
-			if (string.Equals(modpack.ModpackName,VanillaModules.DefaultModpackName,StringComparison.OrdinalIgnoreCase)) {
-				_logger.Warning("ModpackService: Cannot delete the default Vanilla modpack.");
-				return false;
-				}
-			bool result = _modpackData.DeleteModpack(modpack.FileName);
-			if (result) {
-				Refresh();
-				}
-			return result;
-			}
-
 		#endregion
 
 		#region Import / Export
 
 		/// <summary>
-		/// Imports a modpack from an external JSON file.
+		/// Imports a modpack from an external file.
+		/// Supports CalradiaForge JSON files (.json) and Novus Launcher preset files (.xml).
+		/// Novus presets are automatically converted to the CalradiaForge format.
 		/// If a modpack with the same name already exists, the import is rejected.
 		/// </summary>
-		/// <param name="importFilePath">Full path to the external .json file.</param>
+		/// <param name="importFilePath">Full path to the external .json or .xml file.</param>
 		/// <returns>
-		/// A tuple: (success, modpack, errorMessage).
+		/// A tuple: (success, modpack, message).
 		/// On success, the modpack is saved to disk and added to <see cref="AllModpacks"/>.
 		/// </returns>
 		public (bool Success, ModpackModel? Modpack, string Message) Import(string importFilePath) {
-			ModpackModel? imported = _modpackData.ImportFromFile(importFilePath);
-			if (imported is null) {
-				return (false,null,"Failed to read the modpack file. Ensure it is a valid CalradiaForge modpack JSON file.");
+			if (string.IsNullOrWhiteSpace(importFilePath) || !File.Exists(importFilePath)) {
+				return (false, null, "Import file not found.");
+			}
+
+			string extension = Path.GetExtension(importFilePath);
+			ModpackModel? imported;
+
+			if (string.Equals(extension, ".xml", StringComparison.OrdinalIgnoreCase)) {
+				// Novus Launcher preset conversion
+				imported = NovusPresetConverter.ConvertFromFile(importFilePath);
+				if (imported is null) {
+					return (false, null, "Failed to convert Novus preset. Ensure it is a valid Novus Launcher XML preset file.");
 				}
+			} else if (string.Equals(extension, ".json", StringComparison.OrdinalIgnoreCase)) {
+				// Native CalradiaForge modpack
+				imported = _modpackData.ImportFromFile(importFilePath);
+				if (imported is null) {
+					return (false, null, "Failed to read the modpack file. Ensure it is a valid CalradiaForge modpack JSON file.");
+				}
+			} else {
+				return (false, null, $"Unsupported file type '{extension}'. Use .json (CalradiaForge) or .xml (Novus Launcher).");
+			}
+
 			if (_modpackData.ModpackExists(imported.ModpackName)) {
-				return (false,imported,$"A modpack named '{imported.ModpackName}' already exists.");
-				}
+				return (false, imported, $"A modpack named '{imported.ModpackName}' already exists.");
+			}
+
 			bool saved = _modpackData.SaveModpack(imported);
 			if (!saved) {
-				return (false,imported,"Failed to save the imported modpack.");
-				}
+				return (false, imported, "Failed to save the imported modpack.");
+			}
+
 			Refresh();
-			return (true,imported,$"Successfully imported '{imported.ModpackName}'.");
+			return (true, imported, $"Successfully imported '{imported.ModpackName}'.");
 			}
 
 		/// <summary>
