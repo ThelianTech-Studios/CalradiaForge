@@ -23,6 +23,25 @@ If you maintain more than one loadout (e.g., vanilla+, hardcore, overhaul), Calr
 
 ---
 
+## 🎮 Supported Game Platforms
+
+| Platform         | Direct Launch | Notes |
+|------------------|---------------|-------|
+| Steam            | ✅ Full        | Auto-launches Steam if not running. Full overlay & achievement support. |
+| GOG / Standalone | ✅ Full        | No platform client required. |
+| Epic Games       | ⚠️ Limited     | TaleWorlds requires authentication through the Epic client. CalradiaForge can manage your load order and mod setup, but you must launch the game through the Epic Games Store. |
+| GamePass         | ⚠️ Limited     | Xbox/Microsoft account login is required. CalradiaForge can manage your load order and mod setup, but you must launch through the Xbox app. |
+
+**Why can't CalradiaForge launch Epic/GamePass directly?**
+
+TaleWorlds recently changed how non-Steam launchers work. Epic and GamePass now require authentication token exchange through their respective clients. This is a platform-level restriction that third-party launchers cannot bypass.
+
+CalradiaForge still provides **full mod management**, load order arrangement, and modpack features for these platforms — you just need to press Play from the platform's own launcher.
+
+> ⚠️ **Note:** Direct launch support for Epic Games and GamePass is planned for a future release. This will likely involve writing the load order to Bannerlord's vanilla launcher config so it can be picked up when launching through the platform client.
+
+---
+
 ## ✨ Key Features
 
 ### 📦 Mods Management
