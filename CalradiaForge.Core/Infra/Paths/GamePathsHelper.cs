@@ -32,6 +32,7 @@
 						} else {
 						config.GameProvider=GameProvider.Steam;
 						config.GameFolderPath=gamePath;
+						config.GameLauncherFilePath=Path.Combine(gamePath,"bin","Win64_Shipping_Client","Bannerlord.exe");
 						string workshopPath = Path.Combine(steamPath,"steamapps","workshop","content",_steamGameID);
 						if (!Directory.Exists(workshopPath)) {
 							throw new DirectoryNotFoundException($"The expected Steam Workshop folder was not found at '{workshopPath}'. Please Check your Settings");
