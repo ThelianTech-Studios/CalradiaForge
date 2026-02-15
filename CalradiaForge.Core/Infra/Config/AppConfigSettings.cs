@@ -1,7 +1,7 @@
-﻿namespace CalradiaForge.Core.Infra.Config
-	{
+﻿namespace CalradiaForge.Core.Infra.Config {
 	using System;
 	using System.ComponentModel;
+	using System.IO;
 
 	using CalradiaForge.Core.Infra.Paths;
 
@@ -36,6 +36,10 @@
 			AddIfMissing("GameLauncherFilePath");
 			AddIfMissing("GamePlatform",GameProvider.NotInitialized.ToString());
 			AddIfMissing("LastSelectedModpack","Last Used");
+			AddIfMissing("ModpackStartupMode",ModpackStartupMode.LastUsed.ToString());
+			AddIfMissing("DebugMode","False");
+			AddIfMissing("LastUnblockRunDate");
+			AddIfMissing("LastUnblockRunResult");
 			}
 		#endregion
 
@@ -51,6 +55,8 @@
 			set {
 				if (_config["GamePlatform"]!=value.ToString()) {
 					_config["GamePlatform"]=value.ToString();
+					OnPropertyChanged(nameof(GameProvider));
+					OnPropertyChanged(nameof(IsGameFromSteam));
 					}
 				}
 			}
@@ -70,6 +76,7 @@
 				if (_config["GameFolderPath"]!=value) {
 					_config["GameFolderPath"]=value;
 					OnPropertyChanged(nameof(GameFolderPath));
+					OnPropertyChanged(nameof(ModulesDirectoryPath));
 					}
 				}
 			}
@@ -78,6 +85,7 @@
 			set {
 				if (_config["GameLauncherFilePath"]!=value) {
 					_config["GameLauncherFilePath"]=value;
+					OnPropertyChanged(nameof(GameLauncherFilePath));
 					}
 				}
 			}
@@ -106,6 +114,64 @@
 					}
 				}
 			}
+
+		/// <summary>
+		/// Controls how the ModsPage ComboBox selects a modpack on application startup.
+		/// </summary>
+		public ModpackStartupMode ModpackStartupMode {
+			get => Enum.TryParse(_config["ModpackStartupMode"],out ModpackStartupMode m) ? m : ModpackStartupMode.LastUsed;
+			set {
+				if (_config["ModpackStartupMode"]!=value.ToString()) {
+					_config["ModpackStartupMode"]=value.ToString();
+					OnPropertyChanged(nameof(ModpackStartupMode));
+					}
+				}
+			}
+
+		/// <summary>
+		/// When enabled, the application generates more verbose log output
+		/// and may produce diagnostic data dumps for troubleshooting.
+		/// Should only be enabled when requested for debugging bug reports.
+		/// </summary>
+		public bool DebugMode {
+			get => _config.GetBool("DebugMode",false);
+			set {
+				string stringValue = value.ToString();
+				if (_config["DebugMode"]!=stringValue) {
+					_config["DebugMode"]=stringValue;
+					OnPropertyChanged(nameof(DebugMode));
+					}
+				}
+			}
+
+		/// <summary>
+		/// Persisted timestamp of the last time the DLL Unblock tool was run.
+		/// Displayed in the Tools tab for user reference and debugging.
+		/// </summary>
+		public string LastUnblockRunDate {
+			get => _config["LastUnblockRunDate"];
+			set {
+				if (_config["LastUnblockRunDate"]!=value) {
+					_config["LastUnblockRunDate"]=value;
+					OnPropertyChanged(nameof(LastUnblockRunDate));
+					}
+				}
+			}
+
+		/// <summary>
+		/// Persisted summary result of the last DLL Unblock tool run.
+		/// Displayed in the Tools tab for user reference and debugging.
+		/// </summary>
+		public string LastUnblockRunResult {
+			get => _config["LastUnblockRunResult"];
+			set {
+				if (_config["LastUnblockRunResult"]!=value) {
+					_config["LastUnblockRunResult"]=value;
+					OnPropertyChanged(nameof(LastUnblockRunResult));
+					}
+				}
+			}
+
 		// Add more strongly-typed properties for other configuration settings as needed
 
 		#endregion
