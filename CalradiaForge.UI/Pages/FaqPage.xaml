@@ -72,7 +72,7 @@
                         <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
                                              Text="CalradiaForge extracts mod archives directly into the Bannerlord Modules folder. Make sure the archive contains a valid mod structure with a SubModule.xml file." />
                         <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
-                                             Text="If the archive is nested (a folder inside a folder), CalradiaForge will attempt to detect the correct root. If extraction still fails, try re-downloading the mod or extracting it manually." />
+                                             Text="If the archive is nested (a folder inside a folder), CalradiaForge will attempt to detect the correct root. If extraction still fails, try extracting the mod manually." />
                         <TextBlock Style="{StaticResource SettingsHint}" TextWrapping="Wrap"
                                              Text="Supported archive formats: .zip, .7z, .rar" />
                     </StackPanel>
@@ -87,9 +87,12 @@
                                              Text="A modpack is a saved snapshot of your active mods and their load order. You can create multiple modpacks for different playstyles (e.g., Vanilla+, Overhaul, Hardcore)." />
                         <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
                                              Text="Switch between modpacks using the dropdown on the Mods page. The selected modpack's load order is applied immediately." />
-                        <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap"
+						<TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
                                              Text="To save changes to a modpack, go to the Mod Packs page and click 'Save to Modpack'. This overwrites the saved data with your current active load order." />
-                    </StackPanel>
+						<TextBlock Style="{StaticResource SettingsHint}" TextWrapping="Wrap" 
+											 Text="Make sure you have selected the correct modpack on the Mods Page before you add/remove mods to your load order there, before you go and save any changes in the Modpacks Page else any changes will be lost."
+											 />
+					</StackPanel>
                 </Border>
 
                 <!-- ── Q5: Epic / GamePass limitations ── -->
@@ -102,7 +105,7 @@
                         <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
                                              Text="CalradiaForge still provides full mod management, load order arrangement, and modpack features for these platforms — you just need to press Play from the platform's own launcher." />
                         <TextBlock Style="{StaticResource SettingsHint}" TextWrapping="Wrap"
-                                             Text="Direct launch support for Epic and GamePass is planned for a future release." />
+                                             Text="Direct launch support for Epic and GamePass is planned for a future release. For now load orders are not passed to the game's native launcher." />
                     </StackPanel>
                 </Border>
 
@@ -113,9 +116,13 @@
                                              Style="{StaticResource SettingsSectionHeader}" />
                         <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
                                              Text="Yes. Go to the Mod Packs page and click Import. Select a Novus Launcher preset file (.xml) and CalradiaForge will convert it into a CalradiaForge modpack automatically." />
-                        <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap"
+						<TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
                                              Text="You can also import native CalradiaForge modpack files (.json) the same way." />
-                    </StackPanel>
+						<TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
+																 Text="You can also place CalradiaForge Modpacks directly in the modpacks subdirectory in the app's directory, and the app will automatically refresh the selectable modpacks."/>
+						<TextBlock Style="{StaticResource SettingsHint}" TextWrapping="Wrap"
+																 Text="Refresh or switch pages for the app to automatically refresh the dropdown menus'."/>
+					</StackPanel>
                 </Border>
 
                 <!-- ── Q7: Clearing mod cache ── -->
