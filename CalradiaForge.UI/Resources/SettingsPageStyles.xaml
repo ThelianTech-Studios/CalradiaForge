@@ -267,43 +267,72 @@
 	</Style>
 
 	<!-- ══════════════════════════════════════════════════════
-	     ToggleSwitch — MahApps Metro, themed to CalradiaForge
+	     ToggleSwitch — Pure WPF CheckBox styled as a toggle switch
+	     Replaces MahApps ToggleSwitch to avoid .NET 10 XAML
+	     compiler compatibility issues with MahApps 2.4.11.
+
 	     Off:   TB.Sfc.MedDark track, TB.Txt.Mid thumb
 	     On:    TB.Acc.Orange track, TB.Acc.Gold thumb
 	     Hover: TB.Acc.Gold border highlight
 	     ══════════════════════════════════════════════════════ -->
-	<Style x:Key="SettingsToggleSwitch" TargetType="mah:ToggleSwitch">
+	<Style x:Key="SettingsToggleSwitch" TargetType="CheckBox">
 		<Setter Property="Foreground" Value="{StaticResource TB.Txt.Bright}" />
 		<Setter Property="FontFamily" Value="{StaticResource Font.Secondary}" />
 		<Setter Property="FontSize" Value="13" />
-		<Setter Property="ContentDirection" Value="RightToLeft" />
 		<Setter Property="Cursor" Value="Hand" />
-		<Setter Property="OffSwitchBrush" Value="{StaticResource TB.Sfc.MedDark}" />
-		<Setter Property="OnSwitchBrush" Value="{StaticResource TB.Acc.Orange}" />
-		<Setter Property="ThumbIndicatorBrush" Value="{StaticResource TB.Txt.Mid}" />
-		<Setter Property="ThumbIndicatorDisabledBrush" Value="{StaticResource TB.Txt.Dim}" />
-		<Setter Property="BorderBrush" Value="{StaticResource TB.Sfc.Lighter.75}" />
-		<Setter Property="BorderThickness" Value="1" />
-		<Setter Property="ToggleSwitchButtonStyle">
+		<Setter Property="SnapsToDevicePixels" Value="True" />
+		<Setter Property="Template">
 			<Setter.Value>
-				<Style TargetType="mah:ToggleSwitchButton">
-					<Setter Property="Background" Value="{StaticResource TB.Sfc.MedDark}" />
-					<Setter Property="BorderBrush" Value="{StaticResource TB.Sfc.Lighter.75}" />
-					<Setter Property="BorderThickness" Value="1" />
-					<Setter Property="SnapsToDevicePixels" Value="True" />
-					<Setter Property="ThumbIndicatorBrush" Value="{StaticResource TB.Txt.Mid}" />
-					<Setter Property="OffSwitchBrush" Value="{StaticResource TB.Sfc.MedDark}" />
-					<Setter Property="OnSwitchBrush" Value="{StaticResource TB.Acc.Orange}" />
-					<Style.Triggers>
+				<ControlTemplate TargetType="CheckBox">
+					<DockPanel VerticalAlignment="Center">
+						<!-- Switch track + thumb -->
+						<Grid x:Name="SwitchTrack"
+									DockPanel.Dock="Left"
+									Width="44" Height="22"
+									VerticalAlignment="Center"
+									Margin="0,0,10,0">
+							<Border x:Name="TrackBorder"
+											Background="{StaticResource TB.Sfc.MedDark}"
+											BorderBrush="{StaticResource TB.Sfc.Lighter.75}"
+											BorderThickness="1"
+											CornerRadius="11"
+											SnapsToDevicePixels="True" />
+							<Canvas Margin="3,0" ClipToBounds="False">
+								<Ellipse x:Name="Thumb"
+												 Width="16" Height="16"
+												 Canvas.Top="2"
+												 Canvas.Left="2"
+												 Fill="{StaticResource TB.Txt.Mid}" />
+							</Canvas>
+						</Grid>
+						<!-- Label -->
+						<ContentPresenter VerticalAlignment="Center"
+															RecognizesAccessKey="True" />
+					</DockPanel>
+					<ControlTemplate.Triggers>
+						<!-- Checked state: slide thumb right, recolor -->
 						<Trigger Property="IsChecked" Value="True">
-							<Setter Property="ThumbIndicatorBrush" Value="{StaticResource TB.Acc.Gold}" />
-							<Setter Property="BorderBrush" Value="{StaticResource TB.Acc.Orange}" />
+							<Setter TargetName="Thumb" Property="Canvas.Left" Value="22" />
+							<Setter TargetName="Thumb" Property="Fill"
+											Value="{StaticResource TB.Acc.Gold}" />
+							<Setter TargetName="TrackBorder" Property="Background"
+											Value="{StaticResource TB.Acc.Orange}" />
+							<Setter TargetName="TrackBorder" Property="BorderBrush"
+											Value="{StaticResource TB.Acc.Orange}" />
 						</Trigger>
+						<!-- Hover: gold border -->
 						<Trigger Property="IsMouseOver" Value="True">
-							<Setter Property="BorderBrush" Value="{StaticResource TB.Acc.Gold}" />
+							<Setter TargetName="TrackBorder" Property="BorderBrush"
+											Value="{StaticResource TB.Acc.Gold}" />
 						</Trigger>
-					</Style.Triggers>
-				</Style>
+						<!-- Disabled -->
+						<Trigger Property="IsEnabled" Value="False">
+							<Setter TargetName="SwitchTrack" Property="Opacity" Value="0.4" />
+							<Setter TargetName="Thumb" Property="Fill"
+											Value="{StaticResource TB.Txt.Dim}" />
+						</Trigger>
+					</ControlTemplate.Triggers>
+				</ControlTemplate>
 			</Setter.Value>
 		</Setter>
 	</Style>
