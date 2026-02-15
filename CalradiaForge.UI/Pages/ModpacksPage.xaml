@@ -55,6 +55,12 @@
 								<MenuItem Header="ButterLib Suite"
 													Style="{StaticResource ModpacksMenuItem}"
 													Click="CreateFromButterLib_Click" />
+								<MenuItem Header="Vanilla - WarSails"
+													Style="{StaticResource ModpacksMenuItem}"
+													Click="CreateFromVanillaWarSails_Click" />
+								<MenuItem Header="ButterLib - WarSails"
+													Style="{StaticResource ModpacksMenuItem}"
+													Click="CreateFromButterLibWarSails_Click" />
 							</ContextMenu>
 						</Button.ContextMenu>
 					</Button>
@@ -64,40 +70,63 @@
 								ToolTip="Import a CalradiaForge modpack (.json) or Novus Launcher preset (.xml)"
 								Margin="0,0,8,0"
 								Click="ImportButton_Click" />
-				<Button Content="Save"
+				<Button Content="Save to Modpack"
 								Style="{StaticResource ModpacksActionButton}"
-								ToolTip="Save changes to the selected modpack"
+								ToolTip="Overwrite the selected modpack's saved data with the current active load order from the Mods page"
 								IsEnabled="{Binding HasSelection}"
 								Click="SaveButton_Click" />
 			</StackPanel>
 		</Grid>
 
-		<!--Row 1: Column Header + Metadata-->
+		<!--Row 1: Dual List Headers + Metadata-->
 		<Grid Grid.Row="1" Margin="0,0,0,5">
 			<Grid.ColumnDefinitions>
 				<ColumnDefinition Width="*" />
-				<ColumnDefinition Width="Auto" />
+				<ColumnDefinition Width="*" />
 			</Grid.ColumnDefinitions>
-			<TextBlock Grid.Column="0" Text="Load Order"
-								 Style="{StaticResource ModpacksSectionHeader}"
-								 HorizontalAlignment="Center" />
-			<StackPanel Grid.Column="1" Orientation="Horizontal" Margin="0,0,10,0">
-				<TextBlock Text="By:" Style="{StaticResource ModpacksMetaLabel}" />
-				<TextBlock Text="{Binding SelectedCreatedBy}"
-									 Style="{StaticResource ModpacksMetaValue}" Margin="4,0,12,0" />
-				<TextBlock Text="Updated:" Style="{StaticResource ModpacksMetaLabel}" />
-				<TextBlock Text="{Binding SelectedLastUpdated}"
-									 Style="{StaticResource ModpacksMetaValue}" />
-			</StackPanel>
+			<!--Left header: Active load order-->
+			<TextBlock Grid.Column="0" Text="Active Load Order"
+								 Style="{StaticResource ModpacksSectionHeader}" />
+			<!--Right header: Saved modpack data + metadata-->
+			<Grid Grid.Column="1" Margin="10,0,0,0">
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="Auto" />
+					<ColumnDefinition Width="*" />
+				</Grid.ColumnDefinitions>
+				<TextBlock Grid.Column="0" Text="Saved Modpack Data"
+									 Style="{StaticResource ModpacksSectionHeader}" />
+				<StackPanel Grid.Column="1" Orientation="Horizontal"
+										HorizontalAlignment="Right" Margin="0,0,10,0">
+					<TextBlock Text="By:" Style="{StaticResource ModpacksMetaLabel}" />
+					<TextBlock Text="{Binding SelectedCreatedBy}"
+										 Style="{StaticResource ModpacksMetaValue}" Margin="4,0,12,0" />
+					<TextBlock Text="Updated:" Style="{StaticResource ModpacksMetaLabel}" />
+					<TextBlock Text="{Binding SelectedLastUpdated}"
+										 Style="{StaticResource ModpacksMetaValue}" />
+				</StackPanel>
+			</Grid>
 		</Grid>
 
-		<!--Row 2: Load Order ListBox (full width, no drag-drop)-->
-		<ListBox x:Name="LoadOrderListBox" Grid.Row="2"
-						 Style="{StaticResource ModpacksListBox}"
-						 ItemTemplate="{StaticResource ModpackLoadOrderItemTemplate}"
-						 ItemsSource="{Binding EditableLoadOrder}"
-						 SelectedIndex="{Binding SelectedEntryIndex}"
-						 SelectionChanged="LoadOrderListBox_SelectionChanged" />
+		<!--Row 2: Dual Lists — Active (left, read-only) | Saved (right, editable)-->
+		<Grid Grid.Row="2" MinHeight="200">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="*" />
+				<ColumnDefinition Width="*" />
+			</Grid.ColumnDefinitions>
+			<!--Left: Active load order from Mods page (read-only preview)-->
+			<ListBox x:Name="ActiveLoadOrderListBox" Grid.Column="0" Margin="0,0,5,0"
+							 Style="{StaticResource ModpacksListBox}"
+							 ItemTemplate="{StaticResource ModpackActiveLoadOrderItemTemplate}"
+							 ItemsSource="{Binding ActiveLoadOrder}"
+							 IsHitTestVisible="False" />
+			<!--Right: Saved modpack load order (editable with trash icons)-->
+			<ListBox x:Name="LoadOrderListBox" Grid.Column="1" Margin="5,0,0,0"
+							 Style="{StaticResource ModpacksListBox}"
+							 ItemTemplate="{StaticResource ModpackLoadOrderItemTemplate}"
+							 ItemsSource="{Binding EditableLoadOrder}"
+							 SelectedIndex="{Binding SelectedEntryIndex}"
+							 SelectionChanged="LoadOrderListBox_SelectionChanged" />
+		</Grid>
 
 		<!--Row 3: Selected Entry Edit Panel-->
 		<Border Grid.Row="3" Margin="0,8,0,0"
