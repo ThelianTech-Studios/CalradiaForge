@@ -3,6 +3,7 @@
 	using System.Windows.Threading;
 
 	using CalradiaForge.Core.Infra.Config;
+	using CalradiaForge.Core.Infra.Launch;
 	using CalradiaForge.Core.Infra.Logging;
 	using CalradiaForge.Core.Infra.Modpacks;
 	using CalradiaForge.Core.Infra.Mods;
@@ -17,6 +18,7 @@
 		public static ModService ModService { get; private set; } = null!;
 		public static ModInstaller ModInstaller { get; private set; } = null!;
 		public static ModpackService ModpackService { get; private set; } = null!;
+		public static GameLauncher GameLauncher { get; private set; } = null!;
 		public App() {
 			InitializeComponent();
 		}
@@ -28,7 +30,26 @@
 			InitializeConfiguration();
 			InitializeModServices();
 			InitializeModpackServices();
+			InitializeLauncherService();
+
+			// Apply saved debug mode to logger verbosity
+			if (AppConfig.DebugMode) {
+				_logger.MinimumLevel = Logger.LogLevel.Debug;
+				_logger.Info("App: Debug mode enabled — logging verbose diagnostic messages.");
+			}
 		}
+
+		protected override void OnExit(ExitEventArgs e) {
+			try {
+				if (ModpackService?.CurrentLoadOrderEntries is { Count:>0 } entries) {
+					ModpackService.SaveLastUsed(entries);
+					_logger.Info("App: Saved last-used load order on exit.");
+					}
+				} catch (Exception ex) {
+				_logger.Error(ex,"App: Failed to save last-used load order on exit.");
+				}
+			base.OnExit(e);
+			}
 		private void InitializeConfiguration() {
 			var appConfig = new AppConfig(AppPaths.ConfigFilePath);
 			appConfig.Load();
@@ -46,6 +67,9 @@
 			var modpackData = new ModpackData(AppPaths.ModpacksDirectory, AppPaths.LastUsedModsFilePath);
 			ModpackService = new ModpackService(modpackData);
 			ModpackService.LoadAll();
+		}
+		private void InitializeLauncherService() {
+					GameLauncher = new GameLauncher(AppConfig);
 		}
 
 		private void SetupExceptionHandeling() {
