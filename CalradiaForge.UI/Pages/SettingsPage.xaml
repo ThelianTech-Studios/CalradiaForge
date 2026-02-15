@@ -126,10 +126,11 @@
 					<Border Style="{StaticResource SettingsSectionBorder}">
 						<StackPanel>
 							<TextBlock Text="Diagnostics" Style="{StaticResource SettingsSectionHeader}" />
-							<mah:ToggleSwitch x:Name="DebugModeToggle"
-																Content="Enable Debug Mode"
-																Style="{StaticResource SettingsToggleSwitch}"
-																Toggled="DebugMode_Toggled" />
+							<CheckBox x:Name="DebugModeToggle"
+							Content="Enable Debug Mode"
+							Style="{StaticResource SettingsToggleSwitch}"
+							Checked="DebugMode_Toggled"
+							Unchecked="DebugMode_Toggled" />
 							<TextBlock Text="Enables verbose logging and diagnostic data output. Only enable this when requested for troubleshooting."
 												 Style="{StaticResource SettingsHint}"
 												 Margin="0,4,0,0" />

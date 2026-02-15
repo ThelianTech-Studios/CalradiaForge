@@ -127,7 +127,7 @@
 			}
 
 			// Debug mode toggle
-			DebugModeToggle.IsOn = _config.DebugMode;
+			DebugModeToggle.IsChecked = _config.DebugMode;
 		}
 
 		/// <summary>
@@ -218,15 +218,18 @@
 
 		/// <summary>
 		/// Handles debug mode toggle switch changes.
-		/// Auto-saves to config immediately.
+		/// Auto-saves to config immediately and adjusts log verbosity.
 		/// </summary>
 		private void DebugMode_Toggled(object sender, RoutedEventArgs e) {
 			if (!IsLoaded) {
 				return;
 			}
-			_config.DebugMode = DebugModeToggle.IsOn;
-			_logger.Info($"SettingsPage: DebugMode changed to {_config.DebugMode}");
-			// TODO: Wire into Logger verbosity and diagnostic dump system
+			bool enabled = DebugModeToggle.IsChecked == true;
+			_config.DebugMode = enabled;
+			_logger.MinimumLevel = enabled
+				? Logger.LogLevel.Debug
+				: Logger.LogLevel.Info;
+			_logger.Info($"SettingsPage: DebugMode changed to {enabled}. Log level: {_logger.MinimumLevel}");
 		}
 
 		#endregion
