@@ -19,6 +19,8 @@
 	/// <summary>
 	/// Modpacks management page. Handles creating, saving, importing modpacks,
 	/// viewing and editing their load order entries.
+	/// Shows a side-by-side comparison of the saved modpack data (right, editable)
+	/// and the active load order from the Mods page (left, read-only).
 	/// </summary>
 	public partial class ModpacksPage : Page, INotifyPropertyChanged {
 		#region Fields
@@ -49,10 +51,18 @@
 		public ObservableCollection<ModpackModel> ModpackList { get; set; } = [];
 
 		/// <summary>
-		/// Editable load order for the currently selected modpack.
+		/// Editable load order for the currently selected modpack (saved data on disk).
 		/// This is a working copy — changes are not persisted until Save is clicked.
+		/// Displayed in the right list.
 		/// </summary>
 		public ObservableCollection<ModpackEntryModel> EditableLoadOrder { get; set; } = [];
+
+		/// <summary>
+		/// Read-only snapshot of the active load order from the Mods page.
+		/// Populated from <see cref="ModpackService.CurrentLoadOrderEntries"/>.
+		/// Displayed in the left list for visual comparison.
+		/// </summary>
+		public ObservableCollection<ModpackEntryModel> ActiveLoadOrder { get; set; } = [];
 		#endregion
 
 		#region Bound Properties
@@ -142,19 +152,57 @@
 
 			_modpackService = App.ModpackService;
 			PopulateModpackList();
+			PopulateActiveLoadOrder();
 
 			// Wire trash icon clicks via the ListBox's tunneling event
 			LoadOrderListBox.PreviewMouseLeftButtonUp += LoadOrderListBox_PreviewMouseLeftButtonUp;
+
+			// Refresh the active load order whenever the page becomes visible
+			IsVisibleChanged += ModpacksPage_IsVisibleChanged;
 		}
+		#endregion
+
+		#region Page Visibility
+
+		/// <summary>
+		/// Refreshes the active load order and modpack list whenever the page becomes visible.
+		/// This ensures both lists always reflect the latest state from ModsPage and disk,
+		/// even if the user switched modpacks, reordered mods, or created new modpacks
+		/// before navigating here.
+		/// Triggers a live mod rescan so <see cref="Core.Infra.Mods.ModService.CurrentMods"/>
+		/// is up-to-date before template creation or load order comparison.
+		/// </summary>
+		private async void ModpacksPage_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e) {
+			if (e.NewValue is true) {
+				Core.Infra.Mods.ModService modService = App.ModService;
+				if (!modService.IsRefreshing) {
+					try {
+						await modService.RefreshAsync();
+					} catch (OperationCanceledException) {
+						// Refresh was cancelled — proceed with cached data
+					} catch (Exception ex) {
+						StatusText = $"Mod rescan failed: {ex.Message}";
+					}
+				}
+				PopulateModpackList();
+				PopulateActiveLoadOrder();
+			}
+		}
+
 		#endregion
 
 		#region Populate
 
 		/// <summary>
 		/// Reloads the modpack list from the service into the ComboBox collection.
+		/// Reloads modpacks from disk first to pick up external changes
+		/// (added, deleted, or modified modpack files).
 		/// Preserves selection if possible.
 		/// </summary>
 		private void PopulateModpackList() {
+			// Reload from disk to detect added/deleted modpack files
+			_modpackService.Refresh();
+
 			string? previousSelection = _selectedModpack?.ModpackName;
 
 			ModpackComboBox.SelectionChanged -= ModpackComboBox_SelectionChanged;
@@ -187,7 +235,7 @@
 		}
 
 		/// <summary>
-		/// Loads the selected modpack's data into the load order list and metadata fields.
+		/// Loads the selected modpack's data into the right list and metadata fields.
 		/// </summary>
 		private void LoadSelectedModpackData() {
 			EditableLoadOrder.Clear();
@@ -208,6 +256,19 @@
 
 			foreach (ModpackEntryModel entry in _selectedModpack.LoadOrder) {
 				EditableLoadOrder.Add(entry.Clone());
+			}
+		}
+
+		/// <summary>
+		/// Populates the left list with the current active load order
+		/// from <see cref="ModpackService.CurrentLoadOrderEntries"/>.
+		/// This reflects what the Mods page has in memory right now.
+		/// </summary>
+		private void PopulateActiveLoadOrder() {
+			ActiveLoadOrder.Clear();
+
+			foreach (ModpackEntryModel entry in _modpackService.CurrentLoadOrderEntries) {
+				ActiveLoadOrder.Add(entry.Clone());
 			}
 		}
 
@@ -382,6 +443,14 @@
 			ShowCreatePanel(ModpackTemplate.ButterLib);
 		}
 
+		private void CreateFromVanillaWarSails_Click(object sender, RoutedEventArgs e) {
+			ShowCreatePanel(ModpackTemplate.VanillaWarSails);
+		}
+
+		private void CreateFromButterLibWarSails_Click(object sender, RoutedEventArgs e) {
+			ShowCreatePanel(ModpackTemplate.ButterLibWarSails);
+		}
+
 		private void ShowCreatePanel(ModpackTemplate template) {
 			_pendingTemplate = template;
 			InputModpackName = string.Empty;
@@ -409,7 +478,9 @@
 				createdBy = "User";
 			}
 
-			bool success = _modpackService.CreateNew(name, createdBy, _pendingTemplate);
+			// Pass installed mods so the template resolves live version data
+			List<ModuleModel> installedMods = App.ModService.CurrentMods;
+			bool success = _modpackService.CreateNew(name, createdBy, _pendingTemplate, installedMods);
 
 			if (success) {
 				HideCreatePanel();
@@ -440,20 +511,32 @@
 		#region Save
 
 		/// <summary>
-		/// Saves the current editable load order back to the selected modpack on disk.
+		/// Overwrites the selected modpack's saved data on disk with the current
+		/// active load order from the Mods page. Reads from
+		/// <see cref="ModpackService.CurrentLoadOrderEntries"/> which is kept
+		/// in sync by ModsPage whenever the user drags or reorders mods.
+		/// After saving, refreshes both lists so the right side reflects the new disk state.
 		/// </summary>
 		private void SaveButton_Click(object sender, RoutedEventArgs e) {
 			if (_selectedModpack is null) {
 				StatusText = "No modpack selected.";
 				return;
+			}		
+
+			if (_modpackService.CurrentLoadOrderEntries.Count == 0) {
+				StatusText = "No active load order found. Arrange mods on the Mods page first.";
+				return;
 			}
 
-			var entries = EditableLoadOrder.Select(entry => entry.Clone()).ToList();
+			List<ModpackEntryModel> entries = _modpackService.CurrentLoadOrderEntries
+				.Select(entry => entry.Clone()).ToList();
+
 			bool success = _modpackService.Save(_selectedModpack, entries);
 
 			if (success) {
 				PopulateModpackList();
-				StatusText = $"Saved '{_selectedModpack.ModpackName}' successfully.";
+				PopulateActiveLoadOrder();
+				StatusText = $"Saved active load order to '{_selectedModpack.ModpackName}'.";
 			} else {
 				StatusText = $"Failed to save '{_selectedModpack.ModpackName}'.";
 			}
