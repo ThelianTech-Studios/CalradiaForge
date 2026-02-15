@@ -36,7 +36,7 @@
 			AddIfMissing("GameLauncherFilePath");
 			AddIfMissing("GamePlatform",GameProvider.NotInitialized.ToString());
 			AddIfMissing("LastSelectedModpack","Last Used");
-			AddIfMissing("ModpackStartupMode",ModpackStartupMode.LastUsed.ToString());
+			AddIfMissing("ModpackStartupMode",ModpackStartupMode.AlwaysAsk.ToString());
 			AddIfMissing("DebugMode","False");
 			AddIfMissing("LastUnblockRunDate");
 			AddIfMissing("LastUnblockRunResult");
