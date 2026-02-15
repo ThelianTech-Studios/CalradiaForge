@@ -20,7 +20,17 @@
 		/// <summary>
 		/// BUTR ButterLib framework stack followed by vanilla modules.
 		/// </summary>
-		ButterLib
+		ButterLib,
+
+		/// <summary>
+		/// Vanilla Bannerlord modules including the WarSails (Naval) DLC.
+		/// </summary>
+		VanillaWarSails,
+
+		/// <summary>
+		/// BUTR ButterLib framework stack followed by vanilla modules including the WarSails (Naval) DLC.
+		/// </summary>
+		ButterLibWarSails
 		}
 
 	/// <summary>
@@ -144,21 +154,29 @@
 
 		/// <summary>
 		/// Creates a new modpack pre-populated with the specified template's load order.
+		/// Resolves version data from installed mods when available.
 		/// </summary>
 		/// <param name="modpackName">Display name for the new modpack.</param>
 		/// <param name="createdBy">Author name.</param>
 		/// <param name="template">The template to use for the initial load order.</param>
+		/// <param name="installedMods">
+		/// Currently installed mods for version resolution.
+		/// When provided, template entries are populated with live version data.
+		/// When <c>null</c>, fallback versions are used.
+		/// </param>
 		/// <returns><c>true</c> when created and saved successfully.</returns>
-		public bool CreateNew(string modpackName,string createdBy,ModpackTemplate template = ModpackTemplate.Vanilla) {
+		public bool CreateNew(string modpackName, string createdBy, ModpackTemplate template = ModpackTemplate.Vanilla, List<ModuleModel>? installedMods = null) {
 			if (_modpackData.ModpackExists(modpackName)) {
 				_logger.Warning($"ModpackService: Cannot create — modpack '{modpackName}' already exists.");
 				return false;
 				}
 			List<ModpackEntryModel> defaultOrder = template switch {
-				ModpackTemplate.ButterLib => VanillaModules.GetButterLibLoadOrder(),
-				_ => VanillaModules.GetDefaultLoadOrder()
+				ModpackTemplate.ButterLib => VanillaModules.GetButterLibLoadOrder(installedMods),
+				ModpackTemplate.VanillaWarSails => VanillaModules.GetDefaultWarSailsLoadOrder(installedMods),
+				ModpackTemplate.ButterLibWarSails => VanillaModules.GetButterLibWarSailsLoadOrder(installedMods),
+				_ => VanillaModules.GetDefaultLoadOrder(installedMods)
 				};
-			ModpackModel newModpack = new(modpackName,createdBy,defaultOrder);
+			ModpackModel newModpack = new(modpackName, createdBy, defaultOrder);
 			bool result = _modpackData.SaveModpack(newModpack);
 			if (result) {
 				Refresh();
