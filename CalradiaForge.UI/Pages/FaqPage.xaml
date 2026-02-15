@@ -1,0 +1,157 @@
+﻿<Page x:Class="CalradiaForge.UI.Pages.FaqPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:local="clr-namespace:CalradiaForge.UI.Pages"
+      xmlns:mahIcons="http://metro.mahapps.com/winfx/xaml/iconpacks"
+      mc:Ignorable="d" 
+      d:DesignHeight="450" d:DesignWidth="800"
+      Title="F.A.Q."
+      Background="Transparent">
+
+    <Grid Margin="20,10,20,10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- ════════════════════════════════════════════════════
+             Page Header
+             ════════════════════════════════════════════════════ -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
+            <mahIcons:PackIconMaterial Kind="ChatQuestion" Width="24" Height="24"
+                                                                 Foreground="{StaticResource TB.Acc.Gold}"
+                                                                 VerticalAlignment="Center" Margin="0,0,10,0" />
+            <TextBlock Text="Frequently Asked Questions"
+                                     Foreground="{StaticResource TB.Txt.Bright}"
+                                     FontFamily="{StaticResource Font.Secondary}"
+                                     FontSize="20" FontWeight="SemiBold"
+                                     VerticalAlignment="Center" />
+        </StackPanel>
+
+        <!-- ════════════════════════════════════════════════════
+             FAQ Content — Scrollable list of Q&A sections
+             ════════════════════════════════════════════════════ -->
+        <ScrollViewer Grid.Row="1"
+                                    VerticalScrollBarVisibility="Auto"
+                                    HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Margin="4,0">
+
+                <!-- ── Q1: Game not detecting mods ── -->
+                <Border Style="{StaticResource SettingsSectionBorder}">
+                    <StackPanel>
+                        <TextBlock Text="Why isn't the game detecting my mods?"
+                                             Style="{StaticResource SettingsSectionHeader}" />
+                        <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
+                                             Text="Make sure your mods are in the Active load order on the Mods page. Only mods listed in the Load Order panel are passed to the game at launch." />
+                        <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
+                                             Text="Verify that your game installation path is set correctly under Settings → Game Config. Use the Re-detect button if you're unsure." />
+                        <TextBlock Style="{StaticResource SettingsHint}" TextWrapping="Wrap"
+                                             Text="Tip: If mods were downloaded from the internet, Windows may block their DLLs. Go to Settings → Tools → Unblock DLLs to fix this." />
+                    </StackPanel>
+                </Border>
+
+                <!-- ── Q2: DLL unblocking ── -->
+                <Border Style="{StaticResource SettingsSectionBorder}">
+                    <StackPanel>
+                        <TextBlock Text="What does 'Unblock DLLs' do?"
+                                             Style="{StaticResource SettingsSectionHeader}" />
+                        <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
+                                             Text="When you download files from the internet, Windows adds a hidden security marker (Zone.Identifier) to them. This can prevent Bannerlord from loading mod DLLs." />
+                        <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap"
+                                             Text="The Unblock DLLs tool in Settings → Tools removes this marker from all DLL files in your Modules folder. CalradiaForge also does this automatically when you install mods through the app." />
+                    </StackPanel>
+                </Border>
+
+                <!-- ── Q3: Installation / extraction errors ── -->
+                <Border Style="{StaticResource SettingsSectionBorder}">
+                    <StackPanel>
+                        <TextBlock Text="I'm getting errors when installing mods from an archive."
+                                             Style="{StaticResource SettingsSectionHeader}" />
+                        <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
+                                             Text="CalradiaForge extracts mod archives directly into the Bannerlord Modules folder. Make sure the archive contains a valid mod structure with a SubModule.xml file." />
+                        <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
+                                             Text="If the archive is nested (a folder inside a folder), CalradiaForge will attempt to detect the correct root. If extraction still fails, try re-downloading the mod or extracting it manually." />
+                        <TextBlock Style="{StaticResource SettingsHint}" TextWrapping="Wrap"
+                                             Text="Supported archive formats: .zip, .7z, .rar" />
+                    </StackPanel>
+                </Border>
+
+                <!-- ── Q4: Modpack switching ── -->
+                <Border Style="{StaticResource SettingsSectionBorder}">
+                    <StackPanel>
+                        <TextBlock Text="How do modpacks work?"
+                                             Style="{StaticResource SettingsSectionHeader}" />
+                        <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
+                                             Text="A modpack is a saved snapshot of your active mods and their load order. You can create multiple modpacks for different playstyles (e.g., Vanilla+, Overhaul, Hardcore)." />
+                        <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
+                                             Text="Switch between modpacks using the dropdown on the Mods page. The selected modpack's load order is applied immediately." />
+                        <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap"
+                                             Text="To save changes to a modpack, go to the Mod Packs page and click 'Save to Modpack'. This overwrites the saved data with your current active load order." />
+                    </StackPanel>
+                </Border>
+
+                <!-- ── Q5: Epic / GamePass limitations ── -->
+                <Border Style="{StaticResource SettingsSectionBorder}">
+                    <StackPanel>
+                        <TextBlock Text="Why can't I launch the game from CalradiaForge on Epic or GamePass?"
+                                             Style="{StaticResource SettingsSectionHeader}" />
+                        <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
+                                             Text="TaleWorlds requires authentication through the Epic or Xbox client. This is a platform-level restriction that third-party launchers cannot bypass." />
+                        <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
+                                             Text="CalradiaForge still provides full mod management, load order arrangement, and modpack features for these platforms — you just need to press Play from the platform's own launcher." />
+                        <TextBlock Style="{StaticResource SettingsHint}" TextWrapping="Wrap"
+                                             Text="Direct launch support for Epic and GamePass is planned for a future release." />
+                    </StackPanel>
+                </Border>
+
+                <!-- ── Q6: Importing Novus Launcher presets ── -->
+                <Border Style="{StaticResource SettingsSectionBorder}">
+                    <StackPanel>
+                        <TextBlock Text="Can I import presets from Novus Launcher?"
+                                             Style="{StaticResource SettingsSectionHeader}" />
+                        <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
+                                             Text="Yes. Go to the Mod Packs page and click Import. Select a Novus Launcher preset file (.xml) and CalradiaForge will convert it into a CalradiaForge modpack automatically." />
+                        <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap"
+                                             Text="You can also import native CalradiaForge modpack files (.json) the same way." />
+                    </StackPanel>
+                </Border>
+
+                <!-- ── Q7: Clearing mod cache ── -->
+                <Border Style="{StaticResource SettingsSectionBorder}">
+                    <StackPanel>
+                        <TextBlock Text="When should I clear the mod cache?"
+                                             Style="{StaticResource SettingsSectionHeader}" />
+                        <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
+                                             Text="Clear the mod cache if you've manually added or removed mods from the Modules folder outside of CalradiaForge, or if the mod list appears stale or incorrect." />
+                        <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap"
+                                             Text="Go to Settings → Tools → Clear Mod Cache. On next launch, CalradiaForge will rescan the Modules folder and rebuild the cache." />
+                    </StackPanel>
+                </Border>
+
+                <!-- ── Q8: Reporting issues ── -->
+                <Border Style="{StaticResource SettingsSectionBorder}">
+                    <StackPanel>
+                        <TextBlock Text="How do I report a bug or request a feature?"
+                                             Style="{StaticResource SettingsSectionHeader}" />
+                        <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
+                                             Text="Open an issue on the CalradiaForge GitHub repository. Include a short description of the problem, steps to reproduce it, and any relevant log output." />
+                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                            <Button x:Name="OpenGitHubIssuesButton"
+                                            Content="Open GitHub Issues"
+                                            Style="{StaticResource SettingsToolButton}"
+                                            Click="OpenGitHubIssues_Click" />
+                            <TextBlock Style="{StaticResource SettingsHint}"
+                                                 VerticalAlignment="Center" Margin="12,0,0,0"
+                                                 Text="Opens the CalradiaForge Issues page on GitHub in your browser." />
+                        </StackPanel>
+                        <TextBlock Style="{StaticResource SettingsHint}" Margin="0,8,0,0" TextWrapping="Wrap"
+                                             Text="Tip: Enable Debug Mode in Settings → General before reproducing the issue. This gives more detailed logs for troubleshooting." />
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>
