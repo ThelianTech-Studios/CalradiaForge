@@ -1,0 +1,454 @@
+﻿<Page x:Class="CalradiaForge.UI.Pages.SettingsPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+      xmlns:mahIcons="http://metro.mahapps.com/winfx/xaml/iconpacks"
+      mc:Ignorable="d"
+      Title="Settings"
+      Background="Transparent">
+
+	<Grid Margin="20,10,20,10">
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+		</Grid.RowDefinitions>
+
+		<!-- ════════════════════════════════════════════════════
+		     Nav Bar — Horizontal ListBox with DockPanel
+		     About is docked right, all others flow left.
+		     ════════════════════════════════════════════════════ -->
+		<ListBox x:Name="SettingsNavBar" Grid.Row="0"
+						 Style="{StaticResource SettingsNavBar}"
+						 SelectedIndex="0"
+						 SelectionChanged="SettingsNav_SelectionChanged">
+
+			<ListBoxItem Style="{StaticResource SettingsNavItem}" Content="General">
+				<ListBoxItem.Tag>
+					<mahIcons:PackIconMaterial Kind="CogOutline" Width="18" Height="18" />
+				</ListBoxItem.Tag>
+			</ListBoxItem>
+
+			<ListBoxItem Style="{StaticResource SettingsNavItem}" Content="Game Config">
+				<ListBoxItem.Tag>
+					<mahIcons:PackIconMaterial Kind="GamepadVariantOutline" Width="18" Height="18" />
+				</ListBoxItem.Tag>
+			</ListBoxItem>
+
+			<ListBoxItem Style="{StaticResource SettingsNavItem}" Content="Tools">
+				<ListBoxItem.Tag>
+					<mahIcons:PackIconMaterial Kind="WrenchOutline" Width="18" Height="18" />
+				</ListBoxItem.Tag>
+			</ListBoxItem>
+
+			<ListBoxItem Style="{StaticResource SettingsNavItem}" Content="WIP">
+				<ListBoxItem.Tag>
+					<mahIcons:PackIconMaterial Kind="HardHat" Width="18" Height="18" />
+				</ListBoxItem.Tag>
+			</ListBoxItem>
+
+			<!-- About — docked right via SettingsNavItemRight -->
+			<ListBoxItem Style="{StaticResource SettingsNavItemRight}" Content="About">
+				<ListBoxItem.Tag>
+					<mahIcons:PackIconMaterial Kind="InformationOutline" Width="18" Height="18" />
+				</ListBoxItem.Tag>
+			</ListBoxItem>
+
+		</ListBox>
+
+		<!-- ════════════════════════════════════════════════════
+		     Content Area — Named panels, visibility-toggled
+		     ════════════════════════════════════════════════════ -->
+		<Grid Grid.Row="1" Margin="0,8,0,0">
+
+			<!-- ════════════════════════════════════════════════
+			     PANEL 0 — General
+			     ════════════════════════════════════════════════ -->
+			<ScrollViewer x:Name="PanelGeneral"
+										VerticalScrollBarVisibility="Auto"
+										HorizontalScrollBarVisibility="Disabled"
+										Padding="0,12,0,0">
+				<StackPanel Margin="4,0">
+
+					<!-- Language Section -->
+					<Border Style="{StaticResource SettingsSectionBorder}">
+						<StackPanel>
+							<TextBlock Text="Language" Style="{StaticResource SettingsSectionHeader}" />
+							<Grid>
+								<Grid.ColumnDefinitions>
+									<ColumnDefinition Width="Auto" />
+									<ColumnDefinition Width="200" />
+								</Grid.ColumnDefinitions>
+								<TextBlock Grid.Column="0" Text="Language"
+													 Style="{StaticResource SettingsLabel}" />
+								<ComboBox x:Name="LanguageComboBox" Grid.Column="1"
+													Style="{StaticResource ModsPageComboBox}"
+													IsEnabled="False">
+									<ComboBoxItem Content="en-US" IsSelected="True" />
+								</ComboBox>
+							</Grid>
+							<TextBlock Text="Additional languages coming in a future update."
+												 Style="{StaticResource SettingsHint}"
+												 Margin="0,6,0,0" />
+						</StackPanel>
+					</Border>
+
+					<!-- Startup Behavior Section -->
+					<Border Style="{StaticResource SettingsSectionBorder}">
+						<StackPanel>
+							<TextBlock Text="Startup Behavior" Style="{StaticResource SettingsSectionHeader}" />
+							<TextBlock Text="On startup, select modpack:"
+												 Style="{StaticResource SettingsLabel}"
+												 Margin="0,0,0,6" />
+							<RadioButton x:Name="RadioLastUsed"
+													 Content="Last Used Modpack"
+													 GroupName="ModpackStartup"
+													 Style="{StaticResource SettingsRadioButton}"
+													 Checked="ModpackStartupMode_Changed" />
+							<RadioButton x:Name="RadioAlwaysDefault"
+													 Content="Always Use Default (Vanilla)"
+													 GroupName="ModpackStartup"
+													 Style="{StaticResource SettingsRadioButton}"
+													 Checked="ModpackStartupMode_Changed" />
+							<RadioButton x:Name="RadioAlwaysAsk"
+													 Content="Always Ask"
+													 GroupName="ModpackStartup"
+													 Style="{StaticResource SettingsRadioButton}"
+													 Checked="ModpackStartupMode_Changed" />
+							<TextBlock Text="Controls which modpack is automatically selected when CalradiaForge starts."
+												 Style="{StaticResource SettingsHint}"
+												 Margin="0,6,0,0" />
+						</StackPanel>
+					</Border>
+
+					<!-- Debug Mode Section -->
+					<Border Style="{StaticResource SettingsSectionBorder}">
+						<StackPanel>
+							<TextBlock Text="Diagnostics" Style="{StaticResource SettingsSectionHeader}" />
+							<mah:ToggleSwitch x:Name="DebugModeToggle"
+																Content="Enable Debug Mode"
+																Style="{StaticResource SettingsToggleSwitch}"
+																Toggled="DebugMode_Toggled" />
+							<TextBlock Text="Enables verbose logging and diagnostic data output. Only enable this when requested for troubleshooting."
+												 Style="{StaticResource SettingsHint}"
+												 Margin="0,4,0,0" />
+						</StackPanel>
+					</Border>
+
+				</StackPanel>
+			</ScrollViewer>
+
+			<!-- ════════════════════════════════════════════════
+			     PANEL 1 — Game Configuration
+			     ════════════════════════════════════════════════ -->
+			<ScrollViewer x:Name="PanelGameConfig"
+										Visibility="Collapsed"
+										VerticalScrollBarVisibility="Auto"
+										HorizontalScrollBarVisibility="Disabled"
+										Padding="0,12,0,0">
+				<StackPanel Margin="4,0">
+
+					<!-- Game Installation Section -->
+					<Border Style="{StaticResource SettingsSectionBorder}">
+						<StackPanel>
+							<TextBlock Text="Game Installation" Style="{StaticResource SettingsSectionHeader}" />
+
+							<!-- Game Folder Path -->
+							<TextBlock Text="Game Folder" Style="{StaticResource SettingsLabel}"
+												 Margin="0,0,0,4" />
+							<Grid>
+								<Grid.ColumnDefinitions>
+									<ColumnDefinition Width="*" />
+									<ColumnDefinition Width="Auto" />
+								</Grid.ColumnDefinitions>
+								<Border Grid.Column="0" Style="{StaticResource SettingsPathBorder}">
+									<TextBlock x:Name="GameFolderPathText"
+														 Style="{StaticResource SettingsPathDisplay}"
+														 Text="{Binding GameFolderPath}" />
+								</Border>
+								<Button Grid.Column="1" Content="Select Folder"
+												Style="{StaticResource SettingsActionButton}"
+												Margin="8,0,0,0"
+												Click="SelectGameFolder_Click" />
+							</Grid>
+							<TextBlock x:Name="GameFolderValidation"
+												 Style="{StaticResource SettingsValidationOk}"
+												 Text="" />
+
+							<!-- Game Executable (Epic / StandAlone only) -->
+							<StackPanel x:Name="ExePathSection" Margin="0,12,0,0">
+								<TextBlock Text="Game Executable" Style="{StaticResource SettingsLabel}"
+													 Margin="0,0,0,4" />
+								<Grid>
+									<Grid.ColumnDefinitions>
+										<ColumnDefinition Width="*" />
+										<ColumnDefinition Width="Auto" />
+									</Grid.ColumnDefinitions>
+									<Border Grid.Column="0" Style="{StaticResource SettingsPathBorder}">
+										<TextBlock x:Name="ExePathText"
+															 Style="{StaticResource SettingsPathDisplay}"
+															 Text="{Binding GameLauncherFilePath}" />
+									</Border>
+									<Button Grid.Column="1" Content="Select File"
+													Style="{StaticResource SettingsActionButton}"
+													Margin="8,0,0,0"
+													Click="SelectGameExe_Click" />
+								</Grid>
+							</StackPanel>
+
+							<!-- Steam Workshop Folder (Steam only) -->
+							<StackPanel x:Name="WorkshopPathSection" Margin="0,12,0,0">
+								<TextBlock Text="Steam Workshop Folder" Style="{StaticResource SettingsLabel}"
+													 Margin="0,0,0,4" />
+								<Grid>
+									<Grid.ColumnDefinitions>
+										<ColumnDefinition Width="*" />
+										<ColumnDefinition Width="Auto" />
+									</Grid.ColumnDefinitions>
+									<Border Grid.Column="0" Style="{StaticResource SettingsPathBorder}">
+										<TextBlock x:Name="WorkshopPathText"
+															 Style="{StaticResource SettingsPathDisplay}"
+															 Text="{Binding SteamWorkshopFolderPath}" />
+									</Border>
+									<Button Grid.Column="1" Content="Select Folder"
+													Style="{StaticResource SettingsActionButton}"
+													Margin="8,0,0,0"
+													Click="SelectWorkshopFolder_Click" />
+								</Grid>
+							</StackPanel>
+
+						</StackPanel>
+					</Border>
+
+					<!-- Detection Section -->
+					<Border Style="{StaticResource SettingsSectionBorder}">
+						<StackPanel>
+							<TextBlock Text="Detection" Style="{StaticResource SettingsSectionHeader}" />
+							<StackPanel Orientation="Horizontal">
+								<Button Content="🔄  Re-detect Game"
+												Style="{StaticResource SettingsToolButton}"
+												Click="RedetectGame_Click" />
+								<TextBlock Text="Re-runs auto-detection for Steam, Epic, and StandAlone installations. Overwrites current paths."
+													 Style="{StaticResource SettingsHint}"
+													 VerticalAlignment="Center"
+													 Margin="12,0,0,0"
+													 MaxWidth="400" />
+							</StackPanel>
+						</StackPanel>
+					</Border>
+
+				</StackPanel>
+			</ScrollViewer>
+
+			<!-- ════════════════════════════════════════════════
+			     PANEL 2 — Tools
+			     ════════════════════════════════════════════════ -->
+			<ScrollViewer x:Name="PanelTools"
+										Visibility="Collapsed"
+										VerticalScrollBarVisibility="Auto"
+										HorizontalScrollBarVisibility="Disabled"
+										Padding="0,12,0,0">
+				<StackPanel Margin="4,0">
+
+					<!-- Mod Maintenance Section -->
+					<Border Style="{StaticResource SettingsSectionBorder}">
+						<StackPanel>
+							<TextBlock Text="Mod Maintenance" Style="{StaticResource SettingsSectionHeader}" />
+							<StackPanel Orientation="Horizontal">
+								<Button Content="🔓  Unblock DLLs"
+												Style="{StaticResource SettingsToolButton}"
+												Click="UnblockDlls_Click" />
+								<TextBlock Text="Removes the Zone.Identifier alternate data stream from all DLL files in the Modules folder. Required for mods downloaded from the internet."
+													 Style="{StaticResource SettingsHint}"
+													 VerticalAlignment="Center"
+													 Margin="12,0,0,0"
+													 MaxWidth="400" />
+							</StackPanel>
+							<StackPanel Margin="0,8,0,0">
+								<TextBlock x:Name="UnblockLastRunText"
+													 Style="{StaticResource SettingsHint}"
+													 FontStyle="Normal" />
+								<TextBlock x:Name="UnblockResultText"
+													 Style="{StaticResource SettingsHint}"
+													 FontStyle="Normal" />
+							</StackPanel>
+						</StackPanel>
+					</Border>
+
+					<!-- Data Management Section -->
+					<Border Style="{StaticResource SettingsSectionBorder}">
+						<StackPanel>
+							<TextBlock Text="Data Management" Style="{StaticResource SettingsSectionHeader}" />
+
+							<StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+								<Button Content="🗑  Clear Mod Cache"
+												Style="{StaticResource SettingsToolButton}"
+												Click="ClearModCache_Click" />
+								<TextBlock Text="Deletes the cached mod list and forces a fresh rescan on next launch."
+													 Style="{StaticResource SettingsHint}"
+													 VerticalAlignment="Center"
+													 Margin="12,0,0,0"
+													 MaxWidth="400" />
+							</StackPanel>
+
+							<StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+								<Button Content="📂  Open Config Folder"
+												Style="{StaticResource SettingsToolButton}"
+												Click="OpenConfigFolder_Click" />
+								<TextBlock Text="Opens the CalradiaForge Config directory in Windows Explorer."
+													 Style="{StaticResource SettingsHint}"
+													 VerticalAlignment="Center"
+													 Margin="12,0,0,0"
+													 MaxWidth="400" />
+							</StackPanel>
+
+							<StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+								<Button Content="📂  Open Logs Folder"
+												Style="{StaticResource SettingsToolButton}"
+												Click="OpenLogsFolder_Click" />
+								<TextBlock Text="Opens the Logs directory in Windows Explorer."
+													 Style="{StaticResource SettingsHint}"
+													 VerticalAlignment="Center"
+													 Margin="12,0,0,0"
+													 MaxWidth="400" />
+							</StackPanel>
+
+							<StackPanel Orientation="Horizontal">
+								<Button Content="📂  Open Modpacks Folder"
+												Style="{StaticResource SettingsToolButton}"
+												Click="OpenModpacksFolder_Click" />
+								<TextBlock Text="Opens the Modpacks directory in Windows Explorer."
+													 Style="{StaticResource SettingsHint}"
+													 VerticalAlignment="Center"
+													 Margin="12,0,0,0"
+													 MaxWidth="400" />
+							</StackPanel>
+
+						</StackPanel>
+					</Border>
+
+				</StackPanel>
+			</ScrollViewer>
+
+			<!-- ════════════════════════════════════════════════
+			     PANEL 3 — WIP
+			     ════════════════════════════════════════════════ -->
+			<Grid x:Name="PanelWip" Visibility="Collapsed">
+				<StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+					<mahIcons:PackIconMaterial Kind="Wrench" Width="48" Height="48"
+																		 Foreground="{StaticResource TB.Txt.Dim}"
+																		 HorizontalAlignment="Center"
+																		 Margin="0,0,0,16" />
+					<TextBlock Text="This tab is reserved for future development."
+										 Foreground="{StaticResource TB.Txt.Mid}"
+										 FontFamily="{StaticResource Font.Secondary}"
+										 FontSize="16" FontWeight="SemiBold"
+										 HorizontalAlignment="Center"
+										 TextAlignment="Center" />
+					<TextBlock Text="If there is enough community interest in advanced features&#x0a;and functionality beyond the current project scope,&#x0a;future settings will appear here."
+										 Foreground="{StaticResource TB.Txt.Dim}"
+										 FontFamily="{StaticResource Font.Secondary}"
+										 FontSize="13"
+										 HorizontalAlignment="Center"
+										 TextAlignment="Center"
+										 Margin="0,12,0,0"
+										 LineHeight="20" />
+					<TextBlock Text="Stay tuned for updates!"
+										 Foreground="{StaticResource TB.Acc.Gold}"
+										 FontFamily="{StaticResource Font.Secondary}"
+										 FontSize="13" FontWeight="SemiBold"
+										 HorizontalAlignment="Center"
+										 Margin="0,16,0,0" />
+				</StackPanel>
+			</Grid>
+
+			<!-- ════════════════════════════════════════════════
+			     PANEL 4 — About
+			     ════════════════════════════════════════════════ -->
+			<ScrollViewer x:Name="PanelAbout"
+										Visibility="Collapsed"
+										VerticalScrollBarVisibility="Auto"
+										HorizontalScrollBarVisibility="Disabled"
+										Padding="0,12,0,0">
+				<StackPanel HorizontalAlignment="Center" MaxWidth="500">
+
+					<!-- App Identity -->
+					<Image Source="/resources/App_Icon.png" Width="72" Height="72"
+								 HorizontalAlignment="Center" Margin="0,10,0,8" />
+					<TextBlock Text="CalradiaForge"
+										 Style="{StaticResource SettingsAboutTitle}" />
+					<TextBlock x:Name="VersionText"
+										 Style="{StaticResource SettingsAboutVersion}" />
+
+					<Separator Margin="0,16" Background="{StaticResource TB.Sfc.MedDark.50}" />
+
+					<TextBlock Text="A modern mod launcher for Mount &amp; Blade II: Bannerlord."
+										 Foreground="{StaticResource TB.Txt.Bright}"
+										 FontFamily="{StaticResource Font.Secondary}"
+										 FontSize="14"
+										 HorizontalAlignment="Center"
+										 TextAlignment="Center" />
+					<TextBlock Text="Built by players, for players."
+										 Foreground="{StaticResource TB.Acc.Gold}"
+										 FontFamily="{StaticResource Font.Secondary}"
+										 FontSize="13" FontStyle="Italic"
+										 HorizontalAlignment="Center"
+										 Margin="0,4,0,0" />
+
+					<Separator Margin="0,16" Background="{StaticResource TB.Sfc.MedDark.50}" />
+
+					<!-- Publisher & Links -->
+					<Grid HorizontalAlignment="Center">
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="Auto" />
+							<ColumnDefinition Width="Auto" />
+						</Grid.ColumnDefinitions>
+						<Grid.RowDefinitions>
+							<RowDefinition Height="Auto" />
+							<RowDefinition Height="Auto" />
+							<RowDefinition Height="Auto" />
+						</Grid.RowDefinitions>
+
+						<TextBlock Grid.Row="0" Grid.Column="0" Text="Publisher"
+											 Style="{StaticResource SettingsAboutLabel}" Margin="0,0,0,8" />
+						<TextBlock Grid.Row="0" Grid.Column="1" Text="ThelianTech™"
+											 Style="{StaticResource SettingsAboutValue}" Margin="8,0,0,8" />
+
+						<TextBlock Grid.Row="1" Grid.Column="0" Text="License"
+											 Style="{StaticResource SettingsAboutLabel}" Margin="0,0,0,8" />
+						<Button Grid.Row="1" Grid.Column="1" Content="View License"
+										Style="{StaticResource SettingsToolButton}"
+										Height="28" Padding="10,4" FontSize="12"
+										Margin="8,0,0,8"
+										Click="ViewLicense_Click" />
+
+						<TextBlock Grid.Row="2" Grid.Column="0" Text="GitHub"
+											 Style="{StaticResource SettingsAboutLabel}" />
+						<Button Grid.Row="2" Grid.Column="1" Content="View on GitHub"
+										Style="{StaticResource SettingsToolButton}"
+										Height="28" Padding="10,4" FontSize="12"
+										Margin="8,0,0,0"
+										Click="ViewGitHub_Click" />
+					</Grid>
+
+					<Separator Margin="0,16" Background="{StaticResource TB.Sfc.MedDark.50}" />
+
+					<TextBlock Text="© 2026 ThelianTech™ — All rights reserved."
+										 Foreground="{StaticResource TB.Txt.Dim}"
+										 FontFamily="{StaticResource Font.Secondary}"
+										 FontSize="11"
+										 HorizontalAlignment="Center" />
+					<TextBlock Text="Not affiliated with TaleWorlds Entertainment."
+										 Foreground="{StaticResource TB.Txt.Dim}"
+										 FontFamily="{StaticResource Font.Secondary}"
+										 FontSize="11"
+										 HorizontalAlignment="Center"
+										 Margin="0,2,0,20" />
+
+				</StackPanel>
+			</ScrollViewer>
+
+		</Grid>
+	</Grid>
+</Page>
