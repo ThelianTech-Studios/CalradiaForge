@@ -11,6 +11,7 @@ namespace CalradiaForge.UI.Pages
 	using System.Windows.Controls;
 	using System.Windows.Data;
 
+	using CalradiaForge.Core.Infra.Config;
 	using CalradiaForge.Core.Infra.Launch;
 	using CalradiaForge.Core.Infra.Modpacks;
 	using CalradiaForge.Core.Infra.Mods;
@@ -40,6 +41,15 @@ namespace CalradiaForge.UI.Pages
 		private string _searchQuery = string.Empty;
 		private int _selectedModpackIndex = -1;
 		private ModpackModel? _selectedModpack;
+
+		/// <summary>
+		/// Sentinel "ghost" modpack inserted at index 0 when
+		/// <see cref="ModpackStartupMode.AlwaysAsk"/> is active.
+		/// Has an empty load order so selecting it results in no mods loaded
+		/// and <see cref="CanStart"/> evaluating to <c>false</c>.
+		/// Identified exclusively via reference equality — never saved to disk.
+		/// </summary>
+		private readonly ModpackModel _ghostModpack = new("— Select a modpack —", string.Empty, []);
 		#endregion
 
 		#region Observable Collections
@@ -55,6 +65,7 @@ namespace CalradiaForge.UI.Pages
 
 		/// <summary>
 		/// Available modpacks for selection via the ComboBox.
+		/// May contain <see cref="_ghostModpack"/> at index 0 when in AlwaysAsk mode.
 		/// </summary>
 		public ObservableCollection<ModpackModel> ModpackList { get; set; } = [];
 		#endregion
@@ -176,24 +187,99 @@ namespace CalradiaForge.UI.Pages
 
 		/// <summary>
 		/// Loads all available modpacks from <see cref="ModpackService"/> into the ComboBox.
-		/// Selects the first modpack by default.
+		/// Selects the initial modpack based on <see cref="ModpackStartupMode"/>:
+		/// <list type="bullet">
+		///   <item><see cref="ModpackStartupMode.LastUsed"/> — restores the previously selected modpack by name.</item>
+		///   <item><see cref="ModpackStartupMode.AlwaysDefault"/> — selects the built-in "Vanilla" modpack.</item>
+		///   <item><see cref="ModpackStartupMode.AlwaysAsk"/> — inserts a ghost sentinel at index 0 and selects it.</item>
+		/// </list>
 		/// </summary>
 		private void PopulateModpackList() {
 			ModPackComboBox.SelectionChanged-=ModPack_SelectionChanged;
 			ModpackList.Clear();
 
+			bool isAlwaysAsk = App.AppConfig.ModpackStartupMode==ModpackStartupMode.AlwaysAsk;
+
+			// Insert the ghost sentinel at index 0 for AlwaysAsk mode
+			if (isAlwaysAsk) {
+				ModpackList.Add(_ghostModpack);
+				}
+
 			foreach (ModpackModel modpack in _modpackService.AllModpacks) {
 				ModpackList.Add(modpack);
 				}
 
-			if (ModpackList.Count>0) {
-				SelectedModpackIndex=0;
-				}
+			// Select initial modpack based on startup mode
+			SelectedModpackIndex=ResolveStartupModpackIndex();
 
 			ModPackComboBox.SelectionChanged+=ModPack_SelectionChanged;
 
-			// Load the first modpack's load order
+			// Load the selected modpack's load order
 			ApplySelectedModpack();
+			}
+
+		/// <summary>
+		/// Determines which modpack index to select on startup based on
+		/// the <see cref="AppConfigSettings.ModpackStartupMode"/> setting.
+		/// </summary>
+		/// <returns>
+		/// The resolved index into <see cref="ModpackList"/>.
+		/// For AlwaysAsk, returns 0 (the ghost sentinel).
+		/// Falls back to 0 (first real modpack) if the target modpack is not found.
+		/// </returns>
+		private int ResolveStartupModpackIndex() {
+			if (ModpackList.Count==0) {
+				return -1;
+				}
+
+			ModpackStartupMode mode = App.AppConfig.ModpackStartupMode;
+
+			switch (mode) {
+				case ModpackStartupMode.AlwaysDefault:
+					// Find the built-in "Vanilla" modpack by name
+					int vanillaIndex = FindModpackIndexByName(VanillaModules.DefaultModpackName);
+					return vanillaIndex>=0 ? vanillaIndex : 0;
+
+				case ModpackStartupMode.LastUsed:
+					// Restore the previously selected modpack
+					string lastSelected = App.AppConfig.LastSelectedModpack;
+					if (!string.IsNullOrWhiteSpace(lastSelected)) {
+						int lastIndex = FindModpackIndexByName(lastSelected);
+						if (lastIndex>=0) {
+							return lastIndex;
+							}
+						}
+					return 0;
+
+				case ModpackStartupMode.AlwaysAsk:
+					// Ghost sentinel is at index 0
+					return 0;
+
+				default:
+					return 0;
+				}
+			}
+
+		/// <summary>
+		/// Checks whether the given modpack is the ghost sentinel
+		/// used by the AlwaysAsk startup mode.
+		/// Uses reference equality — the ghost is a single instance.
+		/// </summary>
+		private bool IsGhostModpack(ModpackModel? modpack) {
+			return ReferenceEquals(modpack,_ghostModpack);
+			}
+
+		/// <summary>
+		/// Finds the index of a modpack in <see cref="ModpackList"/> by name (case-insensitive).
+		/// Skips the ghost sentinel to avoid false matches.
+		/// </summary>
+		/// <param name="modpackName">The modpack name to search for.</param>
+		/// <returns>The index if found; otherwise -1.</returns>
+		private int FindModpackIndexByName(string modpackName) {
+			return ModpackList
+				.Select((m,i) => new { m,i })
+				.Where(x => !IsGhostModpack(x.m))
+				.FirstOrDefault(x => string.Equals(x.m.ModpackName,modpackName,StringComparison.OrdinalIgnoreCase))?.i??-1;
 			}
 
 		/// <summary>
@@ -201,30 +287,39 @@ namespace CalradiaForge.UI.Pages
 		/// back to ModsPage after creating modpacks on the ModpacksPage.
 		/// Reloads modpacks from disk first to pick up external changes
 		/// (added, deleted, or modified modpack files).
+		/// Preserves the ghost sentinel at index 0 if AlwaysAsk mode is active
+		/// and the user hasn't yet picked a real modpack.
 		/// </summary>
 		public void RefreshModpackList() {
 			// Reload from disk to detect added/deleted modpack files
 			_modpackService.Refresh();
 
-			string? previousSelection = _selectedModpack?.ModpackName;
+			// Remember what was selected before the refresh
+			ModpackModel? previousModpack = _selectedModpack;
+			bool wasGhostSelected = IsGhostModpack(previousModpack);
+			string? previousName = wasGhostSelected ? null : previousModpack?.ModpackName;
 
 			ModPackComboBox.SelectionChanged-=ModPack_SelectionChanged;
 			ModpackList.Clear();
+
+			bool isAlwaysAsk = App.AppConfig.ModpackStartupMode==ModpackStartupMode.AlwaysAsk;
+
+			// Re-inject ghost if AlwaysAsk is active and user was still on it
+			if (isAlwaysAsk&&wasGhostSelected) {
+				ModpackList.Add(_ghostModpack);
+				}
 
 			foreach (ModpackModel modpack in _modpackService.AllModpacks) {
 				ModpackList.Add(modpack);
 				}
 
-			// Restore previous selection if still available
-			if (previousSelection is not null) {
-				int index = ModpackList
-					.Select((m,i) => new { m,i })
-					.FirstOrDefault(x => string.Equals(x.m.ModpackName,previousSelection,StringComparison.OrdinalIgnoreCase))?.i??-1;
-				if (index>=0) {
-					SelectedModpackIndex=index;
-					} else if (ModpackList.Count>0) {
-					SelectedModpackIndex=0;
-					}
+			// Restore previous selection
+			if (wasGhostSelected) {
+				// User hadn't picked yet — keep ghost selected at 0
+				SelectedModpackIndex=0;
+				} else if (previousName is not null) {
+				int index = FindModpackIndexByName(previousName);
+				SelectedModpackIndex=index>=0 ? index : 0;
 				} else if (ModpackList.Count>0) {
 				SelectedModpackIndex=0;
 				}
@@ -241,8 +336,10 @@ namespace CalradiaForge.UI.Pages
 
 		/// <summary>
 		/// Applies the currently selected modpack's load order to the dual lists.
-		/// Validates entries against installed mods — valid entries go to LoadOrder,
-		/// missing entries are reported in the status text.
+		/// If the ghost sentinel is selected, shows all mods as Available with
+		/// an empty load order and a prompt in the status text.
+		/// For real modpacks, validates entries against installed mods —
+		/// valid entries go to LoadOrder, missing entries are reported.
 		/// Mods not in the modpack remain in AvailableModsList.
 		/// </summary>
 		private void ApplySelectedModpack() {
@@ -263,6 +360,18 @@ namespace CalradiaForge.UI.Pages
 				}
 
 			_selectedModpack=ModpackList[SelectedModpackIndex];
+
+			// Ghost sentinel — empty load order, prompt user to pick
+			if (IsGhostModpack(_selectedModpack)) {
+				foreach (ModuleModel mod in _modService.CurrentMods) {
+					AvailableModsList.Add(mod);
+					}
+				DependencyWarningText="No modpack selected. Choose one from the dropdown above.";
+				LoadOrderView.Refresh();
+				AvailableModsView.Refresh();
+				UpdateCanStart();
+				return;
+				}
 
 			// Validate the modpack against installed mods
 			var (validEntries, missingModNames)=ModpackService.ValidateLoadOrder(
@@ -432,9 +541,30 @@ namespace CalradiaForge.UI.Pages
 		#region ModPack Actions
 		/// <summary>
 		/// Handles modpack ComboBox selection changes.
-		/// Loads the selected modpack's load order into the dual lists.
+		/// When the user picks a real modpack after the ghost sentinel,
+		/// removes the ghost from the list so it can't be re-selected.
 		/// </summary>
 		private void ModPack_SelectionChanged(object sender,SelectionChangedEventArgs e) {
+			// If user picked a real modpack, remove the ghost sentinel
+			if (SelectedModpackIndex>=0
+				&&SelectedModpackIndex<ModpackList.Count
+				&&!IsGhostModpack(ModpackList[SelectedModpackIndex])
+				&&ModpackList.Count>0
+				&&IsGhostModpack(ModpackList[0])) {
+
+				ModPackComboBox.SelectionChanged-=ModPack_SelectionChanged;
+
+				// Capture the real modpack name before removal shifts indices
+				string selectedName = ModpackList[SelectedModpackIndex].ModpackName;
+				ModpackList.RemoveAt(0);
+
+				// Re-find the index after ghost removal
+				int newIndex = FindModpackIndexByName(selectedName);
+				SelectedModpackIndex=newIndex>=0 ? newIndex : 0;
+
+				ModPackComboBox.SelectionChanged+=ModPack_SelectionChanged;
+				}
+
 			ApplySelectedModpack();
 			}
 		#endregion
@@ -539,8 +669,14 @@ namespace CalradiaForge.UI.Pages
 		/// and launches Bannerlord via the <see cref="GameLauncher"/> service.
 		/// For Steam installs, auto-starts Steam if it's not running and waits
 		/// for initialization before launching the game.
+		/// Skips persist and launch if the ghost sentinel is selected.
 		/// </summary>
 		private async void PlayButton_Click(object sender,RoutedEventArgs e) {
+			// Defensive — ghost should never reach here (CanStart is false)
+			if (IsGhostModpack(_selectedModpack)) {
+				return;
+				}
+
 			// Save last-used load order
 			List<ModpackEntryModel> currentEntries =
 				ModpackService.BuildEntryListFromModules(CurrentLoadOrder.ToList());
@@ -608,7 +744,13 @@ namespace CalradiaForge.UI.Pages
 						$"{_modService.AddedMods.Count} mod(s) added, "+
 						$"{_modService.RemovedMods.Count} mod(s) removed since last session.";
 					} else if (_modService.CurrentMods.Count>0) {
-					DependencyWarningText=string.Empty;
+					// Preserve the AlwaysAsk prompt if ghost is still selected
+					if (IsGhostModpack(_selectedModpack)) {
+						DependencyWarningText="No modpack selected. Choose one from the dropdown above.";
+						}
+					else {
+						DependencyWarningText=string.Empty;
+						}
 					} else {
 					DependencyWarningText="No mods found. Install mods or check your game path in Settings.";
 					}

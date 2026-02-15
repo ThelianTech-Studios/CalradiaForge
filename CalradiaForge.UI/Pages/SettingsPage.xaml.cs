@@ -213,7 +213,6 @@
 			} else {
 				_config.ModpackStartupMode = ModpackStartupMode.LastUsed;
 			}
-			_logger.Info($"SettingsPage: ModpackStartupMode changed to {_config.ModpackStartupMode}");
 		}
 
 		/// <summary>
