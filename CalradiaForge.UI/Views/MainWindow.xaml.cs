@@ -19,7 +19,7 @@
 			_pages = [
 				new ModsPage(),
 				new ModpacksPage(),
-				new Page(), // Placeholder — FaqPage (TODO: item #2)
+				new FaqPage(),
 			];
 			_settingsPage = new SettingsPage();
 			MainContentFrame.Navigate(_pages[0]);
@@ -63,9 +63,10 @@
 			int index = NavBarControler.SelectedIndex;
 			if (index >= 0 && index < _pages.Length) {
 				Page targetPage = _pages[index];
-				// Sync modpack data when navigating back to ModsPage
+				// Sync modpack and mod data when navigating back to ModsPage
 				if (targetPage is ModsPage modspage) {
 					modspage.RefreshModpackList();
+					modspage.RefreshAvailableMods();
 					}
 				MainContentFrame.Navigate(_pages[index]);
 				}
