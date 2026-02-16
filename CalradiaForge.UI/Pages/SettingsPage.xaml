@@ -16,8 +16,7 @@
 		</Grid.RowDefinitions>
 
 		<!-- ════════════════════════════════════════════════════
-		     Nav Bar — Horizontal ListBox with DockPanel
-		     About is docked right, all others flow left.
+		     Nav Bar
 		     ════════════════════════════════════════════════════ -->
 		<ListBox x:Name="SettingsNavBar" Grid.Row="0"
 						 Style="{StaticResource SettingsNavBar}"
@@ -48,7 +47,6 @@
 				</ListBoxItem.Tag>
 			</ListBoxItem>
 
-			<!-- About — docked right via SettingsNavItemRight -->
 			<ListBoxItem Style="{StaticResource SettingsNavItemRight}" Content="About">
 				<ListBoxItem.Tag>
 					<mahIcons:PackIconMaterial Kind="InformationOutline" Width="18" Height="18" />
@@ -58,20 +56,17 @@
 		</ListBox>
 
 		<!-- ════════════════════════════════════════════════════
-		     Content Area — Named panels, visibility-toggled
+		     Content Area
 		     ════════════════════════════════════════════════════ -->
 		<Grid Grid.Row="1" Margin="0,8,0,0">
 
-			<!-- ════════════════════════════════════════════════
-			     PANEL 0 — General
-			     ════════════════════════════════════════════════ -->
+			<!-- PANEL 0 — General -->
 			<ScrollViewer x:Name="PanelGeneral"
 										VerticalScrollBarVisibility="Auto"
 										HorizontalScrollBarVisibility="Disabled"
 										Padding="0,12,0,0">
 				<StackPanel Margin="4,0">
 
-					<!-- Language Section -->
 					<Border Style="{StaticResource SettingsSectionBorder}">
 						<StackPanel>
 							<TextBlock Text="Language" Style="{StaticResource SettingsSectionHeader}" />
@@ -94,7 +89,6 @@
 						</StackPanel>
 					</Border>
 
-					<!-- Startup Behavior Section -->
 					<Border Style="{StaticResource SettingsSectionBorder}">
 						<StackPanel>
 							<TextBlock Text="Startup Behavior" Style="{StaticResource SettingsSectionHeader}" />
@@ -122,7 +116,6 @@
 						</StackPanel>
 					</Border>
 
-					<!-- Debug Mode Section -->
 					<Border Style="{StaticResource SettingsSectionBorder}">
 						<StackPanel>
 							<TextBlock Text="Diagnostics" Style="{StaticResource SettingsSectionHeader}" />
@@ -140,9 +133,7 @@
 				</StackPanel>
 			</ScrollViewer>
 
-			<!-- ════════════════════════════════════════════════
-			     PANEL 1 — Game Configuration
-			     ════════════════════════════════════════════════ -->
+			<!-- PANEL 1 — Game Configuration -->
 			<ScrollViewer x:Name="PanelGameConfig"
 										Visibility="Collapsed"
 										VerticalScrollBarVisibility="Auto"
@@ -155,7 +146,6 @@
 						<StackPanel>
 							<TextBlock Text="Game Installation" Style="{StaticResource SettingsSectionHeader}" />
 
-							<!-- Game Folder Path -->
 							<TextBlock Text="Game Folder" Style="{StaticResource SettingsLabel}"
 												 Margin="0,0,0,4" />
 							<Grid>
@@ -177,7 +167,6 @@
 												 Style="{StaticResource SettingsValidationOk}"
 												 Text="" />
 
-							<!-- Game Executable (Epic / StandAlone only) -->
 							<StackPanel x:Name="ExePathSection" Margin="0,12,0,0">
 								<TextBlock Text="Game Executable" Style="{StaticResource SettingsLabel}"
 													 Margin="0,0,0,4" />
@@ -198,7 +187,6 @@
 								</Grid>
 							</StackPanel>
 
-							<!-- Steam Workshop Folder (Steam only) -->
 							<StackPanel x:Name="WorkshopPathSection" Margin="0,12,0,0">
 								<TextBlock Text="Steam Workshop Folder" Style="{StaticResource SettingsLabel}"
 													 Margin="0,0,0,4" />
@@ -222,6 +210,37 @@
 						</StackPanel>
 					</Border>
 
+					<!-- Script Extender (BLSE) Section -->
+					<Border Style="{StaticResource SettingsSectionBorder}">
+						<StackPanel>
+							<TextBlock Text="Script Extender (BLSE)" Style="{StaticResource SettingsSectionHeader}" />
+
+							<TextBlock Text="BLSE Standalone Executable" Style="{StaticResource SettingsLabel}"
+												 Margin="0,0,0,4" />
+							<Grid>
+								<Grid.ColumnDefinitions>
+									<ColumnDefinition Width="*" />
+									<ColumnDefinition Width="Auto" />
+								</Grid.ColumnDefinitions>
+								<Border Grid.Column="0" Style="{StaticResource SettingsPathBorder}">
+									<TextBlock x:Name="BLSEExePathText"
+														 Style="{StaticResource SettingsPathDisplay}"
+														 Text="{Binding BLSEExePath}" />
+								</Border>
+								<Button Grid.Column="1" Content="Select File"
+												Style="{StaticResource SettingsActionButton}"
+												Margin="8,0,0,0"
+												Click="SelectBLSEExe_Click" />
+							</Grid>
+							<TextBlock x:Name="BLSEValidation"
+												 Style="{StaticResource SettingsValidationOk}"
+												 Text="" />
+							<TextBlock Text="The Bannerlord Software Extender enables advanced script mods. If installed, CalradiaForge auto-detects it in the game's bin folder. You can also select it manually."
+												 Style="{StaticResource SettingsHint}"
+												 Margin="0,6,0,0" />
+						</StackPanel>
+					</Border>
+
 					<!-- Detection Section -->
 					<Border Style="{StaticResource SettingsSectionBorder}">
 						<StackPanel>
@@ -230,7 +249,7 @@
 								<Button Content="🔄  Re-detect Game"
 												Style="{StaticResource SettingsToolButton}"
 												Click="RedetectGame_Click" />
-								<TextBlock Text="Re-runs auto-detection for Steam, Epic, and StandAlone installations. Overwrites current paths."
+								<TextBlock Text="Re-runs auto-detection for Steam, Epic, and StandAlone installations. Also detects BLSE if installed. Overwrites current paths."
 													 Style="{StaticResource SettingsHint}"
 													 VerticalAlignment="Center"
 													 Margin="12,0,0,0"
@@ -242,9 +261,7 @@
 				</StackPanel>
 			</ScrollViewer>
 
-			<!-- ════════════════════════════════════════════════
-			     PANEL 2 — Tools
-			     ════════════════════════════════════════════════ -->
+			<!-- PANEL 2 — Tools -->
 			<ScrollViewer x:Name="PanelTools"
 										Visibility="Collapsed"
 										VerticalScrollBarVisibility="Auto"
@@ -252,7 +269,6 @@
 										Padding="0,12,0,0">
 				<StackPanel Margin="4,0">
 
-					<!-- Mod Maintenance Section -->
 					<Border Style="{StaticResource SettingsSectionBorder}">
 						<StackPanel>
 							<TextBlock Text="Mod Maintenance" Style="{StaticResource SettingsSectionHeader}" />
@@ -277,7 +293,6 @@
 						</StackPanel>
 					</Border>
 
-					<!-- Data Management Section -->
 					<Border Style="{StaticResource SettingsSectionBorder}">
 						<StackPanel>
 							<TextBlock Text="Data Management" Style="{StaticResource SettingsSectionHeader}" />
@@ -332,9 +347,7 @@
 				</StackPanel>
 			</ScrollViewer>
 
-			<!-- ════════════════════════════════════════════════
-			     PANEL 3 — WIP
-			     ════════════════════════════════════════════════ -->
+			<!-- PANEL 3 — WIP -->
 			<Grid x:Name="PanelWip" Visibility="Collapsed">
 				<StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
 					<mahIcons:PackIconMaterial Kind="Wrench" Width="48" Height="48"
@@ -364,9 +377,7 @@
 				</StackPanel>
 			</Grid>
 
-			<!-- ════════════════════════════════════════════════
-			     PANEL 4 — About
-			     ════════════════════════════════════════════════ -->
+			<!-- PANEL 4 — About -->
 			<ScrollViewer x:Name="PanelAbout"
 										Visibility="Collapsed"
 										VerticalScrollBarVisibility="Auto"
@@ -374,7 +385,6 @@
 										Padding="0,12,0,0">
 				<StackPanel HorizontalAlignment="Center" MaxWidth="500">
 
-					<!-- App Identity -->
 					<Image Source="/resources/App_Icon.png" Width="72" Height="72"
 								 HorizontalAlignment="Center" Margin="0,10,0,8" />
 					<TextBlock Text="CalradiaForge"
@@ -399,7 +409,6 @@
 
 					<Separator Margin="0,16" Background="{StaticResource TB.Sfc.MedDark.50}" />
 
-					<!-- Publisher & Links -->
 					<Grid HorizontalAlignment="Center">
 						<Grid.ColumnDefinitions>
 							<ColumnDefinition Width="Auto" />

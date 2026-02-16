@@ -27,6 +27,7 @@
 		private string _gameFolderPath = string.Empty;
 		private string _gameLauncherFilePath = string.Empty;
 		private string _steamWorkshopFolderPath = string.Empty;
+		private string _blseExePath = string.Empty;
 
 		/// <summary>
 		/// Panel references indexed to match <see cref="SettingsNavBar"/> selection order.
@@ -50,6 +51,11 @@
 			get => _steamWorkshopFolderPath;
 			set { _steamWorkshopFolderPath = value; OnPropertyChanged(); }
 		}
+
+		public string BLSEExePath {
+			get => _blseExePath;
+			set { _blseExePath = value; OnPropertyChanged(); }
+		}
 		#endregion
 
 		#region INotifyPropertyChanged
@@ -71,6 +77,7 @@
 			LoadCurrentValues();
 			UpdatePathSectionVisibility();
 			UpdateGameFolderValidation();
+			UpdateBLSEValidation();
 			LoadUnblockStatus();
 			SetVersionText();
 		}
@@ -111,6 +118,7 @@
 			GameFolderPath = _config.GameFolderPath;
 			GameLauncherFilePath = _config.GameLauncherFilePath;
 			SteamWorkshopFolderPath = _config.SteamWorkshopFolderPath;
+			BLSEExePath = _config.BLSEExePath;
 
 			// Modpack startup mode radio buttons
 			switch (_config.ModpackStartupMode) {
@@ -165,6 +173,25 @@
 			} else {
 				GameFolderValidation.Text = $"✗ {error}";
 				GameFolderValidation.Style = (Style)FindResource("SettingsValidationError");
+			}
+		}
+
+		/// <summary>
+		/// Updates the validation indicator below the BLSE executable path.
+		/// Shows a green check if a valid exe exists, otherwise shows a hint
+		/// that BLSE is optional and can be configured later.
+		/// </summary>
+		private void UpdateBLSEValidation() {
+			if (!string.IsNullOrWhiteSpace(_config.BLSEExePath)
+				&& GamePathValidator.ValidateGameExecutable(_config.BLSEExePath, out _)) {
+				BLSEValidation.Text = "✓ BLSE executable found.";
+				BLSEValidation.Style = (Style)FindResource("SettingsValidationOk");
+			} else if (string.IsNullOrWhiteSpace(_config.BLSEExePath)) {
+				BLSEValidation.Text = "Not configured — optional. Select if you use BLSE mods.";
+				BLSEValidation.Style = (Style)FindResource("SettingsValidationOk");
+			} else {
+				BLSEValidation.Text = "✗ The selected BLSE executable was not found.";
+				BLSEValidation.Style = (Style)FindResource("SettingsValidationError");
 			}
 		}
 
@@ -313,8 +340,37 @@
 		}
 
 		/// <summary>
+		/// Opens a file browser dialog for the BLSE Standalone executable.
+		/// Validates using <see cref="GamePathValidator.ValidateGameExecutable"/>
+		/// (file must exist and be a .exe). Persists to config immediately.
+		/// </summary>
+		private void SelectBLSEExe_Click(object sender, RoutedEventArgs e) {
+			OpenFileDialog dialogWindow = new() {
+				Title = "Select BLSE Standalone Executable",
+				Filter = "Executable Files (*.exe)|*.exe",
+				CheckFileExists = true
+			};
+			if (dialogWindow.ShowDialog() != true) {
+				return;
+			}
+			string selectedPath = dialogWindow.FileName;
+
+			if (!GamePathValidator.ValidateGameExecutable(selectedPath, out string error)) {
+				_logger.Warning($"SettingsPage: BLSE executable validation failed: {error}");
+				// TODO: Show toast notification with error message
+				UpdateBLSEValidation();
+				return;
+			}
+
+			_config.BLSEExePath = selectedPath;
+			BLSEExePath = selectedPath;
+			UpdateBLSEValidation();
+			_logger.Info($"SettingsPage: BLSE executable set to '{selectedPath}'");
+		}
+
+		/// <summary>
 		/// Re-runs the game auto-detection pipeline via <see cref="GamePathsHelper"/>
-		/// and refreshes all displayed paths and visibility.
+		/// and refreshes all displayed paths, visibility, and BLSE validation.
 		/// </summary>
 		private void RedetectGame_Click(object sender, RoutedEventArgs e) {
 			_logger.Info("SettingsPage: Re-detecting game installation...");
@@ -323,9 +379,11 @@
 			GameFolderPath = _config.GameFolderPath;
 			GameLauncherFilePath = _config.GameLauncherFilePath;
 			SteamWorkshopFolderPath = _config.SteamWorkshopFolderPath;
+			BLSEExePath = _config.BLSEExePath;
 
 			UpdatePathSectionVisibility();
 			UpdateGameFolderValidation();
+			UpdateBLSEValidation();
 			_logger.Info($"SettingsPage: Re-detect complete. Platform: {_config.GameProvider}");
 			// TODO: Show toast notification with detection result
 		}
