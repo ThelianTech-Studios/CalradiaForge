@@ -97,9 +97,6 @@
 
 	<!-- ══════════════════════════════════════════════════════
 	     ComboBox — Full ControlTemplate
-	     Dropdown styled with dark background, rounded border,
-	     and proper padding. ItemContainerStyle wired to apply
-	     ModsPageComboBoxItem to every dropdown row.
 	     ══════════════════════════════════════════════════════ -->
 	<Style x:Key="ModsPageComboBox" TargetType="ComboBox">
 		<Setter Property="Foreground" Value="{StaticResource TB.Txt.Bright}" />
@@ -276,12 +273,16 @@
 	</Style>
 
 	<!-- ══════════════════════════════════════════════════════
-	     Play Button
+	     Play Split Button — Left half (Play icon + label)
+	     Gold background. Rounded on left, flat on right.
+	     Disabled state uses TB.Sfc.MedLight (grayish-yellow
+	     closest to muted gold in the theme palette).
 	     ══════════════════════════════════════════════════════ -->
-	<ControlTemplate x:Key="ModsPagePlayButtonTemplate" TargetType="Button">
+	<ControlTemplate x:Key="PlaySplitButtonLeftTemplate" TargetType="Button">
 		<Border x:Name="ButtonBorder"
 						Background="{StaticResource TB.Acc.Gold}"
-						BorderThickness="0" CornerRadius="6"
+						BorderThickness="0"
+						CornerRadius="6,0,0,6"
 						Padding="{TemplateBinding Padding}"
 						SnapsToDevicePixels="True">
 			<StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
@@ -296,30 +297,72 @@
 		<ControlTemplate.Triggers>
 			<Trigger Property="IsMouseOver" Value="True">
 				<Setter TargetName="ButtonBorder" Property="Background"
-								Value="{StaticResource TB.Acc.Gold}" />
+								Value="{StaticResource TB.Acc.Amber}" />
 			</Trigger>
 			<Trigger Property="IsPressed" Value="True">
 				<Setter TargetName="ButtonBorder" Property="Opacity" Value="0.85" />
 			</Trigger>
 			<Trigger Property="IsEnabled" Value="False">
 				<Setter TargetName="ButtonBorder" Property="Background"
-								Value="{StaticResource TB.Acc.Amber}" />
-				<Setter TargetName="ButtonBorder" Property="Opacity" Value="0.4" />
+								Value="{StaticResource TB.Sfc.MedLight}" />
+				<Setter TargetName="ButtonBorder" Property="Opacity" Value="0.6" />
 				<Setter TargetName="PlayIcon" Property="Foreground"
+								Value="{StaticResource TB.Txt.Dim}" />
+				<Setter Property="Foreground"
 								Value="{StaticResource TB.Txt.Dim}" />
 			</Trigger>
 		</ControlTemplate.Triggers>
 	</ControlTemplate>
 
-	<Style x:Key="ModsPagePlayButton" TargetType="Button">
-		<Setter Property="Template" Value="{StaticResource ModsPagePlayButtonTemplate}" />
+	<Style x:Key="PlaySplitButtonLeft" TargetType="Button">
+		<Setter Property="Template" Value="{StaticResource PlaySplitButtonLeftTemplate}" />
 		<Setter Property="Foreground" Value="{StaticResource TB.Txt.Dark}" />
 		<Setter Property="FontFamily" Value="{StaticResource Font.Secondary}" />
 		<Setter Property="FontSize" Value="14" />
 		<Setter Property="FontWeight" Value="SemiBold" />
 		<Setter Property="Padding" Value="14,6" />
-		<Setter Property="Width" Value="100" />
+		<Setter Property="MinWidth" Value="140" />
 		<Setter Property="Height" Value="36" />
+		<Setter Property="Cursor" Value="Hand" />
+	</Style>
+
+	<!-- ══════════════════════════════════════════════════════
+	     Play Split Button — Right half (Dropdown chevron)
+	     Gold background. Rounded on right, flat on left.
+	     1px left border using Amber as divider.
+	     ══════════════════════════════════════════════════════ -->
+	<ControlTemplate x:Key="PlaySplitButtonRightTemplate" TargetType="Button">
+		<Border x:Name="ButtonBorder"
+						Background="{StaticResource TB.Acc.Gold}"
+						BorderThickness="1,0,0,0"
+						BorderBrush="{StaticResource TB.Acc.Amber}"
+						CornerRadius="0,6,6,0"
+						Padding="{TemplateBinding Padding}"
+						SnapsToDevicePixels="True">
+			<ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+		</Border>
+		<ControlTemplate.Triggers>
+			<Trigger Property="IsMouseOver" Value="True">
+				<Setter TargetName="ButtonBorder" Property="Background"
+								Value="{StaticResource TB.Acc.Amber}" />
+			</Trigger>
+			<Trigger Property="IsPressed" Value="True">
+				<Setter TargetName="ButtonBorder" Property="Opacity" Value="0.85" />
+			</Trigger>
+			<Trigger Property="IsEnabled" Value="False">
+				<Setter TargetName="ButtonBorder" Property="Background"
+								Value="{StaticResource TB.Sfc.MedLight}" />
+				<Setter TargetName="ButtonBorder" Property="Opacity" Value="0.6" />
+			</Trigger>
+		</ControlTemplate.Triggers>
+	</ControlTemplate>
+
+	<Style x:Key="PlaySplitButtonRight" TargetType="Button">
+		<Setter Property="Template" Value="{StaticResource PlaySplitButtonRightTemplate}" />
+		<Setter Property="Foreground" Value="{StaticResource TB.Txt.Dark}" />
+		<Setter Property="Width" Value="28" />
+		<Setter Property="Height" Value="36" />
+		<Setter Property="Padding" Value="0" />
 		<Setter Property="Cursor" Value="Hand" />
 	</Style>
 
@@ -337,9 +380,6 @@
 
 	<!-- ══════════════════════════════════════════════════════
 	     ListBox
-	     Forces each ListBoxItem to stretch its content
-	     to the full width of the list so the Grid columns
-	     in the DataTemplate can pin version text right.
 	     ══════════════════════════════════════════════════════ -->
 	<Style x:Key="ModsListBox" TargetType="ListBox">
 		<Setter Property="Foreground" Value="{StaticResource TB.Txt.Bright}" />
