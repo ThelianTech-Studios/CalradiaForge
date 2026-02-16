@@ -85,7 +85,25 @@
 		}
 
 		/// <summary>
-		/// Launches Bannerlord with the specified load order.
+		/// Validates that the BLSE executable is configured and exists on disk.
+		/// Does not check base game validity — call <see cref="CanLaunch"/> first
+		/// for platform and game folder validation.
+		/// </summary>
+		/// <param name="error">Describes the validation failure, if any.</param>
+		/// <returns><c>true</c> when BLSE is configured and the executable exists.</returns>
+		public bool CanLaunchBLSE(out string error) {
+			if (string.IsNullOrWhiteSpace(_config.BLSEExePath) || !File.Exists(_config.BLSEExePath)) {
+				error = "BLSE executable not found. Please configure it in Settings → Game Config.";
+				return false;
+			}
+			error = string.Empty;
+			return true;
+		}
+
+		/// <summary>
+		/// Launches Bannerlord with the specified load order using the given launch target.
+		/// For <see cref="LaunchTarget.BLSE"/>, launches via the BLSE Standalone executable
+		/// which accepts the same CLI arguments as the vanilla game.
 		/// For Steam installs, ensures Steam is running first — auto-launching it
 		/// if needed and waiting for the client to initialize before starting the game.
 		/// For Epic Games and GamePass, launch is blocked by <see cref="CanLaunch"/>
@@ -96,10 +114,16 @@
 		/// initialization. The modpack templates define the correct order.
 		/// </summary>
 		/// <param name="loadOrder">The active load order to pass to the game.</param>
+		/// <param name="target">Which executable to launch — Bannerlord or BLSE.</param>
 		/// <returns>A result indicating success or the reason for failure.</returns>
-		public async Task<GameLaunchResult> LaunchAsync(List<ModuleModel> loadOrder) {
+		public async Task<GameLaunchResult> LaunchAsync(List<ModuleModel> loadOrder, LaunchTarget target = LaunchTarget.Bannerlord) {
 			if (!CanLaunch(out string validationError)) {
 				return GameLaunchResult.Fail(validationError);
+			}
+
+			// Additional validation for BLSE target
+			if (target == LaunchTarget.BLSE && !CanLaunchBLSE(out string blseError)) {
+				return GameLaunchResult.Fail(blseError);
 			}
 
 			// Ensure Steam is running for Steam installs before launching the game
@@ -111,10 +135,11 @@
 			}
 
 			string arguments = BuildLaunchArguments(loadOrder);
-			_logger.Info($"GameLauncher: Launching with arguments: {arguments}");
+			string exePath = ResolveExePath(target);
+			_logger.Info($"GameLauncher: Launching {target} with arguments: {arguments}");
 
 			try {
-				return LaunchExe(arguments);
+				return LaunchExe(exePath, arguments, target);
 			} catch (Exception ex) {
 				_logger.Error($"GameLauncher: Failed to launch game.", ex);
 				return GameLaunchResult.Fail($"Launch failed: {ex.Message}");
@@ -122,9 +147,19 @@
 		}
 
 		/// <summary>
+		/// Resolves the executable path for the given launch target.
+		/// </summary>
+		private string ResolveExePath(LaunchTarget target) {
+			return target == LaunchTarget.BLSE
+				? _config.BLSEExePath
+				: _config.GameLauncherFilePath;
+		}
+
+		/// <summary>
 		/// Builds the complete Bannerlord CLI argument string.
 		/// Format: <c>/singleplayer _MODULES_*Mod1*Mod2*...*_MODULES_</c>
 		/// The game mode flag is required — without it Bannerlord crashes on startup.
+		/// BLSE Standalone accepts the same argument format unchanged.
 		/// </summary>
 		private static string BuildLaunchArguments(List<ModuleModel> loadOrder) {
 			string modulesArg = BuildModulesArgument(loadOrder);
@@ -159,15 +194,12 @@
 		}
 
 		/// <summary>
-		/// Launches the game by starting the executable from
-		/// <see cref="AppConfigSettings.GameLauncherFilePath"/>.
+		/// Launches the game by starting the specified executable.
 		/// For Steam installs, sets the <c>SteamAppId</c> environment variable
 		/// so Steam recognizes the process and enables overlay, achievements,
 		/// and workshop integration.
 		/// </summary>
-		private GameLaunchResult LaunchExe(string arguments) {
-			string exePath = _config.GameLauncherFilePath;
-
+		private GameLaunchResult LaunchExe(string exePath, string arguments, LaunchTarget target) {
 			ProcessStartInfo startInfo = new() {
 				FileName = exePath,
 				Arguments = arguments,
@@ -180,8 +212,8 @@
 			}
 
 			Process.Start(startInfo);
-			_logger.Info($"GameLauncher: Launched '{exePath}' (Platform: {_config.GameProvider}).");
-			return GameLaunchResult.Ok($"Game launched via {_config.GameProvider}.");
+			_logger.Info($"GameLauncher: Launched '{exePath}' as {target} (Platform: {_config.GameProvider}).");
+			return GameLaunchResult.Ok($"Game launched via {_config.GameProvider} ({target}).");
 		}
 
 		/// <summary>
