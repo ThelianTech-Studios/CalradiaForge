@@ -9,7 +9,7 @@
 	using CalradiaForge.Core.Models;
 
 	/// <summary>
-	/// Removes the <c>Zone.Identifier</c> alternate data stream (ADS) from DLL files
+	/// Removes the <c>Zone.Identifier</c> alternate data stream (ADS) from files
 	/// in a given directory. This "unblocks" files that Windows marks as downloaded
 	/// from the internet, which prevents Bannerlord from loading them.
 	/// </summary>
@@ -39,6 +39,60 @@
 				return new UnblockResult();
 			}
 			return await Task.Run(() => UnblockDirectory(directoryPath, token), token);
+		}
+
+		/// <summary>
+		/// Unblocks <b>all</b> files in the specified directory for a BLSE installation.
+		/// Unlike <see cref="UnblockAllAsync"/> which targets only <c>*.dll</c> files,
+		/// this method strips the <c>Zone.Identifier</c> ADS from every file type
+		/// (<c>.exe</c>, <c>.dll</c>, <c>.exe.config</c>, etc.) because BLSE archives
+		/// contain a mix of file types that all carry ADS when downloaded via a browser.
+		/// <para>
+		/// Intended to be called on the temp extraction directory <b>before</b> copying
+		/// files to the game bin, so they arrive already unblocked.
+		/// </para>
+		/// </summary>
+		/// <param name="sourceBinDir">
+		/// The platform-specific BLSE bin folder inside the temp extraction directory
+		/// (e.g., <c>Win64_Shipping_Client</c> or <c>Gaming.Desktop.x64_Shipping_Client</c>).
+		/// </param>
+		/// <param name="token">Cancellation token for cooperative cancellation.</param>
+		/// <returns>An <see cref="UnblockResult"/> summarising how many files were unblocked.</returns>
+		public static async Task<UnblockResult> UnblockBLSEFilesAsync(
+			string sourceBinDir,
+			CancellationToken token = default) {
+			if (string.IsNullOrWhiteSpace(sourceBinDir) || !Directory.Exists(sourceBinDir)) {
+				_logger.Warning($"DllUnblocker: BLSE source directory does not exist: '{sourceBinDir}'");
+				return new UnblockResult();
+			}
+			return await Task.Run(() => {
+				UnblockResult result = new();
+				string[] allFiles;
+				try {
+					allFiles = Directory.GetFiles(sourceBinDir, "*.*", SearchOption.TopDirectoryOnly);
+				} catch (Exception ex) {
+					_logger.Error(ex, $"DllUnblocker: Failed to enumerate BLSE files in: '{sourceBinDir}'");
+					return result;
+				}
+
+				foreach (string filePath in allFiles) {
+					token.ThrowIfCancellationRequested();
+
+					if (!IsFileBlocked(filePath)) {
+						continue;
+					}
+
+					if (TryUnblockFile(filePath)) {
+						result.UnblockedCount++;
+					} else {
+						result.FailedCount++;
+						result.FailedFiles.Add(filePath);
+					}
+				}
+
+				_logger.Info($"DllUnblocker: BLSE unblock — {result.ToSummaryString()} in '{sourceBinDir}'");
+				return result;
+			}, token);
 		}
 
 		#region Private Logic
