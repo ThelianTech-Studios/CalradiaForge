@@ -3,6 +3,7 @@
 	using System.ComponentModel;
 	using System.IO;
 
+	using CalradiaForge.Core.Infra.Launch;
 	using CalradiaForge.Core.Infra.Paths;
 
 	/// <summary>
@@ -40,6 +41,8 @@
 			AddIfMissing("DebugMode","False");
 			AddIfMissing("LastUnblockRunDate");
 			AddIfMissing("LastUnblockRunResult");
+			AddIfMissing("BLSEExePath");
+			AddIfMissing("DefaultLaunchTarget",LaunchTarget.Bannerlord.ToString());
 			}
 		#endregion
 
@@ -168,6 +171,36 @@
 				if (_config["LastUnblockRunResult"]!=value) {
 					_config["LastUnblockRunResult"]=value;
 					OnPropertyChanged(nameof(LastUnblockRunResult));
+					}
+				}
+			}
+
+		/// <summary>
+		/// Full path to the BLSE Standalone executable (Bannerlord.BLSE.Standalone.exe).
+		/// Empty by default — populated by auto-detection in <see cref="GamePathsHelper"/>
+		/// or manually via Settings → Game Config.
+		/// </summary>
+		public string BLSEExePath {
+			get => _config["BLSEExePath"];
+			set {
+				if (_config["BLSEExePath"]!=value) {
+					_config["BLSEExePath"]=value;
+					OnPropertyChanged(nameof(BLSEExePath));
+					}
+				}
+			}
+
+		/// <summary>
+		/// The user's preferred launch target for the Play button.
+		/// Persisted across sessions so the split-button selection is restored on startup.
+		/// Defaults to <see cref="LaunchTarget.Bannerlord"/>.
+		/// </summary>
+		public LaunchTarget DefaultLaunchTarget {
+			get => Enum.TryParse(_config["DefaultLaunchTarget"],out LaunchTarget t) ? t : LaunchTarget.Bannerlord;
+			set {
+				if (_config["DefaultLaunchTarget"]!=value.ToString()) {
+					_config["DefaultLaunchTarget"]=value.ToString();
+					OnPropertyChanged(nameof(DefaultLaunchTarget));
 					}
 				}
 			}
