@@ -41,12 +41,16 @@
 
 		protected override void OnExit(ExitEventArgs e) {
 			try {
+				if (ModInstaller?.IsInstalling==true) {
+					_logger.Info("App: Cancelling in-progress mod installation on exit.");
+					ModInstaller.CancelInstall();
+					}
 				if (ModpackService?.CurrentLoadOrderEntries is { Count:>0 } entries) {
 					ModpackService.SaveLastUsed(entries);
 					_logger.Info("App: Saved last-used load order on exit.");
 					}
 				} catch (Exception ex) {
-				_logger.Error(ex,"App: Failed to save last-used load order on exit.");
+				_logger.Error(ex,"App: Failed to clean up on exit.");
 				}
 			base.OnExit(e);
 			}
