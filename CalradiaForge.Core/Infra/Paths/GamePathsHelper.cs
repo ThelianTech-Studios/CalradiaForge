@@ -9,6 +9,15 @@
 
 		private const string _steamGameID = "261550";
 		private const string _bannerlordFolderName = "Mount & Blade II Bannerlord";
+
+		/// <summary>
+		/// Known BLSE Standalone executable name.
+		/// This is the CLI-oriented launcher that accepts the same
+		/// <c>/singleplayer _MODULES_*...*_MODULES_</c> arguments as Bannerlord.exe
+		/// and launches the game directly without opening a GUI launcher.
+		/// </summary>
+		private const string _blseStandaloneExeName = "Bannerlord.BLSE.Standalone.exe";
+
 		public static void TryAutoDetectGameFolder(AppConfigSettings config) {
 			if (TryDetectSteam(config))
 				return;
@@ -37,6 +46,7 @@
 						if (!Directory.Exists(workshopPath)) {
 							throw new DirectoryNotFoundException($"The expected Steam Workshop folder was not found at '{workshopPath}'. Please Check your Settings");
 							} else { config.SteamWorkshopFolderPath=workshopPath; }
+						TryDetectBLSE(config,gamePath);
 						return true;
 						}
 					}
@@ -56,12 +66,32 @@
 			config.GameProvider=GameProvider.EpicGames;
 			config.GameFolderPath=epicPath;
 			config.GameLauncherFilePath=Path.Combine(epicPath,"bin","Win64_Shipping_Client","Bannerlord.exe");
+			TryDetectBLSE(config,epicPath);
 			return true;
 			}
 
 
 		#endregion
 
+		#region BLSE Detection
+
+		/// <summary>
+		/// Attempts to locate the BLSE Standalone executable in the game's
+		/// <c>bin\Win64_Shipping_Client</c> directory — the same folder that
+		/// contains <c>Bannerlord.exe</c>. If found, populates
+		/// <see cref="AppConfigSettings.BLSEExePath"/> so the Play button
+		/// can offer BLSE as a launch target without manual configuration.
+		/// </summary>
+		/// <param name="config">Config to update with the detected BLSE path.</param>
+		/// <param name="gameFolderPath">Root Bannerlord installation folder.</param>
+		private static void TryDetectBLSE(AppConfigSettings config,string gameFolderPath) {
+			string blsePath = Path.Combine(gameFolderPath,"bin","Win64_Shipping_Client",_blseStandaloneExeName);
+			if (File.Exists(blsePath)) {
+				config.BLSEExePath=blsePath;
+				}
+			}
+
+		#endregion
 
 		public static string GetModulesFolder(AppConfigSettings appConfig) {
 			if (string.IsNullOrWhiteSpace(appConfig.GameFolderPath)||!Directory.Exists(appConfig.GameFolderPath)) {
