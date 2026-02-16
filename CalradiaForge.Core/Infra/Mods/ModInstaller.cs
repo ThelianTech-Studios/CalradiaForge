@@ -13,10 +13,19 @@
 	/// Queues archives and processes them one-by-one on a background thread.
 	/// Handles extraction, mod root detection, version comparison, and placement
 	/// into the game's Modules folder.
+	/// When an archive does not contain a SubModule.xml, falls back to
+	/// BLSE detection and installs it to the game's bin directory if matched.
+	///
+	/// The install task is owned by this service, not the calling page.
+	/// The UI layer starts the install via <see cref="StartInstallAsync"/> and
+	/// observes progress via <see cref="InstallProgressChanged"/>.
+	/// Navigation away from the page does not cancel or orphan the task.
 	/// </summary>
 	public sealed class ModInstaller {
 		private readonly AppConfigSettings _appConfig;
 		private readonly Logger _logger = Logger.Instance;
+		private readonly SemaphoreSlim _installLock = new(1, 1);
+		private CancellationTokenSource? _cts;
 
 		public ModInstaller(AppConfigSettings appConfig) {
 			_appConfig = appConfig ?? throw new ArgumentNullException(nameof(appConfig));
@@ -27,6 +36,33 @@
 		/// </summary>
 		public static string FileDialogFilter =>
 			"Mod Archives (*.zip;*.rar;*.7z;*.tar;*.gz)|*.zip;*.rar;*.7z;*.tar;*.gz|All Files (*.*)|*.*";
+
+		/// <summary>
+		/// Indicates whether an installation batch is currently running.
+		/// The UI layer can bind to this to disable buttons or show spinners.
+		/// </summary>
+		public bool IsInstalling { get; private set; }
+
+		/// <summary>
+		/// The summary of the most recently completed install batch.
+		/// Available after <see cref="InstallCompleted"/> fires.
+		/// <c>null</c> if no install has completed yet.
+		/// </summary>
+		public ModInstallSummary? LastSummary { get; private set; }
+
+		/// <summary>
+		/// Raised on the thread pool after each individual archive is processed.
+		/// The UI layer must dispatch to the UI thread before updating controls.
+		/// Payload: the cumulative <see cref="ModInstallSummary"/> so far.
+		/// </summary>
+		public event Action<ModInstallSummary>? InstallProgressChanged;
+
+		/// <summary>
+		/// Raised on the thread pool when the entire batch completes (success or failure).
+		/// The UI layer must dispatch to the UI thread before updating controls.
+		/// Payload: the final <see cref="ModInstallSummary"/>.
+		/// </summary>
+		public event Action<ModInstallSummary>? InstallCompleted;
 
 		/// <summary>
 		/// Validates that the game directory is configured and exists.
@@ -54,17 +90,74 @@
 		}
 
 		/// <summary>
+		/// Starts a batch mod installation on a background thread.
+		/// Returns immediately — progress is reported via <see cref="InstallProgressChanged"/>
+		/// and completion via <see cref="InstallCompleted"/>.
+		/// Guarded by a semaphore — only one batch can run at a time.
+		/// The task is owned by this service and survives page navigation.
+		/// </summary>
+		/// <param name="archivePaths">Array of full paths to archive files selected by the user.</param>
+		/// <returns>
+		/// <c>true</c> if the install was started.
+		/// <c>false</c> if an install is already in progress.
+		/// </returns>
+		public bool StartInstallAsync(string[] archivePaths) {
+			if (!_installLock.Wait(0)) {
+				_logger.Warning("ModInstaller: Install already in progress. Ignoring duplicate request.");
+				return false;
+			}
+
+			IsInstalling = true;
+			_cts = new CancellationTokenSource();
+			CancellationToken token = _cts.Token;
+
+			// Fire-and-forget on the thread pool — the service owns this task's lifetime
+			_ = Task.Run(async () => {
+				ModInstallSummary summary = new();
+				try {
+					summary = await InstallModsAsync(archivePaths, token);
+				} catch (OperationCanceledException) {
+					_logger.Info("ModInstaller: Install batch was cancelled.");
+				} catch (Exception ex) {
+					_logger.Error(ex, "ModInstaller: Unhandled exception in install batch.");
+				} finally {
+					LastSummary = summary;
+					IsInstalling = false;
+					_cts?.Dispose();
+					_cts = null;
+					_installLock.Release();
+					InstallCompleted?.Invoke(summary);
+				}
+			});
+
+			return true;
+		}
+
+		/// <summary>
+		/// Cancels the currently running install batch, if any.
+		/// </summary>
+		public void CancelInstall() {
+			if (_cts is { IsCancellationRequested: false } cts) {
+				_logger.Info("ModInstaller: Cancellation requested by user.");
+				cts.Cancel();
+			}
+		}
+
+		/// <summary>
 		/// Installs mods from the given archive file paths.
-		/// Archives are queued and processed sequentially on a background thread.
+		/// Archives are queued and processed sequentially.
 		/// Each archive is extracted, its mod root found, version-checked against
 		/// any existing installation, and placed into the Modules folder.
+		/// If no SubModule.xml is found, the archive is checked for BLSE and
+		/// installed to the game bin if detected.
+		/// Raises <see cref="InstallProgressChanged"/> after each archive.
 		/// </summary>
 		/// <param name="archivePaths">Array of full paths to archive files selected by the user.</param>
 		/// <param name="token">Cancellation token.</param>
 		/// <returns>A summary of all install results.</returns>
-		public async Task<ModInstallSummary> InstallModsAsync(
+		private async Task<ModInstallSummary> InstallModsAsync(
 			string[] archivePaths,
-			CancellationToken token = default) {
+			CancellationToken token) {
 
 			ModInstallSummary summary = new();
 			string modulesPath = _appConfig.ModulesDirectoryPath;
@@ -79,6 +172,7 @@
 				string archiveFileName = Path.GetFileName(archivePath);
 				ModInstallResult result = await ProcessSingleArchiveAsync(archivePath, archiveFileName, modulesPath, token);
 				summary.Results.Add(result);
+				InstallProgressChanged?.Invoke(summary);
 			}
 
 			_logger.Info($"ModInstaller: Batch complete. {summary.ToSummaryString()}");
@@ -107,11 +201,22 @@
 
 				// Find the true mod root (handles lazy nested folders)
 				string? modRoot = ModExtractor.FindModRoot(tempDir);
+
+				// ── BLSE fallback ──────────────────────────────────────────────
+				// If no SubModule.xml was found, check if this is a BLSE archive.
+				// BLSE is not a standard Bannerlord module — it ships as exes/DLLs
+				// that go into the game's bin directory, not the Modules folder.
 				if (modRoot is null) {
+					if (BLSEInstaller.IsBLSEArchive(tempDir)) {
+						return await ProcessBLSEInstallAsync(tempDir, archiveFileName, token);
+					}
+
+					// Not a mod and not BLSE — genuinely invalid archive
 					result.Status = ModInstallStatus.Failed;
 					result.Message = "No SubModule.xml found in archive. Not a valid Bannerlord mod.";
 					return result;
 				}
+				// ── End BLSE fallback ──────────────────────────────────────────
 
 				// Parse mod metadata from the extracted SubModule.xml
 				string xmlPath = Path.Combine(modRoot, "SubModule.xml");
@@ -174,6 +279,42 @@
 					ModExtractor.CleanupTempDirectory(tempDir);
 				}
 			}
+		}
+
+		/// <summary>
+		/// Handles BLSE installation as a special case within the archive processing pipeline.
+		/// Delegates to <see cref="BLSEInstaller.InstallAsync"/> for platform-aware file copying.
+		/// Returns a <see cref="ModInstallResult"/> with <see cref="ModInstallStatus.Installed"/>
+		/// on success so it flows through the normal summary pipeline, but does NOT count
+		/// toward <see cref="ModInstallSummary.InstalledCount"/> because BLSE is not a mod.
+		/// The result is identified by <see cref="ModInstallResult.ModuleId"/> being set to "BLSE".
+		/// </summary>
+		private async Task<ModInstallResult> ProcessBLSEInstallAsync(
+			string tempDir,
+			string archiveFileName,
+			CancellationToken token) {
+
+			_logger.Info($"ModInstaller: Detected BLSE archive in '{archiveFileName}'. Delegating to BLSEInstaller.");
+
+			BLSEInstallResult blseResult = await BLSEInstaller.InstallAsync(tempDir, _appConfig, token);
+
+			ModInstallResult result = new() {
+				ArchiveFileName = archiveFileName,
+				ModuleId = "BLSE",
+				ModuleName = "Bannerlord Software Extender (BLSE)"
+			};
+
+			if (blseResult.Success) {
+				result.Status = ModInstallStatus.Installed;
+				result.Message = blseResult.Message;
+				_logger.Info($"BLSEInstaller: BLSE installed successfully from '{archiveFileName}'.");
+			} else {
+				result.Status = ModInstallStatus.Failed;
+				result.Message = blseResult.Message;
+				_logger.Warning($"BLSEInstaller: BLSE installation failed from '{archiveFileName}': {blseResult.Message}");
+			}
+
+			return result;
 		}
 
 		#endregion
