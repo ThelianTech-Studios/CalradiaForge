@@ -9,6 +9,7 @@ namespace CalradiaForge.UI.Pages
 	using System.Runtime.CompilerServices;
 	using System.Windows;
 	using System.Windows.Controls;
+	using System.Windows.Controls.Primitives;
 	using System.Windows.Data;
 
 	using CalradiaForge.Core.Infra.Config;
@@ -41,6 +42,7 @@ namespace CalradiaForge.UI.Pages
 		private string _searchQuery = string.Empty;
 		private int _selectedModpackIndex = -1;
 		private ModpackModel? _selectedModpack;
+		private LaunchTarget _activeLaunchTarget;
 
 		/// <summary>
 		/// Sentinel "ghost" modpack inserted at index 0 when
@@ -117,6 +119,14 @@ namespace CalradiaForge.UI.Pages
 			get => _dependencyWarningText;
 			set { _dependencyWarningText=value; OnPropertyChanged(); }
 			}
+
+		/// <summary>
+		/// Text shown on the left Play button face.
+		/// Changes based on the currently selected launch target.
+		/// </summary>
+		public string PlayButtonText => _activeLaunchTarget == LaunchTarget.BLSE
+			? "Play with BLSE"
+			: "Play Bannerlord";
 		#endregion
 
 		#region INotifyPropertyChanged
@@ -143,9 +153,24 @@ namespace CalradiaForge.UI.Pages
 			AvailableModsView=CollectionViewSource.GetDefaultView(AvailableModsList);
 			AvailableModsView.Filter=ModSearchFilter;
 
+			// Restore persisted launch target from config
+			_activeLaunchTarget=App.AppConfig.DefaultLaunchTarget;
+			UpdateLaunchTargetCheckmarks();
+
 			PopulateAvailableModsFromCache();
 			PopulateModpackList();
 			UpdateCanStart();
+
+			// If an install was already running when the user navigated back,
+			// re-sync the UI state from the service
+			if (_modInstaller.IsInstalling) {
+				IsInstalling=true;
+				DependencyWarningText="Installation in progress...";
+				}
+
+			// Subscribe to service-level install events
+			_modInstaller.InstallProgressChanged+=OnInstallProgressChanged;
+			_modInstaller.InstallCompleted+=OnInstallCompleted;
 
 			// Always scan on first load to catch mods added/removed between sessions.
 			// PopulateAvailableModsFromCache provides immediate UI content from cache
@@ -153,7 +178,54 @@ namespace CalradiaForge.UI.Pages
 			Loaded+=async (_,_) => {
 				await StartupRescanAsync();
 			};
+
+			Unloaded+=(_,_) => {
+				_modInstaller.InstallProgressChanged-=OnInstallProgressChanged;
+				_modInstaller.InstallCompleted-=OnInstallCompleted;
+				};
 			}
+		#endregion
+
+		#region Install Event Handlers
+
+		/// <summary>
+		/// Handles progress updates from the <see cref="ModInstaller"/> service.
+		/// Dispatches to the UI thread to update the status text.
+		/// </summary>
+		private void OnInstallProgressChanged(ModInstallSummary summary) {
+			Dispatcher.BeginInvoke(() => {
+				DependencyWarningText=$"Installing... {summary.TotalCount} archive(s) processed so far.";
+				});
+			}
+
+		/// <summary>
+		/// Handles install batch completion from the <see cref="ModInstaller"/> service.
+		/// Dispatches to the UI thread to update status, refresh the mod list,
+		/// run DLL unblocking, and re-evaluate <see cref="CanStart"/>.
+		/// </summary>
+		private async void OnInstallCompleted(ModInstallSummary summary) {
+			await Dispatcher.InvokeAsync(async () => {
+				DependencyWarningText=summary.ToSummaryString();
+
+				// Auto-unblock DLLs in the Modules folder after installation
+				string modulesPath = App.AppConfig.ModulesDirectoryPath;
+				if (!string.IsNullOrWhiteSpace(modulesPath)&&Directory.Exists(modulesPath)) {
+					UnblockResult unblockResult = await DLLUnblocker.UnblockAllAsync(modulesPath);
+					DependencyWarningText+=$" | DLLs: {unblockResult.ToSummaryString()}";
+					}
+
+				// Refresh mod list to pick up newly installed mods
+				if (summary.InstalledCount>0||summary.UpgradedCount>0) {
+					await _modService.RefreshAsync();
+					UpdateAvailableModsList();
+					ApplySelectedModpack();
+					}
+
+				IsInstalling=false;
+				UpdateCanStart();
+				});
+			}
+
 		#endregion
 
 		#region Populate Mods
@@ -572,15 +644,18 @@ namespace CalradiaForge.UI.Pages
 		#region Mod Actions
 
 		/// <summary>
-		/// Full mod installation pipeline:
-		/// 1. Validate game directory is set and exists
-		/// 2. Open multi-select file dialog for archive selection
-		/// 3. Batch install mods via async queue
-		/// 4. Auto-unblock DLLs in the Modules folder
-		/// 5. Refresh the mod list to pick up new installations
-		/// 6. Report results via <see cref="DependencyWarningText"/>
+		/// Validates the game directory, opens a file dialog for archive selection,
+		/// and delegates the install to <see cref="ModInstaller.StartInstallAsync"/>.
+		/// The install runs on the service layer — surviving page navigation.
+		/// Progress and completion are observed via service events.
 		/// </summary>
-		private async void InstallModsButton_Click(object sender,RoutedEventArgs e) {
+		private void InstallModsButton_Click(object sender,RoutedEventArgs e) {
+			// Guard — service rejects duplicates, but skip the dialog too
+			if (_modInstaller.IsInstalling) {
+				DependencyWarningText="An installation is already in progress.";
+				return;
+				}
+
 			// Step 1: Validate game directory
 			if (!_modInstaller.ValidateGameDirectory(out string validationError)) {
 				DependencyWarningText=validationError;
@@ -599,36 +674,10 @@ namespace CalradiaForge.UI.Pages
 				return;
 				}
 
-			// Step 3: Batch install mods
-			try {
-				IsInstalling=true;
-				DependencyWarningText=$"Installing {dialog.FileNames.Length} mod(s)...";
-
-				ModInstallSummary installSummary = await _modInstaller.InstallModsAsync(dialog.FileNames);
-
-				DependencyWarningText=installSummary.ToSummaryString();
-
-				// Step 4: Auto-unblock DLLs after installation
-				string modulesPath = App.AppConfig.ModulesDirectoryPath;
-				if (!string.IsNullOrWhiteSpace(modulesPath)&&Directory.Exists(modulesPath)) {
-					UnblockResult unblockResult = await DLLUnblocker.UnblockAllAsync(modulesPath);
-					DependencyWarningText+=$" | DLLs: {unblockResult.ToSummaryString()}";
-					}
-
-				// Step 5: Refresh mod list to pick up newly installed mods
-				if (installSummary.InstalledCount>0||installSummary.UpgradedCount>0) {
-					await _modService.RefreshAsync();
-					UpdateAvailableModsList();
-					ApplySelectedModpack();
-					}
-
-				} catch (OperationCanceledException) {
-				DependencyWarningText="Mod installation was cancelled.";
-				} catch (Exception ex) {
-				DependencyWarningText=$"Installation error: {ex.Message}";
-				} finally {
-				IsInstalling=false;
-				}
+			// Step 3: Kick off the install — service owns the task lifetime
+			IsInstalling=true;
+			DependencyWarningText=$"Installing {dialog.FileNames.Length} archive(s)...";
+			_modInstaller.StartInstallAsync(dialog.FileNames);
 			}
 
 		/// <summary>
@@ -666,7 +715,8 @@ namespace CalradiaForge.UI.Pages
 
 		/// <summary>
 		/// Saves the current load order, persists the selected modpack,
-		/// and launches Bannerlord via the <see cref="GameLauncher"/> service.
+		/// and launches Bannerlord via the <see cref="GameLauncher"/> service
+		/// using the active <see cref="_activeLaunchTarget"/>.
 		/// For Steam installs, auto-starts Steam if it's not running and waits
 		/// for initialization before launching the game.
 		/// Skips persist and launch if the ghost sentinel is selected.
@@ -687,22 +737,93 @@ namespace CalradiaForge.UI.Pages
 				App.AppConfig.LastSelectedModpack=_selectedModpack.ModpackName;
 				}
 
-			// Launch the game (auto-starts Steam if needed)
+			// Launch the game with the active target (auto-starts Steam if needed)
 			CanStart=false;
 			DependencyWarningText="Launching...";
 
-			GameLaunchResult result = await _gameLauncher.LaunchAsync(CurrentLoadOrder.ToList());
+			GameLaunchResult result = await _gameLauncher.LaunchAsync(CurrentLoadOrder.ToList(),_activeLaunchTarget);
 			DependencyWarningText=result.Message;
 
 			UpdateCanStart();
 			}
 
 		/// <summary>
-		/// Updates <see cref="CanStart"/> based on whether
-		/// the load order has mods and the game config is valid.
+		/// Opens the launch target context menu when the dropdown chevron is clicked.
+		/// </summary>
+		private void PlayTargetDropdown_Click(object sender,RoutedEventArgs e) {
+			if (sender is Button button&&button.ContextMenu is not null) {
+				button.ContextMenu.PlacementTarget=button;
+				button.ContextMenu.Placement=PlacementMode.Bottom;
+				button.ContextMenu.IsOpen=true;
+				}
+			}
+
+		/// <summary>
+		/// Selects Bannerlord as the active launch target.
+		/// Persists the choice and updates checkmarks. Does NOT launch.
+		/// </summary>
+		private void LaunchTarget_Bannerlord_Click(object sender,RoutedEventArgs e) {
+			SetActiveLaunchTarget(LaunchTarget.Bannerlord);
+			}
+
+		/// <summary>
+		/// Selects BLSE as the active launch target.
+		/// Persists the choice and updates checkmarks. Does NOT launch.
+		/// If BLSE is not configured, the Play button disables and a warning appears.
+		/// </summary>
+		private void LaunchTarget_BLSE_Click(object sender,RoutedEventArgs e) {
+			SetActiveLaunchTarget(LaunchTarget.BLSE);
+			}
+
+		/// <summary>
+		/// Applies the given launch target as the active selection.
+		/// Persists to config, updates checkmarks, updates button label text,
+		/// and re-evaluates <see cref="CanStart"/> to account for BLSE validity.
+		/// </summary>
+		private void SetActiveLaunchTarget(LaunchTarget target) {
+			_activeLaunchTarget=target;
+			App.AppConfig.DefaultLaunchTarget=target;
+			UpdateLaunchTargetCheckmarks();
+			OnPropertyChanged(nameof(PlayButtonText));
+			UpdateCanStart();
+			}
+
+		/// <summary>
+		/// Toggles the checkmark icon visibility in the launch target dropdown.
+		/// Only the currently persisted target shows its checkmark.
+		/// </summary>
+		private void UpdateLaunchTargetCheckmarks() {
+			CheckBannerlord.Visibility=_activeLaunchTarget==LaunchTarget.Bannerlord
+				? Visibility.Visible
+				: Visibility.Collapsed;
+			CheckBLSE.Visibility=_activeLaunchTarget==LaunchTarget.BLSE
+				? Visibility.Visible
+				: Visibility.Collapsed;
+			}
+
+		/// <summary>
+		/// Updates <see cref="CanStart"/> based on whether the load order has mods,
+		/// the base game config is valid, and (when BLSE is selected) the BLSE
+		/// executable is configured and exists. When BLSE validation fails,
+		/// disables the Play button and sets a warning in <see cref="DependencyWarningText"/>.
+		/// The selection stays on BLSE so the user can fix it in Settings.
 		/// </summary>
 		private void UpdateCanStart() {
-			CanStart=CurrentLoadOrder.Count>0&&_gameLauncher.CanLaunch(out _);
+			bool hasLoadOrder = CurrentLoadOrder.Count>0;
+			bool canLaunchBase = _gameLauncher.CanLaunch(out _);
+
+			if (_activeLaunchTarget==LaunchTarget.BLSE) {
+				bool canLaunchBLSE = _gameLauncher.CanLaunchBLSE(out string blseError);
+				CanStart=hasLoadOrder&&canLaunchBase&&canLaunchBLSE;
+
+				// Show BLSE warning when invalid and no higher-priority message is displayed
+				if (!canLaunchBLSE&&hasLoadOrder&&canLaunchBase
+					&&string.IsNullOrEmpty(DependencyWarningText)) {
+					DependencyWarningText=blseError;
+					}
+				} else {
+				CanStart=hasLoadOrder&&canLaunchBase;
+				}
 			}
 
 		#endregion

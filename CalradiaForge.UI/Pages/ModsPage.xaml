@@ -104,11 +104,56 @@
 							 FontSize="12"
 							 TextWrapping="Wrap" />
 
-		<!--Row 4: Play Button-->
-		<Button Grid.Row="4" Content="Play"
-						Style="{StaticResource ModsPagePlayButton}"
-						HorizontalAlignment="Center" Margin="0,8,0,0"
-						IsEnabled="{Binding CanStart}"
-						Click="PlayButton_Click" />
+		<!--Row 4: Play Split Button Conjoined left (Play) + right (target dropdown)-->
+		<StackPanel Grid.Row="4" Orientation="Horizontal"
+								HorizontalAlignment="Center" Margin="0,8,0,0">
+			<Button x:Name="PlayButton"
+							Content="{Binding PlayButtonText}"
+							Style="{StaticResource PlaySplitButtonLeft}"
+							IsEnabled="{Binding CanStart}"
+							ToolTip="Launch the game with the selected target"
+							Click="PlayButton_Click" />
+			<Button x:Name="PlayTargetDropdown"
+							Style="{StaticResource PlaySplitButtonRight}"
+							ToolTip="Choose launch target"
+							Click="PlayTargetDropdown_Click">
+				<mahIcons:PackIconMaterial Kind="ChevronDown" Width="10" Height="10" />
+				<Button.ContextMenu>
+					<ContextMenu x:Name="LaunchTargetMenu"
+											 Style="{StaticResource ModpacksContextMenu}">
+						<MenuItem x:Name="MenuItemBannerlord"
+											Style="{StaticResource ModpacksMenuItem}"
+											Click="LaunchTarget_Bannerlord_Click">
+							<MenuItem.Header>
+								<StackPanel Orientation="Horizontal">
+									<mahIcons:PackIconMaterial x:Name="CheckBannerlord"
+																						 Kind="Check" Width="12" Height="12"
+																						 Foreground="{StaticResource TB.Acc.Gold}"
+																						 VerticalAlignment="Center"
+																						 Margin="0,0,8,0"
+																						 Visibility="Visible" />
+									<TextBlock Text="Bannerlord" VerticalAlignment="Center" />
+								</StackPanel>
+							</MenuItem.Header>
+						</MenuItem>
+						<MenuItem x:Name="MenuItemBLSE"
+											Style="{StaticResource ModpacksMenuItem}"
+											Click="LaunchTarget_BLSE_Click">
+							<MenuItem.Header>
+								<StackPanel Orientation="Horizontal">
+									<mahIcons:PackIconMaterial x:Name="CheckBLSE"
+																						 Kind="Check" Width="12" Height="12"
+																						 Foreground="{StaticResource TB.Acc.Gold}"
+																						 VerticalAlignment="Center"
+																						 Margin="0,0,8,0"
+																						 Visibility="Collapsed" />
+									<TextBlock Text="BLSE" VerticalAlignment="Center" />
+								</StackPanel>
+							</MenuItem.Header>
+						</MenuItem>
+					</ContextMenu>
+				</Button.ContextMenu>
+			</Button>
+		</StackPanel>
 	</Grid>
 </Page>
