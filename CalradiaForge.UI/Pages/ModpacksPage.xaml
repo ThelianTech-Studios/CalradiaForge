@@ -39,7 +39,7 @@
 				<StackPanel Orientation="Horizontal" Margin="8,0,8,0">
 					<Button x:Name="CreateVanillaButton" Content="Create New"
 									Style="{StaticResource SplitButtonLeft}"
-									ToolTip="Create a new modpack with Vanilla defaults"
+									ToolTip="Create a new modpack using the selected template"
 									Click="CreateNewButton_Click" />
 					<Button x:Name="CreateTemplateDropdown"
 									Style="{StaticResource SplitButtonRight}"
@@ -49,18 +49,62 @@
 						<Button.ContextMenu>
 							<ContextMenu x:Name="TemplateMenu"
 													 Style="{StaticResource ModpacksContextMenu}">
-								<MenuItem Header="Default Modpack"
-													Style="{StaticResource ModpacksMenuItem}"
-													Click="CreateFromVanilla_Click" />
-								<MenuItem Header="ButterLib Suite"
-													Style="{StaticResource ModpacksMenuItem}"
-													Click="CreateFromButterLib_Click" />
-								<MenuItem Header="Vanilla - WarSails"
-													Style="{StaticResource ModpacksMenuItem}"
-													Click="CreateFromVanillaWarSails_Click" />
-								<MenuItem Header="ButterLib - WarSails"
-													Style="{StaticResource ModpacksMenuItem}"
-													Click="CreateFromButterLibWarSails_Click" />
+								<MenuItem Style="{StaticResource ModpacksMenuItem}"
+													Click="CreateFromVanilla_Click">
+									<MenuItem.Header>
+										<StackPanel Orientation="Horizontal">
+											<mahIcons:PackIconMaterial x:Name="CheckVanilla"
+																								 Kind="Check" Width="12" Height="12"
+																								 Foreground="{StaticResource TB.Acc.Gold}"
+																								 VerticalAlignment="Center"
+																								 Margin="0,0,8,0"
+																								 Visibility="Visible" />
+											<TextBlock Text="Default Modpack" VerticalAlignment="Center" />
+										</StackPanel>
+									</MenuItem.Header>
+								</MenuItem>
+								<MenuItem Style="{StaticResource ModpacksMenuItem}"
+													Click="CreateFromButterLib_Click">
+									<MenuItem.Header>
+										<StackPanel Orientation="Horizontal">
+											<mahIcons:PackIconMaterial x:Name="CheckButterLib"
+																								 Kind="Check" Width="12" Height="12"
+																								 Foreground="{StaticResource TB.Acc.Gold}"
+																								 VerticalAlignment="Center"
+																								 Margin="0,0,8,0"
+																								 Visibility="Collapsed" />
+											<TextBlock Text="ButterLib Suite" VerticalAlignment="Center" />
+										</StackPanel>
+									</MenuItem.Header>
+								</MenuItem>
+								<MenuItem Style="{StaticResource ModpacksMenuItem}"
+													Click="CreateFromVanillaWarSails_Click">
+									<MenuItem.Header>
+										<StackPanel Orientation="Horizontal">
+											<mahIcons:PackIconMaterial x:Name="CheckVanillaWarSails"
+																								 Kind="Check" Width="12" Height="12"
+																								 Foreground="{StaticResource TB.Acc.Gold}"
+																								 VerticalAlignment="Center"
+																								 Margin="0,0,8,0"
+																								 Visibility="Collapsed" />
+											<TextBlock Text="Vanilla - WarSails" VerticalAlignment="Center" />
+										</StackPanel>
+									</MenuItem.Header>
+								</MenuItem>
+								<MenuItem Style="{StaticResource ModpacksMenuItem}"
+													Click="CreateFromButterLibWarSails_Click">
+									<MenuItem.Header>
+										<StackPanel Orientation="Horizontal">
+											<mahIcons:PackIconMaterial x:Name="CheckButterLibWarSails"
+																								 Kind="Check" Width="12" Height="12"
+																								 Foreground="{StaticResource TB.Acc.Gold}"
+																								 VerticalAlignment="Center"
+																								 Margin="0,0,8,0"
+																								 Visibility="Collapsed" />
+											<TextBlock Text="ButterLib - WarSails" VerticalAlignment="Center" />
+										</StackPanel>
+									</MenuItem.Header>
+								</MenuItem>
 							</ContextMenu>
 						</Button.ContextMenu>
 					</Button>

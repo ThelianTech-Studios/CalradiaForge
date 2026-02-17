@@ -154,6 +154,9 @@
 			PopulateModpackList();
 			PopulateActiveLoadOrder();
 
+			// Set initial checkmark state for the default template
+			UpdateTemplateCheckmarks();
+
 			// Wire trash icon clicks via the ListBox's tunneling event
 			LoadOrderListBox.PreviewMouseLeftButtonUp += LoadOrderListBox_PreviewMouseLeftButtonUp;
 
@@ -423,10 +426,18 @@
 
 		#region Create New
 
+		/// <summary>
+		/// Opens the create panel using the currently selected template.
+		/// The template is controlled by the dropdown — this button
+		/// only initiates the naming step.
+		/// </summary>
 		private void CreateNewButton_Click(object sender, RoutedEventArgs e) {
-			ShowCreatePanel(ModpackTemplate.Vanilla);
+			ShowCreatePanel(_pendingTemplate);
 		}
 
+		/// <summary>
+		/// Opens the template selection context menu below the dropdown chevron.
+		/// </summary>
 		private void CreateTemplateDropdown_Click(object sender, RoutedEventArgs e) {
 			if (sender is Button button && button.ContextMenu is not null) {
 				button.ContextMenu.PlacementTarget = button;
@@ -435,20 +446,63 @@
 			}
 		}
 
+		/// <summary>
+		/// Selects the Vanilla template. Does NOT open the create panel.
+		/// </summary>
 		private void CreateFromVanilla_Click(object sender, RoutedEventArgs e) {
-			ShowCreatePanel(ModpackTemplate.Vanilla);
+			SetActiveTemplate(ModpackTemplate.Vanilla);
 		}
 
+		/// <summary>
+		/// Selects the ButterLib template. Does NOT open the create panel.
+		/// </summary>
 		private void CreateFromButterLib_Click(object sender, RoutedEventArgs e) {
-			ShowCreatePanel(ModpackTemplate.ButterLib);
+			SetActiveTemplate(ModpackTemplate.ButterLib);
 		}
 
+		/// <summary>
+		/// Selects the Vanilla + WarSails template. Does NOT open the create panel.
+		/// </summary>
 		private void CreateFromVanillaWarSails_Click(object sender, RoutedEventArgs e) {
-			ShowCreatePanel(ModpackTemplate.VanillaWarSails);
+			SetActiveTemplate(ModpackTemplate.VanillaWarSails);
 		}
 
+		/// <summary>
+		/// Selects the ButterLib + WarSails template. Does NOT open the create panel.
+		/// </summary>
 		private void CreateFromButterLibWarSails_Click(object sender, RoutedEventArgs e) {
-			ShowCreatePanel(ModpackTemplate.ButterLibWarSails);
+			SetActiveTemplate(ModpackTemplate.ButterLibWarSails);
+		}
+
+		/// <summary>
+		/// Applies the given template as the active selection for new modpack creation.
+		/// Updates <see cref="_pendingTemplate"/> and toggles checkmark visibility
+		/// in the dropdown menu. Does not persist — resets to Vanilla on app restart.
+		/// </summary>
+		private void SetActiveTemplate(ModpackTemplate template) {
+			_pendingTemplate = template;
+			UpdateTemplateCheckmarks();
+			StatusText = $"Template set to {template}. Click Create New to use it.";
+		}
+
+		/// <summary>
+		/// Toggles the checkmark icon visibility in the template dropdown.
+		/// Only the currently selected template shows its checkmark.
+		/// Mirrors the pattern used by <c>UpdateLaunchTargetCheckmarks</c> on ModsPage.
+		/// </summary>
+		private void UpdateTemplateCheckmarks() {
+			CheckVanilla.Visibility = _pendingTemplate == ModpackTemplate.Vanilla
+				? Visibility.Visible
+				: Visibility.Collapsed;
+			CheckButterLib.Visibility = _pendingTemplate == ModpackTemplate.ButterLib
+				? Visibility.Visible
+				: Visibility.Collapsed;
+			CheckVanillaWarSails.Visibility = _pendingTemplate == ModpackTemplate.VanillaWarSails
+				? Visibility.Visible
+				: Visibility.Collapsed;
+			CheckButterLibWarSails.Visibility = _pendingTemplate == ModpackTemplate.ButterLibWarSails
+				? Visibility.Visible
+				: Visibility.Collapsed;
 		}
 
 		private void ShowCreatePanel(ModpackTemplate template) {
