@@ -103,16 +103,16 @@ A dedicated **Settings** page provides:
 2. **Point CalradiaForge at your game**
   - Open **Settings → Game Config**
   - Select your Bannerlord installation folder (and executable if requested)
-  - Use the **Re-detect** option if you installed via Steam and want auto-detection
+  - Use the **Re-detect** option if you installed Bannerlord via Steam and need to redetect the game
 
 3. **Install your mods**
   - Go to the **Mods** page
-  - Use the mod installation control to select downloadedarchives
+  - Use the mod installation control to select downloaded archives
   - CalradiaForge will extract to the `Modules` folder and automatically unblock DLLs
 
 4. **Organize and enable mods**
   - Drag mods between **Active** and **Inactive** lists
-  - Dragwithin the active list to adjust load order
+  - Drag within the active list to adjust load order
   - Use the search box to quickly find specific mods
 
 5. **Create a modpack**
