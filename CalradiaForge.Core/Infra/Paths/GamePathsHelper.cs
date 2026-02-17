@@ -18,11 +18,27 @@
 		/// </summary>
 		private const string _blseStandaloneExeName = "Bannerlord.BLSE.Standalone.exe";
 
+		/// <summary>
+		/// Master toggle for Epic Games and GamePass platform detection.
+		/// Set to <c>false</c> to disable detection — the detection methods
+		/// (<see cref="TryDetectEpic"/>) remain fully intact and unchanged
+		/// for re-enablement once platform testing becomes possible.
+		/// When disabled, auto-detection skips Epic/GamePass and falls through
+		/// to <see cref="GameProvider.StandAlone"/>.
+		/// </summary>
+		private const bool _enableUnsupportedPlatforms = false;
+
 		public static void TryAutoDetectGameFolder(AppConfigSettings config) {
 			if (TryDetectSteam(config))
 				return;
-			if (TryDetectEpic(config))
-				return;
+			if (_enableUnsupportedPlatforms) {
+				if (TryDetectEpic(config)) {
+					return;
+					}
+				}
+			// GamePass detection is not yet implemented — the GameProvider.GamePass
+			// enum value is preserved for future use. A TryDetectGamePass method
+			// will be added here once testing access is available.
 			config.GameProvider=GameProvider.StandAlone;
 			}
 		#region Detection Methods
