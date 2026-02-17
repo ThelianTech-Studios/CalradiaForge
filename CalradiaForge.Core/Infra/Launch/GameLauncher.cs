@@ -25,9 +25,6 @@
 	/// Handles launching Bannerlord with a given load order.
 	/// Receives all dependencies explicitly — never accesses global state.
 	/// Supports Steam and StandAlone/GOG via direct EXE launch.
-	/// Epic Games and GamePass are not supported for direct launch due to
-	/// TaleWorlds' authentication requirements — users must launch through
-	/// their respective platform clients.
 	/// </summary>
 	public sealed class GameLauncher {
 		private const string _steamAppId = "261550";
