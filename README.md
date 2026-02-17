@@ -25,20 +25,20 @@ If you maintain more than one loadout (e.g., vanilla+, hardcore, overhaul), Calr
 
 ## 🎮 Supported Game Platforms
 
-| Platform         | Direct Launch | Notes |
+| Platform         | Support       | Notes |
 |------------------|---------------|-------|
 | Steam            | ✅ Full        | Auto-launches Steam if not running. Full overlay & achievement support. |
 | GOG / Standalone | ✅ Full        | No platform client required. |
-| Epic Games       | ⚠️ Limited     | TaleWorlds requires authentication through the Epic client. CalradiaForge can manage your load order and mod setup, but you must launch the game through the Epic Games Store. |
-| GamePass         | ⚠️ Limited     | Xbox/Microsoft account login is required. CalradiaForge can manage your load order and mod setup, but you must launch through the Xbox app. |
+| Epic Games       | ❌ None        | Not currently supported. See note below. |
+| GamePass         | ❌ None       | Not currently supported. See note below. |
 
-**Why can't CalradiaForge launch Epic/GamePass directly?**
+**Why aren't Epic Games and GamePass supported?**
 
-TaleWorlds recently changed how non-Steam launchers work. Epic and GamePass now require authentication token exchange through their respective clients. This is a platform-level restriction that third-party launchers cannot bypass.
+The developer does not currently have access to Bannerlord through Epic Games or Xbox GamePass, making it impossible to test CalradiaForge's functionality on these platforms. Without the ability to verify mod installation, load order management, and game launching, there is no way to guarantee compatibility.
 
-CalradiaForge still provides **full mod management**, load order arrangement, and modpack features for these platforms — you just need to press Play from the platform's own launcher.
+Rather than ship an untested experience, Epic and GamePass support has been **disabled for now**. The underlying detection and configuration code is preserved in the codebase and will be re-enabled once proper testing on these platforms becomes possible.
 
-> ⚠️ **Note:** Direct launch support for Epic Games and GamePass is planned for a future release. This will likely involve writing the load order to Bannerlord's vanilla launcher config so it can be picked up when launching through the platform client.
+> ⚠️ **Note:** Epic Games and GamePass support is planned for a future release once the developer has access to test on these platforms.
 
 ---
 
@@ -64,9 +64,8 @@ CalradiaForge still provides **full mod management**, load order arrangement, an
 
 - Launch **Mount & Blade II: Bannerlord** directly from CalradiaForge
 - Support for multiple platforms:
-  - Steam
-  - Epic
-  - Standalone / local installs
+ - Steam
+ - GOG / Standalone
 - Validation checks (e.g., game path presence) before starting to reduce launch errors
 - Launch the game with the **exact active mod setup selected by your current modpack**
 
@@ -75,55 +74,55 @@ CalradiaForge still provides **full mod management**, load order arrangement, an
 A dedicated **Settings** page provides:
 
 - **Game configuration**
-  - Game installation path selection and validation
-  - Platform-aware visibility and re-detection of Bannerlord
+ - Game installation path selection and validation
+ - Platform-aware visibility and re-detection of Bannerlord
 - **Startup behavior**
-  - Choose how CalradiaForge selects modpacks on launch:
-    - Last used modpack
-    - A specific default modpack
-    - Always ask at startup
+ - Choose how CalradiaForge selects modpacks on launch:
+   - Last used modpack
+   - A specific default modpack
+   - Always ask at startup
 - **DLL unblock tool**
-  - Run a focused DLL unblocking pass and persist its “has been run” status
+ - Run a focused DLL unblocking pass and persist its "has been run" status
 - **Data management**
-  - Clear mod cache
-  - Open configuration, logs, and modpack folders directly from the UI
+ - Clear mod cache
+ - Open configuration, logs, and modpack folders directly from the UI
 - **Debug options**
-  - Toggle debug mode for more detailed behavior while testing
+ - Toggle debug mode for more detailed behavior while testing
 - **About panel**
-  - App version, publisher information, and direct links to the project and license
+ - App version, publisher information, and direct links to the project and license
 
 ---
 
 ## 🚀 Quick Start
 
 1. **Download & Install**
-   - Grab the latest official release from:
-     - [![GitHub Repo][CalradiaForge-Github-Shield]][CalradiaForge-Repo]
-     - or the NexusMods page: [CalradiaForge on Nexus][CalradiaForge-Nexus]
+  - Grab the latest official release from:
+    - [![GitHub Repo][CalradiaForge-Github-Shield]][CalradiaForge-Repo]
+    - or the NexusMods page: [CalradiaForge on Nexus][CalradiaForge-Nexus]
 
 2. **Point CalradiaForge at your game**
-   - Open **Settings → Game Config**
-   - Select your Bannerlord installation folder (and executable if requested)
-   - Use the **Re-detect** option if you installed via Steam or Epic and want auto-detection
+  - Open **Settings → Game Config**
+  - Select your Bannerlord installation folder (and executable if requested)
+  - Use the **Re-detect** option if you installed via Steam and want auto-detection
 
 3. **Install your mods**
-   - Go to the **Mods** page
-   - Use the mod installation control to select downloaded archives
-   - CalradiaForge will extract to the `Modules` folder and automatically unblock DLLs
+  - Go to the **Mods** page
+  - Use the mod installation control to select downloadedarchives
+  - CalradiaForge will extract to the `Modules` folder and automatically unblock DLLs
 
 4. **Organize and enable mods**
-   - Drag mods between **Active** and **Inactive** lists
-   - Drag within the active list to adjust load order
-   - Use the search box to quickly find specific mods
+  - Drag mods between **Active** and **Inactive** lists
+  - Dragwithin the active list to adjust load order
+  - Use the search box to quickly find specific mods
 
 5. **Create a modpack**
-   - Save your current selection and ordering as a **modpack**
-   - Name it (e.g., “Vanilla+ QoL”, “Overhaul Build”) and save
-   - Use the modpack selector on the Mods page to switch between setups
+  - Save your current selection and ordering as a **modpack**
+  - Name it (e.g., "Vanilla+ QoL", "Overhaul Build") and save
+  - Use the modpack selector on the Mods page to switch between setups
 
 6. **Launch the game**
-   - Verify your desired modpack is selected
-   - Click **Play** to start Bannerlord with the chosen active mods and order
+  - Verify your desired modpack is selected
+  - Click **Play** to start Bannerlord with the chosen active mods and order
 
 ---
 
@@ -133,11 +132,11 @@ A dedicated **Help / FAQ** page is planned inside the application.
 
 Until then:
 
-- Check the repository’s **Issues** tab on GitHub for known problems and workarounds.
+- Check the repository's **Issues** tab on GitHub for known problems and workarounds.
 - Open a new issue if you run into:
-  - Game not detecting mods launched via CalradiaForge
-  - Installation / extraction errors
-  - Unexpected behavior when switching modpacks
+ - Game not detecting mods launched via CalradiaForge
+ - Installation / extraction errors
+ - Unexpected behavior when switching modpacks
 
 ---
 
@@ -148,40 +147,40 @@ CalradiaForge is built around a **layered architecture** and a strict separation
 ### Architecture at a Glance
 
 - **UI Layer (WPF Application)**
-  - Navigation (Mods, Modpacks, Settings, future Help/FAQ)
-  - Visual styling, theming, and interaction
-  - No direct file-system or game-specific logic
+ - Navigation (Mods, Modpacks, Settings, future Help/FAQ)
+ - Visual styling, theming, and interaction
+ - No direct file-system or game-specific logic
 
 - **Core Infrastructure (Class Library)**
-  - Paths, configuration, detection, and logging
-  - Services for:
-    - Mod discovery and classification (active/inactive)
-    - Modpack creation, storage, import/export
-    - Game launch handling across Steam/Epic/Standalone
+ - Paths, configuration, detection, and logging
+ - Services for:
+   - Mod discovery and classification (active/inactive)
+   - Modpack creation, storage, import/export
+   - Game launch handling across Steam/Standalone
 
 - **Helpers**
-  - Stateless, pure-logic utilities such as path helpers
-  - Receive all required data via parameters (no globals)
+ - Stateless, pure-logic utilities such as path helpers
+ - Receive all required data via parameters (no globals)
 
 - **Config System**
-  - `AppConfig` implements the repository pattern:
-    - JSON read/write
-    - Thread-safe access
-    - Directory safety/validation
-  - `AppConfigSettings` provides strongly-typed, bindable access to configuration
-    - No direct IO
-    - No save logic
+ - `AppConfig` implements the repository pattern:
+   - JSON read/write
+   - Thread-safe access
+   - Directory safety/validation
+ - `AppConfigSettings` provides strongly-typed, bindable access to configuration
+   - No direct IO
+   - No save logic
 
 ### Design Principles
 
 - **UI decides *when*, core decides *how***  
-  UI triggers actions; core provides deterministic, testable behavior.
+ UI triggers actions; core provides deterministic, testable behavior.
 
 - **No global state in helpers**  
-  Helpers accept explicit dependencies (e.g., `AppConfigSettings`, paths, or plain data models).
+ Helpers accept explicit dependencies (e.g., `AppConfigSettings`, paths, or plain data models).
 
 - **Defensive design**  
-  Core components are safe to use independently of the WPF application.
+ Core components are safe to use independently of the WPF application.
 
 For a deep dive into the patterns, folder layout, and rules, see:
 
@@ -191,10 +190,10 @@ For a deep dive into the patterns, folder layout, and rules, see:
 
 ## 🤝 Contributing
 
-Contributions are welcome as long as they respect the project’s architecture and license.
+Contributions are welcome as long as they respect the project's architecture and license.
 
 - Read the contributor rules and patterns in:  
-  [`CONTRIBUTIONS.md`](../../CONTRIBUTIONS.md)
+ [`CONTRIBUTIONS.md`](../../CONTRIBUTIONS.md)
 - Fork the repository and create a feature branch:
  ```git
  git checkout -b feature/my-feature
