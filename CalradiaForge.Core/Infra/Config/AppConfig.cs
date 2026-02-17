@@ -65,23 +65,5 @@
 				_configValues=JsonConvert.DeserializeObject<Dictionary<string,string>>(json)??new Dictionary<string,string>();
 				}
 			}
-
-
-		//Old way to load config, marked as Depreacated and Obselete. Leaving here as ref to Old code for Learning purposes
-		//public static AppConfig Load(string filePath) {
-		//	AppConfig config;
-		//	if (!File.Exists(filePath)) {
-		//		config = new AppConfig();
-		//	} else {
-		//		var json = File.ReadAllText(filePath);
-		//		var configData = JsonConvert.DeserializeObject<Dictionary<string, string>>(json) ?? new Dictionary<string, string>();
-		//		config = new AppConfig {
-		//			_configValues = configData
-		//		};
-		//	}
-		//	config._configFilePath = filePath;
-		//	config.Save();
-		//	return config;
-		//}
 		}
 	}
