@@ -42,6 +42,16 @@ Rather than ship an untested experience, Epic and GamePass support has been **di
 
 ---
 
+## 📦 Supported Mod Archive Formats
+
+| Format | Support                  | Notes |
+|--------|--------------------------|-------|
+| `.zip` | ✅ Supported              | Recommended format. Fastest extraction. |
+| `.rar` | ✅ Supported              | Fully supported. |
+| `.7z`  | ⏸️ Temporarily Disabled  | See [FAQ: Why are .7z archives not supported?](#why-are-7z-archives-not-supported) |
+
+---
+
 ## ✨ Key Features
 
 ### 📦 Mods Management
@@ -64,8 +74,8 @@ Rather than ship an untested experience, Epic and GamePass support has been **di
 
 - Launch **Mount & Blade II: Bannerlord** directly from CalradiaForge
 - Support for multiple platforms:
- - Steam
- - GOG / Standalone
+- Steam
+- GOG / Standalone
 - Validation checks (e.g., game path presence) before starting to reduce launch errors
 - Launch the game with the **exact active mod setup selected by your current modpack**
 
@@ -74,41 +84,41 @@ Rather than ship an untested experience, Epic and GamePass support has been **di
 A dedicated **Settings** page provides:
 
 - **Game configuration**
- - Game installation path selection and validation
- - Platform-aware visibility and re-detection of Bannerlord
+- Game installation path selection and validation
+- Platform-aware visibility and re-detection of Bannerlord
 - **Startup behavior**
- - Choose how CalradiaForge selects modpacks on launch:
-   - Last used modpack
-   - A specific default modpack
-   - Always ask at startup
+- Choose how CalradiaForge selects modpacks on launch:
+  - Last used modpack
+  - A specific default modpack
+  - Always ask at startup
 - **DLL unblock tool**
- - Run a focused DLL unblocking pass and persist its "has been run" status
+- Run a focused DLL unblocking pass and persist its "has been run" status
 - **Data management**
- - Clear mod cache
- - Open configuration, logs, and modpack folders directly from the UI
+- Clear mod cache
+- Open configuration, logs, and modpack folders directly from the UI
 - **Debug options**
- - Toggle debug mode for more detailed behavior while testing
+- Toggle debug mode for more detailed behavior while testing
 - **About panel**
- - App version, publisher information, and direct links to the project and license
+- App version, publisher information, and direct links to the project and license
 
 ---
 
 ## 🚀 Quick Start
 
 1. **Download & Install**
-  - Grab the latest official release from:
-    - [![GitHub Repo][CalradiaForge-Github-Shield]][CalradiaForge-Repo]
-    - or the NexusMods page: [CalradiaForge on Nexus][CalradiaForge-Nexus]
+ - Grab the latest official release from:
+   - [![GitHub Repo][CalradiaForge-Github-Shield]][CalradiaForge-Repo]
+   - [![Nexus][CalradiaForge-Nexus-Shield]][CalradiaForge-Nexus]
 
 2. **Point CalradiaForge at your game**
-  - Open **Settings → Game Config**
-  - Select your Bannerlord installation folder (and executable if requested)
-  - Use the **Re-detect** option if you installed Bannerlord via Steam and need to redetect the game
+ - Open **Settings → Game Config**
+ - Select your Bannerlord installation folder (and executable if requested)
+ - Use the **Detect Game** option if you installed Bannerlord via other *Game Platforms* and need to redetect the game
 
 3. **Install your mods**
-  - Go to the **Mods** page
-  - Use the mod installation control to select downloaded archives
-  - CalradiaForge will extract to the `Modules` folder and automatically unblock DLLs
+ - Go to the **Mods** page
+ - Use the mod installation control to select downloaded archives (`.zip` or `.rar`)
+ - CalradiaForge will extract to the `Modules` folder and automatically unblock DLLs
 
 4. **Organize and enable mods**
   - Drag mods between **Active** and **Inactive** lists
@@ -128,10 +138,21 @@ A dedicated **Settings** page provides:
 
 ## 📚 FAQ / Help
 
-A dedicated **Help / FAQ** page is planned inside the application.
+CalradiaForge includes a built-in **FAQ page** accessible from the navigation menu. Below are some commonly asked questions:
 
-Until then:
+### Why are .7z archives not supported?
 
+CalradiaForge currently uses SharpCompress for archive extraction. The `.7z` format uses **block compression** (LZMA/LZMA2), which SharpCompress must decompress sequentially and entirely in-memory. For large Bannerlord mods with 1,000+ files, this causes extraction times of **~25 minutes** for a single mod — making the install experience unacceptable.
+
+The `.zip` and `.rar` formats use per-file compression, allowing SharpCompress to extract each file individually without this bottleneck.
+
+> **Workaround:** If your mod is only available as a `.7z` file, extract it manually using [7-Zip](https://www.7-zip.org/) and re-archive it as a `.zip` before installing through CalradiaForge.
+
+> **Planned fix:** A future update will integrate native 7-Zip extraction (via the 7-Zip SDK or CLI) to handle `.7z` archives at full speed.
+
+### Other questions
+
+- Check the in-app **FAQ** page for answers to common questions about mod detection, DLL unblocking, modpacks, importing presets, and more.
 - Check the repository's **Issues** tab on GitHub for known problems and workarounds.
 - Open a new issue if you run into:
  - Game not detecting mods launched via CalradiaForge
@@ -147,7 +168,7 @@ CalradiaForge is built around a **layered architecture** and a strict separation
 ### Architecture at a Glance
 
 - **UI Layer (WPF Application)**
- - Navigation (Mods, Modpacks, Settings, future Help/FAQ)
+ - Navigation (Mods, Modpacks, Settings, FAQ)
  - Visual styling, theming, and interaction
  - No direct file-system or game-specific logic
 
@@ -171,20 +192,68 @@ CalradiaForge is built around a **layered architecture** and a strict separation
    - No direct IO
    - No save logic
 
+### Service Layer
+
+All core services are instantiated once in `App.xaml.cs` on startup and exposed as static properties for page access. Each service receives its dependencies explicitly via constructor parameters — no service accesses global state.
+
+| Service | Responsibility |
+|---------|---------------|
+| `ModService` | Mod discovery, directory scanning, caching, and change detection |
+| `ModInstaller` | Batch archive extraction, version comparison, BLSE fallback, format validation |
+| `ModpackService` | Modpack CRUD, import/export, Novus conversion, last-used persistence, template creation |
+| `GameLauncher` | Platform-aware game launch (Steam auto-start, BLSE support, CLI argument building) |
+| `ToastService` | Application-wide toast notifications with auto-dismiss, pause/resume, and progress tracking |
+| `Logger` | Singleton file-based logger with level gating (Debug/Info/Warning/Error), 14-day cleanup |
+
+### Config System
+
+| Class | Role | Pattern |
+|-------|------|---------|
+| `AppConfig` | Low-level JSON key/value storage with thread-safe read/write | Repository |
+| `AppConfigSettings` | Strongly-typed properties with `INotifyPropertyChanged` for data binding | Typed Facade / Adapter |
+
+Configuration is created once in `App.xaml.cs`, passed explicitly into services and helpers. `AppConfig` handles persistence and thread safety. `AppConfigSettings` provides typed access — it never performs I/O or saves directly.
+
+### Toast System
+
+A purpose-built notification overlay rendered in `MainWindow.xaml` via an `ItemsControl` bound to `ToastService.VisibleToasts`. Supports:
+
+- **Severity levels** — Info, Success, Warning, Error (each with distinct accent color and icon)
+- **Auto-dismiss timers** with pause on hover and resume on leave
+- **Persistent progress toasts** for long-running operations (mod installation with ETA)
+- **Template selection** — Default, InstallProgress, InstallSummary, MissingMods
+- **Max 3 visible** with oldest-eviction and fade-out close animation
+
+### Mod Installation Pipeline
+
+Archives are processed by a service-owned background task that survives page navigation:
+
+1. **Format validation** — `ModInstaller.IsAcceptedArchive()` rejects unsupported extensions before extraction
+2. **Extraction** — `ModExtractor.ExtractToTempAsync()` with per-file progress callbacks via SharpCompress
+3. **Root detection** — `ModExtractor.FindModRoot()` walks nested folders to locate `SubModule.xml`
+4. **BLSE fallback** — `BLSEInstaller` handles non-module archives containing BLSE executables
+5. **Version check** — Compares against existing installation (install / upgrade / skip)
+6. **File copy** — Recursive copy to `Modules` folder with cancellation support
+7. **DLL unblocking** — `DLLUnblocker` strips `Zone.Identifier` ADS via Win32 `DeleteFile`
+8. **Progress reporting** — Batch-level cumulative tracking with heuristic file-count estimation and ETA
+
 ### Design Principles
 
 - **UI decides *when*, core decides *how***  
  UI triggers actions; core provides deterministic, testable behavior.
 
-- **No global state in helpers**  
- Helpers accept explicit dependencies (e.g., `AppConfigSettings`, paths, or plain data models).
+- **No global state in helpers or services**  
+ All dependencies are received explicitly via constructor parameters or method arguments.
 
 - **Defensive design**  
- Core components are safe to use independently of the WPF application.
+ Core components validate inputs and are safe to use independently of the WPF application.
 
-For a deep dive into the patterns, folder layout, and rules, see:
+- **Service-owned task lifetime**  
+ Long-running operations (mod installation) are owned by the service layer, not the UI page. Navigation away does not cancel or orphan background work.
 
-- [`CONTRIBUTIONS.md`](../../Contributor_Guidelines.md)
+For the complete coding standards, patterns, and contribution rules, see:
+
+- [`CONTRIBUTING.md`](../../CONTRIBUTING.md)
 
 ---
 
