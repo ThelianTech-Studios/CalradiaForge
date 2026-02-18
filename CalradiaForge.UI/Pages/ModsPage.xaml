@@ -96,15 +96,7 @@
 							 ItemsSource="{Binding AvailableModsView}" />
 		</Grid>
 
-		<!--Row 3: Status / Toast Messages-->
-		<TextBlock Grid.Row="3" Margin="0,6,0,0"
-							 Text="{Binding DependencyWarningText}"
-							 Foreground="{StaticResource TB.Acc.Amber}"
-							 FontFamily="{StaticResource Font.Secondary}"
-							 FontSize="12"
-							 TextWrapping="Wrap" />
-
-		<!--Row 4: Play Split Button Conjoined left (Play) + right (target dropdown)-->
+		<!--Row 3: Play Split Button Conjoined left (Play) + right (target dropdown)-->
 		<StackPanel Grid.Row="4" Orientation="Horizontal"
 								HorizontalAlignment="Center" Margin="0,8,0,0">
 			<Button x:Name="PlayButton"

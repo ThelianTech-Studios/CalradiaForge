@@ -26,6 +26,9 @@
 
 			// Wire the Options item (Settings) — separate from ItemsSource
 			NavBarControler.OptionsItemClick += NavBarControler_OnOptionsItemClick;
+
+			// Bind the toast overlay to the shared ToastService
+			ToastHost.ItemsSource = App.Toasts.VisibleToasts;
 		}
 		private void MinimizeButton_Click(object sender,RoutedEventArgs e) {
 			this.WindowState = WindowState.Minimized;

@@ -7,6 +7,7 @@
 				xmlns:ma="http://metro.mahapps.com/winfx/xaml/controls"
         xmlns:maIcons="http://metro.mahapps.com/winfx/xaml/iconpacks"
 				xmlns:h="clr-namespace:CalradiaForge.UI.Helpers"
+				xmlns:conv="clr-namespace:CalradiaForge.UI.Toasts"
         mc:Ignorable="d"
         Title="CalradiaForge Launcher"
         Height="700" Width="1200" MinHeight="400" MinWidth="700"
@@ -106,5 +107,25 @@
 			<Frame x:Name="MainContentFrame" Grid.Row="1" Grid.Column="1"
 						 NavigationUIVisibility="Hidden" Margin="8,0,0,0" />
 		</Grid>
+
+		<!-- Toast Notification Overlay — renders above all content -->
+		<ItemsControl x:Name="ToastHost"
+		              Panel.ZIndex="1000"
+		              HorizontalAlignment="Right"
+		              VerticalAlignment="Bottom"
+		              Margin="0,0,16,16"
+		              IsHitTestVisible="True">
+			<ItemsControl.ItemTemplateSelector>
+				<conv:ToastTemplateSelector
+					DefaultTemplate="{StaticResource ToastDefaultTemplate}"
+					InstallProgressTemplate="{StaticResource ToastInstallProgressTemplate}"
+					MissingModsTemplate="{StaticResource ToastMissingModsTemplate}" />
+			</ItemsControl.ItemTemplateSelector>
+			<ItemsControl.ItemsPanel>
+				<ItemsPanelTemplate>
+					<StackPanel Orientation="Vertical" />
+				</ItemsPanelTemplate>
+			</ItemsControl.ItemsPanel>
+		</ItemsControl>
   </Grid>
 </Window>

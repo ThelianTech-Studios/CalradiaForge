@@ -12,6 +12,8 @@
 	using CalradiaForge.Core.Infra.Paths;
 	using CalradiaForge.Core.Models;
 
+	using CalradiaForge.UI.Toasts;
+
 	using Microsoft.Win32;
 
 	/// <summary>
@@ -276,7 +278,11 @@
 
 			if (!GamePathValidator.ValidateGameFolder(selectedPath, out string error)) {
 				_logger.Warning($"SettingsPage: Game folder validation failed: {error}");
-				// TODO: Show toast notification with error message
+				App.Toasts.Show(new ToastRequest {
+					Title = "Invalid Game Folder",
+					Message = error,
+					Severity = ToastSeverity.Error
+				});
 				UpdateGameFolderValidation();
 				return;
 			}
@@ -305,7 +311,11 @@
 
 			if (!GamePathValidator.ValidateGameExecutable(selectedPath, out string error)) {
 				_logger.Warning($"SettingsPage: Executable validation failed: {error}");
-				// TODO: Show toast notification with error message
+				App.Toasts.Show(new ToastRequest {
+					Title = "Invalid Executable",
+					Message = error,
+					Severity = ToastSeverity.Error
+				});
 				return;
 			}
 
@@ -330,7 +340,11 @@
 
 			if (!GamePathValidator.ValidateWorkshopFolder(selectedPath, out string error)) {
 				_logger.Warning($"SettingsPage: Workshop folder validation failed: {error}");
-				// TODO: Show toast notification with error message
+				App.Toasts.Show(new ToastRequest {
+					Title = "Invalid Workshop Folder",
+					Message = error,
+					Severity = ToastSeverity.Error
+				});
 				return;
 			}
 
@@ -357,7 +371,11 @@
 
 			if (!GamePathValidator.ValidateGameExecutable(selectedPath, out string error)) {
 				_logger.Warning($"SettingsPage: BLSE executable validation failed: {error}");
-				// TODO: Show toast notification with error message
+				App.Toasts.Show(new ToastRequest {
+					Title = "Invalid BLSE Executable",
+					Message = error,
+					Severity = ToastSeverity.Error
+				});
 				UpdateBLSEValidation();
 				return;
 			}
@@ -385,7 +403,15 @@
 			UpdateGameFolderValidation();
 			UpdateBLSEValidation();
 			_logger.Info($"SettingsPage: Re-detect complete. Platform: {_config.GameProvider}");
-			// TODO: Show toast notification with detection result
+
+			bool detected = GamePathValidator.ValidateGameFolder(_config.GameFolderPath, out _);
+			App.Toasts.Show(new ToastRequest {
+				Title = detected ? "Game Detected" : "Detection Failed",
+				Message = detected
+					? $"Bannerlord found via {_config.GameProvider}."
+					: "Could not auto-detect Bannerlord. Please select the game folder manually.",
+				Severity = detected ? ToastSeverity.Success : ToastSeverity.Warning
+			});
 		}
 
 		#endregion
@@ -399,7 +425,11 @@
 		private async void UnblockDlls_Click(object sender, RoutedEventArgs e) {
 			if (!GamePathValidator.ValidateGameFolder(_config.GameFolderPath, out string folderError)) {
 				_logger.Warning($"SettingsPage: Cannot unblock — {folderError}");
-				// TODO: Show toast notification
+				App.Toasts.Show(new ToastRequest {
+					Title = "Cannot Unblock DLLs",
+					Message = folderError,
+					Severity = ToastSeverity.Warning
+				});
 				return;
 			}
 
@@ -419,11 +449,19 @@
 				UnblockResultText.Text = $"Result:  {summary}";
 
 				_logger.Info($"SettingsPage: Unblock complete. {summary}");
-				// TODO: Wire toast notification with result
+				App.Toasts.Show(new ToastRequest {
+					Title = "DLL Unblock Complete",
+					Message = summary,
+					Severity = ToastSeverity.Success
+				});
 			} catch (Exception ex) {
 				_logger.Error(ex, "SettingsPage: Unblock operation failed.");
 				UnblockResultText.Text = $"Result:  Error — {ex.Message}";
-				// TODO: Show toast notification with error
+				App.Toasts.Show(new ToastRequest {
+					Title = "Unblock Failed",
+					Message = ex.Message,
+					Severity = ToastSeverity.Error
+				});
 			}
 		}
 
@@ -434,9 +472,17 @@
 		private void ClearModCache_Click(object sender, RoutedEventArgs e) {
 			bool success = _modService.ClearCache();
 			if (success) {
-				// TODO: Show toast notification confirming cache was cleared
+				App.Toasts.Show(new ToastRequest {
+					Title = "Cache Cleared",
+					Message = "Mod cache has been cleared. A fresh scan will run on next launch.",
+					Severity = ToastSeverity.Success
+				});
 			} else {
-				// TODO: Show toast notification with error
+				App.Toasts.Show(new ToastRequest {
+					Title = "Cache Clear Failed",
+					Message = "Could not clear the mod cache. Check logs for details.",
+					Severity = ToastSeverity.Error
+				});
 			}
 		}
 

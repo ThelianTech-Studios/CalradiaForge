@@ -1,5 +1,6 @@
 ﻿namespace CalradiaForge.UI.Pages {
 	using System;
+	using System.Collections.Generic;
 	using System.Collections.ObjectModel;
 	using System.ComponentModel;
 	using System.Linq;
@@ -11,6 +12,8 @@
 
 	using CalradiaForge.Core.Infra.Modpacks;
 	using CalradiaForge.Core.Models;
+
+	using CalradiaForge.UI.Toasts;
 
 	using MahApps.Metro.IconPacks;
 
@@ -185,6 +188,11 @@
 						// Refresh was cancelled — proceed with cached data
 					} catch (Exception ex) {
 						StatusText = $"Mod rescan failed: {ex.Message}";
+						App.Toasts.Show(new ToastRequest {
+							Title = "Mod Rescan Failed",
+							Message = ex.Message,
+							Severity = ToastSeverity.Error
+						});
 					}
 				}
 				PopulateModpackList();
@@ -419,6 +427,18 @@
 					SelectedModpackIndex = newIndex;
 					LoadSelectedModpackData();
 				}
+
+				App.Toasts.Show(new ToastRequest {
+					Title = "Modpack Imported",
+					Message = $"'{modpack.ModpackName}' imported with {modpack.LoadOrder.Count} entries.",
+					Severity = ToastSeverity.Success
+				});
+			} else {
+				App.Toasts.Show(new ToastRequest {
+					Title = "Import Failed",
+					Message = message,
+					Severity = ToastSeverity.Error
+				});
 			}
 		}
 
@@ -525,6 +545,11 @@
 
 			if (string.IsNullOrWhiteSpace(name)) {
 				StatusText = "Modpack name cannot be empty.";
+				App.Toasts.Show(new ToastRequest {
+					Title = "Name Required",
+					Message = "Enter a name for the new modpack.",
+					Severity = ToastSeverity.Warning
+				});
 				return;
 			}
 
@@ -550,8 +575,18 @@
 				}
 
 				StatusText = $"Created '{name}' with {_pendingTemplate} template.";
+				App.Toasts.Show(new ToastRequest {
+					Title = "Modpack Created",
+					Message = $"'{name}' created with {_pendingTemplate} template.",
+					Severity = ToastSeverity.Success
+				});
 			} else {
 				StatusText = $"Failed to create '{name}'. A modpack with this name may already exist.";
+				App.Toasts.Show(new ToastRequest {
+					Title = "Create Failed",
+					Message = $"A modpack named '{name}' may already exist.",
+					Severity = ToastSeverity.Error
+				});
 			}
 		}
 
@@ -575,10 +610,15 @@
 			if (_selectedModpack is null) {
 				StatusText = "No modpack selected.";
 				return;
-			}		
+			}
 
 			if (_modpackService.CurrentLoadOrderEntries.Count == 0) {
 				StatusText = "No active load order found. Arrange mods on the Mods page first.";
+				App.Toasts.Show(new ToastRequest {
+					Title = "Nothing to Save",
+					Message = "Arrange mods on the Mods page first.",
+					Severity = ToastSeverity.Warning
+				});
 				return;
 			}
 
@@ -591,8 +631,18 @@
 				PopulateModpackList();
 				PopulateActiveLoadOrder();
 				StatusText = $"Saved active load order to '{_selectedModpack.ModpackName}'.";
+				App.Toasts.Show(new ToastRequest {
+					Title = "Modpack Saved",
+					Message = $"'{_selectedModpack.ModpackName}' updated with {entries.Count} entries.",
+					Severity = ToastSeverity.Success
+				});
 			} else {
 				StatusText = $"Failed to save '{_selectedModpack.ModpackName}'.";
+				App.Toasts.Show(new ToastRequest {
+					Title = "Save Failed",
+					Message = $"Could not save '{_selectedModpack.ModpackName}'. Check logs for details.",
+					Severity = ToastSeverity.Error
+				});
 			}
 		}
 

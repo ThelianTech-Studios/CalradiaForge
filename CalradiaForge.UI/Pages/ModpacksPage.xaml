@@ -278,10 +278,5 @@
 				</StackPanel>
 			</Grid>
 		</Border>
-
-		<!--Row 5: Status Bar-->
-		<TextBlock Grid.Row="5" Margin="0,8,0,0"
-							 Text="{Binding StatusText}"
-							 Style="{StaticResource ModpacksStatusText}" />
 	</Grid>
 </Page>
