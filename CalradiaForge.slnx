@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".gitignore" />
+    <File Path="Ai-Agents.md" />
+    <File Path="CONTRIBUTIONS.md" />
+    <File Path="LICENSE.md" />
+    <File Path="README.md" />
+    <File Path="TODO_v1.md" />
+  </Folder>
+  <Project Path="CalradiaForge.Core/CalradiaForge.Core.csproj" />
+  <Project Path="CalradiaForge.UI/CalradiaForge.UI.csproj">
+    <BuildDependency Project="CalradiaForge.Core/CalradiaForge.Core.csproj" />
+  </Project>
+</Solution>
