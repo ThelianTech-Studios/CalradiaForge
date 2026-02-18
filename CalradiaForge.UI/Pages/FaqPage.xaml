@@ -74,7 +74,7 @@
                         <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
                                              Text="If the archive is nested (a folder inside a folder), CalradiaForge will attempt to detect the correct root. If extraction still fails, try extracting the mod manually." />
                         <TextBlock Style="{StaticResource SettingsHint}" TextWrapping="Wrap"
-                                             Text="Supported archive formats: .zip, .7z, .rar" />
+                                             Text="Supported archive formats: .zip, .rar — .7z is temporarily disabled (see below)." />
                     </StackPanel>
                 </Border>
 
@@ -155,6 +155,22 @@
                         </StackPanel>
                         <TextBlock Style="{StaticResource SettingsHint}" Margin="0,8,0,0" TextWrapping="Wrap"
                                              Text="Tip: Enable Debug Mode in Settings → General before reproducing the issue. This gives more detailed logs for troubleshooting." />
+                    </StackPanel>
+                </Border>
+
+                <!-- ── Q9: .7z archive support temporarily disabled ── -->
+                <Border Style="{StaticResource SettingsSectionBorder}">
+                    <StackPanel>
+                        <TextBlock Text="Why are .7z archives not supported?"
+                                             Style="{StaticResource SettingsSectionHeader}" />
+                        <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
+                                             Text="The .7z format uses block compression (LZMA/LZMA2), which the current extraction library (SharpCompress) must decompress sequentially and entirely in-memory. For large Bannerlord mods with 1,000+ files, this causes extraction times of approximately 25 minutes for a single mod — making the install experience unacceptable." />
+                        <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
+                                             Text="The .zip and .rar formats use per-file compression, allowing the library to extract each file individually without this bottleneck. These formats install in seconds, even for large mods." />
+                        <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
+                                             Text="Support for .7z archives has been temporarily disabled while a replacement extraction method is developed. A future update will integrate native 7-Zip extraction to handle .7z archives at full speed." />
+                        <TextBlock Style="{StaticResource SettingsHint}" TextWrapping="Wrap"
+                                             Text="Workaround: If your mod is only available as a .7z file, extract it manually using 7-Zip (7-zip.org) and re-archive it as a .zip before installing through CalradiaForge." />
                     </StackPanel>
                 </Border>
 

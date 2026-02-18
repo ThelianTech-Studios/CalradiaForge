@@ -246,7 +246,7 @@
 						<StackPanel>
 							<TextBlock Text="Detection" Style="{StaticResource SettingsSectionHeader}" />
 							<StackPanel Orientation="Horizontal">
-								<Button Content="🔄  Re-detect Game"
+								<Button Content="🔄  Detect Game"
 												Style="{StaticResource SettingsToolButton}"
 												Click="RedetectGame_Click" />
 								<TextBlock Text="Re-runs auto-detection for Steam, Epic, and StandAlone installations. Also detects BLSE if installed. Overwrites current paths."
