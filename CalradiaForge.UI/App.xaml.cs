@@ -9,6 +9,8 @@
 	using CalradiaForge.Core.Infra.Mods;
 	using CalradiaForge.Core.Infra.Paths;
 
+	using CalradiaForge.UI.Toasts;
+
 	/// <summary>
 	/// Interaction logic for App.xaml
 	/// </summary>
@@ -19,6 +21,7 @@
 		public static ModInstaller ModInstaller { get; private set; } = null!;
 		public static ModpackService ModpackService { get; private set; } = null!;
 		public static GameLauncher GameLauncher { get; private set; } = null!;
+		public static ToastService Toasts { get; private set; } = null!;
 		public App() {
 			InitializeComponent();
 		}
@@ -31,6 +34,7 @@
 			InitializeModServices();
 			InitializeModpackServices();
 			InitializeLauncherService();
+			InitializeToastService();
 
 			// Apply saved debug mode to logger verbosity
 			if (AppConfig.DebugMode) {
@@ -74,6 +78,10 @@
 		}
 		private void InitializeLauncherService() {
 					GameLauncher = new GameLauncher(AppConfig);
+		}
+
+		private void InitializeToastService() {
+			Toasts = new ToastService(Dispatcher);
 		}
 
 		private void SetupExceptionHandeling() {
