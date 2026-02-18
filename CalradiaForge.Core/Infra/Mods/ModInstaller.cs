@@ -29,11 +29,12 @@
 
 		/// <summary>
 		/// Accepted archive file extensions for mod installation (case-insensitive).
-		/// Only <c>.zip</c>, <c>.7z</c>, and <c>.rar</c> are supported by
-		/// Bannerlord mod hosting sites.
+		/// <c>.7z</c> is temporarily excluded due to SharpCompress block-compression
+		/// performance issues causing ~25 minute extraction times for large mods.
+		/// Will be re-enabled once native 7-Zip extraction is implemented.
 		/// </summary>
 		private static readonly HashSet<string> _acceptedExtensions = new(StringComparer.OrdinalIgnoreCase) {
-			".zip", ".7z", ".rar"
+			".zip", ".rar"
 		};
 
 		public ModInstaller(AppConfigSettings appConfig) {
@@ -44,7 +45,7 @@
 		/// Supported archive file extensions for the file dialog filter.
 		/// </summary>
 		public static string FileDialogFilter =>
-			"Mod Archives (*.zip;*.7z;*.rar)|*.zip;*.7z;*.rar|All Files (*.*)|*.*";
+			"Mod Archives (*.zip;*.rar)|*.zip;*.rar|All Files (*.*)|*.*";
 
 		/// <summary>
 		/// Indicates whether an installation batch is currently running.
@@ -85,7 +86,7 @@
 		/// Checks whether the given file has an accepted archive extension.
 		/// </summary>
 		/// <param name="filePath">Full path or file name to check.</param>
-		/// <returns><c>true</c> if the extension is <c>.zip</c>, <c>.7z</c>, or <c>.rar</c>.</returns>
+		/// <returns><c>true</c> if the extension is <c>.zip</c> or <c>.rar</c>.</returns>
 		public static bool IsAcceptedArchive(string filePath) {
 			string extension = Path.GetExtension(filePath);
 			return _acceptedExtensions.Contains(extension);
@@ -222,7 +223,7 @@
 					ModInstallResult skipped = new() {
 						ArchiveFileName = archiveFileName,
 						Status = ModInstallStatus.Failed,
-						Message = $"Unsupported archive format '{ext}'. Only .zip, .7z, and .rar are accepted."
+						Message = $"Unsupported archive format '{ext}'. Only .zip and .rar are currently accepted."
 					};
 					_logger.Warning($"ModInstaller: Rejected '{archiveFileName}' — unsupported format '{ext}'.");
 					summary.Results.Add(skipped);
