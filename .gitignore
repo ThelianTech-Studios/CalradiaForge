@@ -2,10 +2,6 @@
 .vs/
 
 # Visual Studio files
-*.slnx
-*.sln
-*.csproj
-*.editorconfig
 
 # Build output
 bin/
@@ -28,6 +24,5 @@ obj/
 CalradiaForge.UI/Docs/
 
 # Auto-generated
-CalradiaForge.UI/Properties/AssemblyInfo.cs
 /global.json
 /TODO_v1.md
