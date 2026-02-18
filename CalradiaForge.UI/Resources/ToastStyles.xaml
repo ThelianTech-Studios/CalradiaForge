@@ -1,0 +1,343 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:maIcons="http://metro.mahapps.com/winfx/xaml/iconpacks"
+                    xmlns:conv="clr-namespace:CalradiaForge.UI.Toasts">
+
+	<conv:BoolToVisibilityConverter x:Key="BoolToVis" />
+
+	<!-- ══════════════════════════════════════════════════════
+	     DEFAULT TOAST DATA TEMPLATE
+	     ══════════════════════════════════════════════════════ -->
+	<DataTemplate x:Key="ToastDefaultTemplate">
+		<Border Background="{StaticResource TB.Sfc.Dark}"
+		        BorderThickness="1" CornerRadius="6"
+		        Margin="0,0,0,6" Padding="0" MinWidth="300" MaxWidth="360"
+		        Cursor="Hand"
+		        RenderTransformOrigin="0.5,0.5">
+			<Border.RenderTransform>
+				<TranslateTransform />
+			</Border.RenderTransform>
+			<Border.BorderBrush>
+				<SolidColorBrush Color="{StaticResource TC.Sfc.MedLight}" />
+			</Border.BorderBrush>
+			<Border.InputBindings>
+				<MouseBinding MouseAction="LeftClick" Command="{Binding ClickDismissCommand}" />
+			</Border.InputBindings>
+
+			<!-- Slide-in on load, slide-out on IsClosing -->
+			<Border.Style>
+				<Style TargetType="Border">
+					<Style.Triggers>
+						<EventTrigger RoutedEvent="Loaded">
+							<BeginStoryboard>
+								<Storyboard>
+									<DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+									                 From="320" To="0" Duration="0:0:0.25">
+										<DoubleAnimation.EasingFunction>
+											<CubicEase EasingMode="EaseOut" />
+										</DoubleAnimation.EasingFunction>
+									</DoubleAnimation>
+									<DoubleAnimation Storyboard.TargetProperty="Opacity"
+									                 From="0" To="1" Duration="0:0:0.2" />
+								</Storyboard>
+							</BeginStoryboard>
+						</EventTrigger>
+						<DataTrigger Binding="{Binding IsClosing}" Value="True">
+							<DataTrigger.EnterActions>
+								<BeginStoryboard>
+									<Storyboard>
+										<DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+										                 From="0" To="320" Duration="0:0:0.16" />
+										<DoubleAnimation Storyboard.TargetProperty="Opacity"
+										                 From="1" To="0" Duration="0:0:0.16" />
+									</Storyboard>
+								</BeginStoryboard>
+							</DataTrigger.EnterActions>
+						</DataTrigger>
+					</Style.Triggers>
+				</Style>
+			</Border.Style>
+
+			<Grid>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="4" />
+					<ColumnDefinition Width="Auto" />
+					<ColumnDefinition Width="*" />
+					<ColumnDefinition Width="Auto" />
+				</Grid.ColumnDefinitions>
+
+				<!-- Accent stripe -->
+				<Border Grid.Column="0" Background="{Binding AccentBrush}"
+				        CornerRadius="6,0,0,6" />
+
+				<!-- Icon -->
+				<maIcons:PackIconMaterial Grid.Column="1" Kind="{Binding IconKind}"
+				                         Width="20" Height="20" Margin="10,10,6,10"
+				                         VerticalAlignment="Top"
+				                         Foreground="{Binding AccentBrush}" />
+
+				<!-- Title + Message -->
+				<StackPanel Grid.Column="2" Margin="4,8,4,8" VerticalAlignment="Center">
+					<TextBlock Text="{Binding Title}"
+					           FontWeight="SemiBold" FontSize="13"
+					           Foreground="{StaticResource TB.Txt.Bright}"
+					           TextWrapping="Wrap" />
+					<TextBlock Text="{Binding Message}"
+					           FontSize="11.5" Margin="0,2,0,0"
+					           Foreground="{StaticResource TB.Txt.Mid}"
+					           TextWrapping="Wrap" />
+				</StackPanel>
+
+				<!-- Close button -->
+				<Button Grid.Column="3" Command="{Binding CloseCommand}"
+				        Visibility="{Binding ShowCloseButton, Converter={StaticResource BoolToVis}}"
+				        VerticalAlignment="Top" Margin="0,6,6,0"
+				        Width="20" Height="20" Padding="0"
+				        Cursor="Hand" ToolTip="Dismiss">
+					<Button.Template>
+						<ControlTemplate TargetType="Button">
+							<Border Background="Transparent">
+								<maIcons:PackIconMaterial Kind="Close" Width="12" Height="12"
+								                         Foreground="{StaticResource TB.Txt.Dim}"
+								                         HorizontalAlignment="Center"
+								                         VerticalAlignment="Center" />
+							</Border>
+						</ControlTemplate>
+					</Button.Template>
+				</Button>
+			</Grid>
+		</Border>
+	</DataTemplate>
+
+	<!-- ══════════════════════════════════════════════════════
+	     MISSING MODS TOAST — taller with scrollable mod list
+	     ══════════════════════════════════════════════════════ -->
+	<DataTemplate x:Key="ToastMissingModsTemplate">
+		<Border Background="{StaticResource TB.Sfc.Dark}"
+		        BorderThickness="1" CornerRadius="6"
+		        Margin="0,0,0,6" Padding="0" MinWidth="300" MaxWidth="360"
+		        Cursor="Hand"
+		        RenderTransformOrigin="0.5,0.5">
+			<Border.RenderTransform>
+				<TranslateTransform />
+			</Border.RenderTransform>
+			<Border.BorderBrush>
+				<SolidColorBrush Color="{StaticResource TC.Sfc.MedLight}" />
+			</Border.BorderBrush>
+			<Border.InputBindings>
+				<MouseBinding MouseAction="LeftClick" Command="{Binding ClickDismissCommand}" />
+			</Border.InputBindings>
+
+			<Border.Style>
+				<Style TargetType="Border">
+					<Style.Triggers>
+						<EventTrigger RoutedEvent="Loaded">
+							<BeginStoryboard>
+								<Storyboard>
+									<DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+									                 From="320" To="0" Duration="0:0:0.25">
+										<DoubleAnimation.EasingFunction>
+											<CubicEase EasingMode="EaseOut" />
+										</DoubleAnimation.EasingFunction>
+									</DoubleAnimation>
+									<DoubleAnimation Storyboard.TargetProperty="Opacity"
+									                 From="0" To="1" Duration="0:0:0.2" />
+								</Storyboard>
+							</BeginStoryboard>
+						</EventTrigger>
+						<DataTrigger Binding="{Binding IsClosing}" Value="True">
+							<DataTrigger.EnterActions>
+								<BeginStoryboard>
+									<Storyboard>
+										<DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+										                 From="0" To="320" Duration="0:0:0.16" />
+										<DoubleAnimation Storyboard.TargetProperty="Opacity"
+										                 From="1" To="0" Duration="0:0:0.16" />
+									</Storyboard>
+								</BeginStoryboard>
+							</DataTrigger.EnterActions>
+						</DataTrigger>
+					</Style.Triggers>
+				</Style>
+			</Border.Style>
+
+			<Grid>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="4" />
+					<ColumnDefinition Width="Auto" />
+					<ColumnDefinition Width="*" />
+					<ColumnDefinition Width="Auto" />
+				</Grid.ColumnDefinitions>
+
+				<!-- Accent stripe -->
+				<Border Grid.Column="0" Background="{Binding AccentBrush}"
+				        CornerRadius="6,0,0,6" />
+
+				<!-- Icon -->
+				<maIcons:PackIconMaterial Grid.Column="1" Kind="{Binding IconKind}"
+				                         Width="20" Height="20" Margin="10,10,6,10"
+				                         VerticalAlignment="Top"
+				                         Foreground="{Binding AccentBrush}" />
+
+				<!-- Title + scrollable mod names -->
+				<StackPanel Grid.Column="2" Margin="4,8,4,8" VerticalAlignment="Top">
+					<TextBlock Text="{Binding Title}"
+					           FontWeight="SemiBold" FontSize="13"
+					           Foreground="{StaticResource TB.Txt.Bright}"
+					           TextWrapping="Wrap" />
+					<ScrollViewer MaxHeight="80" Margin="0,4,0,0"
+					              VerticalScrollBarVisibility="Auto"
+					              HorizontalScrollBarVisibility="Disabled">
+						<TextBlock Text="{Binding Message}"
+						           FontSize="11" FontStyle="Italic"
+						           Foreground="{StaticResource TB.Txt.Mid}"
+						           TextWrapping="Wrap" />
+					</ScrollViewer>
+				</StackPanel>
+
+				<!-- Close button -->
+				<Button Grid.Column="3" Command="{Binding CloseCommand}"
+				        Visibility="{Binding ShowCloseButton, Converter={StaticResource BoolToVis}}"
+				        VerticalAlignment="Top" Margin="0,6,6,0"
+				        Width="20" Height="20" Padding="0"
+				        Cursor="Hand" ToolTip="Dismiss">
+					<Button.Template>
+						<ControlTemplate TargetType="Button">
+							<Border Background="Transparent">
+								<maIcons:PackIconMaterial Kind="Close" Width="12" Height="12"
+								                         Foreground="{StaticResource TB.Txt.Dim}"
+								                         HorizontalAlignment="Center"
+								                         VerticalAlignment="Center" />
+							</Border>
+						</ControlTemplate>
+					</Button.Template>
+				</Button>
+			</Grid>
+		</Border>
+	</DataTemplate>
+
+	<!-- ══════════════════════════════════════════════════════
+	     INSTALL PROGRESS TOAST — progress bar + dynamic ETA
+	     ══════════════════════════════════════════════════════ -->
+	<DataTemplate x:Key="ToastInstallProgressTemplate">
+		<Border Background="{StaticResource TB.Sfc.Dark}"
+		        BorderThickness="1" CornerRadius="6"
+		        Margin="0,0,0,6" Padding="0" MinWidth="300" MaxWidth="360"
+		        RenderTransformOrigin="0.5,0.5">
+			<Border.RenderTransform>
+				<TranslateTransform />
+			</Border.RenderTransform>
+			<Border.BorderBrush>
+				<SolidColorBrush Color="{StaticResource TC.Sfc.MedLight}" />
+			</Border.BorderBrush>
+
+			<!-- Slide-in on load, slide-out on IsClosing -->
+			<Border.Style>
+				<Style TargetType="Border">
+					<Style.Triggers>
+						<EventTrigger RoutedEvent="Loaded">
+							<BeginStoryboard>
+								<Storyboard>
+									<DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+									                 From="320" To="0" Duration="0:0:0.25">
+										<DoubleAnimation.EasingFunction>
+											<CubicEase EasingMode="EaseOut" />
+										</DoubleAnimation.EasingFunction>
+									</DoubleAnimation>
+									<DoubleAnimation Storyboard.TargetProperty="Opacity"
+									                 From="0" To="1" Duration="0:0:0.2" />
+								</Storyboard>
+							</BeginStoryboard>
+						</EventTrigger>
+						<DataTrigger Binding="{Binding IsClosing}" Value="True">
+							<DataTrigger.EnterActions>
+								<BeginStoryboard>
+									<Storyboard>
+										<DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+										                 From="0" To="320" Duration="0:0:0.16" />
+										<DoubleAnimation Storyboard.TargetProperty="Opacity"
+										                 From="1" To="0" Duration="0:0:0.16" />
+									</Storyboard>
+								</BeginStoryboard>
+							</DataTrigger.EnterActions>
+						</DataTrigger>
+					</Style.Triggers>
+				</Style>
+			</Border.Style>
+
+			<Grid>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="4" />
+					<ColumnDefinition Width="Auto" />
+					<ColumnDefinition Width="*" />
+				</Grid.ColumnDefinitions>
+
+				<!-- Accent stripe -->
+				<Border Grid.Column="0" Background="{Binding AccentBrush}"
+				        CornerRadius="6,0,0,6" />
+
+				<!-- Icon -->
+				<maIcons:PackIconMaterial Grid.Column="1" Kind="ProgressDownload"
+				                         Width="20" Height="20" Margin="10,10,6,10"
+				                         VerticalAlignment="Top"
+				                         Foreground="{Binding AccentBrush}" />
+
+				<!-- Title + Message + Progress Bar -->
+				<StackPanel Grid.Column="2" Margin="4,8,10,8" VerticalAlignment="Center">
+					<TextBlock Text="{Binding Title}"
+					           FontWeight="SemiBold" FontSize="13"
+					           Foreground="{StaticResource TB.Txt.Bright}"
+					           TextWrapping="Wrap" />
+					<TextBlock Text="{Binding Message}"
+					           FontSize="11" Margin="0,3,0,0"
+					           Foreground="{StaticResource TB.Txt.Mid}"
+					           TextWrapping="Wrap" />
+					<ProgressBar Minimum="0"
+					             Maximum="{Binding ProgressMax}"
+					             Value="{Binding ProgressValue}"
+					             Height="6" Margin="0,6,0,2"
+					             Background="{StaticResource TB.Bg.Darkest}"
+					             Foreground="{StaticResource TB.Acc.Amber}"
+					             BorderThickness="0">
+						<ProgressBar.Template>
+							<ControlTemplate TargetType="ProgressBar">
+								<Grid>
+									<!-- Track (unfilled background) -->
+									<Border x:Name="PART_Track"
+									        Background="{TemplateBinding Background}"
+									        CornerRadius="3"
+									        Height="{TemplateBinding Height}" />
+									<!-- Fill indicator (foreground color) -->
+									<Border x:Name="PART_Indicator"
+									        Background="{TemplateBinding Foreground}"
+									        CornerRadius="3"
+									        Height="{TemplateBinding Height}"
+									        HorizontalAlignment="Left" />
+								</Grid>
+							</ControlTemplate>
+						</ProgressBar.Template>
+					</ProgressBar>
+				</StackPanel>
+			</Grid>
+		</Border>
+	</DataTemplate>
+
+	<!-- ══════════════════════════════════════════════════════
+	     TOAST HOST — ItemsControl style for the overlay
+	     ══════════════════════════════════════════════════════ -->
+	<Style x:Key="ToastHostStyle" TargetType="ItemsControl">
+		<Setter Property="HorizontalAlignment" Value="Right" />
+		<Setter Property="VerticalAlignment" Value="Bottom" />
+		<Setter Property="Margin" Value="0,0,16,16" />
+		<Setter Property="IsHitTestVisible" Value="True" />
+		<Setter Property="ItemTemplate" Value="{StaticResource ToastDefaultTemplate}" />
+		<Setter Property="ItemsPanel">
+			<Setter.Value>
+				<ItemsPanelTemplate>
+					<StackPanel Orientation="Vertical" />
+				</ItemsPanelTemplate>
+			</Setter.Value>
+		</Setter>
+	</Style>
+
+</ResourceDictionary>
