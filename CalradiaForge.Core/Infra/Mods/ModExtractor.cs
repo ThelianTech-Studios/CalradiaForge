@@ -16,13 +16,44 @@
 		private static readonly Logger _logger = Logger.Instance;
 
 		/// <summary>
+		/// Heuristic for estimating file count from archive size.
+		/// Used to seed the progress bar maximum before actual counts are known.
+		/// ~33 files per megabyte based on typical Bannerlord mod archives.
+		/// </summary>
+		public const double FilesPerMBEstimate = 33.0;
+
+		/// <summary>
+		/// Estimates the total file count for an archive based on its file size.
+		/// </summary>
+		/// <param name="archivePath">Full path to the archive file.</param>
+		/// <returns>Estimated file count, minimum 10.</returns>
+		public static int EstimateFileCount(string archivePath) {
+			try {
+				long bytes = new FileInfo(archivePath).Length;
+				double megabytes = bytes / (1024.0 * 1024.0);
+				return Math.Max(10, (int)(megabytes * FilesPerMBEstimate));
+			} catch {
+				return 100; // Safe fallback
+			}
+		}
+
+		/// <summary>
 		/// Extracts the archive to a temporary directory.
 		/// SharpCompress auto-detects format (zip, rar, 7z, tar, etc.).
 		/// </summary>
 		/// <param name="archivePath">Full path to the archive file.</param>
 		/// <param name="token">Cancellation token.</param>
+		/// <param name="onFileExtracted">
+		/// Optional callback invoked after each file is extracted.
+		/// Parameter is the cumulative count of files extracted from this archive so far.
+		/// Called on the extraction thread — callers must dispatch to the UI thread.
+		/// </param>
 		/// <returns>The path to the temp directory containing extracted contents, or <c>null</c> on failure.</returns>
-		public static async Task<string?> ExtractToTempAsync(string archivePath, CancellationToken token = default) {
+		public static async Task<string?> ExtractToTempAsync(
+			string archivePath,
+			CancellationToken token = default,
+			Action<int>? onFileExtracted = null) {
+
 			if (string.IsNullOrWhiteSpace(archivePath) || !File.Exists(archivePath)) {
 				_logger.Warning($"ModExtractor: Archive not found: '{archivePath}'");
 				return null;
@@ -32,6 +63,7 @@
 				Directory.CreateDirectory(tempDir);
 				await Task.Run(() => {
 					token.ThrowIfCancellationRequested();
+					int filesExtracted = 0;
 					using IArchive archive = ArchiveFactory.Open(archivePath);
 					foreach (IArchiveEntry entry in archive.Entries) {
 						token.ThrowIfCancellationRequested();
@@ -40,6 +72,8 @@
 								ExtractFullPath = true,
 								Overwrite = true
 							});
+							filesExtracted++;
+							onFileExtracted?.Invoke(filesExtracted);
 						}
 					}
 				}, token);

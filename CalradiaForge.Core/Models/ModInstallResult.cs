@@ -39,5 +39,14 @@
 
 		[JsonProperty("previous_version")]
 		public string? PreviousVersion { get; set; }
+
+		/// <summary>
+		/// Actual number of files extracted from this archive.
+		/// Used by the installer to replace the size-based estimate
+		/// with a real count for batch-level progress refinement.
+		/// Not serialized — only relevant during the install session.
+		/// </summary>
+		[JsonIgnore]
+		public int ExtractedFileCount { get; set; }
 	}
 }

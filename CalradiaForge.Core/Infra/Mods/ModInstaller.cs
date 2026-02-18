@@ -27,6 +27,15 @@
 		private readonly SemaphoreSlim _installLock = new(1, 1);
 		private CancellationTokenSource? _cts;
 
+		/// <summary>
+		/// Accepted archive file extensions for mod installation (case-insensitive).
+		/// Only <c>.zip</c>, <c>.7z</c>, and <c>.rar</c> are supported by
+		/// Bannerlord mod hosting sites.
+		/// </summary>
+		private static readonly HashSet<string> _acceptedExtensions = new(StringComparer.OrdinalIgnoreCase) {
+			".zip", ".7z", ".rar"
+		};
+
 		public ModInstaller(AppConfigSettings appConfig) {
 			_appConfig = appConfig ?? throw new ArgumentNullException(nameof(appConfig));
 		}
@@ -35,7 +44,7 @@
 		/// Supported archive file extensions for the file dialog filter.
 		/// </summary>
 		public static string FileDialogFilter =>
-			"Mod Archives (*.zip;*.rar;*.7z;*.tar;*.gz)|*.zip;*.rar;*.7z;*.tar;*.gz|All Files (*.*)|*.*";
+			"Mod Archives (*.zip;*.7z;*.rar)|*.zip;*.7z;*.rar|All Files (*.*)|*.*";
 
 		/// <summary>
 		/// Indicates whether an installation batch is currently running.
@@ -63,6 +72,24 @@
 		/// Payload: the final <see cref="ModInstallSummary"/>.
 		/// </summary>
 		public event Action<ModInstallSummary>? InstallCompleted;
+
+		/// <summary>
+		/// Raised on the extraction thread during archive extraction.
+		/// Reports batch-level cumulative file counts and per-archive context
+		/// so the UI can render a single progress bar that never resets.
+		/// The UI layer must dispatch to the UI thread before updating controls.
+		/// </summary>
+		public event Action<ExtractionProgress>? ExtractionProgressChanged;
+
+		/// <summary>
+		/// Checks whether the given file has an accepted archive extension.
+		/// </summary>
+		/// <param name="filePath">Full path or file name to check.</param>
+		/// <returns><c>true</c> if the extension is <c>.zip</c>, <c>.7z</c>, or <c>.rar</c>.</returns>
+		public static bool IsAcceptedArchive(string filePath) {
+			string extension = Path.GetExtension(filePath);
+			return _acceptedExtensions.Contains(extension);
+		}
 
 		/// <summary>
 		/// Validates that the game directory is configured and exists.
@@ -151,6 +178,8 @@
 		/// If no SubModule.xml is found, the archive is checked for BLSE and
 		/// installed to the game bin if detected.
 		/// Raises <see cref="InstallProgressChanged"/> after each archive.
+		/// Raises <see cref="ExtractionProgressChanged"/> during extraction with
+		/// batch-level cumulative file counts for smooth progress reporting.
 		/// </summary>
 		/// <param name="archivePaths">Array of full paths to archive files selected by the user.</param>
 		/// <param name="token">Cancellation token.</param>
@@ -164,15 +193,73 @@
 
 			// Build the processing queue
 			Queue<string> installQueue = new(archivePaths);
+			int totalArchives = archivePaths.Length;
 			_logger.Info($"ModInstaller: Queued {installQueue.Count} archive(s) for installation.");
 
+			// Batch-level tracking for cumulative extraction progress
+			DateTime batchStartUtc = DateTime.UtcNow;
+			int batchFilesExtracted = 0;
+
+			// Pre-estimate total files across all archives using file-size heuristic
+			int estimatedTotalFiles = 0;
+			int[] perArchiveEstimates = new int[totalArchives];
+			for (int i = 0; i < totalArchives; i++) {
+				perArchiveEstimates[i] = ModExtractor.EstimateFileCount(archivePaths[i]);
+				estimatedTotalFiles += perArchiveEstimates[i];
+			}
+
+			int archiveIndex = 0;
 			while (installQueue.Count > 0) {
 				token.ThrowIfCancellationRequested();
 				string archivePath = installQueue.Dequeue();
 				string archiveFileName = Path.GetFileName(archivePath);
-				ModInstallResult result = await ProcessSingleArchiveAsync(archivePath, archiveFileName, modulesPath, token);
+				int currentArchiveIndex = archiveIndex;
+				int archiveFilesExtracted = 0;
+
+				// Reject unsupported archive formats before attempting extraction
+				if (!IsAcceptedArchive(archivePath)) {
+					string ext = Path.GetExtension(archivePath);
+					ModInstallResult skipped = new() {
+						ArchiveFileName = archiveFileName,
+						Status = ModInstallStatus.Failed,
+						Message = $"Unsupported archive format '{ext}'. Only .zip, .7z, and .rar are accepted."
+					};
+					_logger.Warning($"ModInstaller: Rejected '{archiveFileName}' — unsupported format '{ext}'.");
+					summary.Results.Add(skipped);
+					InstallProgressChanged?.Invoke(summary);
+					archiveIndex++;
+					continue;
+				}
+
+				// Per-file extraction callback — builds batch-level progress
+				void OnFileExtracted(int localCount) {
+					archiveFilesExtracted = localCount;
+					int currentBatchTotal = batchFilesExtracted + localCount;
+					ExtractionProgressChanged?.Invoke(new ExtractionProgress {
+						CurrentEntry = localCount,
+						ArchiveFileName = archiveFileName,
+						ArchiveIndex = currentArchiveIndex + 1,
+						TotalArchives = totalArchives,
+						BatchFilesExtracted = currentBatchTotal,
+						EstimatedTotalFiles = estimatedTotalFiles,
+						TimestampUtc = DateTime.UtcNow,
+						BatchStartUtc = batchStartUtc
+					});
+				}	
+
+				ModInstallResult result = await ProcessSingleArchiveAsync(
+					archivePath, archiveFileName, modulesPath, token, OnFileExtracted);
+
+				// After archive completes, refine the estimate:
+				// replace this archive's heuristic estimate with the actual count
+				int previousEstimate = perArchiveEstimates[currentArchiveIndex];
+				int actualCount = archiveFilesExtracted;
+				estimatedTotalFiles = estimatedTotalFiles - previousEstimate + actualCount;
+				batchFilesExtracted += actualCount;
+
 				summary.Results.Add(result);
 				InstallProgressChanged?.Invoke(summary);
+				archiveIndex++;
 			}
 
 			_logger.Info($"ModInstaller: Batch complete. {summary.ToSummaryString()}");
@@ -185,14 +272,15 @@
 			string archivePath,
 			string archiveFileName,
 			string modulesPath,
-			CancellationToken token) {
+			CancellationToken token,
+			Action<int>? onFileExtracted = null) {
 
 			ModInstallResult result = new() { ArchiveFileName = archiveFileName };
 			string? tempDir = null;
 
 			try {
-				// Extract archive to temp directory
-				tempDir = await ModExtractor.ExtractToTempAsync(archivePath, token);
+				// Extract archive to temp directory with per-file progress
+				tempDir = await ModExtractor.ExtractToTempAsync(archivePath, token, onFileExtracted);
 				if (tempDir is null) {
 					result.Status = ModInstallStatus.Failed;
 					result.Message = "Failed to extract archive.";
