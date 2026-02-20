@@ -1,6 +1,6 @@
 # CalradiaForge Software License
 
-**Version 1.1 --- 2026**
+**Version 1.2 --- 2026**
 
 ------------------------------------------------------------------------
 
@@ -13,7 +13,17 @@ software.
 All rights reserved.
 
 ------------------------------------------------------------------------
+### Trade Name Notice
 
+ThelianTech™ is the trade name of the author and publisher of CalradiaForge. 
+Use of this name, logo, or branding without explicit permission is prohibited. 
+ThelianTech™ is not affiliated with, endorsed by, or sponsored by 
+any third-party entity, including TaleWorlds Entertainment. 
+All rights associated with this trade name, including common law trademark rights, 
+are reserved. Public use, GitHub commit history, and other documented activity 
+establish prior use of the name.
+
+------------------------------------------------------------------------
 ## 1. Definitions
 
 "Software" refers to the CalradiaForge application, including its
