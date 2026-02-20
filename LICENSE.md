@@ -1,185 +1,190 @@
 # CalradiaForge Software License
 
-**Version 1.0 — 2026**
+**Version 1.2 --- 2026**
 
----
+------------------------------------------------------------------------
 
 ## Copyright Notice
 
-**Copyright © 2026 ThelianTech™**
-ThelianTech is the trade name of the author and publisher of this software.
+Copyright © 2026 ThelianTech™\
+ThelianTech is the trade name of the author and publisher of this
+software.
 
 All rights reserved.
 
----
+------------------------------------------------------------------------
+### Trade Name Notice
 
+ThelianTech™ is the trade name of the author and publisher of CalradiaForge. 
+Use of this name, logo, or branding without explicit permission is prohibited. 
+ThelianTech™ is not affiliated with, endorsed by, or sponsored by 
+any third-party entity, including TaleWorlds Entertainment. 
+All rights associated with this trade name, including common law trademark rights, 
+are reserved. Public use, GitHub commit history, and other documented activity 
+establish prior use of the name.
+
+------------------------------------------------------------------------
 ## 1. Definitions
 
-**“Software”** refers to the CalradiaForge application, including its binaries, source code, assets, documentation, and all associated files.
+"Software" refers to the CalradiaForge application, including its
+binaries, source code, assets, documentation, branding, and all
+associated files.
 
-**“Official Distribution Sources”** refers exclusively to:
+"Official Distribution Sources" refers exclusively to the official
+GitHub repository and NexusMods page published by ThelianTech.
 
- [![GitHub Repo][CalradiaForge-Github-Shield]][CalradiaForge-Repo]
- [![NexusMods][CalradiaForge-Nexus-Shield]][CalradiaForge-Nexus]
+"User" refers to any individual who downloads, installs, views, uses, or
+interacts with the Software.
 
-**“User”** refers to any individual who downloads, installs, views, uses, or interacts with the Software.
+"Contributor" refers to any individual who forks the repository and
+submits pull requests or proposed changes.
 
-**“Contributor”** refers to any individual who forks the repository and submits pull requests or proposed changes.
-
----
+------------------------------------------------------------------------
 
 ## 2. Grant of License
 
-You are granted a limited, non-exclusive, non-transferable, revocable license to:
+You are granted a limited, non-exclusive, non-transferable, revocable
+license to:
 
-- Download and use the official compiled release versions of CalradiaForge for personal, non-commercial use
-- View the source code hosted on GitHub for educational and contribution purposes
-- Share links to the Official Distribution Sources
+-   Download and use official compiled release versions for personal,
+    non-commercial use
+-   View the source code for transparency and contribution purposes
+-   Share links to the Official Distribution Sources
 
----
+------------------------------------------------------------------------
 
 ## 3. Non-Commercial Use
 
-You may not sell, license, rent, lease, bundle, or otherwise commercially exploit the Software.
+Voluntary donations, tips, sponsorships, or gratuities made to the
+author are permitted, provided no payment is required to access or use
+the Software.
 
-### Content Creation Exception
+You may not sell, license, rent, lease, bundle, or otherwise
+commercially exploit the Software.
 
-Use of CalradiaForge shown within monetized videos, streams, or media content (e.g., YouTube, Twitch, TikTok, tutorials, reviews) **is explicitly permitted** and **does not** constitute commercial use of the Software.
+Content creation featuring the Software in monetized videos, streams, or
+reviews is explicitly permitted and does not constitute commercial use.
 
----
+------------------------------------------------------------------------
 
 ## 4. No Derivatives or Modified Builds
 
 You may not:
 
-- Modify the Software
-- Create derivative works
-- Distribute modified versions
-- Distribute self-compiled versions of the Software
-- Repackage or mirror the Software
+-   Modify the Software
+-   Create derivative works
+-   Distribute modified versions
+-   Distribute self-compiled versions
+-   Mirror or repackage the Software
 
-All distribution must occur only through the Official Distribution Sources.
+All distribution must occur only through Official Distribution Sources.
 
----
+------------------------------------------------------------------------
 
-## 5. Controlled Distribution
+## 5. Source Code Visibility and Compilation
 
-You may **only** share links to:
+Source code is visible for education and contribution.
 
-[![GitHub Repo][CalradiaForge-Github-Shield]][CalradiaForge-Repo]
-[![NexusMods][CalradiaForge-Nexus-Shield]][CalradiaForge-Nexus]
+Users are not permitted to compile the source for regular use or
+distribute compiled builds.
 
-You may not upload, mirror, or redistribute the Software files anywhere else.
+Official support applies only to official release builds.
 
----
+------------------------------------------------------------------------
 
-## 6. Source Code Visibility and Compilation
+## 6. Independent Project Status & No Affiliation
 
-The source code is visible for transparency, education, and contribution.
+CalradiaForge is an independent, third-party software project developed
+and published by ThelianTech.
 
-Users are **not permitted** to compile the source for regular use.
+It is not affiliated with, endorsed by, sponsored by, approved by, or
+officially connected with TaleWorlds Entertainment or its affiliates.
 
-If a user chooses to compile the source:
+All references to game titles or fictional locations are used solely to
+describe compatibility and intended functionality.
 
-- It is done entirely at their own risk
-- No support will be provided
-- The user assumes all responsibility for instability, misuse, or data loss
-- Such builds may not be distributed
+No partnership, joint venture, agency, or endorsement relationship is
+created or implied.
 
-Official support is provided **only** for official release builds.
+------------------------------------------------------------------------
 
----
+## 7. Third-Party Intellectual Property Notice
 
-## 7. GitHub Forking and Contributions
+"Mount & Blade", "Mount & Blade II: Bannerlord", "Bannerlord",
+"Calradia", and all related names, logos, characters, world elements,
+and assets are the intellectual property of their respective owners.
 
-Forking the repository is permitted **only** for the purpose of contributing improvements back to the main project through pull requests.
+CalradiaForge does not include, reproduce, distribute, or modify
+proprietary game source code or protected in-game assets.
 
-Forks may be used for:
+Use of such terminology is nominative and descriptive only.
 
-- Debugging
-- Testing
-- Developing proposed fixes or features
+Nothing in this license grants any right to third-party intellectual
+property.
 
-Forks may **not** be used to create or distribute alternative versions of the Software.
+------------------------------------------------------------------------
 
----
+## 8. Ownership of CalradiaForge
 
-## 8. Contributor License Agreement (CLA)
+All right, title, and interest in and to the Software remain exclusively
+vested in ThelianTech.
 
-By submitting a pull request or contribution, you agree that:
+This includes, without limitation:
 
-- You assign all rights, title, and interest in your contribution to ThelianTech
-- Your contribution becomes part of the Software under this license
-- You waive any claim of ownership over the contributed code
-- The project maintainer has full discretion to accept, modify, or reject contributions
+-   Source code and compiled binaries
+-   Software architecture and logic
+-   User interface design and layout
+-   Visual styling and themes
+-   Application icons, logos, and branding
+-   Documentation and written materials
+-   Packaging and distribution artifacts
 
----
+No portion of the Software incorporates proprietary game source code or
+protected game assets.
 
-## 9. No Plugins, Extensions, or External Modifications
+No ownership rights are granted beyond the limited license expressly
+provided.
 
-CalradiaForge is not designed to support external plugins or extensions.
-All requested functionality must be contributed directly to the main project via the contribution process.
+------------------------------------------------------------------------
 
----
+## 9. Contributor License Agreement (CLA)
 
-## 10. Reverse Engineering
+By submitting a contribution, you assign all rights, title, and interest
+in that contribution to ThelianTech.
 
-Because the source code is publicly viewable, no specific restrictions are placed on inspection of the binaries. However, attempting to bypass protections, misrepresent the Software, or create derivative works remains prohibited.
+------------------------------------------------------------------------
 
----
+## 10. Violation of License
 
-## 11. Violation of License
+Violation results in immediate termination of license rights.
 
-If you violate this license:
+------------------------------------------------------------------------
 
-- Your license to use the Software terminates immediately
-- You forfeit access to support, community spaces, and assistance
-- You assume all risks and liabilities for continued use
+## 11. Disclaimer of Warranty
 
----
+The Software is provided "AS IS", without warranty of any kind.
 
-## 12. Ownership
+------------------------------------------------------------------------
 
-The Software and all associated intellectual property remain the sole property of ThelianTech.
+## 12. Limitation of Liability
 
-This license does not grant ownership rights to any user.
+ThelianTech shall not be liable for any damages arising from use of the
+Software.
 
----
+------------------------------------------------------------------------
 
-## 13. Disclaimer of Warranty
+## 13. Governing Law
 
-The Software is provided **“AS IS”**, without warranty of any kind.
-ThelianTech is not liable for any damages, data loss, or issues arising from use of the Software.
+This license is governed by the laws of the State of Utah, United
+States.
 
----
+------------------------------------------------------------------------
 
-## 14. Limitation of Liability
+## 14. Acceptance
 
-In no event shall ThelianTech be liable for any claim, damages, or liability arising from the use of the Software.
+By downloading, installing, or using CalradiaForge, you agree to this
+license.
 
----
+------------------------------------------------------------------------
 
-## 15. Governing Law
-
-This license shall be governed by the laws of the State of Utah, United States.
-
----
-
-## 16. Right to Modify License
-
-ThelianTech reserves the right to modify this license for future versions of the Software at any time.
-
----
-
-## 17. Acceptance
-
-By downloading, installing, or using CalradiaForge, you agree to the terms of this license.
-
----
-
-### End of License
-<!-- Listed below are the links to the shields above -->
-[CalradiaForge-Repo]: https://github.com/ThelianTech-Studios/CalradiaForge
-[CalradiaForge-Github-Shield]: https://img.shields.io/badge/CalradiaForge-Repo?style=plastic&logo=github&logoColor=%23181717&label=GitHub&color=blue
-[CalradiaForge-Nexus]: chrome://network-error/-106
-[CalradiaForge-Nexus-Shield]: https://img.shields.io/badge/CalradiaForge-Nexus?style=plastic&label=NexusMods&labelColor=Black&color=orange
+End of License
