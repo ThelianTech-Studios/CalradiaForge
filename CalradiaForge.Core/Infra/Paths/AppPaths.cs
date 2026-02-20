@@ -8,7 +8,6 @@
 	/// Provides resolved application paths and ensures required folders exist.
 	/// </summary>
 	public static class AppPaths {
-		private static readonly Logger _logger = Logger.Instance;
 		/// <summary>
 		/// Gets the root directory used for all application data folders.
 		/// </summary>
@@ -25,26 +24,32 @@
 		private const string LastUsedModsFileName = "last_used_mods.data";
 		private const string ConfigFileName = "config.json";
 
+		private static readonly Lazy<ResolvedDirectory> _configDirectory = new(() => ResolveDirectory(Path.Combine(RootDirectory, ConfigFolderName)));
+		private static readonly Lazy<ResolvedDirectory> _logsDirectory = new(() => ResolveDirectory(Path.Combine(RootDirectory, LogsFolderName)));
+		private static readonly Lazy<ResolvedDirectory> _modpacksDirectory = new(() => ResolveDirectory(Path.Combine(RootDirectory, ModpacksFolderName)));
+		private static readonly Lazy<ResolvedDirectory> _dataDirectory = new(() => ResolveDirectory(Path.Combine(RootDirectory, DataFolderName)));
+		private static readonly Lazy<ResolvedDirectory> _languagesDirectory = new(() => ResolveDirectory(Path.Combine(RootDirectory, LanguagesFolderName)));
+
 		/// <summary>
 		/// Gets the configuration directory path.
 		/// </summary>
-		public static string ConfigDirectory => EnsureDirectoryExists(Path.Combine(RootDirectory, ConfigFolderName));
+		public static string ConfigDirectory => _configDirectory.Value.Path;
 		/// <summary>
 		/// Gets the logs directory path.
 		/// </summary>
-		public static string LogsDirectory => EnsureDirectoryExists(Path.Combine(RootDirectory, LogsFolderName));
+		public static string LogsDirectory => _logsDirectory.Value.Path;
 		/// <summary>
 		/// Gets the modpacks directory path.
 		/// </summary>
-		public static string ModpacksDirectory => EnsureDirectoryExists(Path.Combine(RootDirectory, ModpacksFolderName));
+		public static string ModpacksDirectory => _modpacksDirectory.Value.Path;
 		/// <summary>
 		/// Gets the data directory path.
 		/// </summary>
-		public static string DataDirectory => EnsureDirectoryExists(Path.Combine(RootDirectory, DataFolderName));
+		public static string DataDirectory => _dataDirectory.Value.Path;
 		/// <summary>
 		/// Gets the languages directory path.
 		/// </summary>
-		public static string LanguagesDirectory => EnsureDirectoryExists(Path.Combine(RootDirectory, LanguagesFolderName));
+		public static string LanguagesDirectory => _languagesDirectory.Value.Path;
 		/// <summary>
 		/// Gets the path to the current mods cache file.
 		/// </summary>
@@ -63,17 +68,39 @@
 		public static string ConfigFilePath => Path.Combine(ConfigDirectory, ConfigFileName);
 
 		/// <summary>
-		/// Ensures a directory exists and returns the resolved path.
+		/// Logs resolved paths with creation metadata.
 		/// </summary>
-		private static string EnsureDirectoryExists(string path) {
+		public static void LogResolvedPaths(Logger logger) {
+			if (logger.MinimumLevel != Logger.LogLevel.Debug) {
+				return;
+			}
+			LogResolvedPath(logger, _configDirectory.Value);
+			LogResolvedPath(logger, _logsDirectory.Value);
+			LogResolvedPath(logger, _modpacksDirectory.Value);
+			LogResolvedPath(logger, _dataDirectory.Value);
+			LogResolvedPath(logger, _languagesDirectory.Value);
+		}
+
+		private static void LogResolvedPath(Logger logger, ResolvedDirectory directory) {
+			logger.Debug("AppPaths: Resolved path.", new { directory.Path, directory.Created });
+		}
+
+		private static ResolvedDirectory ResolveDirectory(string path) {
 			bool existed = Directory.Exists(path);
 			if (!existed) {
 				Directory.CreateDirectory(path);
 			}
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("AppPaths: Resolved path.", new { Path = path, Created = !existed });
+			return new ResolvedDirectory(path, created: !existed);
+		}
+
+		private sealed class ResolvedDirectory {
+			public ResolvedDirectory(string path, bool created) {
+				Path = path;
+				Created = created;
 			}
-			return path;
+
+			public string Path { get; }
+			public bool Created { get; }
 		}
 	}
 }
