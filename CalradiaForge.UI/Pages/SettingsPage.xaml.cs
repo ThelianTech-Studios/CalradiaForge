@@ -555,7 +555,7 @@
 		/// Opens the license URL via <see cref="ExplorerHelper"/>.
 		/// </summary>
 		private void ViewLicense_Click(object sender, RoutedEventArgs e) {
-			ExplorerHelper.OpenUrl("https://github.com/ThelianTech-Studios/CalradiaForge/blob/master_docs/LICENSE.md");
+			ExplorerHelper.OpenUrl("https://github.com/ThelianTech/CalradiaForge/blob/master_docs/LICENSE.md");
 		}
 
 		/// <summary>

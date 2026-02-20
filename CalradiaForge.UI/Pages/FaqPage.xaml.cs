@@ -17,7 +17,7 @@ namespace CalradiaForge.UI.Pages
 
 		private void OpenGitHubIssues_Click(object sender,RoutedEventArgs e) {
 			Process.Start(new ProcessStartInfo {
-				FileName="https://github.com/ThelianTech-Studios/CalradiaForge/issues",
+				FileName="https://github.com/ThelianTech/CalradiaForge/issues",
 				UseShellExecute=true,
 				});
 			}
