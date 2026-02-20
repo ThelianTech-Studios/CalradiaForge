@@ -36,6 +36,7 @@
 
   <ItemGroup>
     <None Remove="Resources\App_Icon.png" />
+    <None Remove="Resources\EULA.txt" />
   </ItemGroup>
 
   <ItemGroup>
@@ -57,6 +58,11 @@
   <!-- Copy language JSON files and manifest to output Languages\ folder -->
   <ItemGroup>
     <None Include="..\Languages\**" CopyToOutputDirectory="PreserveNewest" LinkBase="Languages" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Resources\EULA.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\EULA.txt">
