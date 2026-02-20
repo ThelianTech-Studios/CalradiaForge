@@ -14,9 +14,6 @@
 		[JsonProperty("displayName")]
 		public string DisplayName { get; set; } = string.Empty;
 
-		[JsonProperty("author")]
-		public string Author { get; set; } = string.Empty;
-
 		/// <summary>
 		/// Returns the display name for ComboBox <c>DisplayMemberPath</c> binding.
 		/// </summary>

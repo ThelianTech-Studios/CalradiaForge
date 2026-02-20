@@ -1,6 +1,7 @@
 ﻿namespace CalradiaForge.Core.Models
 	{
 	using Newtonsoft.Json;
+	// TODO: Placeholder for future advanced load order/sorting features.
 	public class DependenciesModulesModel
 		{
 
@@ -8,9 +9,9 @@
 			}
 
 		[JsonProperty("dependency_mod_id")]
-		public string DependencyModId { get; set; }
+		public string? DependencyModId { get; set; }
 		[JsonProperty("dependency_mod_version")]
-		public string DependencyModVersion { get; set; }
+		public string? DependencyModVersion { get; set; }
 		[JsonProperty("is_optional")]
 		public bool IsOptional { get; set; }
 		[JsonProperty("has_version_requirement")]

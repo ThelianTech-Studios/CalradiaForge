@@ -19,23 +19,25 @@
 		public ModuleModel() { }
 
 		[JsonProperty("mod_name")]
-		public string ModuleName { get; set; }
+		public string? ModuleName { get; set; }
 
 		[JsonProperty("mod_version")]
-		public string ModuleVersion { get; set; }
+		public string? ModuleVersion { get; set; }
 
 		[JsonProperty("mod_id")]
-		public string ModuleId { get; set; }
+		public string? ModuleId { get; set; }
 
 		[JsonProperty("mod_url")]
 		public string? ModuleURL { get; set; }
 
+		// TODO: Placeholder for future advanced load order/sorting features.
 		[JsonProperty("install_path")]
-		public string InstallPath { get; set; }
+		public string? InstallPath { get; set; }
 
 		[JsonProperty("is_singleplayer_mod")]
 		public bool IsSinglePlayerMod { get; set; }
 
+		// TODO: Placeholder for future advanced load order/sorting features.
 		[JsonProperty("dependency_mods_list")]
 		public List<DependenciesModulesModel>? DependencyModules { get; set; }
 
