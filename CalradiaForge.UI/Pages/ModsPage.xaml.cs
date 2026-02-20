@@ -1,4 +1,4 @@
-namespace CalradiaForge.UI.Pages {
+ï»¿namespace CalradiaForge.UI.Pages {
 	using System;
 	using System.Collections.Generic;
 	using System.Collections.ObjectModel;
@@ -48,6 +48,24 @@ namespace CalradiaForge.UI.Pages {
 		private ModpackModel? _selectedModpack;
 		private LaunchTarget _activeLaunchTarget;
 		private Guid _installToastId;
+		private DateTime _lastExtractionProgressUpdate = DateTime.MinValue;
+
+		/// <summary>
+		/// Tracks whether the initial startup scan from <see cref="StartupRescanAsync"/>
+		/// has completed. Pre-scan calls to <see cref="ApplySelectedModpack"/> suppress
+		/// toast notifications to prevent duplicate toasts during the startup sequence
+		/// (constructor â†’ Loaded â†’ scan). Only the post-scan apply shows the toast.
+		/// Also gates <see cref="RefreshAvailableMods"/> and <see cref="RefreshModpackList"/>
+		/// to prevent duplicate work while the startup scan is still in progress.
+		/// </summary>
+		private bool _hasCompletedInitialScan;
+
+		/// <summary>
+		/// Minimum interval between extraction progress UI updates.
+		/// Prevents dispatcher flooding on fast SSDs where hundreds of
+		/// per-file events fire before the UI can render a single frame.
+		/// </summary>
+		private static readonly TimeSpan _extractionThrottleInterval = TimeSpan.FromMilliseconds(150);
 
 		/// <summary>
 		/// Shorthand accessor for the active translation strings.
@@ -60,9 +78,9 @@ namespace CalradiaForge.UI.Pages {
 		/// <see cref="ModpackStartupMode.AlwaysAsk"/> is active.
 		/// Has an empty load order so selecting it results in no mods loaded
 		/// and <see cref="CanStart"/> evaluating to <c>false</c>.
-		/// Identified exclusively via reference equality — never saved to disk.
+		/// Identified exclusively via reference equality â€” never saved to disk.
 		/// </summary>
-		private readonly ModpackModel _ghostModpack = new("— Select a modpack —", string.Empty, []);
+		private readonly ModpackModel _ghostModpack = new("â€” Select a modpack â€”", string.Empty, []);
 		#endregion
 
 		#region Observable Collections
@@ -155,6 +173,9 @@ namespace CalradiaForge.UI.Pages {
 		#region Constructor
 		/// <summary>
 		/// Initializes the mods page and wires UI bindings and services.
+		/// The constructor populates lists from cached data with toasts suppressed.
+		/// The authoritative scan and single toast fire happens later in
+		/// <see cref="StartupRescanAsync"/> triggered by the Loaded event.
 		/// </summary>
 		public ModsPage() {
 			InitializeComponent();
@@ -178,8 +199,10 @@ namespace CalradiaForge.UI.Pages {
 			_activeLaunchTarget = App.AppConfig.DefaultLaunchTarget;
 			UpdateLaunchTargetCheckmarks();
 
+			// Populate from cache with toasts suppressed â€” the startup scan
+			// in Loaded will apply the modpack authoritatively with toasts
 			PopulateAvailableModsFromCache();
-			PopulateModpackList();
+			PopulateModpackList(suppressToast: true);
 			UpdateCanStart();
 
 			// If an install was already running when the user navigated back,
@@ -189,23 +212,47 @@ namespace CalradiaForge.UI.Pages {
 				DependencyWarningText = T.Mods_InstallInProgress;
 			}
 
-			// Subscribe to service-level install events
+			// Subscribe/unsubscribe in Loaded/Unloaded to survive WPF's
+			// extra layout cycles that can fire Unloaded on cold start.
+			Loaded += ModsPage_Loaded;
+			Unloaded += ModsPage_Unloaded;
+		}
+
+		/// <summary>
+		/// Handles the Loaded event â€” subscribes to install service events
+		/// and kicks off the startup rescan. Using Loaded ensures handlers
+		/// are always wired even after WPF re-layout Unloaded/Loaded cycles.
+		/// <see cref="StartupRescanAsync"/> is the single authoritative startup
+		/// path â€” it scans, applies the modpack with toasts enabled, and sets
+		/// <see cref="_hasCompletedInitialScan"/>. All earlier calls from the
+		/// constructor run with toasts suppressed.
+		/// </summary>
+		private async void ModsPage_Loaded(object sender, RoutedEventArgs e) {
+			// Guard against duplicate subscriptions from repeated Loaded fires
+			_modInstaller.InstallProgressChanged -= OnInstallProgressChanged;
+			_modInstaller.InstallCompleted -= OnInstallCompleted;
+			_modInstaller.ExtractionProgressChanged -= OnExtractionProgressChanged;
+
 			_modInstaller.InstallProgressChanged += OnInstallProgressChanged;
 			_modInstaller.InstallCompleted += OnInstallCompleted;
 			_modInstaller.ExtractionProgressChanged += OnExtractionProgressChanged;
 
-			// Always scan on first load to catch mods added/removed between sessions.
-			// PopulateAvailableModsFromCache provides immediate UI content from cache
-			// while the async scan replaces it with the live file-system state.
-			Loaded += async (_, _) => {
-				await StartupRescanAsync();
-			};
+			// Re-sync install state in case Unloaded fired mid-install
+			if (_modInstaller.IsInstalling && _installToastId == Guid.Empty) {
+				IsInstalling = true;
+				DependencyWarningText = T.Mods_InstallInProgress;
+			}
 
-			Unloaded += (_, _) => {
-				_modInstaller.InstallProgressChanged -= OnInstallProgressChanged;
-				_modInstaller.InstallCompleted -= OnInstallCompleted;
-				_modInstaller.ExtractionProgressChanged -= OnExtractionProgressChanged;
-			};
+			await StartupRescanAsync();
+		}
+
+		/// <summary>
+		/// Handles the Unloaded event â€” unsubscribes from install service events.
+		/// </summary>
+		private void ModsPage_Unloaded(object sender, RoutedEventArgs e) {
+			_modInstaller.InstallProgressChanged -= OnInstallProgressChanged;
+			_modInstaller.InstallCompleted -= OnInstallCompleted;
+			_modInstaller.ExtractionProgressChanged -= OnExtractionProgressChanged;
 		}
 		#endregion
 
@@ -278,8 +325,20 @@ namespace CalradiaForge.UI.Pages {
 		/// archives, so it never resets mid-install.
 		/// Uses <see cref="ExtractionProgress.TimestampUtc"/> captured on the extraction
 		/// thread to avoid dispatcher-queue delay inflating the elapsed time.
+		/// Throttled to prevent dispatcher flooding on fast SSDs â€” only dispatches
+		/// a UI update when at least 150 ms have elapsed since the last one.
 		/// </summary>
 		private void OnExtractionProgressChanged(ExtractionProgress progress) {
+			// Throttle: skip this event if we updated the UI too recently.
+			// This runs on the extraction thread so use the event's own timestamp
+			// to avoid clock skew with dispatcher-queued DateTime.UtcNow calls.
+			DateTime now = progress.TimestampUtc;
+			bool isFinalUpdate = progress.BatchFilesExtracted >= progress.EstimatedTotalFiles;
+			if (!isFinalUpdate && (now - _lastExtractionProgressUpdate) < _extractionThrottleInterval) {
+				return;
+			}
+			_lastExtractionProgressUpdate = now;
+
 			Dispatcher.BeginInvoke(() => {
 				// Build the progress message
 				string archiveName = Path.GetFileNameWithoutExtension(progress.ArchiveFileName);
@@ -288,19 +347,19 @@ namespace CalradiaForge.UI.Pages {
 
 				// Calculate batch-level ETA using extraction-thread timestamps
 				string eta = string.Empty;
-				if (progress.BatchFilesExtracted > 20 && progress.EstimatedTotalFiles > 0) {
+				if (progress.BatchFilesExtracted > 5 && progress.EstimatedTotalFiles > 0) {
 					TimeSpan elapsed = progress.TimestampUtc - progress.BatchStartUtc;
-					if (elapsed.TotalSeconds > 1) {
+					if (elapsed.TotalMilliseconds > 250) {
 						double filesPerSec = progress.BatchFilesExtracted / elapsed.TotalSeconds;
 						if (filesPerSec > 0) {
 							int remaining = progress.EstimatedTotalFiles - progress.BatchFilesExtracted;
 							if (remaining > 0) {
 								TimeSpan timeLeft = TimeSpan.FromSeconds(remaining / filesPerSec);
 								eta = timeLeft.TotalSeconds < 5
-									? $" — {T.Common_AlmostDone}"
-									: $" — ~{FormatTimeRemaining(timeLeft)} {T.Common_Remaining}";
+									? $" â€” {T.Common_AlmostDone}"
+									: $" â€” ~{FormatTimeRemaining(timeLeft)} {T.Common_Remaining}";
 							} else {
-								eta = $" — {T.Common_AlmostDone}";
+								eta = $" â€” {T.Common_AlmostDone}";
 							}
 						}
 					}
@@ -370,12 +429,17 @@ namespace CalradiaForge.UI.Pages {
 		/// Loads all available modpacks from <see cref="ModpackService"/> into the ComboBox.
 		/// Selects the initial modpack based on <see cref="ModpackStartupMode"/>:
 		/// <list type="bullet">
-		///   <item><see cref="ModpackStartupMode.LastUsed"/> — restores the previously selected modpack by name.</item>
-		///   <item><see cref="ModpackStartupMode.AlwaysDefault"/> — selects the built-in "Vanilla" modpack.</item>
-		///   <item><see cref="ModpackStartupMode.AlwaysAsk"/> — inserts a ghost sentinel at index 0 and selects it.</item>
+		///   <item><see cref="ModpackStartupMode.LastUsed"/> â€” restores the previously selected modpack by name.</item>
+		///   <item><see cref="ModpackStartupMode.AlwaysDefault"/> â€” selects the built-in "Vanilla" modpack.</item>
+		///   <item><see cref="ModpackStartupMode.AlwaysAsk"/> â€” inserts a ghost sentinel at index 0 and selects it.</item>
 		/// </list>
 		/// </summary>
-		private void PopulateModpackList() {
+		/// <param name="suppressToast">
+		/// When <c>true</c>, the subsequent <see cref="ApplySelectedModpack"/> call
+		/// will not fire a missing-mods toast. Used during the constructor to avoid
+		/// duplicate toasts before <see cref="StartupRescanAsync"/> completes.
+		/// </param>
+		private void PopulateModpackList(bool suppressToast = false) {
 			ModPackComboBox.SelectionChanged -= ModPack_SelectionChanged;
 			ModpackList.Clear();
 
@@ -393,9 +457,9 @@ namespace CalradiaForge.UI.Pages {
 
 			ModPackComboBox.SelectionChanged += ModPack_SelectionChanged;
 
-			ApplySelectedModpack();
+			ApplySelectedModpack(showToast: !suppressToast);
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ModsPage: Populated modpack list.", new { Count = ModpackList.Count, StartupIndex = SelectedModpackIndex, AlwaysAsk = isAlwaysAsk });
+				_logger.Debug("ModsPage: Populated modpack list.", new { Count = ModpackList.Count, StartupIndex = SelectedModpackIndex, AlwaysAsk = isAlwaysAsk, SuppressToast = suppressToast });
 			}
 		}
 
@@ -444,7 +508,7 @@ namespace CalradiaForge.UI.Pages {
 		/// <summary>
 		/// Checks whether the given modpack is the ghost sentinel
 		/// used by the AlwaysAsk startup mode.
-		/// Uses reference equality — the ghost is a single instance.
+		/// Uses reference equality â€” the ghost is a single instance.
 		/// </summary>
 		private bool IsGhostModpack(ModpackModel? modpack) {
 			return ReferenceEquals(modpack, _ghostModpack);
@@ -470,8 +534,22 @@ namespace CalradiaForge.UI.Pages {
 		/// (added, deleted, or modified modpack files).
 		/// Preserves the ghost sentinel at index 0 if AlwaysAsk mode is active
 		/// and the user hasn't yet picked a real modpack.
+		/// Skipped if the initial startup scan has not yet completed,
+		/// because <see cref="StartupRescanAsync"/> handles the first apply.
 		/// </summary>
-		public void RefreshModpackList() {
+		/// <param name="suppressApply">
+		/// When <c>true</c>, skips the <see cref="ApplySelectedModpack"/> call
+		/// at the end. Used when the caller will apply the modpack separately
+		/// (e.g. <see cref="RefreshAvailableMods"/> follows immediately after).
+		/// </param>
+		public void RefreshModpackList(bool suppressApply = false) {
+			if (!_hasCompletedInitialScan) {
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("ModsPage: Skipping modpack refresh â€” initial scan not yet complete.");
+				}
+				return;
+			}
+
 			_modpackService.Refresh();
 
 			ModpackModel? previousModpack = _selectedModpack;
@@ -494,7 +572,7 @@ namespace CalradiaForge.UI.Pages {
 
 			// Restore previous selection
 			if (wasGhostSelected) {
-				// User hadn't picked yet — keep ghost selected at 0
+				// User hadn't picked yet â€” keep ghost selected at 0
 				SelectedModpackIndex = 0;
 			} else if (previousName is not null) {
 				int index = FindModpackIndexByName(previousName);
@@ -505,8 +583,11 @@ namespace CalradiaForge.UI.Pages {
 
 			ModPackComboBox.SelectionChanged += ModPack_SelectionChanged;
 
-			// Re-apply the selected modpack to update both lists
-			ApplySelectedModpack();
+			// Re-apply the selected modpack to update both lists,
+			// unless the caller will handle it (e.g. RefreshAvailableMods follows)
+			if (!suppressApply) {
+				ApplySelectedModpack();
+			}
 		}
 
 		#endregion
@@ -517,18 +598,25 @@ namespace CalradiaForge.UI.Pages {
 		/// Applies the currently selected modpack's load order to the dual lists.
 		/// If the ghost sentinel is selected, shows all mods as Available with
 		/// an empty load order and a prompt in the status text.
-		/// For real modpacks, validates entries against installed mods —
+		/// For real modpacks, validates entries against installed mods â€”
 		/// valid entries go to LoadOrder, missing entries are reported.
 		/// Mods not in the modpack remain in AvailableModsList.
 		/// </summary>
-		private void ApplySelectedModpack() {
+		/// <param name="showToast">
+		/// When <c>false</c>, missing-mod toast notifications are suppressed.
+		/// The status text (<see cref="DependencyWarningText"/>) is always updated
+		/// regardless of this flag. Defaults to <c>true</c> so post-startup callers
+		/// (user-driven ComboBox changes, manual refresh, install completion) always
+		/// show the toast without needing to pass a flag.
+		/// </param>
+		private void ApplySelectedModpack(bool showToast = true) {
 			CurrentLoadOrder.Clear();
 			AvailableModsList.Clear();
 			DependencyWarningText = string.Empty;
 
 			if (SelectedModpackIndex < 0 || SelectedModpackIndex >= ModpackList.Count) {
 				_selectedModpack = null;
-				// No modpack selected — all mods go to Available
+				// No modpack selected â€” all mods go to Available
 				foreach (ModuleModel mod in _modService.CurrentMods) {
 					AvailableModsList.Add(mod);
 				}
@@ -543,7 +631,7 @@ namespace CalradiaForge.UI.Pages {
 
 			_selectedModpack = ModpackList[SelectedModpackIndex];
 
-			// Ghost sentinel — empty load order, prompt user to pick
+			// Ghost sentinel â€” empty load order, prompt user to pick
 			if (IsGhostModpack(_selectedModpack)) {
 				foreach (ModuleModel mod in _modService.CurrentMods) {
 					AvailableModsList.Add(mod);
@@ -576,28 +664,31 @@ namespace CalradiaForge.UI.Pages {
 				}
 			}
 
-			// Rebuild available mods list — mods not in the load order
+			// Rebuild available mods list â€” mods not in the load order
 			foreach (ModuleModel mod in _modService.CurrentMods) {
 				if (string.IsNullOrEmpty(mod.ModuleId) || !loadOrderIds.Contains(mod.ModuleId)) {
 					AvailableModsList.Add(mod);
 				}
 			}
 
-			// Report missing mods via toast and status text
+			// Report missing mods â€” status text is always updated,
+			// toast is gated by the showToast parameter
 			if (missingModNames.Count > 0) {
 				string names = string.Join(", ", missingModNames);
 				DependencyWarningText = $"{missingModNames.Count} mod(s) not found: {names}";
 
-				// Build a line-per-mod message for the toast
-				string toastBody = string.Join("\n", missingModNames.Select(n => $"• {n}"));
-				App.Toasts.Show(new ToastRequest {
-					Title = $"{missingModNames.Count} {T.Toast_MissingMods}",
-					Message = toastBody,
-					Severity = ToastSeverity.Warning,
-					TemplateKey = ToastTemplateKeys.MissingMods,
-					Duration = TimeSpan.FromSeconds(10),
-					AllowClickDismiss = false
-				});
+				if (showToast) {
+					// Build a line-per-mod message for the toast
+					string toastBody = string.Join("\n", missingModNames.Select(n => $"â€¢ {n}"));
+					App.Toasts.Show(new ToastRequest {
+						Title = $"{missingModNames.Count} {T.Toast_MissingMods}",
+						Message = toastBody,
+						Severity = ToastSeverity.Warning,
+						TemplateKey = ToastTemplateKeys.MissingMods,
+						Duration = TimeSpan.FromSeconds(10),
+						AllowClickDismiss = false
+					});
+				}
 			}
 
 			// Refresh filtered views
@@ -614,7 +705,7 @@ namespace CalradiaForge.UI.Pages {
 
 		#endregion
 
-		#region Drag and Drop — IDropTarget
+		#region Drag and Drop â€” IDropTarget
 
 		/// <summary>
 		/// Called by GongSolutions during a drag hover to decide whether the drop is valid.
@@ -715,7 +806,7 @@ namespace CalradiaForge.UI.Pages {
 
 		/// <summary>
 		/// Filters both the load order and available mods lists based on search input.
-		/// Uses <see cref="ICollectionView.Filter"/> — items stay in their collections,
+		/// Uses <see cref="ICollectionView.Filter"/> â€” items stay in their collections,
 		/// only visibility changes. No items are moved or removed.
 		/// </summary>
 		private void SearchBox_TextChanged(object sender, TextChangedEventArgs e) {
@@ -744,6 +835,9 @@ namespace CalradiaForge.UI.Pages {
 		/// Handles modpack ComboBox selection changes.
 		/// When the user picks a real modpack after the ghost sentinel,
 		/// removes the ghost from the list so it can't be re-selected.
+		/// During startup (before <see cref="_hasCompletedInitialScan"/> is set),
+		/// toasts are suppressed because <see cref="StartupRescanAsync"/> will
+		/// apply the modpack authoritively with fresh data.
 		/// </summary>
 		private void ModPack_SelectionChanged(object sender, SelectionChangedEventArgs e) {
 			// If user picked a real modpack, remove the ghost sentinel
@@ -766,7 +860,9 @@ namespace CalradiaForge.UI.Pages {
 				ModPackComboBox.SelectionChanged += ModPack_SelectionChanged;
 			}
 
-			ApplySelectedModpack();
+			// Suppress toasts during startup â€” StartupRescanAsync owns the
+			// authoritative apply with fresh data and shows the toast once
+			ApplySelectedModpack(showToast: _hasCompletedInitialScan);
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("ModsPage: Modpack selection changed.", new { SelectedIndex = SelectedModpackIndex, SelectedName = _selectedModpack?.ModpackName });
 			}
@@ -778,12 +874,12 @@ namespace CalradiaForge.UI.Pages {
 		/// <summary>
 		/// Validates the game directory, opens a file dialog for archive selection,
 		/// and delegates the install to <see cref="ModInstaller.StartInstallAsync"/>.
-		/// The install runs on the service layer — surviving page navigation.
+		/// The install runs on the service layer â€” surviving page navigation.
 		/// Progress and completion are observed via service events.
 		/// Shows a persistent progress toast for the duration of the install.
 		/// </summary>
 		private void InstallModsButton_Click(object sender, RoutedEventArgs e) {
-			// Guard — service rejects duplicates, but skip the dialog too
+			// Guard â€” service rejects duplicates, but skip the dialog too
 			if (_modInstaller.IsInstalling) {
 				App.Toasts.Show(new ToastRequest {
 					Title = T.Toast_InstallInProgress,
@@ -831,7 +927,7 @@ namespace CalradiaForge.UI.Pages {
 				ProgressMax = 100
 			});
 
-			// Step 4: Kick off the install — service owns the task lifetime
+			// Step 4: Kick off the install â€” service owns the task lifetime
 			IsInstalling = true;
 			DependencyWarningText = $"Installing {dialog.FileNames.Length} archive(s)...";
 			_modInstaller.StartInstallAsync(dialog.FileNames);
@@ -890,7 +986,7 @@ namespace CalradiaForge.UI.Pages {
 		/// Skips persist and launch if the ghost sentinel is selected.
 		/// </summary>
 		private async void PlayButton_Click(object sender, RoutedEventArgs e) {
-			// Defensive — ghost should never reach here (CanStart is false)
+			// Defensive â€” ghost should never reach here (CanStart is false)
 			if (IsGhostModpack(_selectedModpack)) {
 				return;
 			}
@@ -1033,9 +1129,13 @@ namespace CalradiaForge.UI.Pages {
 		/// the UI reflects the actual file system state.
 		/// The cache provides instant UI population, but mods may have been
 		/// added or removed from the Modules directory between sessions.
+		/// This is the single authoritative startup path â€” the only call
+		/// that applies the modpack with toasts enabled during initial load.
+		/// Sets <see cref="_hasCompletedInitialScan"/> when finished so
+		/// subsequent navigation-triggered refreshes are no longer blocked.
 		/// </summary>
 		private async Task StartupRescanAsync() {
-			if (_modService.IsRefreshing) {
+			if (_hasCompletedInitialScan || _modService.IsRefreshing) {
 				return;
 			}
 			try {
@@ -1048,7 +1148,10 @@ namespace CalradiaForge.UI.Pages {
 				}
 				bool hasChanges = await _modService.RefreshAsync();
 				UpdateAvailableModsList();
-				ApplySelectedModpack();
+
+				// This is the single authoritative apply â€” toasts enabled
+				ApplySelectedModpack(showToast: true);
+
 				if (hasChanges) {
 					DependencyWarningText =
 						$"{_modService.AddedMods.Count} mod(s) added, " +
@@ -1069,7 +1172,7 @@ namespace CalradiaForge.UI.Pages {
 					});
 				}
 			} catch (OperationCanceledException) {
-				// Scan was cancelled — cache data remains in the UI
+				// Scan was cancelled â€” cache data remains in the UI
 			} catch (Exception ex) {
 				DependencyWarningText = $"Auto-scan failed: {ex.Message}";
 				App.Toasts.Show(new ToastRequest {
@@ -1078,6 +1181,7 @@ namespace CalradiaForge.UI.Pages {
 					Severity = ToastSeverity.Error
 				});
 			} finally {
+				_hasCompletedInitialScan = true;
 				IsRefreshing = false;
 				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 					_logger.Debug("ModsPage: Startup rescan finished.", new { Count = _modService.CurrentMods.Count });
@@ -1090,8 +1194,17 @@ namespace CalradiaForge.UI.Pages {
 		/// Called when navigating back to ModsPage to pick up any changes
 		/// from mod installations, deletions, cache clears, or rescans
 		/// performed elsewhere (e.g. mods removed from the game directory).
+		/// Skipped if the initial startup scan has not yet completed,
+		/// because <see cref="StartupRescanAsync"/> already covers the
+		/// same work and running both produces duplicate scans.
 		/// </summary>
 		public async void RefreshAvailableMods() {
+			if (!_hasCompletedInitialScan) {
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("ModsPage: Skipping refresh â€” initial scan not yet complete.");
+				}
+				return;
+			}
 			if (_modService.IsRefreshing) {
 				return;
 			}
@@ -1104,7 +1217,7 @@ namespace CalradiaForge.UI.Pages {
 				UpdateAvailableModsList();
 				ApplySelectedModpack();
 			} catch (OperationCanceledException) {
-				// Refresh was cancelled — no action needed
+				// Refresh was cancelled â€” no action needed
 			} catch (Exception ex) {
 				DependencyWarningText = $"Refresh failed: {ex.Message}";
 				App.Toasts.Show(new ToastRequest {
