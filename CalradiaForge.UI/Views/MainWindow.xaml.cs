@@ -105,9 +105,12 @@
 			int index = NavBarControler.SelectedIndex;
 			if (index >= 0 && index < _pages.Length) {
 				Page targetPage = _pages[index];
-				// Sync modpack and mod data when navigating back to ModsPage
+				// Sync modpack and mod data when navigating back to ModsPage.
+				// RefreshModpackList rebuilds the ComboBox only (suppressApply)
+				// because RefreshAvailableMods will scan, rebuild, and apply
+				// the modpack with a single authoritative toast.
 				if (targetPage is ModsPage modspage) {
-					modspage.RefreshModpackList();
+					modspage.RefreshModpackList(suppressApply: true);
 					modspage.RefreshAvailableMods();
 				}
 				MainContentFrame.Navigate(_pages[index]);
