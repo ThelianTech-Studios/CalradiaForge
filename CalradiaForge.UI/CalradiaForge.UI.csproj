@@ -46,6 +46,11 @@
     </Resource>
   </ItemGroup>
 
+  <!-- Copy language JSON files and manifest to output Languages\ folder -->
+  <ItemGroup>
+    <None Include="..\Languages\**" CopyToOutputDirectory="PreserveNewest" LinkBase="Languages" />
+  </ItemGroup>
+
   <ItemGroup>
     <Compile Update="Properties\Resources.Designer.cs">
       <DesignTime>True</DesignTime>
