@@ -1,0 +1,159 @@
+==============================
+CalradiaForge End-User License Agreement (EULA)
+Version 1.2 — 2026
+==================
+
+Trade Name Notice:
+ThelianTech™ is the trade name of the author and publisher of CalradiaForge. Use of this name, logo, or branding without explicit permission is prohibited. ThelianTech™ is not affiliated with, endorsed by, or sponsored by any third-party entity, including TaleWorlds Entertainment. All rights associated with this trade name, including common law trademark rights, are reserved. Public use, GitHub commit history, and other documented activity establish prior use of the name.
+
+---
+
+1. Definitions
+
+---
+
+Software: The CalradiaForge application, including binaries, source code, assets, documentation, branding, and all associated files.
+Official Distribution Sources: The official GitHub repository and NexusMods page published by ThelianTech.
+User: Any individual who downloads, installs, views, uses, or interacts with the Software.
+Contributor: Any individual who forks the repository and submits pull requests or proposed changes.
+
+---
+
+2. Grant of License
+
+---
+
+You are granted a limited, non-exclusive, non-transferable, revocable license to:
+
+* Download and use official compiled release versions for personal, non-commercial use
+* View the source code for transparency and contribution purposes
+* Share links to the Official Distribution Sources
+
+---
+
+3. Non-Commercial Use
+
+---
+
+* Voluntary donations, tips, sponsorships, or gratuities to the author are permitted.
+* No payment is required to access or use the Software.
+* Users may not sell, license, rent, lease, bundle, or commercially exploit the Software.
+* Monetized videos, streams, or reviews showing the Software are explicitly allowed and do not constitute commercial use.
+
+---
+
+4. No Derivatives or Modified Builds
+
+---
+
+Users may not:
+
+* Modify the Software
+* Create derivative works
+* Distribute modified versions
+* Distribute self-compiled versions
+* Mirror or repackage the Software
+
+All distribution must occur only through Official Distribution Sources.
+
+---
+
+5. Source Code Visibility and Compilation
+
+---
+
+* Source code is visible for education and contribution purposes.
+* Users are not permitted to compile the source for regular use or distribute compiled builds.
+* Official support is provided only for official release builds.
+
+---
+
+6. Independent Project Status & No Affiliation
+
+---
+
+* CalradiaForge is an independent, third-party software project developed and published by ThelianTech.
+* It is not affiliated with, endorsed by, sponsored by, approved by, or officially connected with TaleWorlds Entertainment or its affiliates.
+* References to game titles or fictional locations are descriptive only.
+* No partnership, joint venture, agency, or endorsement relationship is created or implied.
+
+---
+
+7. Third-Party Intellectual Property Notice
+
+---
+
+* "Mount & Blade", "Mount & Blade II: Bannerlord", "Bannerlord", "Calradia", and all related names, logos, characters, world elements, and assets are the intellectual property of their respective owners.
+* CalradiaForge does not include, reproduce, distribute, or modify proprietary game source code or protected in-game assets.
+* Use of such terminology is nominative and descriptive only.
+* Nothing in this EULA grants any rights to third-party intellectual property.
+
+---
+
+8. Ownership of CalradiaForge
+
+---
+
+All rights, title, and interest in and to the Software remain exclusively with ThelianTech™, including but not limited to:
+
+* Source code and compiled binaries
+* Software architecture and logic
+* User interface design and layout
+* Visual styling and themes
+* Application icons, logos, and branding
+* Documentation and written materials
+* Packaging and distribution artifacts
+
+No ownership rights are granted beyond the limited license expressly provided.
+
+---
+
+9. Contributor License Agreement (CLA)
+
+---
+
+By submitting a contribution, you assign all rights, title, and interest in that contribution to ThelianTech™.
+
+---
+
+10. Violation of License
+
+---
+
+Violation of this EULA results in immediate termination of your license to use the Software.
+
+---
+
+11. Disclaimer of Warranty
+
+---
+
+The Software is provided "AS IS", without warranty of any kind.
+
+---
+
+12. Limitation of Liability
+
+---
+
+ThelianTech™ shall not be liable for any damages arising from use of the Software.
+
+---
+
+13. Governing Law
+
+---
+
+This EULA is governed by the laws of the State of Utah, United States.
+
+---
+
+14. Acceptance
+
+---
+
+By downloading, installing, or using CalradiaForge, you agree to the terms of this EULA.
+
+==============================
+End of EULA
+===========

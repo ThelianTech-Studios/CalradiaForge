@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net10.0-windows</TargetFramework>
+    <TargetFramework>net10.0-windows7.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
@@ -10,20 +10,28 @@
     <RootNamespace>CalradiaForge.UI</RootNamespace>
     <SignAssembly>False</SignAssembly>
     <Title>CalradiaForge Launcher</Title>
-    <Authors>ThelianTech Studios</Authors>
+    <Authors>ThelianTech</Authors>
     <Product>$(Title)</Product>
-    <Copyright>Copyright ThelianTech Studios ©2026</Copyright>
+    <Copyright>Copyright © 2026 ThelianTech™</Copyright>
     <Description>An alternative game launcher for Mount &amp; Blade II: Bannerlord</Description>
     <NeutralLanguage>en-US</NeutralLanguage>
     <IncludeSymbols>False</IncludeSymbols>
+    <PackageProjectUrl>https://github.com/ThelianTech/CalradiaForge</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/ThelianTech/CalradiaForge</RepositoryUrl>
+    <PackageReleaseNotes>Beta v0.9.22</PackageReleaseNotes>
+    <Version>0.9.22</Version>
+    <PackageLicenseFile>EULA.txt</PackageLicenseFile>
+    <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+    <GenerateAssemblyInfo>True</GenerateAssemblyInfo>
+    <DebugType>embedded</DebugType>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+    <GenerateAssemblyInfo>True</GenerateAssemblyInfo>
+    <DebugType>embedded</DebugType>
   </PropertyGroup>
 
   <ItemGroup>
@@ -49,6 +57,12 @@
   <!-- Copy language JSON files and manifest to output Languages\ folder -->
   <ItemGroup>
     <None Include="..\Languages\**" CopyToOutputDirectory="PreserveNewest" LinkBase="Languages" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\EULA.txt">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
