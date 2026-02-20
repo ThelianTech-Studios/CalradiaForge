@@ -72,7 +72,7 @@
 				if (presetElement is null || !string.Equals(presetElement.Name.LocalName, "Preset", StringComparison.OrdinalIgnoreCase)) {
 					_logger.Warning("NovusConverter: Root element is not <Preset>.");
 					return null;
-					}
+				}
 
 				string name = presetElement.Attribute("Name")?.Value?.Trim() ?? string.Empty;
 				string createdBy = presetElement.Attribute("CreatedBy")?.Value?.Trim() ?? "Unknown";
@@ -80,14 +80,14 @@
 				if (string.IsNullOrWhiteSpace(name)) {
 					_logger.Warning("NovusConverter: Preset has no Name attribute.");
 					return null;
-					}
+				}
 
 				List<ModpackEntryModel> loadOrder = ParseModuleEntries(presetElement);
 
 				if (loadOrder.Count == 0) {
 					_logger.Warning($"NovusConverter: Preset '{name}' has no module entries.");
 					return null;
-					}
+				}
 
 				ModpackModel modpack = new() {
 					ModpackName = name,
@@ -108,7 +108,7 @@
 				}
 				return null;
 			}
-			}
+		}
 
 		/// <summary>
 		/// Parses all <c>&lt;PresetModule&gt;</c> child elements from the <c>&lt;Preset&gt;</c> root.
@@ -128,7 +128,7 @@
 						_logger.Debug("NovusConverter: Skipping module with empty Id.");
 					}
 					continue;
-					}
+				}
 
 				entries.Add(new ModpackEntryModel {
 					ModuleId = id,
@@ -139,6 +139,6 @@
 			}
 
 			return entries;
-			}
+		}
 	}
 }

@@ -145,12 +145,18 @@
 		#region INotifyPropertyChanged
 		public event PropertyChangedEventHandler? PropertyChanged;
 
+		/// <summary>
+		/// Raises a <see cref="PropertyChanged"/> notification for the specified property.
+		/// </summary>
 		protected void OnPropertyChanged([CallerMemberName] string name = "") {
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 		}
 		#endregion
 
 		#region Constructor
+		/// <summary>
+		/// Initializes the modpacks page and populates initial lists.
+		/// </summary>
 		public ModpacksPage() {
 			InitializeComponent();
 			DataContext = this;
@@ -548,20 +554,23 @@
 		/// Mirrors the pattern used by <c>UpdateLaunchTargetCheckmarks</c> on ModsPage.
 		/// </summary>
 		private void UpdateTemplateCheckmarks() {
-			CheckVanilla.Visibility=_pendingTemplate==ModpackTemplate.Vanilla
+			CheckVanilla.Visibility = _pendingTemplate == ModpackTemplate.Vanilla
 				? Visibility.Visible
 				: Visibility.Collapsed;
-			CheckButterLib.Visibility=_pendingTemplate==ModpackTemplate.ButterLib
+			CheckButterLib.Visibility = _pendingTemplate == ModpackTemplate.ButterLib
 				? Visibility.Visible
 				: Visibility.Collapsed;
-			CheckVanillaWarSails.Visibility=_pendingTemplate==ModpackTemplate.VanillaWarSails
+			CheckVanillaWarSails.Visibility = _pendingTemplate == ModpackTemplate.VanillaWarSails
 				? Visibility.Visible
 				: Visibility.Collapsed;
-			CheckButterLibWarSails.Visibility=_pendingTemplate==ModpackTemplate.ButterLibWarSails
+			CheckButterLibWarSails.Visibility = _pendingTemplate == ModpackTemplate.ButterLibWarSails
 				? Visibility.Visible
 				: Visibility.Collapsed;
-			}
+		}
 
+		/// <summary>
+		/// Displays the create panel for the specified template selection.
+		/// </summary>
 		private void ShowCreatePanel(ModpackTemplate template) {
 			_pendingTemplate = template;
 			InputModpackName = string.Empty;
@@ -570,12 +579,18 @@
 			CreateNameBox.Focus();
 		}
 
+		/// <summary>
+		/// Hides the create panel and clears input fields.
+		/// </summary>
 		private void HideCreatePanel() {
 			IsCreatePanelVisible = Visibility.Collapsed;
 			InputModpackName = string.Empty;
 			InputCreatedBy = string.Empty;
 		}
 
+		/// <summary>
+		/// Confirms creation of a new modpack using the current template selection.
+		/// </summary>
 		private void CreateConfirmButton_Click(object sender, RoutedEventArgs e) {
 			string name = InputModpackName?.Trim() ?? string.Empty;
 			string createdBy = InputCreatedBy?.Trim() ?? string.Empty;
@@ -630,6 +645,9 @@
 			}
 		}
 
+		/// <summary>
+		/// Cancels modpack creation and resets the create panel.
+		/// </summary>
 		private void CreateCancelButton_Click(object sender, RoutedEventArgs e) {
 			HideCreatePanel();
 			StatusText = string.Empty;

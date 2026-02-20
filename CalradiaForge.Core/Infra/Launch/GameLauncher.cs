@@ -10,7 +10,7 @@
 	using CalradiaForge.Core.Infra.Paths;
 	using CalradiaForge.Core.Models;
 
-	
+
 
 	// TODO: Implement launcher config write for Epic/GamePass platforms.
 	// The approach (similar to Novus Launcher) would be:
@@ -36,6 +36,9 @@
 		private readonly AppConfigSettings _config;
 		private readonly Logger _logger = Logger.Instance;
 
+		/// <summary>
+		/// Initializes a new launcher using the provided configuration.
+		/// </summary>
 		public GameLauncher(AppConfigSettings config) {
 			_config = config ?? throw new ArgumentNullException(nameof(config));
 		}

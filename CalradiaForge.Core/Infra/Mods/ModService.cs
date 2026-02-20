@@ -1,10 +1,10 @@
 ﻿namespace CalradiaForge.Core.Infra.Mods {
 	using System;
 	using System.Collections.Generic;
+	using System.Diagnostics;
 	using System.Linq;
 	using System.Threading;
 	using System.Threading.Tasks;
-	using System.Diagnostics;
 
 	using CalradiaForge.Core.Infra.Config;
 	using CalradiaForge.Core.Infra.Logging;
@@ -51,6 +51,9 @@
 		/// </summary>
 		public bool IsRefreshing { get; private set; }
 
+		/// <summary>
+		/// Initializes a new mod service with configuration and cache dependencies.
+		/// </summary>
 		public ModService(AppConfigSettings appConfig, ModsData modsData) {
 			_appConfig = appConfig ?? throw new ArgumentNullException(nameof(appConfig));
 			_modsData = modsData ?? throw new ArgumentNullException(nameof(modsData));
@@ -192,11 +195,11 @@
 					RemovedCount = RemovedMods.Count,
 					Added = addedNames,
 					Removed = removedNames
-					});
-				}
+				});
+			}
 
 			return AddedMods.Count > 0 || RemovedMods.Count > 0;
-			}
+		}
 
 		#endregion
 	}

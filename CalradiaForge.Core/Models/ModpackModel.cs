@@ -1,5 +1,4 @@
-﻿namespace CalradiaForge.Core.Models
-	{
+﻿namespace CalradiaForge.Core.Models {
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
@@ -11,17 +10,22 @@
 	/// Modpacks are serialized to JSON files in the Modpacks directory.
 	/// The filename on disk is derived from <see cref="ModpackName"/> via sanitization.
 	/// </summary>
-	public sealed class ModpackModel
-		{
+	public sealed class ModpackModel {
 
+		/// <summary>
+		/// Initializes an empty modpack model for serialization.
+		/// </summary>
 		public ModpackModel() { }
 
-		public ModpackModel(string modpackName,string createdBy,List<ModpackEntryModel> loadOrder) {
-			ModpackName=modpackName;
-			CreatedBy=createdBy;
-			LastUpdated=DateTime.Now.ToString("yyyy-MM-dd");
-			LoadOrder=loadOrder;
-			}
+		/// <summary>
+		/// Initializes a modpack model with metadata and load order.
+		/// </summary>
+		public ModpackModel(string modpackName, string createdBy, List<ModpackEntryModel> loadOrder) {
+			ModpackName = modpackName;
+			CreatedBy = createdBy;
+			LastUpdated = DateTime.Now.ToString("yyyy-MM-dd");
+			LoadOrder = loadOrder;
+		}
 
 		/// <summary>
 		/// Human-friendly display name of the modpack (shown in UI lists).
@@ -59,12 +63,12 @@
 		/// </summary>
 		public ModpackModel Clone() {
 			return new ModpackModel {
-				ModpackName=ModpackName,
-				CreatedBy=CreatedBy,
-				LastUpdated=LastUpdated,
-				FileName=FileName,
-				LoadOrder=LoadOrder.Select(e => e.Clone()).ToList()
-				};
-			}
+				ModpackName = ModpackName,
+				CreatedBy = CreatedBy,
+				LastUpdated = LastUpdated,
+				FileName = FileName,
+				LoadOrder = LoadOrder.Select(e => e.Clone()).ToList()
+			};
 		}
 	}
+}

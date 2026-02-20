@@ -29,6 +29,9 @@ namespace CalradiaForge.UI.Toasts {
 
 		private readonly Action<Guid> _closeCallback;
 
+		/// <summary>
+		/// Initializes a toast view model with a callback used to close the toast.
+		/// </summary>
 		public ToastViewModel(Action<Guid> closeCallback) {
 			_closeCallback = closeCallback ?? throw new ArgumentNullException(nameof(closeCallback));
 			CloseCommand = new RelayCommand(() => _closeCallback(Id));
@@ -113,7 +116,13 @@ namespace CalradiaForge.UI.Toasts {
 		public ICommand ClickDismissCommand { get; }
 
 		#region INotifyPropertyChanged
+		/// <summary>
+		/// Raised when a bound property value changes.
+		/// </summary>
 		public event PropertyChangedEventHandler? PropertyChanged;
+		/// <summary>
+		/// Raises a <see cref="PropertyChanged"/> notification.
+		/// </summary>
 		private void OnPropertyChanged([CallerMemberName] string name = "") {
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 		}
@@ -127,17 +136,29 @@ namespace CalradiaForge.UI.Toasts {
 		private readonly Action _execute;
 		private readonly Func<bool>? _canExecute;
 
+		/// <summary>
+		/// Initializes a relay command with execute and optional can-execute delegates.
+		/// </summary>
 		public RelayCommand(Action execute, Func<bool>? canExecute = null) {
 			_execute = execute ?? throw new ArgumentNullException(nameof(execute));
 			_canExecute = canExecute;
 		}
 
+		/// <summary>
+		/// Occurs when the ability to execute the command has changed.
+		/// </summary>
 		public event EventHandler? CanExecuteChanged {
 			add => CommandManager.RequerySuggested += value;
 			remove => CommandManager.RequerySuggested -= value;
 		}
 
+		/// <summary>
+		/// Determines whether the command can execute.
+		/// </summary>
 		public bool CanExecute(object? parameter) => _canExecute?.Invoke() ?? true;
+		/// <summary>
+		/// Executes the command action.
+		/// </summary>
 		public void Execute(object? parameter) => _execute();
 	}
 }

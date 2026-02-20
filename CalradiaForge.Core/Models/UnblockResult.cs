@@ -17,8 +17,10 @@
 				return "No files needed to be unblocked.";
 			}
 			List<string> parts = [];
-			if (UnblockedCount > 0) parts.Add($"{UnblockedCount} file(s) unblocked");
-			if (FailedCount > 0) parts.Add($"{FailedCount} file(s) failed to unblock");
+			if (UnblockedCount > 0)
+				parts.Add($"{UnblockedCount} file(s) unblocked");
+			if (FailedCount > 0)
+				parts.Add($"{FailedCount} file(s) failed to unblock");
 			return string.Join(", ", parts);
 		}
 	}

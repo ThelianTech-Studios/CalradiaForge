@@ -13,9 +13,15 @@ public static class NavMenuProperties {
 			"IconPadding", typeof(Thickness), typeof(NavMenuProperties),
 			new FrameworkPropertyMetadata(new Thickness(0), FrameworkPropertyMetadataOptions.Inherits));
 
+	/// <summary>
+	/// Sets the icon padding for a navigation menu item.
+	/// </summary>
 	public static void SetIconPadding(DependencyObject element, Thickness value)
 		=> element.SetValue(IconPaddingProperty, value);
 
+	/// <summary>
+	/// Gets the icon padding for a navigation menu item.
+	/// </summary>
 	public static Thickness GetIconPadding(DependencyObject element)
 		=> (Thickness)element.GetValue(IconPaddingProperty);
 
@@ -25,9 +31,15 @@ public static class NavMenuProperties {
 			"TextPadding", typeof(Thickness), typeof(NavMenuProperties),
 			new FrameworkPropertyMetadata(new Thickness(0), FrameworkPropertyMetadataOptions.Inherits));
 
+	/// <summary>
+	/// Sets the text padding for a navigation menu item.
+	/// </summary>
 	public static void SetTextPadding(DependencyObject element, Thickness value)
 		=> element.SetValue(TextPaddingProperty, value);
 
+	/// <summary>
+	/// Gets the text padding for a navigation menu item.
+	/// </summary>
 	public static Thickness GetTextPadding(DependencyObject element)
 		=> (Thickness)element.GetValue(TextPaddingProperty);
 
@@ -37,9 +49,15 @@ public static class NavMenuProperties {
 			"TextMargin", typeof(Thickness), typeof(NavMenuProperties),
 			new FrameworkPropertyMetadata(new Thickness(0, 5, 0, 0), FrameworkPropertyMetadataOptions.Inherits));
 
+	/// <summary>
+	/// Sets the text margin for a navigation menu item.
+	/// </summary>
 	public static void SetTextMargin(DependencyObject element, Thickness value)
 		=> element.SetValue(TextMarginProperty, value);
 
+	/// <summary>
+	/// Gets the text margin for a navigation menu item.
+	/// </summary>
 	public static Thickness GetTextMargin(DependencyObject element)
 		=> (Thickness)element.GetValue(TextMarginProperty);
 }

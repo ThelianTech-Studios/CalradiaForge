@@ -1,5 +1,4 @@
-﻿namespace CalradiaForge.Core.Infra.Modpacks
-	{
+﻿namespace CalradiaForge.Core.Infra.Modpacks {
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
@@ -17,8 +16,7 @@
 	/// When installed mods are available, version data is pulled from the live install.
 	/// Otherwise, hardcoded fallback versions are used per entry.
 	/// </remarks>
-	public static class VanillaModules
-		{
+	public static class VanillaModules {
 		private static readonly Logger _logger = Logger.Instance;
 		/// <summary>
 		/// Display name used for the built-in vanilla modpack template.
@@ -86,7 +84,7 @@
 		/// </remarks>
 		public static List<ModpackEntryModel> GetDefaultLoadOrder() {
 			return GetDefaultLoadOrder(null);
-			}
+		}
 
 		/// <summary>
 		/// Returns the default vanilla module load order, resolving version data
@@ -99,7 +97,7 @@
 		/// </param>
 		public static List<ModpackEntryModel> GetDefaultLoadOrder(List<ModuleModel>? installedMods) {
 			return BuildFromTemplate(VanillaEntries, installedMods);
-			}
+		}
 
 		#endregion
 
@@ -117,7 +115,7 @@
 		/// </remarks>
 		public static List<ModpackEntryModel> GetButterLibLoadOrder() {
 			return GetButterLibLoadOrder(null);
-			}
+		}
 
 		/// <summary>
 		/// Returns the ButterLib suite module load order, resolving version data
@@ -129,9 +127,9 @@
 		/// When <c>null</c> or empty, fallback versions are used for all entries.
 		/// </param>
 		public static List<ModpackEntryModel> GetButterLibLoadOrder(List<ModuleModel>? installedMods) {
-			List<(string Id, string Name, string FallbackVersion)> template = [..ButterLibEntries, ..VanillaEntries];
+			List<(string Id, string Name, string FallbackVersion)> template = [.. ButterLibEntries, .. VanillaEntries];
 			return BuildFromTemplate(template, installedMods);
-			}
+		}
 
 		#endregion
 
@@ -147,7 +145,7 @@
 		/// </remarks>
 		public static List<ModpackEntryModel> GetDefaultWarSailsLoadOrder() {
 			return GetDefaultWarSailsLoadOrder(null);
-			}
+		}
 
 		/// <summary>
 		/// Returns the vanilla + WarSails DLC module load order, resolving version data
@@ -157,9 +155,9 @@
 		/// Currently installed mods for version resolution. May be <c>null</c>.
 		/// </param>
 		public static List<ModpackEntryModel> GetDefaultWarSailsLoadOrder(List<ModuleModel>? installedMods) {
-			List<(string Id, string Name, string FallbackVersion)> template = [..VanillaEntries, ..WarSailsEntries];
+			List<(string Id, string Name, string FallbackVersion)> template = [.. VanillaEntries, .. WarSailsEntries];
 			return BuildFromTemplate(template, installedMods);
-			}
+		}
 
 		#endregion
 
@@ -176,7 +174,7 @@
 		/// </remarks>
 		public static List<ModpackEntryModel> GetButterLibWarSailsLoadOrder() {
 			return GetButterLibWarSailsLoadOrder(null);
-			}
+		}
 
 		/// <summary>
 		/// Returns the ButterLib + WarSails DLC module load order, resolving version data
@@ -186,9 +184,9 @@
 		/// Currently installed mods for version resolution. May be <c>null</c>.
 		/// </param>
 		public static List<ModpackEntryModel> GetButterLibWarSailsLoadOrder(List<ModuleModel>? installedMods) {
-			List<(string Id, string Name, string FallbackVersion)> template = [..ButterLibEntries, ..VanillaEntries, ..WarSailsEntries];
+			List<(string Id, string Name, string FallbackVersion)> template = [.. ButterLibEntries, .. VanillaEntries, .. WarSailsEntries];
 			return BuildFromTemplate(template, installedMods);
-			}
+		}
 
 		#endregion
 
@@ -230,7 +228,7 @@
 			}
 
 			return result;
-			}
+		}
 
 		#endregion
 
@@ -244,7 +242,7 @@
 		/// <returns>A new <see cref="ModpackModel"/> with the vanilla module set.</returns>
 		public static ModpackModel CreateDefaultModpack(string createdBy = "CalradiaForge", List<ModuleModel>? installedMods = null) {
 			return new ModpackModel(DefaultModpackName, createdBy, GetDefaultLoadOrder(installedMods));
-			}
+		}
 
 		/// <summary>
 		/// Creates a complete <see cref="ModpackModel"/> pre-populated with the ButterLib suite load order.
@@ -255,7 +253,7 @@
 		/// <returns>A new <see cref="ModpackModel"/> with the ButterLib suite module set.</returns>
 		public static ModpackModel CreateButterLibModpack(string createdBy = "CalradiaForge", List<ModuleModel>? installedMods = null) {
 			return new ModpackModel(ButterLibModpackName, createdBy, GetButterLibLoadOrder(installedMods));
-			}
+		}
 
 		/// <summary>
 		/// Creates a complete <see cref="ModpackModel"/> pre-populated with the vanilla + WarSails DLC load order.
@@ -265,7 +263,7 @@
 		/// <returns>A new <see cref="ModpackModel"/> with the vanilla + WarSails module set.</returns>
 		public static ModpackModel CreateDefaultWarSailsModpack(string createdBy = "CalradiaForge", List<ModuleModel>? installedMods = null) {
 			return new ModpackModel(VanillaWarSailsModpackName, createdBy, GetDefaultWarSailsLoadOrder(installedMods));
-			}
+		}
 
 		/// <summary>
 		/// Creates a complete <see cref="ModpackModel"/> pre-populated with the ButterLib + WarSails DLC load order.
@@ -275,8 +273,8 @@
 		/// <returns>A new <see cref="ModpackModel"/> with the ButterLib + WarSails module set.</returns>
 		public static ModpackModel CreateButterLibWarSailsModpack(string createdBy = "CalradiaForge", List<ModuleModel>? installedMods = null) {
 			return new ModpackModel(ButterLibWarSailsModpackName, createdBy, GetButterLibWarSailsLoadOrder(installedMods));
-			}
+		}
 
 		#endregion
-		}
 	}
+}

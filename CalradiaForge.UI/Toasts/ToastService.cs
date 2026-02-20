@@ -20,9 +20,18 @@ namespace CalradiaForge.UI.Toasts {
 		private readonly Dictionary<Guid, DispatcherTimer> _timers = [];
 		private readonly TimeSpan _closeAnimationDuration = TimeSpan.FromMilliseconds(160);
 
+		/// <summary>
+		/// Gets the collection of currently visible toasts.
+		/// </summary>
 		public ObservableCollection<ToastViewModel> VisibleToasts { get; } = [];
+		/// <summary>
+		/// Gets the maximum number of visible toasts allowed at once.
+		/// </summary>
 		public int MaxVisible { get; } = 3;
 
+		/// <summary>
+		/// Initializes the toast service with the dispatcher used for UI updates.
+		/// </summary>
 		public ToastService(Dispatcher dispatcher) {
 			_dispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
 		}
@@ -78,6 +87,9 @@ namespace CalradiaForge.UI.Toasts {
 
 		#region Internal
 
+		/// <summary>
+		/// Creates a view model instance from the toast request.
+		/// </summary>
 		private ToastViewModel CreateViewModel(ToastRequest request) {
 			ToastViewModel viewModel = new(Close) {
 				Title = request.Title,
@@ -97,6 +109,9 @@ namespace CalradiaForge.UI.Toasts {
 			return viewModel;
 		}
 
+		/// <summary>
+		/// Inserts a toast into the visible list, evicting the oldest when full.
+		/// </summary>
 		private void InsertToast(ToastViewModel viewModel) {
 			if (VisibleToasts.Count >= MaxVisible) {
 				ToastViewModel oldest = VisibleToasts.Last();
@@ -106,6 +121,9 @@ namespace CalradiaForge.UI.Toasts {
 			VisibleToasts.Insert(0, viewModel);
 		}
 
+		/// <summary>
+		/// Starts the auto-dismiss timer for the specified toast.
+		/// </summary>
 		private void StartTimer(ToastViewModel viewModel, TimeSpan duration) {
 			DispatcherTimer timer = new() {
 				Interval = duration
@@ -120,6 +138,9 @@ namespace CalradiaForge.UI.Toasts {
 			timer.Start();
 		}
 
+		/// <summary>
+		/// Closes the toast and optionally animates its removal.
+		/// </summary>
 		private void CloseInternal(Guid toastId, bool animate) {
 			ToastViewModel? viewModel = VisibleToasts.FirstOrDefault(t => t.Id == toastId);
 			if (viewModel is null) {
@@ -137,6 +158,9 @@ namespace CalradiaForge.UI.Toasts {
 			_ = RemoveAfterDelayAsync(viewModel);
 		}
 
+		/// <summary>
+		/// Removes a toast after the close animation delay.
+		/// </summary>
 		private async Task RemoveAfterDelayAsync(ToastViewModel viewModel) {
 			await Task.Delay(_closeAnimationDuration);
 			_dispatcher.Invoke(() => {
@@ -144,6 +168,9 @@ namespace CalradiaForge.UI.Toasts {
 			});
 		}
 
+		/// <summary>
+		/// Stops and removes the timer associated with a toast.
+		/// </summary>
 		private void StopTimer(Guid toastId) {
 			if (_timers.TryGetValue(toastId, out DispatcherTimer? timer)) {
 				timer.Stop();
@@ -151,6 +178,9 @@ namespace CalradiaForge.UI.Toasts {
 			}
 		}
 
+		/// <summary>
+		/// Pauses a toast timer and records remaining time.
+		/// </summary>
 		private void PauseInternal(Guid toastId) {
 			ToastViewModel? viewModel = VisibleToasts.FirstOrDefault(t => t.Id == toastId);
 			if (viewModel is null || viewModel.IsPersistent || !viewModel.IsTimerRunning) {
@@ -165,6 +195,9 @@ namespace CalradiaForge.UI.Toasts {
 			}
 		}
 
+		/// <summary>
+		/// Resumes a paused toast timer.
+		/// </summary>
 		private void ResumeInternal(Guid toastId) {
 			ToastViewModel? viewModel = VisibleToasts.FirstOrDefault(t => t.Id == toastId);
 			if (viewModel is null || viewModel.IsPersistent || viewModel.IsTimerRunning) {
@@ -184,6 +217,9 @@ namespace CalradiaForge.UI.Toasts {
 			}
 		}
 
+		/// <summary>
+		/// Returns a default display duration for the specified severity.
+		/// </summary>
 		private static TimeSpan GetDefaultDuration(ToastSeverity severity) {
 			return severity switch {
 				ToastSeverity.Success => TimeSpan.FromSeconds(5),
@@ -193,6 +229,9 @@ namespace CalradiaForge.UI.Toasts {
 			};
 		}
 
+		/// <summary>
+		/// Resolves the accent brush associated with a toast severity.
+		/// </summary>
 		private static Brush ResolveAccentBrush(ToastSeverity severity) {
 			string key = severity switch {
 				ToastSeverity.Success => "TB.Acc.Gold",
@@ -204,6 +243,9 @@ namespace CalradiaForge.UI.Toasts {
 			return (Brush)Application.Current.FindResource(key);
 		}
 
+		/// <summary>
+		/// Resolves the icon kind associated with a toast severity.
+		/// </summary>
 		private static PackIconMaterialKind ResolveIconKind(ToastSeverity severity) {
 			return severity switch {
 				ToastSeverity.Success => PackIconMaterialKind.CheckCircleOutline,
@@ -217,6 +259,9 @@ namespace CalradiaForge.UI.Toasts {
 
 		#region Dispatcher Helpers
 
+		/// <summary>
+		/// Executes an action on the UI thread.
+		/// </summary>
 		private void RunOnUiThread(Action action) {
 			if (_dispatcher.CheckAccess()) {
 				action();
@@ -226,6 +271,9 @@ namespace CalradiaForge.UI.Toasts {
 			_dispatcher.Invoke(action);
 		}
 
+		/// <summary>
+		/// Executes a function on the UI thread and returns its result.
+		/// </summary>
 		private T RunOnUiThread<T>(Func<T> func) {
 			if (_dispatcher.CheckAccess()) {
 				return func();

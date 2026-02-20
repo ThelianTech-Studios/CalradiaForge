@@ -1,22 +1,26 @@
-﻿	namespace CalradiaForge.Core.Models
-	{
+﻿namespace CalradiaForge.Core.Models {
 	using Newtonsoft.Json;
 
 	/// <summary>
 	/// Represents a single module entry inside a modpack's load order.
 	/// Contains the minimum data needed to identify and locate the module.
 	/// </summary>
-	public sealed class ModpackEntryModel
-		{
+	public sealed class ModpackEntryModel {
 
+		/// <summary>
+		/// Initializes an empty modpack entry.
+		/// </summary>
 		public ModpackEntryModel() { }
 
-		public ModpackEntryModel(string moduleId,string moduleName,string requiredVersion,string? moduleUrl = null) {
-			ModuleId=moduleId;
-			ModuleName=moduleName;
-			RequiredVersion=requiredVersion;
-			ModuleURL=moduleUrl;
-			}
+		/// <summary>
+		/// Initializes a modpack entry with module metadata.
+		/// </summary>
+		public ModpackEntryModel(string moduleId, string moduleName, string requiredVersion, string? moduleUrl = null) {
+			ModuleId = moduleId;
+			ModuleName = moduleName;
+			RequiredVersion = requiredVersion;
+			ModuleURL = moduleUrl;
+		}
 
 		/// <summary>
 		/// Module identifier used to match against installed <see cref="ModuleModel.ModuleId"/>.
@@ -47,11 +51,11 @@
 		/// </summary>
 		public ModpackEntryModel Clone() {
 			return new ModpackEntryModel {
-				ModuleId=ModuleId,
-				ModuleName=ModuleName,
-				RequiredVersion=RequiredVersion,
-				ModuleURL=ModuleURL
-				};
-			}
+				ModuleId = ModuleId,
+				ModuleName = ModuleName,
+				RequiredVersion = RequiredVersion,
+				ModuleURL = ModuleURL
+			};
 		}
 	}
+}

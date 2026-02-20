@@ -64,12 +64,18 @@
 
 		#region INotifyPropertyChanged
 		public event PropertyChangedEventHandler? PropertyChanged;
+		/// <summary>
+		/// Raises a <see cref="PropertyChanged"/> notification for the specified property.
+		/// </summary>
 		protected void OnPropertyChanged([CallerMemberName] string name = "") {
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 		}
 		#endregion
 
 		#region Constructor
+		/// <summary>
+		/// Initializes the settings page and loads current configuration values.
+		/// </summary>
 		public SettingsPage() {
 			InitializeComponent();
 			DataContext = this;
@@ -151,7 +157,7 @@
 					SteamWorkshopFolderPath,
 					BLSEExePath,
 					DebugMode = _config.DebugMode
-					});
+				});
 			}
 		}
 
@@ -352,11 +358,11 @@
 		/// </summary>
 		private void SelectGameFolder_Click(object sender, RoutedEventArgs e) {
 			string? selectedPath;
-			OpenFolderDialog dialogWindow = new() {Title="Select Bannerlord Game Folder"};
-				if (dialogWindow.ShowDialog() != true) {
-					return;
-					}
-				selectedPath = dialogWindow.FolderName;
+			OpenFolderDialog dialogWindow = new() { Title = "Select Bannerlord Game Folder" };
+			if (dialogWindow.ShowDialog() != true) {
+				return;
+			}
+			selectedPath = dialogWindow.FolderName;
 
 			if (!GamePathValidator.ValidateGameFolder(selectedPath, out string error)) {
 				_logger.Warning($"SettingsPage: Game folder validation failed: {error}");
@@ -387,12 +393,12 @@
 			OpenFileDialog dialogWindow = new OpenFileDialog() {
 				Title = "Select Bannerlord Executable",
 				Filter = "Executable Files (*.exe)|*.exe",
-				CheckFileExists =true
-				};
-				if (dialogWindow.ShowDialog() != true) {
-					return;
-					}
-				selectedPath = dialogWindow.FileName;
+				CheckFileExists = true
+			};
+			if (dialogWindow.ShowDialog() != true) {
+				return;
+			}
+			selectedPath = dialogWindow.FileName;
 
 			if (!GamePathValidator.ValidateGameExecutable(selectedPath, out string error)) {
 				_logger.Warning($"SettingsPage: Executable validation failed: {error}");
@@ -419,12 +425,12 @@
 		private void SelectWorkshopFolder_Click(object sender, RoutedEventArgs e) {
 			string? selectedPath;
 			OpenFolderDialog dialogWindow = new() {
-				Title="Select Steam Workshop Folder"
-				};
-				if (dialogWindow.ShowDialog() != true) {
-					return;
-					}
-				selectedPath = dialogWindow.FolderName;
+				Title = "Select Steam Workshop Folder"
+			};
+			if (dialogWindow.ShowDialog() != true) {
+				return;
+			}
+			selectedPath = dialogWindow.FolderName;
 
 			if (!GamePathValidator.ValidateWorkshopFolder(selectedPath, out string error)) {
 				_logger.Warning($"SettingsPage: Workshop folder validation failed: {error}");
@@ -490,7 +496,7 @@
 				_logger.Debug("SettingsPage: Starting game detection.", new {
 					GameFolderPath = _config.GameFolderPath,
 					GameProvider = _config.GameProvider.ToString()
-					});
+				});
 			}
 			GamePathsHelper.TryAutoDetectGameFolder(_config);
 
@@ -510,7 +516,7 @@
 					SteamWorkshopFolderPath = _config.SteamWorkshopFolderPath,
 					BLSEExePath = _config.BLSEExePath,
 					GameProvider = _config.GameProvider.ToString()
-					});
+				});
 			}
 
 			bool detected = GamePathValidator.ValidateGameFolder(_config.GameFolderPath, out _);
@@ -559,10 +565,10 @@
 
 				_logger.Info($"SettingsPage: Unblock complete. {summary}");
 				App.Toasts.Show(new ToastRequest {
-					Title="DLL Unblock Complete",
-					Message=summary,
-					Severity=ToastSeverity.Success
-					});
+					Title = "DLL Unblock Complete",
+					Message = summary,
+					Severity = ToastSeverity.Success
+				});
 				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 					_logger.Debug("SettingsPage: Unblock summary.", new { Summary = summary });
 				}

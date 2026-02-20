@@ -1,31 +1,38 @@
-﻿namespace CalradiaForge.Core.Infra.Config
-	{
+﻿namespace CalradiaForge.Core.Infra.Config {
 	using System.Collections.Generic;
 
 	using CalradiaForge.Core.Infra.Logging;
 
 	using Newtonsoft.Json;
 
-	public sealed class AppConfig
-		{
+	/// <summary>
+	/// Provides thread-safe key/value configuration persistence backed by JSON.
+	/// </summary>
+	public sealed class AppConfig {
 		private readonly Logger _logger = Logger.Instance;
 		private readonly object _lock = new();
-		private Dictionary<string,string> _configValues = new();
+		private Dictionary<string, string> _configValues = new();
 		private readonly string _configFilePath;
+		/// <summary>
+		/// Initializes a new configuration store using the specified file path.
+		/// </summary>
 		public AppConfig(string filePath) {
 			if (string.IsNullOrWhiteSpace(filePath)) {
-				throw new ArgumentException("File path cannot be null or whitespace.",nameof(filePath));
-				}
-			_configFilePath=filePath;
+				throw new ArgumentException("File path cannot be null or whitespace.", nameof(filePath));
+			}
+			_configFilePath = filePath;
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("AppConfig: Initialized.", new { FilePath = _configFilePath });
 			}
-			}
+		}
 
+		/// <summary>
+		/// Gets or sets a configuration value by key, persisting changes immediately.
+		/// </summary>
 		public string this[string key] {
 			get {
 				lock (_lock) {
-					bool found = _configValues.TryGetValue(key,out var value);
+					bool found = _configValues.TryGetValue(key, out var value);
 					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 						_logger.Debug("AppConfig: Read key.", new {
 							Key = key,
@@ -34,12 +41,12 @@
 						});
 					}
 					return found ? value : string.Empty;
-					}
 				}
+			}
 			set {
 				lock (_lock) {
 					_configValues.TryGetValue(key, out var oldValue);
-					_configValues[key]=value;
+					_configValues[key] = value;
 					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 						_logger.Debug("AppConfig: Wrote key.", new {
 							Key = key,
@@ -48,41 +55,56 @@
 						});
 					}
 					Save();
-					}
 				}
 			}
+		}
+		/// <summary>
+		/// Saves the current configuration values to disk.
+		/// </summary>
 		public void Save() {
 
 			lock (_lock) {
 				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 					_logger.Debug("AppConfig: Saving config.", new { FilePath = _configFilePath, Count = _configValues.Count });
 				}
-				var json = JsonConvert.SerializeObject(_configValues,Formatting.Indented);
-				File.WriteAllText(_configFilePath,json);
+				var json = JsonConvert.SerializeObject(_configValues, Formatting.Indented);
+				File.WriteAllText(_configFilePath, json);
 				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 					_logger.Debug("AppConfig: Save complete.", new { FilePath = _configFilePath });
 				}
-				}
 			}
+		}
 
+		/// <summary>
+		/// Determines whether a non-empty value exists for the specified key.
+		/// </summary>
 		public bool IsConfigured(string key) {
 			lock (_lock) {
 				return !string.IsNullOrWhiteSpace(this[key]);
-				}
 			}
+		}
 
-		public bool GetBool(string key,bool fallback = false) {
+		/// <summary>
+		/// Reads a boolean configuration value with a fallback.
+		/// </summary>
+		public bool GetBool(string key, bool fallback = false) {
 			lock (_lock) {
-				return bool.TryParse(this[key],out var result) ? result : fallback;
-				}
+				return bool.TryParse(this[key], out var result) ? result : fallback;
 			}
+		}
 
-		public int GetInt(string key,int fallback = 0) {
+		/// <summary>
+		/// Reads an integer configuration value with a fallback.
+		/// </summary>
+		public int GetInt(string key, int fallback = 0) {
 			lock (_lock) {
-				return int.TryParse(this[key],out var result) ? result : fallback;
-				}
+				return int.TryParse(this[key], out var result) ? result : fallback;
 			}
+		}
 
+		/// <summary>
+		/// Loads configuration values from disk or initializes defaults when missing.
+		/// </summary>
 		public void Load() {
 			lock (_lock) {
 				if (!File.Exists(_configFilePath)) {
@@ -91,13 +113,13 @@
 					}
 					Save();
 					return;
-					}
+				}
 				var json = File.ReadAllText(_configFilePath);
-				_configValues=JsonConvert.DeserializeObject<Dictionary<string,string>>(json)??new Dictionary<string,string>();
+				_configValues = JsonConvert.DeserializeObject<Dictionary<string, string>>(json) ?? new Dictionary<string, string>();
 				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 					_logger.Debug("AppConfig: Config loaded.", new { FilePath = _configFilePath, Count = _configValues.Count });
-				}
 				}
 			}
 		}
 	}
+}

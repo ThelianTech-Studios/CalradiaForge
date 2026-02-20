@@ -37,6 +37,9 @@
 			".zip", ".rar"
 		};
 
+		/// <summary>
+		/// Initializes a new mod installer with the provided configuration.
+		/// </summary>
 		public ModInstaller(AppConfigSettings appConfig) {
 			_appConfig = appConfig ?? throw new ArgumentNullException(nameof(appConfig));
 		}
@@ -262,7 +265,7 @@
 						TimestampUtc = DateTime.UtcNow,
 						BatchStartUtc = batchStartUtc
 					});
-				}	
+				}
 
 				ModInstallResult result = await ProcessSingleArchiveAsync(
 					archivePath, archiveFileName, modulesPath, token, OnFileExtracted);
@@ -288,6 +291,9 @@
 
 		#region Single Archive Processing
 
+		/// <summary>
+		/// Processes a single archive from extraction through copy into the Modules folder.
+		/// </summary>
 		private async Task<ModInstallResult> ProcessSingleArchiveAsync(
 			string archivePath,
 			string archiveFileName,
@@ -308,7 +314,7 @@
 					result.Status = ModInstallStatus.Failed;
 					result.Message = "Failed to extract archive.";
 					return result;
-					}
+				}
 
 				// Find the true mod root (handles lazy nested folders)
 				string? modRoot = ModExtractor.FindModRoot(tempDir);
@@ -342,7 +348,7 @@
 					result.Status = ModInstallStatus.Failed;
 					result.Message = "Failed to parse SubModule.xml from archive.";
 					return result;
-					}
+				}
 
 				result.ModuleId = newMod.ModuleId;
 				result.ModuleName = newMod.ModuleName;
@@ -497,14 +503,11 @@
 			return new VersionCheckOutcome {
 				Action = VersionAction.Skip,
 				ExistingVersion = existingMod.ModuleVersion
-				};
+			};
 		}
 
 		/// <summary>
-		/// Compares two Bannerlord mod version strings.
-		/// Handles the <c>v</c> prefix and <c>*</c> wildcard.
-		/// Returns: positive if <paramref name="newVersion"/> is newer,
-		/// 0 if equal, negative if older.
+		/// Compares two module version strings and returns ordering semantics.
 		/// </summary>
 		private static int CompareModVersions(string newVersion, string existingVersion) {
 			// Strip leading 'v' characters (Bannerlord uses "v1.3.3" or "vv1.3.4")
@@ -532,7 +535,7 @@
 		#region File System Helpers
 
 		/// <summary>
-		/// Recursively copies a directory and all its contents to a target path.
+		/// Copies a directory tree to a target path, honoring cancellation.
 		/// </summary>
 		private static void CopyDirectory(string sourceDir, string targetDir, CancellationToken token) {
 			if (Logger.Instance.MinimumLevel == Logger.LogLevel.Debug) {
@@ -550,12 +553,12 @@
 				token.ThrowIfCancellationRequested();
 				string targetSubDir = Path.Combine(targetDir, Path.GetFileName(subDir));
 				CopyDirectory(subDir, targetSubDir, token);
-				}
+			}
 
 			if (Logger.Instance.MinimumLevel == Logger.LogLevel.Debug) {
 				Logger.Instance.Debug("ModInstaller: Directory copy complete.", new { SourceDir = sourceDir, TargetDir = targetDir });
 			}
-			}
+		}
 
 		/// <summary>
 		/// Safely deletes a directory and all its contents.

@@ -13,6 +13,9 @@ namespace CalradiaForge.UI.Toasts {
 		public DataTemplate? InstallProgressTemplate { get; set; }
 		public DataTemplate? MissingModsTemplate { get; set; }
 
+		/// <summary>
+		/// Selects a toast template based on the view model's template key.
+		/// </summary>
 		public override DataTemplate SelectTemplate(object item, DependencyObject container) {
 			if (item is ToastViewModel viewModel) {
 				if (viewModel.TemplateKey == ToastTemplateKeys.InstallSummary) {

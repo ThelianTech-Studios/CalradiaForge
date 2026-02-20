@@ -12,12 +12,15 @@
 	using MahApps.Metro.Controls;
 
 	/// <summary>
-	/// Interaction logic for MainWindow.xaml
+	/// Main application window hosting navigation and page content.
 	/// </summary>
 	public partial class MainWindow : Window {
 		private readonly Logger _logger = Logger.Instance;
 		private readonly Page[] _pages;
 		private readonly SettingsPage _settingsPage;
+		/// <summary>
+		/// Initializes the main window and navigation pages.
+		/// </summary>
 		public MainWindow() {
 			InitializeComponent();
 			_pages = [
@@ -43,10 +46,7 @@
 		}
 
 		/// <summary>
-		/// Applies translated strings to the HamburgerMenu nav labels.
-		/// <see cref="HamburgerMenuIconItem.Label"/> is not a DependencyProperty,
-		/// so XAML binding is not supported — we set it in code instead.
-		/// Called on startup and whenever the active language changes.
+		/// Applies translated labels to navigation items.
 		/// </summary>
 		private void ApplyNavTranslations() {
 			TranslationStrings s = App.Translator.Strings;
@@ -72,13 +72,22 @@
 			}
 		}
 
-		private void MinimizeButton_Click(object sender,RoutedEventArgs e) {
+		/// <summary>
+		/// Minimizes the window when the minimize button is clicked.
+		/// </summary>
+		private void MinimizeButton_Click(object sender, RoutedEventArgs e) {
 			this.WindowState = WindowState.Minimized;
 		}
-		private void CloseButton_Click(object sender,RoutedEventArgs e) {
+		/// <summary>
+		/// Closes the window when the close button is clicked.
+		/// </summary>
+		private void CloseButton_Click(object sender, RoutedEventArgs e) {
 			this.Close();
 		}
-		private void TitleBar_MouseLeftButtonDown(object sender,MouseButtonEventArgs e) {
+		/// <summary>
+		/// Enables drag or maximize behavior on title bar interaction.
+		/// </summary>
+		private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
 			if (e.ClickCount == 2) {
 				this.WindowState = this.WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
 				return;
@@ -86,10 +95,13 @@
 			try {
 				this.DragMove();
 			} catch (Exception ex) {
-				throw new InvalidOperationException("Failed to move the window. This can happen if the mouse is released outside the window bounds during dragging.",ex);
+				throw new InvalidOperationException("Failed to move the window. This can happen if the mouse is released outside the window bounds during dragging.", ex);
 			}
 		}
-		private void NavBarControler_OnItemInvoked(object sender,HamburgerMenuItemInvokedEventArgs e) {
+		/// <summary>
+		/// Handles navigation item selection in the main menu.
+		/// </summary>
+		private void NavBarControler_OnItemInvoked(object sender, HamburgerMenuItemInvokedEventArgs e) {
 			int index = NavBarControler.SelectedIndex;
 			if (index >= 0 && index < _pages.Length) {
 				Page targetPage = _pages[index];
@@ -97,20 +109,17 @@
 				if (targetPage is ModsPage modspage) {
 					modspage.RefreshModpackList();
 					modspage.RefreshAvailableMods();
-					}
+				}
 				MainContentFrame.Navigate(_pages[index]);
 				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 					_logger.Debug("MainWindow: Navigated to page.", new { PageIndex = index, PageType = targetPage.GetType().Name });
 				}
-				}
-			
+			}
+
 		}
 
 		/// <summary>
-		/// Handles the Settings item click from the HamburgerMenu OptionsItemsSource.
-		/// OptionsItemsSource is separate from ItemsSource — it does not participate
-		/// in SelectedIndex and fires its own OptionsItemClick event.
-		/// Navigates to the SettingsPage which is held as a standalone instance.
+		/// Handles navigation to the settings page from the options menu.
 		/// </summary>
 		private void NavBarControler_OnOptionsItemClick(object sender, ItemClickEventArgs e) {
 			// Deselect the main nav so Settings appears as the active context

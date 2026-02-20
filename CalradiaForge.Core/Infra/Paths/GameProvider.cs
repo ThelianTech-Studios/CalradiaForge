@@ -1,13 +1,11 @@
-﻿namespace CalradiaForge.Core.Infra.Paths
-	{
+﻿namespace CalradiaForge.Core.Infra.Paths {
 	/// <summary>
 	/// Identifies the platform/storefront from which Bannerlord was installed.
 	/// Determines launch behavior — Steam and StandAlone/GOG support direct EXE launch,
 	/// while Epic Games and GamePass require launching through their respective clients
 	/// due to authentication/token requirements imposed by TaleWorlds.
 	/// </summary>
-	public enum GameProvider
-		{
+	public enum GameProvider {
 		/// <summary>
 		/// Standalone or GOG installation. Supports direct EXE launch.
 		/// </summary>
@@ -39,5 +37,5 @@
 		/// Platform not yet configured by the user.
 		/// </summary>
 		NotInitialized
-		}
 	}
+}

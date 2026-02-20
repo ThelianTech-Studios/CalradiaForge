@@ -18,214 +18,214 @@
 		/// signaling WPF that all properties may have changed.
 		/// </summary>
 		private void NotifyAllPropertiesChanged() {
-			PropertyChanged?.Invoke(this,new PropertyChangedEventArgs(null));
-			}
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(null));
+		}
 
 		/// <summary>
 		/// Applies the given translation dictionary to all properties.
 		/// Keys not present in the dictionary retain their hardcoded English defaults.
 		/// Fires a single blanket <see cref="PropertyChanged"/> event when complete.
 		/// </summary>
-		public void Apply(Dictionary<string,string> translations) {
-			if (translations is null || translations.Count==0) {
+		public void Apply(Dictionary<string, string> translations) {
+			if (translations is null || translations.Count == 0) {
 				return;
-				}
+			}
 
 			// Navigation
-			Nav_ModsTab=GetOrDefault(translations,nameof(Nav_ModsTab),Nav_ModsTab);
-			Nav_ModpacksTab=GetOrDefault(translations,nameof(Nav_ModpacksTab),Nav_ModpacksTab);
-			Nav_FaqTab=GetOrDefault(translations,nameof(Nav_FaqTab),Nav_FaqTab);
-			Nav_SettingsTab=GetOrDefault(translations,nameof(Nav_SettingsTab),Nav_SettingsTab);
+			Nav_ModsTab = GetOrDefault(translations, nameof(Nav_ModsTab), Nav_ModsTab);
+			Nav_ModpacksTab = GetOrDefault(translations, nameof(Nav_ModpacksTab), Nav_ModpacksTab);
+			Nav_FaqTab = GetOrDefault(translations, nameof(Nav_FaqTab), Nav_FaqTab);
+			Nav_SettingsTab = GetOrDefault(translations, nameof(Nav_SettingsTab), Nav_SettingsTab);
 
 			// ModsPage — Header
-			Mods_ModpacksLabel=GetOrDefault(translations,nameof(Mods_ModpacksLabel),Mods_ModpacksLabel);
-			Mods_InstallButton=GetOrDefault(translations,nameof(Mods_InstallButton),Mods_InstallButton);
-			Mods_LoadOrderHeader=GetOrDefault(translations,nameof(Mods_LoadOrderHeader),Mods_LoadOrderHeader);
-			Mods_AvailableModsHeader=GetOrDefault(translations,nameof(Mods_AvailableModsHeader),Mods_AvailableModsHeader);
-			Mods_RefreshTooltip=GetOrDefault(translations,nameof(Mods_RefreshTooltip),Mods_RefreshTooltip);
+			Mods_ModpacksLabel = GetOrDefault(translations, nameof(Mods_ModpacksLabel), Mods_ModpacksLabel);
+			Mods_InstallButton = GetOrDefault(translations, nameof(Mods_InstallButton), Mods_InstallButton);
+			Mods_LoadOrderHeader = GetOrDefault(translations, nameof(Mods_LoadOrderHeader), Mods_LoadOrderHeader);
+			Mods_AvailableModsHeader = GetOrDefault(translations, nameof(Mods_AvailableModsHeader), Mods_AvailableModsHeader);
+			Mods_RefreshTooltip = GetOrDefault(translations, nameof(Mods_RefreshTooltip), Mods_RefreshTooltip);
 
 			// ModsPage — Play Button
-			Mods_PlayBannerlord=GetOrDefault(translations,nameof(Mods_PlayBannerlord),Mods_PlayBannerlord);
-			Mods_PlayWithBLSE=GetOrDefault(translations,nameof(Mods_PlayWithBLSE),Mods_PlayWithBLSE);
-			Mods_LaunchTargetTooltip=GetOrDefault(translations,nameof(Mods_LaunchTargetTooltip),Mods_LaunchTargetTooltip);
-			Mods_LaunchTargetBannerlord=GetOrDefault(translations,nameof(Mods_LaunchTargetBannerlord),Mods_LaunchTargetBannerlord);
-			Mods_LaunchTargetBLSE=GetOrDefault(translations,nameof(Mods_LaunchTargetBLSE),Mods_LaunchTargetBLSE);
+			Mods_PlayBannerlord = GetOrDefault(translations, nameof(Mods_PlayBannerlord), Mods_PlayBannerlord);
+			Mods_PlayWithBLSE = GetOrDefault(translations, nameof(Mods_PlayWithBLSE), Mods_PlayWithBLSE);
+			Mods_LaunchTargetTooltip = GetOrDefault(translations, nameof(Mods_LaunchTargetTooltip), Mods_LaunchTargetTooltip);
+			Mods_LaunchTargetBannerlord = GetOrDefault(translations, nameof(Mods_LaunchTargetBannerlord), Mods_LaunchTargetBannerlord);
+			Mods_LaunchTargetBLSE = GetOrDefault(translations, nameof(Mods_LaunchTargetBLSE), Mods_LaunchTargetBLSE);
 
 			// ModsPage — Status Messages
-			Mods_SelectModpackPrompt=GetOrDefault(translations,nameof(Mods_SelectModpackPrompt),Mods_SelectModpackPrompt);
-			Mods_InstallInProgress=GetOrDefault(translations,nameof(Mods_InstallInProgress),Mods_InstallInProgress);
-			Mods_Launching=GetOrDefault(translations,nameof(Mods_Launching),Mods_Launching);
-			Mods_ScanningForMods=GetOrDefault(translations,nameof(Mods_ScanningForMods),Mods_ScanningForMods);
-			Mods_NoModsFound=GetOrDefault(translations,nameof(Mods_NoModsFound),Mods_NoModsFound);
-			Mods_InstallDialogTitle=GetOrDefault(translations,nameof(Mods_InstallDialogTitle),Mods_InstallDialogTitle);
+			Mods_SelectModpackPrompt = GetOrDefault(translations, nameof(Mods_SelectModpackPrompt), Mods_SelectModpackPrompt);
+			Mods_InstallInProgress = GetOrDefault(translations, nameof(Mods_InstallInProgress), Mods_InstallInProgress);
+			Mods_Launching = GetOrDefault(translations, nameof(Mods_Launching), Mods_Launching);
+			Mods_ScanningForMods = GetOrDefault(translations, nameof(Mods_ScanningForMods), Mods_ScanningForMods);
+			Mods_NoModsFound = GetOrDefault(translations, nameof(Mods_NoModsFound), Mods_NoModsFound);
+			Mods_InstallDialogTitle = GetOrDefault(translations, nameof(Mods_InstallDialogTitle), Mods_InstallDialogTitle);
 
 			// ModpacksPage — Header
-			Modpacks_HeaderLabel=GetOrDefault(translations,nameof(Modpacks_HeaderLabel),Modpacks_HeaderLabel);
-			Modpacks_CreateNewButton=GetOrDefault(translations,nameof(Modpacks_CreateNewButton),Modpacks_CreateNewButton);
-			Modpacks_ImportButton=GetOrDefault(translations,nameof(Modpacks_ImportButton),Modpacks_ImportButton);
-			Modpacks_SaveButton=GetOrDefault(translations,nameof(Modpacks_SaveButton),Modpacks_SaveButton);
+			Modpacks_HeaderLabel = GetOrDefault(translations, nameof(Modpacks_HeaderLabel), Modpacks_HeaderLabel);
+			Modpacks_CreateNewButton = GetOrDefault(translations, nameof(Modpacks_CreateNewButton), Modpacks_CreateNewButton);
+			Modpacks_ImportButton = GetOrDefault(translations, nameof(Modpacks_ImportButton), Modpacks_ImportButton);
+			Modpacks_SaveButton = GetOrDefault(translations, nameof(Modpacks_SaveButton), Modpacks_SaveButton);
 
 			// ModpacksPage — Lists
-			Modpacks_ActiveLoadOrderHeader=GetOrDefault(translations,nameof(Modpacks_ActiveLoadOrderHeader),Modpacks_ActiveLoadOrderHeader);
-			Modpacks_SavedDataHeader=GetOrDefault(translations,nameof(Modpacks_SavedDataHeader),Modpacks_SavedDataHeader);
-			Modpacks_ByLabel=GetOrDefault(translations,nameof(Modpacks_ByLabel),Modpacks_ByLabel);
-			Modpacks_UpdatedLabel=GetOrDefault(translations,nameof(Modpacks_UpdatedLabel),Modpacks_UpdatedLabel);
+			Modpacks_ActiveLoadOrderHeader = GetOrDefault(translations, nameof(Modpacks_ActiveLoadOrderHeader), Modpacks_ActiveLoadOrderHeader);
+			Modpacks_SavedDataHeader = GetOrDefault(translations, nameof(Modpacks_SavedDataHeader), Modpacks_SavedDataHeader);
+			Modpacks_ByLabel = GetOrDefault(translations, nameof(Modpacks_ByLabel), Modpacks_ByLabel);
+			Modpacks_UpdatedLabel = GetOrDefault(translations, nameof(Modpacks_UpdatedLabel), Modpacks_UpdatedLabel);
 
 			// ModpacksPage — Edit Panel
-			Modpacks_ModuleIdLabel=GetOrDefault(translations,nameof(Modpacks_ModuleIdLabel),Modpacks_ModuleIdLabel);
-			Modpacks_VersionLabel=GetOrDefault(translations,nameof(Modpacks_VersionLabel),Modpacks_VersionLabel);
-			Modpacks_NameLabel=GetOrDefault(translations,nameof(Modpacks_NameLabel),Modpacks_NameLabel);
-			Modpacks_UrlLabel=GetOrDefault(translations,nameof(Modpacks_UrlLabel),Modpacks_UrlLabel);
-			Modpacks_SaveEntryButton=GetOrDefault(translations,nameof(Modpacks_SaveEntryButton),Modpacks_SaveEntryButton);
+			Modpacks_ModuleIdLabel = GetOrDefault(translations, nameof(Modpacks_ModuleIdLabel), Modpacks_ModuleIdLabel);
+			Modpacks_VersionLabel = GetOrDefault(translations, nameof(Modpacks_VersionLabel), Modpacks_VersionLabel);
+			Modpacks_NameLabel = GetOrDefault(translations, nameof(Modpacks_NameLabel), Modpacks_NameLabel);
+			Modpacks_UrlLabel = GetOrDefault(translations, nameof(Modpacks_UrlLabel), Modpacks_UrlLabel);
+			Modpacks_SaveEntryButton = GetOrDefault(translations, nameof(Modpacks_SaveEntryButton), Modpacks_SaveEntryButton);
 
 			// ModpacksPage — Create Panel
-			Modpacks_CreateNameLabel=GetOrDefault(translations,nameof(Modpacks_CreateNameLabel),Modpacks_CreateNameLabel);
-			Modpacks_CreatedByLabel=GetOrDefault(translations,nameof(Modpacks_CreatedByLabel),Modpacks_CreatedByLabel);
-			Modpacks_ConfirmButton=GetOrDefault(translations,nameof(Modpacks_ConfirmButton),Modpacks_ConfirmButton);
-			Modpacks_CancelButton=GetOrDefault(translations,nameof(Modpacks_CancelButton),Modpacks_CancelButton);
+			Modpacks_CreateNameLabel = GetOrDefault(translations, nameof(Modpacks_CreateNameLabel), Modpacks_CreateNameLabel);
+			Modpacks_CreatedByLabel = GetOrDefault(translations, nameof(Modpacks_CreatedByLabel), Modpacks_CreatedByLabel);
+			Modpacks_ConfirmButton = GetOrDefault(translations, nameof(Modpacks_ConfirmButton), Modpacks_ConfirmButton);
+			Modpacks_CancelButton = GetOrDefault(translations, nameof(Modpacks_CancelButton), Modpacks_CancelButton);
 
 			// ModpacksPage — Template Names
-			Modpacks_TemplateVanilla=GetOrDefault(translations,nameof(Modpacks_TemplateVanilla),Modpacks_TemplateVanilla);
-			Modpacks_TemplateButterLib=GetOrDefault(translations,nameof(Modpacks_TemplateButterLib),Modpacks_TemplateButterLib);
-			Modpacks_TemplateVanillaWarSails=GetOrDefault(translations,nameof(Modpacks_TemplateVanillaWarSails),Modpacks_TemplateVanillaWarSails);
-			Modpacks_TemplateButterLibWarSails=GetOrDefault(translations,nameof(Modpacks_TemplateButterLibWarSails),Modpacks_TemplateButterLibWarSails);
+			Modpacks_TemplateVanilla = GetOrDefault(translations, nameof(Modpacks_TemplateVanilla), Modpacks_TemplateVanilla);
+			Modpacks_TemplateButterLib = GetOrDefault(translations, nameof(Modpacks_TemplateButterLib), Modpacks_TemplateButterLib);
+			Modpacks_TemplateVanillaWarSails = GetOrDefault(translations, nameof(Modpacks_TemplateVanillaWarSails), Modpacks_TemplateVanillaWarSails);
+			Modpacks_TemplateButterLibWarSails = GetOrDefault(translations, nameof(Modpacks_TemplateButterLibWarSails), Modpacks_TemplateButterLibWarSails);
 
 			// Settings — Nav Tabs
-			Settings_GeneralTab=GetOrDefault(translations,nameof(Settings_GeneralTab),Settings_GeneralTab);
-			Settings_GameConfigTab=GetOrDefault(translations,nameof(Settings_GameConfigTab),Settings_GameConfigTab);
-			Settings_ToolsTab=GetOrDefault(translations,nameof(Settings_ToolsTab),Settings_ToolsTab);
-			Settings_WipTab=GetOrDefault(translations,nameof(Settings_WipTab),Settings_WipTab);
-			Settings_AboutTab=GetOrDefault(translations,nameof(Settings_AboutTab),Settings_AboutTab);
+			Settings_GeneralTab = GetOrDefault(translations, nameof(Settings_GeneralTab), Settings_GeneralTab);
+			Settings_GameConfigTab = GetOrDefault(translations, nameof(Settings_GameConfigTab), Settings_GameConfigTab);
+			Settings_ToolsTab = GetOrDefault(translations, nameof(Settings_ToolsTab), Settings_ToolsTab);
+			Settings_WipTab = GetOrDefault(translations, nameof(Settings_WipTab), Settings_WipTab);
+			Settings_AboutTab = GetOrDefault(translations, nameof(Settings_AboutTab), Settings_AboutTab);
 
 			// Settings — General
-			Settings_LanguageHeader=GetOrDefault(translations,nameof(Settings_LanguageHeader),Settings_LanguageHeader);
-			Settings_LanguageLabel=GetOrDefault(translations,nameof(Settings_LanguageLabel),Settings_LanguageLabel);
-			Settings_LanguageHint=GetOrDefault(translations,nameof(Settings_LanguageHint),Settings_LanguageHint);
-			Settings_StartupHeader=GetOrDefault(translations,nameof(Settings_StartupHeader),Settings_StartupHeader);
-			Settings_StartupLabel=GetOrDefault(translations,nameof(Settings_StartupLabel),Settings_StartupLabel);
-			Settings_StartupLastUsed=GetOrDefault(translations,nameof(Settings_StartupLastUsed),Settings_StartupLastUsed);
-			Settings_StartupAlwaysDefault=GetOrDefault(translations,nameof(Settings_StartupAlwaysDefault),Settings_StartupAlwaysDefault);
-			Settings_StartupAlwaysAsk=GetOrDefault(translations,nameof(Settings_StartupAlwaysAsk),Settings_StartupAlwaysAsk);
-			Settings_StartupHint=GetOrDefault(translations,nameof(Settings_StartupHint),Settings_StartupHint);
-			Settings_DiagnosticsHeader=GetOrDefault(translations,nameof(Settings_DiagnosticsHeader),Settings_DiagnosticsHeader);
-			Settings_DebugModeLabel=GetOrDefault(translations,nameof(Settings_DebugModeLabel),Settings_DebugModeLabel);
-			Settings_DebugModeHint=GetOrDefault(translations,nameof(Settings_DebugModeHint),Settings_DebugModeHint);
+			Settings_LanguageHeader = GetOrDefault(translations, nameof(Settings_LanguageHeader), Settings_LanguageHeader);
+			Settings_LanguageLabel = GetOrDefault(translations, nameof(Settings_LanguageLabel), Settings_LanguageLabel);
+			Settings_LanguageHint = GetOrDefault(translations, nameof(Settings_LanguageHint), Settings_LanguageHint);
+			Settings_StartupHeader = GetOrDefault(translations, nameof(Settings_StartupHeader), Settings_StartupHeader);
+			Settings_StartupLabel = GetOrDefault(translations, nameof(Settings_StartupLabel), Settings_StartupLabel);
+			Settings_StartupLastUsed = GetOrDefault(translations, nameof(Settings_StartupLastUsed), Settings_StartupLastUsed);
+			Settings_StartupAlwaysDefault = GetOrDefault(translations, nameof(Settings_StartupAlwaysDefault), Settings_StartupAlwaysDefault);
+			Settings_StartupAlwaysAsk = GetOrDefault(translations, nameof(Settings_StartupAlwaysAsk), Settings_StartupAlwaysAsk);
+			Settings_StartupHint = GetOrDefault(translations, nameof(Settings_StartupHint), Settings_StartupHint);
+			Settings_DiagnosticsHeader = GetOrDefault(translations, nameof(Settings_DiagnosticsHeader), Settings_DiagnosticsHeader);
+			Settings_DebugModeLabel = GetOrDefault(translations, nameof(Settings_DebugModeLabel), Settings_DebugModeLabel);
+			Settings_DebugModeHint = GetOrDefault(translations, nameof(Settings_DebugModeHint), Settings_DebugModeHint);
 
 			// Settings — Game Config
-			Settings_GameInstallHeader=GetOrDefault(translations,nameof(Settings_GameInstallHeader),Settings_GameInstallHeader);
-			Settings_GameFolderLabel=GetOrDefault(translations,nameof(Settings_GameFolderLabel),Settings_GameFolderLabel);
-			Settings_SelectFolderButton=GetOrDefault(translations,nameof(Settings_SelectFolderButton),Settings_SelectFolderButton);
-			Settings_GameExeLabel=GetOrDefault(translations,nameof(Settings_GameExeLabel),Settings_GameExeLabel);
-			Settings_SelectFileButton=GetOrDefault(translations,nameof(Settings_SelectFileButton),Settings_SelectFileButton);
-			Settings_WorkshopFolderLabel=GetOrDefault(translations,nameof(Settings_WorkshopFolderLabel),Settings_WorkshopFolderLabel);
-			Settings_BLSEHeader=GetOrDefault(translations,nameof(Settings_BLSEHeader),Settings_BLSEHeader);
-			Settings_BLSEExeLabel=GetOrDefault(translations,nameof(Settings_BLSEExeLabel),Settings_BLSEExeLabel);
-			Settings_BLSEHint=GetOrDefault(translations,nameof(Settings_BLSEHint),Settings_BLSEHint);
-			Settings_DetectionHeader=GetOrDefault(translations,nameof(Settings_DetectionHeader),Settings_DetectionHeader);
-			Settings_DetectGameButton=GetOrDefault(translations,nameof(Settings_DetectGameButton),Settings_DetectGameButton);
-			Settings_DetectGameHint=GetOrDefault(translations,nameof(Settings_DetectGameHint),Settings_DetectGameHint);
+			Settings_GameInstallHeader = GetOrDefault(translations, nameof(Settings_GameInstallHeader), Settings_GameInstallHeader);
+			Settings_GameFolderLabel = GetOrDefault(translations, nameof(Settings_GameFolderLabel), Settings_GameFolderLabel);
+			Settings_SelectFolderButton = GetOrDefault(translations, nameof(Settings_SelectFolderButton), Settings_SelectFolderButton);
+			Settings_GameExeLabel = GetOrDefault(translations, nameof(Settings_GameExeLabel), Settings_GameExeLabel);
+			Settings_SelectFileButton = GetOrDefault(translations, nameof(Settings_SelectFileButton), Settings_SelectFileButton);
+			Settings_WorkshopFolderLabel = GetOrDefault(translations, nameof(Settings_WorkshopFolderLabel), Settings_WorkshopFolderLabel);
+			Settings_BLSEHeader = GetOrDefault(translations, nameof(Settings_BLSEHeader), Settings_BLSEHeader);
+			Settings_BLSEExeLabel = GetOrDefault(translations, nameof(Settings_BLSEExeLabel), Settings_BLSEExeLabel);
+			Settings_BLSEHint = GetOrDefault(translations, nameof(Settings_BLSEHint), Settings_BLSEHint);
+			Settings_DetectionHeader = GetOrDefault(translations, nameof(Settings_DetectionHeader), Settings_DetectionHeader);
+			Settings_DetectGameButton = GetOrDefault(translations, nameof(Settings_DetectGameButton), Settings_DetectGameButton);
+			Settings_DetectGameHint = GetOrDefault(translations, nameof(Settings_DetectGameHint), Settings_DetectGameHint);
 
 			// Settings — Tools
-			Settings_ModMaintenanceHeader=GetOrDefault(translations,nameof(Settings_ModMaintenanceHeader),Settings_ModMaintenanceHeader);
-			Settings_UnblockDllsButton=GetOrDefault(translations,nameof(Settings_UnblockDllsButton),Settings_UnblockDllsButton);
-			Settings_UnblockDllsHint=GetOrDefault(translations,nameof(Settings_UnblockDllsHint),Settings_UnblockDllsHint);
-			Settings_DataManagementHeader=GetOrDefault(translations,nameof(Settings_DataManagementHeader),Settings_DataManagementHeader);
-			Settings_ClearCacheButton=GetOrDefault(translations,nameof(Settings_ClearCacheButton),Settings_ClearCacheButton);
-			Settings_ClearCacheHint=GetOrDefault(translations,nameof(Settings_ClearCacheHint),Settings_ClearCacheHint);
-			Settings_OpenConfigButton=GetOrDefault(translations,nameof(Settings_OpenConfigButton),Settings_OpenConfigButton);
-			Settings_OpenConfigHint=GetOrDefault(translations,nameof(Settings_OpenConfigHint),Settings_OpenConfigHint);
-			Settings_OpenLogsButton=GetOrDefault(translations,nameof(Settings_OpenLogsButton),Settings_OpenLogsButton);
-			Settings_OpenLogsHint=GetOrDefault(translations,nameof(Settings_OpenLogsHint),Settings_OpenLogsHint);
-			Settings_OpenModpacksButton=GetOrDefault(translations,nameof(Settings_OpenModpacksButton),Settings_OpenModpacksButton);
-			Settings_OpenModpacksHint=GetOrDefault(translations,nameof(Settings_OpenModpacksHint),Settings_OpenModpacksHint);
+			Settings_ModMaintenanceHeader = GetOrDefault(translations, nameof(Settings_ModMaintenanceHeader), Settings_ModMaintenanceHeader);
+			Settings_UnblockDllsButton = GetOrDefault(translations, nameof(Settings_UnblockDllsButton), Settings_UnblockDllsButton);
+			Settings_UnblockDllsHint = GetOrDefault(translations, nameof(Settings_UnblockDllsHint), Settings_UnblockDllsHint);
+			Settings_DataManagementHeader = GetOrDefault(translations, nameof(Settings_DataManagementHeader), Settings_DataManagementHeader);
+			Settings_ClearCacheButton = GetOrDefault(translations, nameof(Settings_ClearCacheButton), Settings_ClearCacheButton);
+			Settings_ClearCacheHint = GetOrDefault(translations, nameof(Settings_ClearCacheHint), Settings_ClearCacheHint);
+			Settings_OpenConfigButton = GetOrDefault(translations, nameof(Settings_OpenConfigButton), Settings_OpenConfigButton);
+			Settings_OpenConfigHint = GetOrDefault(translations, nameof(Settings_OpenConfigHint), Settings_OpenConfigHint);
+			Settings_OpenLogsButton = GetOrDefault(translations, nameof(Settings_OpenLogsButton), Settings_OpenLogsButton);
+			Settings_OpenLogsHint = GetOrDefault(translations, nameof(Settings_OpenLogsHint), Settings_OpenLogsHint);
+			Settings_OpenModpacksButton = GetOrDefault(translations, nameof(Settings_OpenModpacksButton), Settings_OpenModpacksButton);
+			Settings_OpenModpacksHint = GetOrDefault(translations, nameof(Settings_OpenModpacksHint), Settings_OpenModpacksHint);
 
 			// Settings — WIP
-			Settings_WipTitle=GetOrDefault(translations,nameof(Settings_WipTitle),Settings_WipTitle);
-			Settings_WipDescription=GetOrDefault(translations,nameof(Settings_WipDescription),Settings_WipDescription);
-			Settings_WipStayTuned=GetOrDefault(translations,nameof(Settings_WipStayTuned),Settings_WipStayTuned);
+			Settings_WipTitle = GetOrDefault(translations, nameof(Settings_WipTitle), Settings_WipTitle);
+			Settings_WipDescription = GetOrDefault(translations, nameof(Settings_WipDescription), Settings_WipDescription);
+			Settings_WipStayTuned = GetOrDefault(translations, nameof(Settings_WipStayTuned), Settings_WipStayTuned);
 
 			// Settings — About
-			Settings_AboutDescription=GetOrDefault(translations,nameof(Settings_AboutDescription),Settings_AboutDescription);
-			Settings_AboutTagline=GetOrDefault(translations,nameof(Settings_AboutTagline),Settings_AboutTagline);
-			Settings_AboutPublisherLabel=GetOrDefault(translations,nameof(Settings_AboutPublisherLabel),Settings_AboutPublisherLabel);
-			Settings_AboutLicenseLabel=GetOrDefault(translations,nameof(Settings_AboutLicenseLabel),Settings_AboutLicenseLabel);
-			Settings_AboutViewLicense=GetOrDefault(translations,nameof(Settings_AboutViewLicense),Settings_AboutViewLicense);
-			Settings_AboutGitHubLabel=GetOrDefault(translations,nameof(Settings_AboutGitHubLabel),Settings_AboutGitHubLabel);
-			Settings_AboutViewGitHub=GetOrDefault(translations,nameof(Settings_AboutViewGitHub),Settings_AboutViewGitHub);
-			Settings_AboutCopyright=GetOrDefault(translations,nameof(Settings_AboutCopyright),Settings_AboutCopyright);
-			Settings_AboutDisclaimer=GetOrDefault(translations,nameof(Settings_AboutDisclaimer),Settings_AboutDisclaimer);
+			Settings_AboutDescription = GetOrDefault(translations, nameof(Settings_AboutDescription), Settings_AboutDescription);
+			Settings_AboutTagline = GetOrDefault(translations, nameof(Settings_AboutTagline), Settings_AboutTagline);
+			Settings_AboutPublisherLabel = GetOrDefault(translations, nameof(Settings_AboutPublisherLabel), Settings_AboutPublisherLabel);
+			Settings_AboutLicenseLabel = GetOrDefault(translations, nameof(Settings_AboutLicenseLabel), Settings_AboutLicenseLabel);
+			Settings_AboutViewLicense = GetOrDefault(translations, nameof(Settings_AboutViewLicense), Settings_AboutViewLicense);
+			Settings_AboutGitHubLabel = GetOrDefault(translations, nameof(Settings_AboutGitHubLabel), Settings_AboutGitHubLabel);
+			Settings_AboutViewGitHub = GetOrDefault(translations, nameof(Settings_AboutViewGitHub), Settings_AboutViewGitHub);
+			Settings_AboutCopyright = GetOrDefault(translations, nameof(Settings_AboutCopyright), Settings_AboutCopyright);
+			Settings_AboutDisclaimer = GetOrDefault(translations, nameof(Settings_AboutDisclaimer), Settings_AboutDisclaimer);
 
 			// FAQ Page
-			Faq_PageTitle=GetOrDefault(translations,nameof(Faq_PageTitle),Faq_PageTitle);
-			Faq_Q1_Title=GetOrDefault(translations,nameof(Faq_Q1_Title),Faq_Q1_Title);
-			Faq_Q1_Answer1=GetOrDefault(translations,nameof(Faq_Q1_Answer1),Faq_Q1_Answer1);
-			Faq_Q1_Answer2=GetOrDefault(translations,nameof(Faq_Q1_Answer2),Faq_Q1_Answer2);
-			Faq_Q1_Hint=GetOrDefault(translations,nameof(Faq_Q1_Hint),Faq_Q1_Hint);
-			Faq_Q2_Title=GetOrDefault(translations,nameof(Faq_Q2_Title),Faq_Q2_Title);
-			Faq_Q2_Answer1=GetOrDefault(translations,nameof(Faq_Q2_Answer1),Faq_Q2_Answer1);
-			Faq_Q2_Answer2=GetOrDefault(translations,nameof(Faq_Q2_Answer2),Faq_Q2_Answer2);
-			Faq_Q3_Title=GetOrDefault(translations,nameof(Faq_Q3_Title),Faq_Q3_Title);
-			Faq_Q3_Answer1=GetOrDefault(translations,nameof(Faq_Q3_Answer1),Faq_Q3_Answer1);
-			Faq_Q3_Answer2=GetOrDefault(translations,nameof(Faq_Q3_Answer2),Faq_Q3_Answer2);
-			Faq_Q3_Hint=GetOrDefault(translations,nameof(Faq_Q3_Hint),Faq_Q3_Hint);
-			Faq_Q4_Title=GetOrDefault(translations,nameof(Faq_Q4_Title),Faq_Q4_Title);
-			Faq_Q4_Answer1=GetOrDefault(translations,nameof(Faq_Q4_Answer1),Faq_Q4_Answer1);
-			Faq_Q4_Answer2=GetOrDefault(translations,nameof(Faq_Q4_Answer2),Faq_Q4_Answer2);
-			Faq_Q4_Answer3=GetOrDefault(translations,nameof(Faq_Q4_Answer3),Faq_Q4_Answer3);
-			Faq_Q4_Hint=GetOrDefault(translations,nameof(Faq_Q4_Hint),Faq_Q4_Hint);
-			Faq_Q5_Title=GetOrDefault(translations,nameof(Faq_Q5_Title),Faq_Q5_Title);
-			Faq_Q5_Answer1=GetOrDefault(translations,nameof(Faq_Q5_Answer1),Faq_Q5_Answer1);
-			Faq_Q5_Answer2=GetOrDefault(translations,nameof(Faq_Q5_Answer2),Faq_Q5_Answer2);
-			Faq_Q5_Hint=GetOrDefault(translations,nameof(Faq_Q5_Hint),Faq_Q5_Hint);
-			Faq_Q6_Title=GetOrDefault(translations,nameof(Faq_Q6_Title),Faq_Q6_Title);
-			Faq_Q6_Answer1=GetOrDefault(translations,nameof(Faq_Q6_Answer1),Faq_Q6_Answer1);
-			Faq_Q6_Answer2=GetOrDefault(translations,nameof(Faq_Q6_Answer2),Faq_Q6_Answer2);
-			Faq_Q6_Answer3=GetOrDefault(translations,nameof(Faq_Q6_Answer3),Faq_Q6_Answer3);
-			Faq_Q6_Hint=GetOrDefault(translations,nameof(Faq_Q6_Hint),Faq_Q6_Hint);
-			Faq_Q7_Title=GetOrDefault(translations,nameof(Faq_Q7_Title),Faq_Q7_Title);
-			Faq_Q7_Answer1=GetOrDefault(translations,nameof(Faq_Q7_Answer1),Faq_Q7_Answer1);
-			Faq_Q7_Answer2=GetOrDefault(translations,nameof(Faq_Q7_Answer2),Faq_Q7_Answer2);
-			Faq_Q8_Title=GetOrDefault(translations,nameof(Faq_Q8_Title),Faq_Q8_Title);
-			Faq_Q8_Answer1=GetOrDefault(translations,nameof(Faq_Q8_Answer1),Faq_Q8_Answer1);
-			Faq_Q8_OpenIssuesButton=GetOrDefault(translations,nameof(Faq_Q8_OpenIssuesButton),Faq_Q8_OpenIssuesButton);
-			Faq_Q8_OpenIssuesHint=GetOrDefault(translations,nameof(Faq_Q8_OpenIssuesHint),Faq_Q8_OpenIssuesHint);
-			Faq_Q8_Hint=GetOrDefault(translations,nameof(Faq_Q8_Hint),Faq_Q8_Hint);
-			Faq_Q9_Title=GetOrDefault(translations,nameof(Faq_Q9_Title),Faq_Q9_Title);
-			Faq_Q9_Answer1=GetOrDefault(translations,nameof(Faq_Q9_Answer1),Faq_Q9_Answer1);
-			Faq_Q9_Answer2=GetOrDefault(translations,nameof(Faq_Q9_Answer2),Faq_Q9_Answer2);
-			Faq_Q9_Answer3=GetOrDefault(translations,nameof(Faq_Q9_Answer3),Faq_Q9_Answer3);
-			Faq_Q9_Hint=GetOrDefault(translations,nameof(Faq_Q9_Hint),Faq_Q9_Hint);
+			Faq_PageTitle = GetOrDefault(translations, nameof(Faq_PageTitle), Faq_PageTitle);
+			Faq_Q1_Title = GetOrDefault(translations, nameof(Faq_Q1_Title), Faq_Q1_Title);
+			Faq_Q1_Answer1 = GetOrDefault(translations, nameof(Faq_Q1_Answer1), Faq_Q1_Answer1);
+			Faq_Q1_Answer2 = GetOrDefault(translations, nameof(Faq_Q1_Answer2), Faq_Q1_Answer2);
+			Faq_Q1_Hint = GetOrDefault(translations, nameof(Faq_Q1_Hint), Faq_Q1_Hint);
+			Faq_Q2_Title = GetOrDefault(translations, nameof(Faq_Q2_Title), Faq_Q2_Title);
+			Faq_Q2_Answer1 = GetOrDefault(translations, nameof(Faq_Q2_Answer1), Faq_Q2_Answer1);
+			Faq_Q2_Answer2 = GetOrDefault(translations, nameof(Faq_Q2_Answer2), Faq_Q2_Answer2);
+			Faq_Q3_Title = GetOrDefault(translations, nameof(Faq_Q3_Title), Faq_Q3_Title);
+			Faq_Q3_Answer1 = GetOrDefault(translations, nameof(Faq_Q3_Answer1), Faq_Q3_Answer1);
+			Faq_Q3_Answer2 = GetOrDefault(translations, nameof(Faq_Q3_Answer2), Faq_Q3_Answer2);
+			Faq_Q3_Hint = GetOrDefault(translations, nameof(Faq_Q3_Hint), Faq_Q3_Hint);
+			Faq_Q4_Title = GetOrDefault(translations, nameof(Faq_Q4_Title), Faq_Q4_Title);
+			Faq_Q4_Answer1 = GetOrDefault(translations, nameof(Faq_Q4_Answer1), Faq_Q4_Answer1);
+			Faq_Q4_Answer2 = GetOrDefault(translations, nameof(Faq_Q4_Answer2), Faq_Q4_Answer2);
+			Faq_Q4_Answer3 = GetOrDefault(translations, nameof(Faq_Q4_Answer3), Faq_Q4_Answer3);
+			Faq_Q4_Hint = GetOrDefault(translations, nameof(Faq_Q4_Hint), Faq_Q4_Hint);
+			Faq_Q5_Title = GetOrDefault(translations, nameof(Faq_Q5_Title), Faq_Q5_Title);
+			Faq_Q5_Answer1 = GetOrDefault(translations, nameof(Faq_Q5_Answer1), Faq_Q5_Answer1);
+			Faq_Q5_Answer2 = GetOrDefault(translations, nameof(Faq_Q5_Answer2), Faq_Q5_Answer2);
+			Faq_Q5_Hint = GetOrDefault(translations, nameof(Faq_Q5_Hint), Faq_Q5_Hint);
+			Faq_Q6_Title = GetOrDefault(translations, nameof(Faq_Q6_Title), Faq_Q6_Title);
+			Faq_Q6_Answer1 = GetOrDefault(translations, nameof(Faq_Q6_Answer1), Faq_Q6_Answer1);
+			Faq_Q6_Answer2 = GetOrDefault(translations, nameof(Faq_Q6_Answer2), Faq_Q6_Answer2);
+			Faq_Q6_Answer3 = GetOrDefault(translations, nameof(Faq_Q6_Answer3), Faq_Q6_Answer3);
+			Faq_Q6_Hint = GetOrDefault(translations, nameof(Faq_Q6_Hint), Faq_Q6_Hint);
+			Faq_Q7_Title = GetOrDefault(translations, nameof(Faq_Q7_Title), Faq_Q7_Title);
+			Faq_Q7_Answer1 = GetOrDefault(translations, nameof(Faq_Q7_Answer1), Faq_Q7_Answer1);
+			Faq_Q7_Answer2 = GetOrDefault(translations, nameof(Faq_Q7_Answer2), Faq_Q7_Answer2);
+			Faq_Q8_Title = GetOrDefault(translations, nameof(Faq_Q8_Title), Faq_Q8_Title);
+			Faq_Q8_Answer1 = GetOrDefault(translations, nameof(Faq_Q8_Answer1), Faq_Q8_Answer1);
+			Faq_Q8_OpenIssuesButton = GetOrDefault(translations, nameof(Faq_Q8_OpenIssuesButton), Faq_Q8_OpenIssuesButton);
+			Faq_Q8_OpenIssuesHint = GetOrDefault(translations, nameof(Faq_Q8_OpenIssuesHint), Faq_Q8_OpenIssuesHint);
+			Faq_Q8_Hint = GetOrDefault(translations, nameof(Faq_Q8_Hint), Faq_Q8_Hint);
+			Faq_Q9_Title = GetOrDefault(translations, nameof(Faq_Q9_Title), Faq_Q9_Title);
+			Faq_Q9_Answer1 = GetOrDefault(translations, nameof(Faq_Q9_Answer1), Faq_Q9_Answer1);
+			Faq_Q9_Answer2 = GetOrDefault(translations, nameof(Faq_Q9_Answer2), Faq_Q9_Answer2);
+			Faq_Q9_Answer3 = GetOrDefault(translations, nameof(Faq_Q9_Answer3), Faq_Q9_Answer3);
+			Faq_Q9_Hint = GetOrDefault(translations, nameof(Faq_Q9_Hint), Faq_Q9_Hint);
 
 			// Toast Messages
-			Toast_InstallInProgress=GetOrDefault(translations,nameof(Toast_InstallInProgress),Toast_InstallInProgress);
-			Toast_InstallComplete=GetOrDefault(translations,nameof(Toast_InstallComplete),Toast_InstallComplete);
-			Toast_InstallCompleteWithErrors=GetOrDefault(translations,nameof(Toast_InstallCompleteWithErrors),Toast_InstallCompleteWithErrors);
-			Toast_InstallingMods=GetOrDefault(translations,nameof(Toast_InstallingMods),Toast_InstallingMods);
-			Toast_GameLaunched=GetOrDefault(translations,nameof(Toast_GameLaunched),Toast_GameLaunched);
-			Toast_LaunchFailed=GetOrDefault(translations,nameof(Toast_LaunchFailed),Toast_LaunchFailed);
-			Toast_MissingMods=GetOrDefault(translations,nameof(Toast_MissingMods),Toast_MissingMods);
-			Toast_ModListUpdated=GetOrDefault(translations,nameof(Toast_ModListUpdated),Toast_ModListUpdated);
-			Toast_RefreshFailed=GetOrDefault(translations,nameof(Toast_RefreshFailed),Toast_RefreshFailed);
-			Toast_NoModsFound=GetOrDefault(translations,nameof(Toast_NoModsFound),Toast_NoModsFound);
-			Toast_AutoScanFailed=GetOrDefault(translations,nameof(Toast_AutoScanFailed),Toast_AutoScanFailed);
+			Toast_InstallInProgress = GetOrDefault(translations, nameof(Toast_InstallInProgress), Toast_InstallInProgress);
+			Toast_InstallComplete = GetOrDefault(translations, nameof(Toast_InstallComplete), Toast_InstallComplete);
+			Toast_InstallCompleteWithErrors = GetOrDefault(translations, nameof(Toast_InstallCompleteWithErrors), Toast_InstallCompleteWithErrors);
+			Toast_InstallingMods = GetOrDefault(translations, nameof(Toast_InstallingMods), Toast_InstallingMods);
+			Toast_GameLaunched = GetOrDefault(translations, nameof(Toast_GameLaunched), Toast_GameLaunched);
+			Toast_LaunchFailed = GetOrDefault(translations, nameof(Toast_LaunchFailed), Toast_LaunchFailed);
+			Toast_MissingMods = GetOrDefault(translations, nameof(Toast_MissingMods), Toast_MissingMods);
+			Toast_ModListUpdated = GetOrDefault(translations, nameof(Toast_ModListUpdated), Toast_ModListUpdated);
+			Toast_RefreshFailed = GetOrDefault(translations, nameof(Toast_RefreshFailed), Toast_RefreshFailed);
+			Toast_NoModsFound = GetOrDefault(translations, nameof(Toast_NoModsFound), Toast_NoModsFound);
+			Toast_AutoScanFailed = GetOrDefault(translations, nameof(Toast_AutoScanFailed), Toast_AutoScanFailed);
 
 			// Common / Shared
-			Common_AlmostDone=GetOrDefault(translations,nameof(Common_AlmostDone),Common_AlmostDone);
-			Common_Remaining=GetOrDefault(translations,nameof(Common_Remaining),Common_Remaining);
-			Common_Extracting=GetOrDefault(translations,nameof(Common_Extracting),Common_Extracting);
-			Common_FilesExtracted=GetOrDefault(translations,nameof(Common_FilesExtracted),Common_FilesExtracted);
+			Common_AlmostDone = GetOrDefault(translations, nameof(Common_AlmostDone), Common_AlmostDone);
+			Common_Remaining = GetOrDefault(translations, nameof(Common_Remaining), Common_Remaining);
+			Common_Extracting = GetOrDefault(translations, nameof(Common_Extracting), Common_Extracting);
+			Common_FilesExtracted = GetOrDefault(translations, nameof(Common_FilesExtracted), Common_FilesExtracted);
 
 			NotifyAllPropertiesChanged();
-			}
+		}
 
 		/// <summary>
 		/// Returns the dictionary value if the key exists, otherwise returns the fallback.
 		/// </summary>
-		private static string GetOrDefault(Dictionary<string,string> translations,string key,string fallback) {
-			return translations.TryGetValue(key,out string? value) && !string.IsNullOrEmpty(value)
+		private static string GetOrDefault(Dictionary<string, string> translations, string key, string fallback) {
+			return translations.TryGetValue(key, out string? value) && !string.IsNullOrEmpty(value)
 				? value
 				: fallback;
-			}
+		}
 
 		#region Navigation
 		public string Nav_ModsTab { get; private set; } = "Mods";
@@ -428,5 +428,5 @@
 		public string Common_Extracting { get; private set; } = "Extracting";
 		public string Common_FilesExtracted { get; private set; } = "files extracted";
 		#endregion
-		}
 	}
+}

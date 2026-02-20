@@ -1,14 +1,11 @@
-﻿namespace CalradiaForge.Core.Infra.Modpacks
-	{
-	using System;
+﻿namespace CalradiaForge.Core.Infra.Modpacks {
 	using System.Text.RegularExpressions;
 
 	/// <summary>
 	/// Pure static helper for modpack filename sanitization and path resolution.
 	/// Stateless — receives all required data as parameters.
 	/// </summary>
-	public static partial class ModpackFileHelper
-		{
+	public static partial class ModpackFileHelper {
 		/// <summary>
 		/// Characters allowed in sanitized filenames: letters, digits, hyphen, underscore, period.
 		/// Everything else is replaced with underscore.
@@ -30,15 +27,15 @@
 		public static string SanitizeFileName(string modpackName) {
 			if (string.IsNullOrWhiteSpace(modpackName)) {
 				return "unnamed_modpack";
-				}
-			string sanitized = _invalidCharsRegex.Replace(modpackName,"_");
-			sanitized=_consecutiveUnderscores.Replace(sanitized,"_");
-			sanitized=sanitized.Trim('_','.');
+			}
+			string sanitized = _invalidCharsRegex.Replace(modpackName, "_");
+			sanitized = _consecutiveUnderscores.Replace(sanitized, "_");
+			sanitized = sanitized.Trim('_', '.');
 			if (string.IsNullOrWhiteSpace(sanitized)) {
 				return "unnamed_modpack";
-				}
-			return sanitized;
 			}
+			return sanitized;
+		}
 
 		/// <summary>
 		/// Builds the full file path for a modpack JSON file given the directory and display name.
@@ -46,10 +43,10 @@
 		/// <param name="modpacksDirectory">The directory where modpack files are stored.</param>
 		/// <param name="modpackName">The raw display name of the modpack.</param>
 		/// <returns>Full path including the .json extension.</returns>
-		public static string GetModpackFilePath(string modpacksDirectory,string modpackName) {
+		public static string GetModpackFilePath(string modpacksDirectory, string modpackName) {
 			string fileName = SanitizeFileName(modpackName);
-			return Path.Combine(modpacksDirectory,fileName+".json");
-			}
+			return Path.Combine(modpacksDirectory, fileName + ".json");
+		}
 
 		/// <summary>
 		/// Builds the full file path for a modpack using a pre-sanitized filename.
@@ -57,14 +54,20 @@
 		/// <param name="modpacksDirectory">The directory where modpack files are stored.</param>
 		/// <param name="sanitizedFileName">Already-sanitized filename (without extension).</param>
 		/// <returns>Full path including the .json extension.</returns>
-		public static string GetModpackFilePathFromFileName(string modpacksDirectory,string sanitizedFileName) {
-			return Path.Combine(modpacksDirectory,sanitizedFileName+".json");
-			}
+		public static string GetModpackFilePathFromFileName(string modpacksDirectory, string sanitizedFileName) {
+			return Path.Combine(modpacksDirectory, sanitizedFileName + ".json");
+		}
 
+		/// <summary>
+		/// Returns a regex that matches invalid filename characters.
+		/// </summary>
 		[GeneratedRegex(@"[^a-zA-Z0-9\-_.]")]
 		private static partial Regex InvalidFilenameCharsRegex();
 
+		/// <summary>
+		/// Returns a regex that collapses repeated underscores.
+		/// </summary>
 		[GeneratedRegex(@"_{2,}")]
 		private static partial Regex ConsecutiveUnderscoresRegex();
-		}
 	}
+}

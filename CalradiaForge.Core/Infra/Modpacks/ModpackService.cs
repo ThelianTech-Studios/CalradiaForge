@@ -1,5 +1,4 @@
-﻿namespace CalradiaForge.Core.Infra.Modpacks
-	{
+﻿namespace CalradiaForge.Core.Infra.Modpacks {
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
@@ -10,8 +9,7 @@
 	/// <summary>
 	/// Enumerates the available modpack templates used when creating a new modpack.
 	/// </summary>
-	public enum ModpackTemplate
-		{
+	public enum ModpackTemplate {
 		/// <summary>
 		/// Default vanilla Bannerlord modules only.
 		/// </summary>
@@ -31,15 +29,14 @@
 		/// BUTR ButterLib framework stack followed by vanilla modules including the WarSails (Naval) DLC.
 		/// </summary>
 		ButterLibWarSails
-		}
+	}
 
 	/// <summary>
 	/// High-level modpack management service.
 	/// Orchestrates CRUD operations, import/export, validation, and the "Last Used" list.
 	/// Receives dependencies explicitly — never accesses global state.
 	/// </summary>
-	public sealed class ModpackService
-		{
+	public sealed class ModpackService {
 		private readonly ModpackData _modpackData;
 		private readonly Logger _logger = Logger.Instance;
 
@@ -62,9 +59,12 @@
 		/// </summary>
 		public List<ModpackEntryModel> CurrentLoadOrderEntries { get; set; } = [];
 
+		/// <summary>
+		/// Initializes a new modpack service with the provided data layer.
+		/// </summary>
 		public ModpackService(ModpackData modpackData) {
-			_modpackData=modpackData ?? throw new ArgumentNullException(nameof(modpackData));
-			}
+			_modpackData = modpackData ?? throw new ArgumentNullException(nameof(modpackData));
+		}
 
 		#region Startup
 
@@ -73,14 +73,14 @@
 		/// Should be called once during application startup.
 		/// </summary>
 		public void LoadAll() {
-			AllModpacks=_modpackData.LoadAllModpacks();
-			LastUsedModpack=_modpackData.LoadLastUsed();
+			AllModpacks = _modpackData.LoadAllModpacks();
+			LastUsedModpack = _modpackData.LoadLastUsed();
 			EnsureDefaultModpackExists();
 			_logger.Info($"ModpackService: Loaded {AllModpacks.Count} modpack(s). Last Used: {(LastUsedModpack is not null ? "found" : "none")}");
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("ModpackService: Load complete.", new { ModpackCount = AllModpacks.Count, HasLastUsed = LastUsedModpack is not null });
 			}
-			}
+		}
 
 		/// <summary>
 		/// Ensures the built-in "Vanilla" modpack file exists on disk.
@@ -88,17 +88,17 @@
 		/// </summary>
 		private void EnsureDefaultModpackExists() {
 			bool vanillaExists = AllModpacks.Any(
-				m => string.Equals(m.ModpackName,VanillaModules.DefaultModpackName,StringComparison.OrdinalIgnoreCase));
+				m => string.Equals(m.ModpackName, VanillaModules.DefaultModpackName, StringComparison.OrdinalIgnoreCase));
 			if (!vanillaExists) {
 				ModpackModel vanilla = VanillaModules.CreateDefaultModpack();
 				_modpackData.SaveModpack(vanilla);
-				AllModpacks.Insert(0,vanilla);
+				AllModpacks.Insert(0, vanilla);
 				_logger.Info("ModpackService: Created default Vanilla modpack.");
 				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 					_logger.Debug("ModpackService: Default modpack created.", new { ModpackName = vanilla.ModpackName, EntryCount = vanilla.LoadOrder.Count });
 				}
-				}
 			}
+		}
 
 		#endregion
 
@@ -108,13 +108,13 @@
 		/// Reloads all modpacks from disk. Call after external changes (import, delete, etc.).
 		/// </summary>
 		public void Refresh() {
-			AllModpacks=_modpackData.LoadAllModpacks();
+			AllModpacks = _modpackData.LoadAllModpacks();
 			EnsureDefaultModpackExists();
 			_logger.Info($"ModpackService: Refreshed. {AllModpacks.Count} modpack(s) loaded.");
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("ModpackService: Refresh complete.", new { ModpackCount = AllModpacks.Count });
 			}
-			}
+		}
 
 		#endregion
 
@@ -127,18 +127,18 @@
 		/// <param name="modpack">The modpack to overwrite.</param>
 		/// <param name="currentLoadOrder">The current load order entries from ModsPage.</param>
 		/// <returns><c>true</c> when saved successfully.</returns>
-		public bool Save(ModpackModel modpack,List<ModpackEntryModel> currentLoadOrder) {
-			modpack.LoadOrder=currentLoadOrder.Select(e => e.Clone()).ToList();
-			modpack.LastUpdated=DateTime.Now.ToString("yyyy-MM-dd");
+		public bool Save(ModpackModel modpack, List<ModpackEntryModel> currentLoadOrder) {
+			modpack.LoadOrder = currentLoadOrder.Select(e => e.Clone()).ToList();
+			modpack.LastUpdated = DateTime.Now.ToString("yyyy-MM-dd");
 			bool result = _modpackData.SaveModpack(modpack);
 			if (result) {
 				Refresh();
-				}
+			}
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("ModpackService: Saved modpack.", new { ModpackName = modpack.ModpackName, EntryCount = modpack.LoadOrder.Count, Success = result });
 			}
 			return result;
-			}
+		}
 
 		/// <summary>
 		/// Creates and saves a new modpack with the given name and the current working load order.
@@ -147,24 +147,24 @@
 		/// <param name="createdBy">Author name.</param>
 		/// <param name="currentLoadOrder">The current load order entries from ModsPage.</param>
 		/// <returns><c>true</c> when saved successfully; <c>false</c> if the name already exists or save fails.</returns>
-		public bool SaveAs(string modpackName,string createdBy,List<ModpackEntryModel> currentLoadOrder) {
+		public bool SaveAs(string modpackName, string createdBy, List<ModpackEntryModel> currentLoadOrder) {
 			if (_modpackData.ModpackExists(modpackName)) {
 				_logger.Warning($"ModpackService: Cannot SaveAs — modpack '{modpackName}' already exists.");
 				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 					_logger.Debug("ModpackService: SaveAs rejected.", new { ModpackName = modpackName });
 				}
 				return false;
-				}
-			ModpackModel newModpack = new(modpackName,createdBy,currentLoadOrder.Select(e => e.Clone()).ToList());
+			}
+			ModpackModel newModpack = new(modpackName, createdBy, currentLoadOrder.Select(e => e.Clone()).ToList());
 			bool result = _modpackData.SaveModpack(newModpack);
 			if (result) {
 				Refresh();
-				}
+			}
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("ModpackService: SaveAs complete.", new { ModpackName = modpackName, EntryCount = newModpack.LoadOrder.Count, Success = result });
 			}
 			return result;
-			}
+		}
 
 		#endregion
 
@@ -190,23 +190,23 @@
 					_logger.Debug("ModpackService: Create rejected.", new { ModpackName = modpackName });
 				}
 				return false;
-				}
+			}
 			List<ModpackEntryModel> defaultOrder = template switch {
 				ModpackTemplate.ButterLib => VanillaModules.GetButterLibLoadOrder(installedMods),
 				ModpackTemplate.VanillaWarSails => VanillaModules.GetDefaultWarSailsLoadOrder(installedMods),
 				ModpackTemplate.ButterLibWarSails => VanillaModules.GetButterLibWarSailsLoadOrder(installedMods),
 				_ => VanillaModules.GetDefaultLoadOrder(installedMods)
-				};
+			};
 			ModpackModel newModpack = new(modpackName, createdBy, defaultOrder);
 			bool result = _modpackData.SaveModpack(newModpack);
 			if (result) {
 				Refresh();
-				}
+			}
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("ModpackService: Created new modpack.", new { ModpackName = modpackName, Template = template.ToString(), EntryCount = defaultOrder.Count, Success = result });
 			}
 			return result;
-			}
+		}
 		#endregion
 
 		#region Import / Export
@@ -260,7 +260,7 @@
 
 			Refresh();
 			return (true, imported, $"Successfully imported '{imported.ModpackName}'.");
-			}
+		}
 
 		/// <summary>
 		/// Exports a modpack to an external file path chosen by the user.
@@ -268,18 +268,17 @@
 		/// <param name="modpack">The modpack to export.</param>
 		/// <param name="targetFilePath">The full path chosen via SaveFileDialog.</param>
 		/// <returns><c>true</c> when the export succeeded.</returns>
-		public bool Export(ModpackModel modpack,string targetFilePath) {
+		public bool Export(ModpackModel modpack, string targetFilePath) {
 			try {
-				string json = Newtonsoft.Json.JsonConvert.SerializeObject(modpack,Newtonsoft.Json.Formatting.Indented);
-				File.WriteAllText(targetFilePath,json);
+				string json = Newtonsoft.Json.JsonConvert.SerializeObject(modpack, Newtonsoft.Json.Formatting.Indented);
+				File.WriteAllText(targetFilePath, json);
 				_logger.Info($"ModpackService: Exported '{modpack.ModpackName}' to '{targetFilePath}'");
 				return true;
-				}
-			catch (Exception ex) {
-				_logger.Error(ex,$"ModpackService: Failed to export '{modpack.ModpackName}'");
+			} catch (Exception ex) {
+				_logger.Error(ex, $"ModpackService: Failed to export '{modpack.ModpackName}'");
 				return false;
-				}
 			}
+		}
 
 		#endregion
 
@@ -293,27 +292,27 @@
 		/// <returns><c>true</c> when saved successfully.</returns>
 		public bool SaveLastUsed(List<ModpackEntryModel> currentLoadOrder) {
 			ModpackModel lastUsed = new() {
-				ModpackName="Last Used",
-				CreatedBy="User",
-				LastUpdated=DateTime.Now.ToString("yyyy-MM-dd"),
-				LoadOrder=currentLoadOrder.Select(e => e.Clone()).ToList()
-				};
+				ModpackName = "Last Used",
+				CreatedBy = "User",
+				LastUpdated = DateTime.Now.ToString("yyyy-MM-dd"),
+				LoadOrder = currentLoadOrder.Select(e => e.Clone()).ToList()
+			};
 			bool result = _modpackData.SaveLastUsed(lastUsed);
 			if (result) {
-				LastUsedModpack=lastUsed;
-				}
+				LastUsedModpack = lastUsed;
+			}
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("ModpackService: Saved last used load order.", new { EntryCount = lastUsed.LoadOrder.Count, Success = result });
 			}
 			return result;
-			}
+		}
 
 		public void LoadLastUsedFromDisk() {
-			LastUsedModpack=_modpackData.LoadLastUsed();
+			LastUsedModpack = _modpackData.LoadLastUsed();
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("ModpackService: Loaded last used from disk.", new { HasLastUsed = LastUsedModpack is not null });
 			}
-			}
+		}
 
 		#endregion
 
@@ -348,16 +347,15 @@
 			foreach (ModpackEntryModel entry in modpack.LoadOrder) {
 				if (installedIds.Contains(entry.ModuleId)) {
 					validEntries.Add(entry);
-					}
-				else {
+				} else {
 					missingModNames.Add(entry.ModuleName);
-					}
 				}
+			}
 			if (Logger.Instance.MinimumLevel == Logger.LogLevel.Debug) {
 				Logger.Instance.Debug("ModpackService: Load order validation.", new { ModpackName = modpack.ModpackName, ValidCount = validEntries.Count, MissingCount = missingModNames.Count, Missing = string.Join(", ", missingModNames) });
 			}
-			return (validEntries,missingModNames);
-			}
+			return (validEntries, missingModNames);
+		}
 
 		#endregion
 
@@ -371,12 +369,12 @@
 		/// <returns>A list of modpack entry models.</returns>
 		public static List<ModpackEntryModel> BuildEntryListFromModules(List<ModuleModel> modules) {
 			return modules.Select(m => new ModpackEntryModel {
-				ModuleId=m.ModuleId,
-				ModuleName=m.ModuleName,
-				RequiredVersion=m.ModuleVersion,
-				ModuleURL=m.ModuleURL
-				}).ToList();
-			}
+				ModuleId = m.ModuleId,
+				ModuleName = m.ModuleName,
+				RequiredVersion = m.ModuleVersion,
+				ModuleURL = m.ModuleURL
+			}).ToList();
+		}
 
 		/// <summary>
 		/// Finds the modpack in <see cref="AllModpacks"/> that matches the given name.
@@ -385,9 +383,9 @@
 		/// <returns>The matching modpack, or <c>null</c> if not found.</returns>
 		public ModpackModel? FindByName(string modpackName) {
 			return AllModpacks.FirstOrDefault(
-				m => string.Equals(m.ModpackName,modpackName,StringComparison.OrdinalIgnoreCase));
-			}
+				m => string.Equals(m.ModpackName, modpackName, StringComparison.OrdinalIgnoreCase));
+		}
 
 		#endregion
-		}
 	}
+}

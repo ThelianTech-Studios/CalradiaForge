@@ -39,10 +39,14 @@
 		/// </summary>
 		public string ToSummaryString() {
 			List<string> parts = [];
-			if (InstalledCount > 0) parts.Add($"{InstalledCount} installed");
-			if (UpgradedCount > 0) parts.Add($"{UpgradedCount} upgraded");
-			if (SkippedCount > 0) parts.Add($"{SkippedCount} skipped (already installed)");
-			if (FailedCount > 0) parts.Add($"{FailedCount} failed");
+			if (InstalledCount > 0)
+				parts.Add($"{InstalledCount} installed");
+			if (UpgradedCount > 0)
+				parts.Add($"{UpgradedCount} upgraded");
+			if (SkippedCount > 0)
+				parts.Add($"{SkippedCount} skipped (already installed)");
+			if (FailedCount > 0)
+				parts.Add($"{FailedCount} failed");
 
 			// Append BLSE result separately
 			ModInstallResult? blse = BLSEResult;

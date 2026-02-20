@@ -1,6 +1,5 @@
 ﻿namespace CalradiaForge.Core.Infra.Mods {
 	using System;
-	using System.Collections.Generic;
 	using System.Runtime.InteropServices;
 	using System.Threading;
 	using System.Threading.Tasks;
@@ -110,6 +109,9 @@
 
 		#region Private Logic
 
+		/// <summary>
+		/// Recursively scans a directory for blocked DLLs and attempts to unblock them.
+		/// </summary>
 		private static UnblockResult UnblockDirectory(string directoryPath, CancellationToken token) {
 			UnblockResult result = new();
 			string[] dllFiles;

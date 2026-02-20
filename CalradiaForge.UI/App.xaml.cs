@@ -24,10 +24,16 @@
 		public static GameLauncher GameLauncher { get; private set; } = null!;
 		public static ToastService Toasts { get; private set; } = null!;
 		public static TranslationService Translator { get; private set; } = null!;
+		/// <summary>
+		/// Initializes the WPF application instance.
+		/// </summary>
 		public App() {
 			InitializeComponent();
 		}
 
+		/// <summary>
+		/// Handles application startup and initializes services.
+		/// </summary>
 		protected override void OnStartup(StartupEventArgs e) {
 			base.OnStartup(e);
 			_logger.Info("Application Starting");
@@ -52,24 +58,30 @@
 			}
 		}
 
+		/// <summary>
+		/// Handles application shutdown and performs cleanup.
+		/// </summary>
 		protected override void OnExit(ExitEventArgs e) {
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("App: OnExit begin.");
 			}
 			try {
-				if (ModInstaller?.IsInstalling==true) {
+				if (ModInstaller?.IsInstalling == true) {
 					_logger.Info("App: Cancelling in-progress mod installation on exit.");
 					ModInstaller.CancelInstall();
-					}
-				if (ModpackService?.CurrentLoadOrderEntries is { Count:>0 } entries) {
+				}
+				if (ModpackService?.CurrentLoadOrderEntries is { Count: > 0 } entries) {
 					ModpackService.SaveLastUsed(entries);
 					_logger.Info("App: Saved last-used load order on exit.");
-					}
-				} catch (Exception ex) {
-				_logger.Error(ex,"App: Failed to clean up on exit.");
 				}
-			base.OnExit(e);
+			} catch (Exception ex) {
+				_logger.Error(ex, "App: Failed to clean up on exit.");
 			}
+			base.OnExit(e);
+		}
+		/// <summary>
+		/// Loads configuration from disk and initializes settings.
+		/// </summary>
 		private void InitializeConfiguration() {
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("App: Initializing configuration.", new { AppPaths.ConfigFilePath });
@@ -86,6 +98,9 @@
 			}
 		}
 
+		/// <summary>
+		/// Initializes mod services and loads cached data.
+		/// </summary>
 		private void InitializeModServices() {
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("App: Initializing mod services.", new { AppPaths.ModsCurrentFilePath, AppPaths.ModsBackupFilePath });
@@ -99,6 +114,9 @@
 			ModInstaller = new ModInstaller(AppConfig);
 		}
 
+		/// <summary>
+		/// Initializes the modpack service and loads modpack data.
+		/// </summary>
 		private void InitializeModpackServices() {
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("App: Initializing modpack services.", new { AppPaths.ModpacksDirectory });
@@ -110,16 +128,25 @@
 				_logger.Debug("App: Modpacks loaded.", new { Count = ModpackService.AllModpacks.Count });
 			}
 		}
+		/// <summary>
+		/// Initializes the game launcher service.
+		/// </summary>
 		private void InitializeLauncherService() {
-					GameLauncher = new GameLauncher(AppConfig);
-					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-						_logger.Debug("App: GameLauncher initialized.");
-					}
+			GameLauncher = new GameLauncher(AppConfig);
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("App: GameLauncher initialized.");
+			}
 		}
 
+		/// <summary>
+		/// Initializes the toast notification service.
+		/// </summary>
 		private void InitializeToastService() {
 			Toasts = new ToastService(Dispatcher);
 		}
+		/// <summary>
+		/// Initializes the translation service and loads language data.
+		/// </summary>
 		private void InitializeTranslatorService() {
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("App: Initializing translator service.", new { AppPaths.LanguagesDirectory });
@@ -135,19 +162,25 @@
 			}
 		}
 
+		/// <summary>
+		/// Wires global exception handlers for application-level errors.
+		/// </summary>
 		private void SetupExceptionHandeling() {
-			AppDomain.CurrentDomain.UnhandledException += delegate (object s,UnhandledExceptionEventArgs e) {
-				LogUnhadledException((Exception)e.ExceptionObject,"AppDomain.CurrentDomain.UnhandledException");
+			AppDomain.CurrentDomain.UnhandledException += delegate (object s, UnhandledExceptionEventArgs e) {
+				LogUnhadledException((Exception)e.ExceptionObject, "AppDomain.CurrentDomain.UnhandledException");
 			};
-			base.DispatcherUnhandledException += delegate (object s,DispatcherUnhandledExceptionEventArgs e) {
-				LogUnhadledException(e.Exception,"Application.Current.DispatcherUnhandledException");
+			base.DispatcherUnhandledException += delegate (object s, DispatcherUnhandledExceptionEventArgs e) {
+				LogUnhadledException(e.Exception, "Application.Current.DispatcherUnhandledException");
 				e.Handled = true;
 			};
 			TaskScheduler.UnobservedTaskException += delegate (object? s, UnobservedTaskExceptionEventArgs e) {
-				LogUnhadledException(e.Exception,"TaskScheduler.UnobservedTaskException");
+				LogUnhadledException(e.Exception, "TaskScheduler.UnobservedTaskException");
 				e.SetObserved();
 			};
 		}
+		/// <summary>
+		/// Logs unhandled exceptions with context information.
+		/// </summary>
 		public void LogUnhadledException(Exception ex0, string source) {
 			string text = $"Unhandled exception from {source}";
 			try {

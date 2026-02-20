@@ -1,5 +1,4 @@
-﻿namespace CalradiaForge.Core.Infra.Localization
-	{
+﻿namespace CalradiaForge.Core.Infra.Localization {
 	using System;
 	using System.Collections.Generic;
 
@@ -11,8 +10,7 @@
 	/// <see cref="Strings"/> instance for UI consumption.
 	/// Owned as a singleton by <c>App.xaml.cs</c> and passed via dependency injection.
 	/// </summary>
-	public sealed class TranslationService
-		{
+	public sealed class TranslationService {
 		private static readonly Logger _logger = Logger.Instance;
 		private readonly TranslationManager _manager;
 		private readonly AppConfigSettings _config;
@@ -33,10 +31,13 @@
 		/// </summary>
 		public string ActiveLanguageCode { get; private set; } = "en-US";
 
-		public TranslationService(TranslationManager manager,AppConfigSettings config) {
-			_manager=manager??throw new ArgumentNullException(nameof(manager));
-			_config=config??throw new ArgumentNullException(nameof(config));
-			}
+		/// <summary>
+		/// Initializes a new translation service with the provided manager and configuration.
+		/// </summary>
+		public TranslationService(TranslationManager manager, AppConfigSettings config) {
+			_manager = manager ?? throw new ArgumentNullException(nameof(manager));
+			_config = config ?? throw new ArgumentNullException(nameof(config));
+		}
 
 		/// <summary>
 		/// Initializes the service by loading the manifest and applying
@@ -44,29 +45,29 @@
 		/// Call once during app startup after config is loaded.
 		/// </summary>
 		public void Initialize() {
-			AvailableLanguages=_manager.LoadManifest();
+			AvailableLanguages = _manager.LoadManifest();
 			_logger.Info($"TranslationService: Loaded {AvailableLanguages.Count} language(s) from manifest.");
-			if (_logger.MinimumLevel==Logger.LogLevel.Debug) {
-				_logger.Debug("TranslationService: Manifest loaded.",new { LanguageCount = AvailableLanguages.Count });
-				}
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("TranslationService: Manifest loaded.", new { LanguageCount = AvailableLanguages.Count });
+			}
 
 			string savedLanguage = _config.Language;
 			if (string.IsNullOrWhiteSpace(savedLanguage)) {
-				savedLanguage="en-US";
-				}
+				savedLanguage = "en-US";
+			}
 
-			if (_logger.MinimumLevel==Logger.LogLevel.Debug) {
-				_logger.Debug("TranslationService: Initial language resolved.",new { SavedLanguage = savedLanguage });
-				}
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("TranslationService: Initial language resolved.", new { SavedLanguage = savedLanguage });
+			}
 			// Validate the saved language has a file on disk
 			if (!_manager.LanguageFileExists(savedLanguage)) {
 				_logger.Warning($"TranslationService: Language file for '{savedLanguage}' not found. Falling back to en-US defaults.");
-				ActiveLanguageCode="en-US";
+				ActiveLanguageCode = "en-US";
 				return;
-				}
+			}
 
 			SetLanguage(savedLanguage);
-			}
+		}
 
 		/// <summary>
 		/// Switches the active language. Loads the translation file from disk,
@@ -78,34 +79,34 @@
 			if (string.IsNullOrWhiteSpace(languageCode)) {
 				_logger.Warning("TranslationService: Attempted to set null/empty language code.");
 				return;
-				}
+			}
 
-			ActiveLanguageCode=languageCode;
-			_config.Language=languageCode;
+			ActiveLanguageCode = languageCode;
+			_config.Language = languageCode;
 
-			if (_logger.MinimumLevel==Logger.LogLevel.Debug) {
-				_logger.Debug("TranslationService: Setting language.",new { LanguageCode = languageCode });
-				}
-			if (string.Equals(languageCode,"en-US",StringComparison.OrdinalIgnoreCase)) {
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("TranslationService: Setting language.", new { LanguageCode = languageCode });
+			}
+			if (string.Equals(languageCode, "en-US", StringComparison.OrdinalIgnoreCase)) {
 				// English is the hardcoded default — apply an empty dictionary
 				// which leaves all properties at their English default values.
 				// This also resets any previously loaded non-English strings.
-				Strings.Apply(new Dictionary<string,string>());
+				Strings.Apply(new Dictionary<string, string>());
 				_logger.Info("TranslationService: Applied en-US (hardcoded defaults).");
 				return;
-				}
+			}
 
-			Dictionary<string,string> translations = _manager.LoadLanguageFile(languageCode);
-			if (translations.Count==0) {
+			Dictionary<string, string> translations = _manager.LoadLanguageFile(languageCode);
+			if (translations.Count == 0) {
 				_logger.Warning($"TranslationService: Language file for '{languageCode}' was empty or failed to load. Keeping current strings.");
 				return;
-				}
+			}
 
 			Strings.Apply(translations);
 			_logger.Info($"TranslationService: Applied '{languageCode}' with {translations.Count} key(s).");
-			if (_logger.MinimumLevel==Logger.LogLevel.Debug) {
-				_logger.Debug("TranslationService: Language applied.",new { LanguageCode = languageCode,KeyCount = translations.Count });
-				}
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("TranslationService: Language applied.", new { LanguageCode = languageCode, KeyCount = translations.Count });
 			}
 		}
 	}
+}
