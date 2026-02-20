@@ -102,7 +102,7 @@
 			XElement? metadatas = (XElement?)moduleElement.Element("DependedModuleMetadatas");
 			if (metadatas is not null) {
 				foreach (XElement dep in metadatas.Elements("DependedModuleMetadata")) {
-					string depId = dep.Attribute("id")?.Value ?? string.Empty;
+					string depId = dep.Attribute("Id")?.Value ?? string.Empty;
 					string depVersion = dep.Attribute("version")?.Value ?? "0.0.0";
 					bool isOptional = string.Equals(dep.Attribute("optional")?.Value, "true", StringComparison.OrdinalIgnoreCase);
 					bool hasVersionRequirement = !string.IsNullOrEmpty(depVersion);
@@ -116,7 +116,7 @@
 			XElement? legacyDeps = (XElement?)moduleElement.Element("DependedModules");
 			if (legacyDeps is not null) {
 				foreach (XElement dep in legacyDeps.Elements("DependedModule")) {
-					string depId = dep.Attribute("id")?.Value ?? string.Empty;
+					string depId = dep.Attribute("Id")?.Value ?? string.Empty;
 					string depVersion = dep.Attribute("version")?.Value ?? string.Empty;
 					bool hasVersionRequirement = !string.IsNullOrEmpty(depVersion);
 					if (!string.IsNullOrEmpty(depId) && seenIds.Add(depId)) {
