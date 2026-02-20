@@ -2,7 +2,7 @@
 
 A modern mod launcher for **Mount & Blade II: Bannerlord**.
 
-CalradiaForge streamlines mod installation, load order management, modpacks, and game launching into a single, purpose-built desktop application.
+CalradiaForge streamlines mod installation, load order management, modpacks, and game launcher into a single, purpose-built desktop application.
 
  ```
  CalradiaForge was built by players, for players.
