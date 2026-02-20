@@ -37,13 +37,7 @@
 		protected override void OnStartup(StartupEventArgs e) {
 			base.OnStartup(e);
 			_logger.Info("Application Starting");
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("App: Debugging enabled.");
-			}
 			SetupExceptionHandeling();
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("App: Exception handlers wired.");
-			}
 			InitializeConfiguration();
 			InitializeModServices();
 			InitializeModpackServices();
@@ -62,7 +56,7 @@
 		/// Handles application shutdown and performs cleanup.
 		/// </summary>
 		protected override void OnExit(ExitEventArgs e) {
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+			if (AppConfig.DebugMode) {
 				_logger.Debug("App: OnExit begin.");
 			}
 			try {
@@ -83,13 +77,24 @@
 		/// Loads configuration from disk and initializes settings.
 		/// </summary>
 		private void InitializeConfiguration() {
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("App: Initializing configuration.", new { AppPaths.ConfigFilePath });
-			}
 			var appConfig = new AppConfig(AppPaths.ConfigFilePath);
 			appConfig.Load();
 			AppConfig = new AppConfigSettings(appConfig);
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+			if (AppConfig.DebugMode) {
+				_logger.MinimumLevel = Logger.LogLevel.Debug;
+				_logger.Info("App: Debug mode enabled — logging verbose diagnostic messages.");
+			}
+			if (AppConfig.DebugMode) {
+				_logger.Debug("App: Initializing configuration.", new { AppPaths.ConfigFilePath });
+			}
+			if ((AppConfig.GameProvider == GameProvider.NotInitialized) || string.IsNullOrWhiteSpace(AppConfig.GameFolderPath)) {
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("App: Game paths not initialized. Running auto-detection.");
+				}
+				GamePathsHelper.TryAutoDetectGameFolder(AppConfig);
+			}
+
+			if (AppConfig.DebugMode) {
 				_logger.Debug("App: Configuration initialized.", new {
 					AppConfig.DebugMode,
 					AppConfig.Language,
