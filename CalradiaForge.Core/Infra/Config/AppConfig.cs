@@ -32,15 +32,7 @@
 		public string this[string key] {
 			get {
 				lock (_lock) {
-					bool found = _configValues.TryGetValue(key, out var value);
-					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-						_logger.Debug("AppConfig: Read key.", new {
-							Key = key,
-							Value = string.IsNullOrEmpty(value) ? "<empty>" : value,
-							Found = found
-						});
-					}
-					return found ? value : string.Empty;
+					return _configValues.TryGetValue(key, out string? value) ? value : string.Empty;
 				}
 			}
 			set {
