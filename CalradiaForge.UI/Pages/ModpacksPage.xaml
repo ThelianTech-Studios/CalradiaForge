@@ -3,6 +3,7 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+			xmlns:local="clr-namespace:CalradiaForge.UI"
 			xmlns:mahIcons="http://metro.mahapps.com/winfx/xaml/iconpacks"
 			mc:Ignorable="d"
 			Title="Mod Packs"
@@ -25,7 +26,8 @@
 				<ColumnDefinition Width="*" />
 				<ColumnDefinition Width="Auto" />
 			</Grid.ColumnDefinitions>
-			<TextBlock Grid.Column="0" Text="Mod Packs:"
+			<TextBlock Grid.Column="0"
+								 Text="{Binding Strings.Modpacks_HeaderLabel, Source={x:Static local:App.Translator}}"
 								 Style="{StaticResource ModpacksPageHeader}"
 								 Margin="0,0,10,0" />
 			<ComboBox x:Name="ModpackComboBox" Grid.Column="1" MinWidth="160"
@@ -37,7 +39,8 @@
 			<StackPanel Grid.Column="2" Orientation="Horizontal">
 				<!--Conjoined Split Button: Create New (left) + Template Dropdown (right)-->
 				<StackPanel Orientation="Horizontal" Margin="8,0,8,0">
-					<Button x:Name="CreateVanillaButton" Content="Create New"
+					<Button x:Name="CreateVanillaButton"
+									Content="{Binding Strings.Modpacks_CreateNewButton, Source={x:Static local:App.Translator}}"
 									Style="{StaticResource SplitButtonLeft}"
 									ToolTip="Create a new modpack using the selected template"
 									Click="CreateNewButton_Click" />
@@ -59,7 +62,8 @@
 																								 VerticalAlignment="Center"
 																								 Margin="0,0,8,0"
 																								 Visibility="Visible" />
-											<TextBlock Text="Default Modpack" VerticalAlignment="Center" />
+											<TextBlock Text="{Binding Strings.Modpacks_TemplateVanilla, Source={x:Static local:App.Translator}}"
+																 VerticalAlignment="Center" />
 										</StackPanel>
 									</MenuItem.Header>
 								</MenuItem>
@@ -73,7 +77,8 @@
 																								 VerticalAlignment="Center"
 																								 Margin="0,0,8,0"
 																								 Visibility="Collapsed" />
-											<TextBlock Text="ButterLib Suite" VerticalAlignment="Center" />
+											<TextBlock Text="{Binding Strings.Modpacks_TemplateButterLib, Source={x:Static local:App.Translator}}"
+																 VerticalAlignment="Center" />
 										</StackPanel>
 									</MenuItem.Header>
 								</MenuItem>
@@ -87,7 +92,8 @@
 																								 VerticalAlignment="Center"
 																								 Margin="0,0,8,0"
 																								 Visibility="Collapsed" />
-											<TextBlock Text="Vanilla - WarSails" VerticalAlignment="Center" />
+											<TextBlock Text="{Binding Strings.Modpacks_TemplateVanillaWarSails, Source={x:Static local:App.Translator}}"
+																 VerticalAlignment="Center" />
 										</StackPanel>
 									</MenuItem.Header>
 								</MenuItem>
@@ -101,7 +107,8 @@
 																								 VerticalAlignment="Center"
 																								 Margin="0,0,8,0"
 																								 Visibility="Collapsed" />
-											<TextBlock Text="ButterLib - WarSails" VerticalAlignment="Center" />
+											<TextBlock Text="{Binding Strings.Modpacks_TemplateButterLibWarSails, Source={x:Static local:App.Translator}}"
+																 VerticalAlignment="Center" />
 										</StackPanel>
 									</MenuItem.Header>
 								</MenuItem>
@@ -109,12 +116,12 @@
 						</Button.ContextMenu>
 					</Button>
 				</StackPanel>
-				<Button Content="Import"
+				<Button Content="{Binding Strings.Modpacks_ImportButton, Source={x:Static local:App.Translator}}"
 								Style="{StaticResource ModpacksActionButton}"
 								ToolTip="Import a CalradiaForge modpack (.json) or Novus Launcher preset (.xml)"
 								Margin="0,0,8,0"
 								Click="ImportButton_Click" />
-				<Button Content="Save to Modpack"
+				<Button Content="{Binding Strings.Modpacks_SaveButton, Source={x:Static local:App.Translator}}"
 								Style="{StaticResource ModpacksActionButton}"
 								ToolTip="Overwrite the selected modpack's saved data with the current active load order from the Mods page"
 								IsEnabled="{Binding HasSelection}"
@@ -129,7 +136,8 @@
 				<ColumnDefinition Width="*" />
 			</Grid.ColumnDefinitions>
 			<!--Left header: Active load order-->
-			<TextBlock Grid.Column="0" Text="Active Load Order"
+			<TextBlock Grid.Column="0"
+								 Text="{Binding Strings.Modpacks_ActiveLoadOrderHeader, Source={x:Static local:App.Translator}}"
 								 Style="{StaticResource ModpacksSectionHeader}" />
 			<!--Right header: Saved modpack data + metadata-->
 			<Grid Grid.Column="1" Margin="10,0,0,0">
@@ -137,14 +145,17 @@
 					<ColumnDefinition Width="Auto" />
 					<ColumnDefinition Width="*" />
 				</Grid.ColumnDefinitions>
-				<TextBlock Grid.Column="0" Text="Saved Modpack Data"
+				<TextBlock Grid.Column="0"
+									 Text="{Binding Strings.Modpacks_SavedDataHeader, Source={x:Static local:App.Translator}}"
 									 Style="{StaticResource ModpacksSectionHeader}" />
 				<StackPanel Grid.Column="1" Orientation="Horizontal"
 										HorizontalAlignment="Right" Margin="0,0,10,0">
-					<TextBlock Text="By:" Style="{StaticResource ModpacksMetaLabel}" />
+					<TextBlock Text="{Binding Strings.Modpacks_ByLabel, Source={x:Static local:App.Translator}}"
+										 Style="{StaticResource ModpacksMetaLabel}" />
 					<TextBlock Text="{Binding SelectedCreatedBy}"
 										 Style="{StaticResource ModpacksMetaValue}" Margin="4,0,12,0" />
-					<TextBlock Text="Updated:" Style="{StaticResource ModpacksMetaLabel}" />
+					<TextBlock Text="{Binding Strings.Modpacks_UpdatedLabel, Source={x:Static local:App.Translator}}"
+										 Style="{StaticResource ModpacksMetaLabel}" />
 					<TextBlock Text="{Binding SelectedLastUpdated}"
 										 Style="{StaticResource ModpacksMetaValue}" />
 				</StackPanel>
@@ -193,7 +204,7 @@
 				</Grid.ColumnDefinitions>
 				<!--Row 0: Module ID + Version-->
 				<TextBlock Grid.Row="0" Grid.Column="0"
-									 Text="Module ID:"
+									 Text="{Binding Strings.Modpacks_ModuleIdLabel, Source={x:Static local:App.Translator}}"
 									 Style="{StaticResource ModpacksMetaLabel}"
 									 HorizontalAlignment="Right" Margin="0,0,8,6" />
 				<TextBox Grid.Row="0" Grid.Column="1"
@@ -201,7 +212,7 @@
 								 Text="{Binding EditModuleId, UpdateSourceTrigger=PropertyChanged}"
 								 Margin="0,0,8,6" />
 				<TextBlock Grid.Row="0" Grid.Column="2"
-									 Text="Version:"
+									 Text="{Binding Strings.Modpacks_VersionLabel, Source={x:Static local:App.Translator}}"
 									 Style="{StaticResource ModpacksMetaLabel}"
 									 HorizontalAlignment="Right" Margin="0,0,8,6" />
 				<TextBox Grid.Row="0" Grid.Column="3"
@@ -210,7 +221,7 @@
 								 Margin="0,0,0,6" />
 				<!--Row 1: Name + URL-->
 				<TextBlock Grid.Row="1" Grid.Column="0"
-									 Text="Name:"
+									 Text="{Binding Strings.Modpacks_NameLabel, Source={x:Static local:App.Translator}}"
 									 Style="{StaticResource ModpacksMetaLabel}"
 									 HorizontalAlignment="Right" Margin="0,0,8,6" />
 				<TextBox Grid.Row="1" Grid.Column="1"
@@ -218,7 +229,7 @@
 								 Text="{Binding EditModuleName, UpdateSourceTrigger=PropertyChanged}"
 								 Margin="0,0,8,6" />
 				<TextBlock Grid.Row="1" Grid.Column="2"
-									 Text="URL:"
+									 Text="{Binding Strings.Modpacks_UrlLabel, Source={x:Static local:App.Translator}}"
 									 Style="{StaticResource ModpacksMetaLabel}"
 									 HorizontalAlignment="Right" Margin="0,0,8,6" />
 				<TextBox Grid.Row="1" Grid.Column="3"
@@ -227,7 +238,7 @@
 								 Margin="0,0,0,6" />
 				<!--Row 2: Save Entry button-->
 				<Button Grid.Row="2" Grid.Column="3"
-								Content="Save Entry"
+								Content="{Binding Strings.Modpacks_SaveEntryButton, Source={x:Static local:App.Translator}}"
 								Style="{StaticResource ModpacksActionButton}"
 								HorizontalAlignment="Right"
 								Click="SaveEntryButton_Click" />
@@ -252,7 +263,7 @@
 					<ColumnDefinition Width="*" />
 				</Grid.ColumnDefinitions>
 				<TextBlock Grid.Row="0" Grid.Column="0"
-									 Text="Name:"
+									 Text="{Binding Strings.Modpacks_CreateNameLabel, Source={x:Static local:App.Translator}}"
 									 Style="{StaticResource ModpacksMetaLabel}"
 									 HorizontalAlignment="Right" Margin="0,0,8,8" />
 				<TextBox x:Name="CreateNameBox" Grid.Row="0" Grid.Column="1"
@@ -260,7 +271,7 @@
 								 Text="{Binding InputModpackName, UpdateSourceTrigger=PropertyChanged}"
 								 Margin="0,0,0,8" />
 				<TextBlock Grid.Row="1" Grid.Column="0"
-									 Text="Created By:"
+									 Text="{Binding Strings.Modpacks_CreatedByLabel, Source={x:Static local:App.Translator}}"
 									 Style="{StaticResource ModpacksMetaLabel}"
 									 HorizontalAlignment="Right" Margin="0,0,8,8" />
 				<TextBox Grid.Row="1" Grid.Column="1"
@@ -268,11 +279,11 @@
 								 Text="{Binding InputCreatedBy, UpdateSourceTrigger=PropertyChanged}"
 								 Margin="0,0,0,8" />
 				<StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal">
-					<Button Content="Confirm"
+					<Button Content="{Binding Strings.Modpacks_ConfirmButton, Source={x:Static local:App.Translator}}"
 									Style="{StaticResource ModpacksActionButton}"
 									Margin="0,0,8,0"
 									Click="CreateConfirmButton_Click" />
-					<Button Content="Cancel"
+					<Button Content="{Binding Strings.Modpacks_CancelButton, Source={x:Static local:App.Translator}}"
 									Style="{StaticResource ModpacksCancelButton}"
 									Click="CreateCancelButton_Click" />
 				</StackPanel>

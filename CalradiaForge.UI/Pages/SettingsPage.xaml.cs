@@ -1,12 +1,14 @@
 ﻿namespace CalradiaForge.UI.Pages {
 	using System;
 	using System.ComponentModel;
+	using System.Linq;
 	using System.Reflection;
 	using System.Runtime.CompilerServices;
 	using System.Windows;
 	using System.Windows.Controls;
 
 	using CalradiaForge.Core.Infra.Config;
+	using CalradiaForge.Core.Infra.Localization;
 	using CalradiaForge.Core.Infra.Logging;
 	using CalradiaForge.Core.Infra.Mods;
 	using CalradiaForge.Core.Infra.Paths;
@@ -82,6 +84,7 @@
 			UpdateBLSEValidation();
 			LoadUnblockStatus();
 			SetVersionText();
+			PopulateLanguageComboBox();
 		}
 		#endregion
 
@@ -138,6 +141,28 @@
 
 			// Debug mode toggle
 			DebugModeToggle.IsChecked = _config.DebugMode;
+		}
+
+		/// <summary>
+		/// Populates the language ComboBox from the <see cref="Core.Infra.Localization.TranslationService"/>
+		/// manifest and selects the currently active language.
+		/// Wires <see cref="LanguageComboBox_SelectionChanged"/> after selection
+		/// to avoid firing during initialization.
+		/// </summary>
+		private void PopulateLanguageComboBox() {
+			LanguageComboBox.SelectionChanged -= LanguageComboBox_SelectionChanged;
+
+			LanguageComboBox.ItemsSource = App.Translator.AvailableLanguages;
+			LanguageComboBox.IsEnabled = App.Translator.AvailableLanguages.Count > 1;
+
+			// Select the active language
+			string activeCode = App.Translator.ActiveLanguageCode;
+			int selectedIndex = App.Translator.AvailableLanguages
+				.Select((lang, i) => new { lang, i })
+				.FirstOrDefault(x => string.Equals(x.lang.Code, activeCode, StringComparison.OrdinalIgnoreCase))?.i ?? 0;
+			LanguageComboBox.SelectedIndex = selectedIndex;
+
+			LanguageComboBox.SelectionChanged += LanguageComboBox_SelectionChanged;
 		}
 
 		/// <summary>
@@ -226,6 +251,21 @@
 		#endregion
 
 		#region General Tab — Event Handlers
+
+		/// <summary>
+		/// Handles language ComboBox selection changes.
+		/// Delegates to <see cref="Core.Infra.Localization.TranslationService.SetLanguage"/>
+		/// for live hot-reload without restart.
+		/// </summary>
+		private void LanguageComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+			if (!IsLoaded) {
+				return;
+			}
+			if (LanguageComboBox.SelectedItem is LanguageOption selected) {
+				App.Translator.SetLanguage(selected.Code);
+				_logger.Info($"SettingsPage: Language changed to '{selected.Code}' ({selected.DisplayName}).");
+			}
+		}
 
 		/// <summary>
 		/// Handles modpack startup mode radio button changes.

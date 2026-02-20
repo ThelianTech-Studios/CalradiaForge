@@ -3,7 +3,7 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-      xmlns:local="clr-namespace:CalradiaForge.UI.Pages"
+      xmlns:local="clr-namespace:CalradiaForge.UI"
       xmlns:mahIcons="http://metro.mahapps.com/winfx/xaml/iconpacks"
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
@@ -11,166 +11,161 @@
       Background="Transparent">
 
     <Grid Margin="20,10,20,10">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+		</Grid.RowDefinitions>
 
-        <!-- ════════════════════════════════════════════════════
-             Page Header
-             ════════════════════════════════════════════════════ -->
+        <!-- Page Header -->
         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
             <mahIcons:PackIconMaterial Kind="ChatQuestion" Width="24" Height="24"
                                                                  Foreground="{StaticResource TB.Acc.Gold}"
                                                                  VerticalAlignment="Center" Margin="0,0,10,0" />
-            <TextBlock Text="Frequently Asked Questions"
+            <TextBlock Text="{Binding Strings.Faq_PageTitle, Source={x:Static local:App.Translator}}"
                                      Foreground="{StaticResource TB.Txt.Bright}"
                                      FontFamily="{StaticResource Font.Secondary}"
                                      FontSize="20" FontWeight="SemiBold"
                                      VerticalAlignment="Center" />
         </StackPanel>
 
-        <!-- ════════════════════════════════════════════════════
-             FAQ Content — Scrollable list of Q&A sections
-             ════════════════════════════════════════════════════ -->
+        <!-- FAQ Content -->
         <ScrollViewer Grid.Row="1"
                                     VerticalScrollBarVisibility="Visible"
                                     HorizontalScrollBarVisibility="Disabled">
             <StackPanel Margin="4,0">
 
-                <!-- ── Q1: Game not detecting mods ── -->
+                <!-- Q1 -->
                 <Border Style="{StaticResource SettingsSectionBorder}">
                     <StackPanel>
-                        <TextBlock Text="Why isn't the game detecting my mods?"
+                        <TextBlock Text="{Binding Strings.Faq_Q1_Title, Source={x:Static local:App.Translator}}"
                                              Style="{StaticResource SettingsSectionHeader}" />
                         <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
-                                             Text="Make sure your mods are in the Active load order on the Mods page. Only mods listed in the Load Order panel are passed to the game at launch." />
+                                             Text="{Binding Strings.Faq_Q1_Answer1, Source={x:Static local:App.Translator}}" />
                         <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
-                                             Text="Verify that your game installation path is set correctly under Settings → Game Config. Use the Re-detect button if you're unsure." />
+                                             Text="{Binding Strings.Faq_Q1_Answer2, Source={x:Static local:App.Translator}}" />
                         <TextBlock Style="{StaticResource SettingsHint}" TextWrapping="Wrap"
-                                             Text="Tip: If mods were downloaded from the internet, Windows may block their DLLs. Go to Settings → Tools → Unblock DLLs to fix this." />
+                                             Text="{Binding Strings.Faq_Q1_Hint, Source={x:Static local:App.Translator}}" />
                     </StackPanel>
                 </Border>
 
-                <!-- ── Q2: DLL unblocking ── -->
+                <!-- Q2 -->
                 <Border Style="{StaticResource SettingsSectionBorder}">
                     <StackPanel>
-                        <TextBlock Text="What does 'Unblock DLLs' do?"
+                        <TextBlock Text="{Binding Strings.Faq_Q2_Title, Source={x:Static local:App.Translator}}"
                                              Style="{StaticResource SettingsSectionHeader}" />
                         <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
-                                             Text="When you download files from the internet, Windows adds a hidden security marker (Zone.Identifier) to them. This can prevent Bannerlord from loading mod DLLs." />
+                                             Text="{Binding Strings.Faq_Q2_Answer1, Source={x:Static local:App.Translator}}" />
                         <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap"
-                                             Text="The Unblock DLLs tool in Settings → Tools removes this marker from all DLL files in your Modules folder. CalradiaForge also does this automatically when you install mods through the app." />
+                                             Text="{Binding Strings.Faq_Q2_Answer2, Source={x:Static local:App.Translator}}" />
                     </StackPanel>
                 </Border>
 
-                <!-- ── Q3: Installation / extraction errors ── -->
+                <!-- Q3 -->
                 <Border Style="{StaticResource SettingsSectionBorder}">
                     <StackPanel>
-                        <TextBlock Text="I'm getting errors when installing mods from an archive."
+                        <TextBlock Text="{Binding Strings.Faq_Q3_Title, Source={x:Static local:App.Translator}}"
                                              Style="{StaticResource SettingsSectionHeader}" />
                         <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
-                                             Text="CalradiaForge extracts mod archives directly into the Bannerlord Modules folder. Make sure the archive contains a valid mod structure with a SubModule.xml file." />
+                                             Text="{Binding Strings.Faq_Q3_Answer1, Source={x:Static local:App.Translator}}" />
                         <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
-                                             Text="If the archive is nested (a folder inside a folder), CalradiaForge will attempt to detect the correct root. If extraction still fails, try extracting the mod manually." />
+                                             Text="{Binding Strings.Faq_Q3_Answer2, Source={x:Static local:App.Translator}}" />
                         <TextBlock Style="{StaticResource SettingsHint}" TextWrapping="Wrap"
-                                             Text="Supported archive formats: .zip, .rar — .7z is temporarily disabled (see below)." />
+                                             Text="{Binding Strings.Faq_Q3_Hint, Source={x:Static local:App.Translator}}" />
                     </StackPanel>
                 </Border>
 
-                <!-- ── Q4: Modpack switching ── -->
+                <!-- Q4 -->
                 <Border Style="{StaticResource SettingsSectionBorder}">
                     <StackPanel>
-                        <TextBlock Text="How do modpacks work?"
+                        <TextBlock Text="{Binding Strings.Faq_Q4_Title, Source={x:Static local:App.Translator}}"
                                              Style="{StaticResource SettingsSectionHeader}" />
                         <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
-                                             Text="A modpack is a saved snapshot of your active mods and their load order. You can create multiple modpacks for different playstyles (e.g., Vanilla+, Overhaul, Hardcore)." />
+                                             Text="{Binding Strings.Faq_Q4_Answer1, Source={x:Static local:App.Translator}}" />
                         <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
-                                             Text="Switch between modpacks using the dropdown on the Mods page. The selected modpack's load order is applied immediately." />
+                                             Text="{Binding Strings.Faq_Q4_Answer2, Source={x:Static local:App.Translator}}" />
 						<TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
-                                             Text="To save changes to a modpack, go to the Mod Packs page and click 'Save to Modpack'. This overwrites the saved data with your current active load order." />
-						<TextBlock Style="{StaticResource SettingsHint}" TextWrapping="Wrap" 
-											 Text="Make sure you have selected the correct modpack on the Mods Page before you add/remove mods to your load order there, before you go and save any changes in the Modpacks Page else any changes will be lost."
-											 />
-					</StackPanel>
-                </Border>
-
-                <!-- ── Q5: Epic / GamePass limitations ── -->
-                <Border Style="{StaticResource SettingsSectionBorder}">
-                    <StackPanel>
-                        <TextBlock Text="Why can't I launch the game from CalradiaForge on Epic or GamePass?"
-                                             Style="{StaticResource SettingsSectionHeader}" />
-                        <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
-                                             Text="TaleWorlds requires authentication through the Epic or Xbox client. This is a platform-level restriction that third-party launchers cannot bypass." />
-                        <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
-                                             Text="CalradiaForge still provides full mod management, load order arrangement, and modpack features for these platforms — you just need to press Play from the platform's own launcher." />
-                        <TextBlock Style="{StaticResource SettingsHint}" TextWrapping="Wrap"
-                                             Text="Direct launch support for Epic and GamePass is planned for a future release. For now load orders are not passed to the game's native launcher." />
-                    </StackPanel>
-                </Border>
-
-                <!-- ── Q6: Importing Novus Launcher presets ── -->
-                <Border Style="{StaticResource SettingsSectionBorder}">
-                    <StackPanel>
-                        <TextBlock Text="Can I import presets from Novus Launcher?"
-                                             Style="{StaticResource SettingsSectionHeader}" />
-                        <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
-                                             Text="Yes. Go to the Mod Packs page and click Import. Select a Novus Launcher preset file (.xml) and CalradiaForge will convert it into a CalradiaForge modpack automatically." />
-						<TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
-                                             Text="You can also import native CalradiaForge modpack files (.json) the same way." />
-						<TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
-																 Text="You can also place CalradiaForge Modpacks directly in the modpacks subdirectory in the app's directory, and the app will automatically refresh the selectable modpacks."/>
+                                             Text="{Binding Strings.Faq_Q4_Answer3, Source={x:Static local:App.Translator}}" />
 						<TextBlock Style="{StaticResource SettingsHint}" TextWrapping="Wrap"
-																 Text="Refresh or switch pages for the app to automatically refresh the dropdown menus'."/>
+											 Text="{Binding Strings.Faq_Q4_Hint, Source={x:Static local:App.Translator}}" />
 					</StackPanel>
                 </Border>
 
-                <!-- ── Q7: Clearing mod cache ── -->
+                <!-- Q5 -->
                 <Border Style="{StaticResource SettingsSectionBorder}">
                     <StackPanel>
-                        <TextBlock Text="When should I clear the mod cache?"
+                        <TextBlock Text="{Binding Strings.Faq_Q5_Title, Source={x:Static local:App.Translator}}"
                                              Style="{StaticResource SettingsSectionHeader}" />
                         <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
-                                             Text="Clear the mod cache if you've manually added or removed mods from the Modules folder outside of CalradiaForge, or if the mod list appears stale or incorrect." />
-                        <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap"
-                                             Text="Go to Settings → Tools → Clear Mod Cache. On next launch, CalradiaForge will rescan the Modules folder and rebuild the cache." />
+                                             Text="{Binding Strings.Faq_Q5_Answer1, Source={x:Static local:App.Translator}}" />
+                        <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
+                                             Text="{Binding Strings.Faq_Q5_Answer2, Source={x:Static local:App.Translator}}" />
+                        <TextBlock Style="{StaticResource SettingsHint}" TextWrapping="Wrap"
+                                             Text="{Binding Strings.Faq_Q5_Hint, Source={x:Static local:App.Translator}}" />
                     </StackPanel>
                 </Border>
 
-                <!-- ── Q8: Reporting issues ── -->
+                <!-- Q6 -->
                 <Border Style="{StaticResource SettingsSectionBorder}">
                     <StackPanel>
-                        <TextBlock Text="How do I report a bug or request a feature?"
+                        <TextBlock Text="{Binding Strings.Faq_Q6_Title, Source={x:Static local:App.Translator}}"
                                              Style="{StaticResource SettingsSectionHeader}" />
                         <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
-                                             Text="Open an issue on the CalradiaForge GitHub repository. Include a short description of the problem, steps to reproduce it, and any relevant log output." />
+                                             Text="{Binding Strings.Faq_Q6_Answer1, Source={x:Static local:App.Translator}}" />
+						<TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
+                                             Text="{Binding Strings.Faq_Q6_Answer2, Source={x:Static local:App.Translator}}" />
+						<TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
+																 Text="{Binding Strings.Faq_Q6_Answer3, Source={x:Static local:App.Translator}}" />
+						<TextBlock Style="{StaticResource SettingsHint}" TextWrapping="Wrap"
+																 Text="{Binding Strings.Faq_Q6_Hint, Source={x:Static local:App.Translator}}" />
+					</StackPanel>
+                </Border>
+
+                <!-- Q7 -->
+                <Border Style="{StaticResource SettingsSectionBorder}">
+                    <StackPanel>
+                        <TextBlock Text="{Binding Strings.Faq_Q7_Title, Source={x:Static local:App.Translator}}"
+                                             Style="{StaticResource SettingsSectionHeader}" />
+                        <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
+                                             Text="{Binding Strings.Faq_Q7_Answer1, Source={x:Static local:App.Translator}}" />
+                        <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap"
+                                             Text="{Binding Strings.Faq_Q7_Answer2, Source={x:Static local:App.Translator}}" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Q8 -->
+                <Border Style="{StaticResource SettingsSectionBorder}">
+                    <StackPanel>
+                        <TextBlock Text="{Binding Strings.Faq_Q8_Title, Source={x:Static local:App.Translator}}"
+                                             Style="{StaticResource SettingsSectionHeader}" />
+                        <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
+                                             Text="{Binding Strings.Faq_Q8_Answer1, Source={x:Static local:App.Translator}}" />
                         <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
                             <Button x:Name="OpenGitHubIssuesButton"
-                                            Content="Open GitHub Issues"
+                                            Content="{Binding Strings.Faq_Q8_OpenIssuesButton, Source={x:Static local:App.Translator}}"
                                             Style="{StaticResource SettingsToolButton}"
                                             Click="OpenGitHubIssues_Click" />
                             <TextBlock Style="{StaticResource SettingsHint}"
                                                  VerticalAlignment="Center" Margin="12,0,0,0"
-                                                 Text="Opens the CalradiaForge Issues page on GitHub in your browser." />
+                                                 Text="{Binding Strings.Faq_Q8_OpenIssuesHint, Source={x:Static local:App.Translator}}" />
                         </StackPanel>
                         <TextBlock Style="{StaticResource SettingsHint}" Margin="0,8,0,0" TextWrapping="Wrap"
-                                             Text="Tip: Enable Debug Mode in Settings → General before reproducing the issue. This gives more detailed logs for troubleshooting." />
+                                             Text="{Binding Strings.Faq_Q8_Hint, Source={x:Static local:App.Translator}}" />
                     </StackPanel>
                 </Border>
 
-                <!-- ── Q9: .7z archive support temporarily disabled ── -->
+                <!-- Q9 -->
                 <Border Style="{StaticResource SettingsSectionBorder}">
                     <StackPanel>
-                        <TextBlock Text="Why are .7z archives not supported?"
+                        <TextBlock Text="{Binding Strings.Faq_Q9_Title, Source={x:Static local:App.Translator}}"
                                              Style="{StaticResource SettingsSectionHeader}" />
                         <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
-                                             Text="The .7z format uses block compression (LZMA/LZMA2), which the current extraction library (SharpCompress) must decompress sequentially and entirely in-memory. For large Bannerlord mods with 1,000+ files, this causes extraction times of approximately 25 minutes for a single mod — making the install experience unacceptable." />
+                                             Text="{Binding Strings.Faq_Q9_Answer1, Source={x:Static local:App.Translator}}" />
                         <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
-                                             Text="The .zip and .rar formats use per-file compression, allowing the library to extract each file individually without this bottleneck. These formats install in seconds, even for large mods." />
+                                             Text="{Binding Strings.Faq_Q9_Answer2, Source={x:Static local:App.Translator}}" />
                         <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
-                                             Text="Support for .7z archives has been temporarily disabled while a replacement extraction method is developed. A future update will integrate native 7-Zip extraction to handle .7z archives at full speed." />
+                                             Text="{Binding Strings.Faq_Q9_Answer3, Source={x:Static local:App.Translator}}" />
                         <TextBlock Style="{StaticResource SettingsHint}" TextWrapping="Wrap"
-                                             Text="Workaround: If your mod is only available as a .7z file, extract it manually using 7-Zip (7-zip.org) and re-archive it as a .zip before installing through CalradiaForge." />
+                                             Text="{Binding Strings.Faq_Q9_Hint, Source={x:Static local:App.Translator}}" />
                     </StackPanel>
                 </Border>
 

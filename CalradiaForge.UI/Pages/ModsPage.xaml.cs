@@ -6,6 +6,7 @@ namespace CalradiaForge.UI.Pages {
 	using System.IO;
 	using System.Linq;
 	using System.Runtime.CompilerServices;
+	using System.Threading.Tasks;
 	using System.Windows;
 	using System.Windows.Controls;
 	using System.Windows.Controls.Primitives;
@@ -13,6 +14,7 @@ namespace CalradiaForge.UI.Pages {
 
 	using CalradiaForge.Core.Infra.Config;
 	using CalradiaForge.Core.Infra.Launch;
+	using CalradiaForge.Core.Infra.Localization;
 	using CalradiaForge.Core.Infra.Modpacks;
 	using CalradiaForge.Core.Infra.Mods;
 	using CalradiaForge.Core.Models;
@@ -44,6 +46,12 @@ namespace CalradiaForge.UI.Pages {
 		private ModpackModel? _selectedModpack;
 		private LaunchTarget _activeLaunchTarget;
 		private Guid _installToastId;
+
+		/// <summary>
+		/// Shorthand accessor for the active translation strings.
+		/// Avoids repeating <c>App.Translator.Strings</c> throughout the file.
+		/// </summary>
+		private static TranslationStrings T => App.Translator.Strings;
 
 		/// <summary>
 		/// Sentinel "ghost" modpack inserted at index 0 when
@@ -124,10 +132,11 @@ namespace CalradiaForge.UI.Pages {
 		/// <summary>
 		/// Text shown on the left Play button face.
 		/// Changes based on the currently selected launch target.
+		/// Uses translated strings from <see cref="TranslationStrings"/>.
 		/// </summary>
 		public string PlayButtonText => _activeLaunchTarget == LaunchTarget.BLSE
-			? "Play with BLSE"
-			: "Play Bannerlord";
+			? T.Mods_PlayWithBLSE
+			: T.Mods_PlayBannerlord;
 		#endregion
 
 		#region INotifyPropertyChanged
@@ -166,7 +175,7 @@ namespace CalradiaForge.UI.Pages {
 			// re-sync the UI state from the service
 			if (_modInstaller.IsInstalling) {
 				IsInstalling = true;
-				DependencyWarningText = "Installation in progress...";
+				DependencyWarningText = T.Mods_InstallInProgress;
 			}
 
 			// Subscribe to service-level install events
@@ -228,7 +237,7 @@ namespace CalradiaForge.UI.Pages {
 					: ToastSeverity.Success;
 
 				App.Toasts.Show(new ToastRequest {
-					Title = summary.FailedCount > 0 ? "Install Completed with Errors" : "Install Complete",
+					Title = summary.FailedCount > 0 ? T.Toast_InstallCompleteWithErrors : T.Toast_InstallComplete,
 					Message = summary.ToSummaryString(),
 					Severity = severity
 				});
@@ -264,7 +273,7 @@ namespace CalradiaForge.UI.Pages {
 				// Build the progress message
 				string archiveName = Path.GetFileNameWithoutExtension(progress.ArchiveFileName);
 				string batchPosition = $"[{progress.ArchiveIndex}/{progress.TotalArchives}]";
-				string filesText = $"{progress.BatchFilesExtracted} files extracted";
+				string filesText = $"{progress.BatchFilesExtracted} {T.Common_FilesExtracted}";
 
 				// Calculate batch-level ETA using extraction-thread timestamps
 				string eta = string.Empty;
@@ -277,16 +286,16 @@ namespace CalradiaForge.UI.Pages {
 							if (remaining > 0) {
 								TimeSpan timeLeft = TimeSpan.FromSeconds(remaining / filesPerSec);
 								eta = timeLeft.TotalSeconds < 5
-									? " — almost done"
-									: $" — ~{FormatTimeRemaining(timeLeft)} remaining";
+									? $" — {T.Common_AlmostDone}"
+									: $" — ~{FormatTimeRemaining(timeLeft)} {T.Common_Remaining}";
 							} else {
-								eta = " — almost done";
+								eta = $" — {T.Common_AlmostDone}";
 							}
 						}
 					}
 				}
 
-				string message = $"{batchPosition} Extracting: {archiveName}\n{filesText}{eta}";
+				string message = $"{batchPosition} {T.Common_Extracting}: {archiveName}\n{filesText}{eta}";
 				DependencyWarningText = message;
 
 				// Update the persistent progress toast with batch-level values
@@ -516,7 +525,7 @@ namespace CalradiaForge.UI.Pages {
 				foreach (ModuleModel mod in _modService.CurrentMods) {
 					AvailableModsList.Add(mod);
 				}
-				DependencyWarningText = "No modpack selected. Choose one from the dropdown above.";
+				DependencyWarningText = T.Mods_SelectModpackPrompt;
 				LoadOrderView.Refresh();
 				AvailableModsView.Refresh();
 				UpdateCanStart();
@@ -556,7 +565,7 @@ namespace CalradiaForge.UI.Pages {
 				// Build a line-per-mod message for the toast
 				string toastBody = string.Join("\n", missingModNames.Select(n => $"• {n}"));
 				App.Toasts.Show(new ToastRequest {
-					Title = $"{missingModNames.Count} Missing Mod(s)",
+					Title = $"{missingModNames.Count} {T.Toast_MissingMods}",
 					Message = toastBody,
 					Severity = ToastSeverity.Warning,
 					TemplateKey = ToastTemplateKeys.MissingMods,
@@ -745,8 +754,8 @@ namespace CalradiaForge.UI.Pages {
 			// Guard — service rejects duplicates, but skip the dialog too
 			if (_modInstaller.IsInstalling) {
 				App.Toasts.Show(new ToastRequest {
-					Title = "Install in Progress",
-					Message = "An installation is already running. Please wait for it to finish.",
+					Title = T.Toast_InstallInProgress,
+					Message = T.Mods_InstallInProgress,
 					Severity = ToastSeverity.Warning
 				});
 				return;
@@ -764,7 +773,7 @@ namespace CalradiaForge.UI.Pages {
 
 			// Step 2: Open multi-select file dialog
 			OpenFileDialog dialog = new() {
-				Title = "Select Mod Archives to Install",
+				Title = T.Mods_InstallDialogTitle,
 				Filter = ModInstaller.FileDialogFilter,
 				Multiselect = true,
 				CheckFileExists = true
@@ -776,7 +785,7 @@ namespace CalradiaForge.UI.Pages {
 
 			// Step 3: Show persistent progress toast with progress bar
 			_installToastId = App.Toasts.Show(new ToastRequest {
-				Title = "Installing Mods",
+				Title = T.Toast_InstallingMods,
 				Message = $"Processing {dialog.FileNames.Length} archive(s)...",
 				Severity = ToastSeverity.Info,
 				TemplateKey = ToastTemplateKeys.InstallProgress,
@@ -811,7 +820,7 @@ namespace CalradiaForge.UI.Pages {
 						$"{_modService.RemovedMods.Count} mod(s) removed since last scan.";
 
 					App.Toasts.Show(new ToastRequest {
-						Title = "Mod List Updated",
+						Title = T.Toast_ModListUpdated,
 						Message = $"{_modService.AddedMods.Count} added, {_modService.RemovedMods.Count} removed.",
 						Severity = ToastSeverity.Info
 					});
@@ -825,7 +834,7 @@ namespace CalradiaForge.UI.Pages {
 			} catch (Exception ex) {
 				DependencyWarningText = $"Refresh failed: {ex.Message}";
 				App.Toasts.Show(new ToastRequest {
-					Title = "Refresh Failed",
+					Title = T.Toast_RefreshFailed,
 					Message = ex.Message,
 					Severity = ToastSeverity.Error
 				});
@@ -863,13 +872,13 @@ namespace CalradiaForge.UI.Pages {
 
 			// Launch the game with the active target (auto-starts Steam if needed)
 			CanStart = false;
-			DependencyWarningText = "Launching...";
+			DependencyWarningText = T.Mods_Launching;
 
 			GameLaunchResult result = await _gameLauncher.LaunchAsync(CurrentLoadOrder.ToList(), _activeLaunchTarget);
 			DependencyWarningText = result.Message;
 
 			App.Toasts.Show(new ToastRequest {
-				Title = result.Success ? "Game Launched" : "Launch Failed",
+				Title = result.Success ? T.Toast_GameLaunched : T.Toast_LaunchFailed,
 				Message = result.Message,
 				Severity = result.Success ? ToastSeverity.Success : ToastSeverity.Error
 			});
@@ -985,7 +994,7 @@ namespace CalradiaForge.UI.Pages {
 			try {
 				IsRefreshing = true;
 				if (_modService.CurrentMods.Count == 0) {
-					DependencyWarningText = "Scanning for mods...";
+					DependencyWarningText = T.Mods_ScanningForMods;
 				}
 				bool hasChanges = await _modService.RefreshAsync();
 				UpdateAvailableModsList();
@@ -997,15 +1006,15 @@ namespace CalradiaForge.UI.Pages {
 				} else if (_modService.CurrentMods.Count > 0) {
 					// Preserve the AlwaysAsk prompt if ghost is still selected
 					if (IsGhostModpack(_selectedModpack)) {
-						DependencyWarningText = "No modpack selected. Choose one from the dropdown above.";
+						DependencyWarningText = T.Mods_SelectModpackPrompt;
 					} else {
 						DependencyWarningText = string.Empty;
 					}
 				} else {
-					DependencyWarningText = "No mods found. Install mods or check your game path in Settings.";
+					DependencyWarningText = T.Mods_NoModsFound;
 					App.Toasts.Show(new ToastRequest {
-						Title = "No Mods Found",
-						Message = "Install mods or check your game path in Settings.",
+						Title = T.Toast_NoModsFound,
+						Message = T.Mods_NoModsFound,
 						Severity = ToastSeverity.Warning
 					});
 				}
@@ -1014,7 +1023,7 @@ namespace CalradiaForge.UI.Pages {
 			} catch (Exception ex) {
 				DependencyWarningText = $"Auto-scan failed: {ex.Message}";
 				App.Toasts.Show(new ToastRequest {
-					Title = "Auto-Scan Failed",
+					Title = T.Toast_AutoScanFailed,
 					Message = ex.Message,
 					Severity = ToastSeverity.Error
 				});
@@ -1043,7 +1052,7 @@ namespace CalradiaForge.UI.Pages {
 			} catch (Exception ex) {
 				DependencyWarningText = $"Refresh failed: {ex.Message}";
 				App.Toasts.Show(new ToastRequest {
-					Title = "Refresh Failed",
+					Title = T.Toast_RefreshFailed,
 					Message = ex.Message,
 					Severity = ToastSeverity.Error
 				});

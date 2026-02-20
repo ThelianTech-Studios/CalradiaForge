@@ -3,6 +3,7 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:local="clr-namespace:CalradiaForge.UI"
       xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
       xmlns:mahIcons="http://metro.mahapps.com/winfx/xaml/iconpacks"
       mc:Ignorable="d"
@@ -23,31 +24,36 @@
 						 SelectedIndex="0"
 						 SelectionChanged="SettingsNav_SelectionChanged">
 
-			<ListBoxItem Style="{StaticResource SettingsNavItem}" Content="General">
+			<ListBoxItem Style="{StaticResource SettingsNavItem}"
+									 Content="{Binding Strings.Settings_GeneralTab, Source={x:Static local:App.Translator}}">
 				<ListBoxItem.Tag>
 					<mahIcons:PackIconMaterial Kind="CogOutline" Width="18" Height="18" />
 				</ListBoxItem.Tag>
 			</ListBoxItem>
 
-			<ListBoxItem Style="{StaticResource SettingsNavItem}" Content="Game Config">
+			<ListBoxItem Style="{StaticResource SettingsNavItem}"
+									 Content="{Binding Strings.Settings_GameConfigTab, Source={x:Static local:App.Translator}}">
 				<ListBoxItem.Tag>
 					<mahIcons:PackIconMaterial Kind="GamepadVariantOutline" Width="18" Height="18" />
 				</ListBoxItem.Tag>
 			</ListBoxItem>
 
-			<ListBoxItem Style="{StaticResource SettingsNavItem}" Content="Tools">
+			<ListBoxItem Style="{StaticResource SettingsNavItem}"
+									 Content="{Binding Strings.Settings_ToolsTab, Source={x:Static local:App.Translator}}">
 				<ListBoxItem.Tag>
 					<mahIcons:PackIconMaterial Kind="WrenchOutline" Width="18" Height="18" />
 				</ListBoxItem.Tag>
 			</ListBoxItem>
 
-			<ListBoxItem Style="{StaticResource SettingsNavItem}" Content="WIP">
+			<ListBoxItem Style="{StaticResource SettingsNavItem}"
+									 Content="{Binding Strings.Settings_WipTab, Source={x:Static local:App.Translator}}">
 				<ListBoxItem.Tag>
 					<mahIcons:PackIconMaterial Kind="HardHat" Width="18" Height="18" />
 				</ListBoxItem.Tag>
 			</ListBoxItem>
 
-			<ListBoxItem Style="{StaticResource SettingsNavItemRight}" Content="About">
+			<ListBoxItem Style="{StaticResource SettingsNavItemRight}"
+									 Content="{Binding Strings.Settings_AboutTab, Source={x:Static local:App.Translator}}">
 				<ListBoxItem.Tag>
 					<mahIcons:PackIconMaterial Kind="InformationOutline" Width="18" Height="18" />
 				</ListBoxItem.Tag>
@@ -69,21 +75,22 @@
 
 					<Border Style="{StaticResource SettingsSectionBorder}">
 						<StackPanel>
-							<TextBlock Text="Language" Style="{StaticResource SettingsSectionHeader}" />
+							<TextBlock Text="{Binding Strings.Settings_LanguageHeader, Source={x:Static local:App.Translator}}"
+												 Style="{StaticResource SettingsSectionHeader}" />
 							<Grid>
 								<Grid.ColumnDefinitions>
 									<ColumnDefinition Width="Auto" />
 									<ColumnDefinition Width="200" />
 								</Grid.ColumnDefinitions>
-								<TextBlock Grid.Column="0" Text="Language"
+								<TextBlock Grid.Column="0"
+													 Text="{Binding Strings.Settings_LanguageLabel, Source={x:Static local:App.Translator}}"
 													 Style="{StaticResource SettingsLabel}" />
 								<ComboBox x:Name="LanguageComboBox" Grid.Column="1"
 													Style="{StaticResource ModsPageComboBox}"
-													IsEnabled="False">
-									<ComboBoxItem Content="en-US" IsSelected="True" />
-								</ComboBox>
+													DisplayMemberPath="DisplayName"
+													SelectionChanged="LanguageComboBox_SelectionChanged" />
 							</Grid>
-							<TextBlock Text="Additional languages coming in a future update."
+							<TextBlock Text="{Binding Strings.Settings_LanguageHint, Source={x:Static local:App.Translator}}"
 												 Style="{StaticResource SettingsHint}"
 												 Margin="0,6,0,0" />
 						</StackPanel>
@@ -91,26 +98,27 @@
 
 					<Border Style="{StaticResource SettingsSectionBorder}">
 						<StackPanel>
-							<TextBlock Text="Startup Behavior" Style="{StaticResource SettingsSectionHeader}" />
-							<TextBlock Text="On startup, select modpack:"
+							<TextBlock Text="{Binding Strings.Settings_StartupHeader, Source={x:Static local:App.Translator}}"
+												 Style="{StaticResource SettingsSectionHeader}" />
+							<TextBlock Text="{Binding Strings.Settings_StartupLabel, Source={x:Static local:App.Translator}}"
 												 Style="{StaticResource SettingsLabel}"
 												 Margin="0,0,0,6" />
 							<RadioButton x:Name="RadioLastUsed"
-													 Content="Last Used Modpack"
+													 Content="{Binding Strings.Settings_StartupLastUsed, Source={x:Static local:App.Translator}}"
 													 GroupName="ModpackStartup"
 													 Style="{StaticResource SettingsRadioButton}"
 													 Checked="ModpackStartupMode_Changed" />
 							<RadioButton x:Name="RadioAlwaysDefault"
-													 Content="Always Use Default (Vanilla)"
+													 Content="{Binding Strings.Settings_StartupAlwaysDefault, Source={x:Static local:App.Translator}}"
 													 GroupName="ModpackStartup"
 													 Style="{StaticResource SettingsRadioButton}"
 													 Checked="ModpackStartupMode_Changed" />
 							<RadioButton x:Name="RadioAlwaysAsk"
-													 Content="Always Ask"
+													 Content="{Binding Strings.Settings_StartupAlwaysAsk, Source={x:Static local:App.Translator}}"
 													 GroupName="ModpackStartup"
 													 Style="{StaticResource SettingsRadioButton}"
 													 Checked="ModpackStartupMode_Changed" />
-							<TextBlock Text="Controls which modpack is automatically selected when CalradiaForge starts."
+							<TextBlock Text="{Binding Strings.Settings_StartupHint, Source={x:Static local:App.Translator}}"
 												 Style="{StaticResource SettingsHint}"
 												 Margin="0,6,0,0" />
 						</StackPanel>
@@ -118,13 +126,14 @@
 
 					<Border Style="{StaticResource SettingsSectionBorder}">
 						<StackPanel>
-							<TextBlock Text="Diagnostics" Style="{StaticResource SettingsSectionHeader}" />
+							<TextBlock Text="{Binding Strings.Settings_DiagnosticsHeader, Source={x:Static local:App.Translator}}"
+												 Style="{StaticResource SettingsSectionHeader}" />
 							<CheckBox x:Name="DebugModeToggle"
-							Content="Enable Debug Mode"
+							Content="{Binding Strings.Settings_DebugModeLabel, Source={x:Static local:App.Translator}}"
 							Style="{StaticResource SettingsToggleSwitch}"
 							Checked="DebugMode_Toggled"
 							Unchecked="DebugMode_Toggled" />
-							<TextBlock Text="Enables verbose logging and diagnostic data output. Only enable this when requested for troubleshooting."
+							<TextBlock Text="{Binding Strings.Settings_DebugModeHint, Source={x:Static local:App.Translator}}"
 												 Style="{StaticResource SettingsHint}"
 												 Margin="0,4,0,0" />
 						</StackPanel>
@@ -144,9 +153,11 @@
 					<!-- Game Installation Section -->
 					<Border Style="{StaticResource SettingsSectionBorder}">
 						<StackPanel>
-							<TextBlock Text="Game Installation" Style="{StaticResource SettingsSectionHeader}" />
+							<TextBlock Text="{Binding Strings.Settings_GameInstallHeader, Source={x:Static local:App.Translator}}"
+												 Style="{StaticResource SettingsSectionHeader}" />
 
-							<TextBlock Text="Game Folder" Style="{StaticResource SettingsLabel}"
+							<TextBlock Text="{Binding Strings.Settings_GameFolderLabel, Source={x:Static local:App.Translator}}"
+												 Style="{StaticResource SettingsLabel}"
 												 Margin="0,0,0,4" />
 							<Grid>
 								<Grid.ColumnDefinitions>
@@ -158,7 +169,8 @@
 														 Style="{StaticResource SettingsPathDisplay}"
 														 Text="{Binding GameFolderPath}" />
 								</Border>
-								<Button Grid.Column="1" Content="Select Folder"
+								<Button Grid.Column="1"
+												Content="{Binding Strings.Settings_SelectFolderButton, Source={x:Static local:App.Translator}}"
 												Style="{StaticResource SettingsActionButton}"
 												Margin="8,0,0,0"
 												Click="SelectGameFolder_Click" />
@@ -168,7 +180,8 @@
 												 Text="" />
 
 							<StackPanel x:Name="ExePathSection" Margin="0,12,0,0">
-								<TextBlock Text="Game Executable" Style="{StaticResource SettingsLabel}"
+								<TextBlock Text="{Binding Strings.Settings_GameExeLabel, Source={x:Static local:App.Translator}}"
+													 Style="{StaticResource SettingsLabel}"
 													 Margin="0,0,0,4" />
 								<Grid>
 									<Grid.ColumnDefinitions>
@@ -180,7 +193,8 @@
 															 Style="{StaticResource SettingsPathDisplay}"
 															 Text="{Binding GameLauncherFilePath}" />
 									</Border>
-									<Button Grid.Column="1" Content="Select File"
+									<Button Grid.Column="1"
+													Content="{Binding Strings.Settings_SelectFileButton, Source={x:Static local:App.Translator}}"
 													Style="{StaticResource SettingsActionButton}"
 													Margin="8,0,0,0"
 													Click="SelectGameExe_Click" />
@@ -188,7 +202,8 @@
 							</StackPanel>
 
 							<StackPanel x:Name="WorkshopPathSection" Margin="0,12,0,0">
-								<TextBlock Text="Steam Workshop Folder" Style="{StaticResource SettingsLabel}"
+								<TextBlock Text="{Binding Strings.Settings_WorkshopFolderLabel, Source={x:Static local:App.Translator}}"
+													 Style="{StaticResource SettingsLabel}"
 													 Margin="0,0,0,4" />
 								<Grid>
 									<Grid.ColumnDefinitions>
@@ -200,7 +215,8 @@
 															 Style="{StaticResource SettingsPathDisplay}"
 															 Text="{Binding SteamWorkshopFolderPath}" />
 									</Border>
-									<Button Grid.Column="1" Content="Select Folder"
+									<Button Grid.Column="1"
+													Content="{Binding Strings.Settings_SelectFolderButton, Source={x:Static local:App.Translator}}"
 													Style="{StaticResource SettingsActionButton}"
 													Margin="8,0,0,0"
 													Click="SelectWorkshopFolder_Click" />
@@ -213,9 +229,11 @@
 					<!-- Script Extender (BLSE) Section -->
 					<Border Style="{StaticResource SettingsSectionBorder}">
 						<StackPanel>
-							<TextBlock Text="Script Extender (BLSE)" Style="{StaticResource SettingsSectionHeader}" />
+							<TextBlock Text="{Binding Strings.Settings_BLSEHeader, Source={x:Static local:App.Translator}}"
+												 Style="{StaticResource SettingsSectionHeader}" />
 
-							<TextBlock Text="BLSE Standalone Executable" Style="{StaticResource SettingsLabel}"
+							<TextBlock Text="{Binding Strings.Settings_BLSEExeLabel, Source={x:Static local:App.Translator}}"
+												 Style="{StaticResource SettingsLabel}"
 												 Margin="0,0,0,4" />
 							<Grid>
 								<Grid.ColumnDefinitions>
@@ -227,7 +245,8 @@
 														 Style="{StaticResource SettingsPathDisplay}"
 														 Text="{Binding BLSEExePath}" />
 								</Border>
-								<Button Grid.Column="1" Content="Select File"
+								<Button Grid.Column="1"
+												Content="{Binding Strings.Settings_SelectFileButton, Source={x:Static local:App.Translator}}"
 												Style="{StaticResource SettingsActionButton}"
 												Margin="8,0,0,0"
 												Click="SelectBLSEExe_Click" />
@@ -235,21 +254,22 @@
 							<TextBlock x:Name="BLSEValidation"
 												 Style="{StaticResource SettingsValidationOk}"
 												 Text="" />
-							<TextBlock Text="The Bannerlord Software Extender enables advanced script mods. If installed, CalradiaForge auto-detects it in the game's bin folder. You can also select it manually."
-												 Style="{StaticResource SettingsHint}"
-												 Margin="0,6,0,0" />
+							<TextBlock Text="{Binding Strings.Settings_BLSEHint, Source={x:Static local:App.Translator}}"
+													 Style="{StaticResource SettingsHint}"
+													 Margin="0,6,0,0" />
 						</StackPanel>
 					</Border>
 
 					<!-- Detection Section -->
 					<Border Style="{StaticResource SettingsSectionBorder}">
 						<StackPanel>
-							<TextBlock Text="Detection" Style="{StaticResource SettingsSectionHeader}" />
+							<TextBlock Text="{Binding Strings.Settings_DetectionHeader, Source={x:Static local:App.Translator}}"
+												 Style="{StaticResource SettingsSectionHeader}" />
 							<StackPanel Orientation="Horizontal">
-								<Button Content="🔄  Detect Game"
+								<Button Content="{Binding Strings.Settings_DetectGameButton, Source={x:Static local:App.Translator}}"
 												Style="{StaticResource SettingsToolButton}"
 												Click="RedetectGame_Click" />
-								<TextBlock Text="Re-runs auto-detection for Steam, Epic, and StandAlone installations. Also detects BLSE if installed. Overwrites current paths."
+								<TextBlock Text="{Binding Strings.Settings_DetectGameHint, Source={x:Static local:App.Translator}}"
 													 Style="{StaticResource SettingsHint}"
 													 VerticalAlignment="Center"
 													 Margin="12,0,0,0"
@@ -271,12 +291,13 @@
 
 					<Border Style="{StaticResource SettingsSectionBorder}">
 						<StackPanel>
-							<TextBlock Text="Mod Maintenance" Style="{StaticResource SettingsSectionHeader}" />
+							<TextBlock Text="{Binding Strings.Settings_ModMaintenanceHeader, Source={x:Static local:App.Translator}}"
+												 Style="{StaticResource SettingsSectionHeader}" />
 							<StackPanel Orientation="Horizontal">
-								<Button Content="🔓  Unblock DLLs"
+								<Button Content="{Binding Strings.Settings_UnblockDllsButton, Source={x:Static local:App.Translator}}"
 												Style="{StaticResource SettingsToolButton}"
 												Click="UnblockDlls_Click" />
-								<TextBlock Text="Removes the Zone.Identifier alternate data stream from all DLL files in the Modules folder. Required for mods downloaded from the internet."
+								<TextBlock Text="{Binding Strings.Settings_UnblockDllsHint, Source={x:Static local:App.Translator}}"
 													 Style="{StaticResource SettingsHint}"
 													 VerticalAlignment="Center"
 													 Margin="12,0,0,0"
@@ -295,13 +316,14 @@
 
 					<Border Style="{StaticResource SettingsSectionBorder}">
 						<StackPanel>
-							<TextBlock Text="Data Management" Style="{StaticResource SettingsSectionHeader}" />
+							<TextBlock Text="{Binding Strings.Settings_DataManagementHeader, Source={x:Static local:App.Translator}}"
+												 Style="{StaticResource SettingsSectionHeader}" />
 
 							<StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-								<Button Content="🗑  Clear Mod Cache"
+								<Button Content="{Binding Strings.Settings_ClearCacheButton, Source={x:Static local:App.Translator}}"
 												Style="{StaticResource SettingsToolButton}"
 												Click="ClearModCache_Click" />
-								<TextBlock Text="Deletes the cached mod list and forces a fresh rescan on next launch."
+								<TextBlock Text="{Binding Strings.Settings_ClearCacheHint, Source={x:Static local:App.Translator}}"
 													 Style="{StaticResource SettingsHint}"
 													 VerticalAlignment="Center"
 													 Margin="12,0,0,0"
@@ -309,10 +331,10 @@
 							</StackPanel>
 
 							<StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-								<Button Content="📂  Open Config Folder"
+								<Button Content="{Binding Strings.Settings_OpenConfigButton, Source={x:Static local:App.Translator}}"
 												Style="{StaticResource SettingsToolButton}"
 												Click="OpenConfigFolder_Click" />
-								<TextBlock Text="Opens the CalradiaForge Config directory in Windows Explorer."
+								<TextBlock Text="{Binding Strings.Settings_OpenConfigHint, Source={x:Static local:App.Translator}}"
 													 Style="{StaticResource SettingsHint}"
 													 VerticalAlignment="Center"
 													 Margin="12,0,0,0"
@@ -320,10 +342,10 @@
 							</StackPanel>
 
 							<StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-								<Button Content="📂  Open Logs Folder"
+								<Button Content="{Binding Strings.Settings_OpenLogsButton, Source={x:Static local:App.Translator}}"
 												Style="{StaticResource SettingsToolButton}"
 												Click="OpenLogsFolder_Click" />
-								<TextBlock Text="Opens the Logs directory in Windows Explorer."
+								<TextBlock Text="{Binding Strings.Settings_OpenLogsHint, Source={x:Static local:App.Translator}}"
 													 Style="{StaticResource SettingsHint}"
 													 VerticalAlignment="Center"
 													 Margin="12,0,0,0"
@@ -331,10 +353,10 @@
 							</StackPanel>
 
 							<StackPanel Orientation="Horizontal">
-								<Button Content="📂  Open Modpacks Folder"
+								<Button Content="{Binding Strings.Settings_OpenModpacksButton, Source={x:Static local:App.Translator}}"
 												Style="{StaticResource SettingsToolButton}"
 												Click="OpenModpacksFolder_Click" />
-								<TextBlock Text="Opens the Modpacks directory in Windows Explorer."
+								<TextBlock Text="{Binding Strings.Settings_OpenModpacksHint, Source={x:Static local:App.Translator}}"
 													 Style="{StaticResource SettingsHint}"
 													 VerticalAlignment="Center"
 													 Margin="12,0,0,0"
@@ -354,13 +376,13 @@
 																		 Foreground="{StaticResource TB.Txt.Dim}"
 																		 HorizontalAlignment="Center"
 																		 Margin="0,0,0,16" />
-					<TextBlock Text="This tab is reserved for future development."
+					<TextBlock Text="{Binding Strings.Settings_WipTitle, Source={x:Static local:App.Translator}}"
 										 Foreground="{StaticResource TB.Txt.Mid}"
 										 FontFamily="{StaticResource Font.Secondary}"
 										 FontSize="16" FontWeight="SemiBold"
 										 HorizontalAlignment="Center"
 										 TextAlignment="Center" />
-					<TextBlock Text="If there is enough community interest in advanced features&#x0a;and functionality beyond the current project scope,&#x0a;future settings will appear here."
+					<TextBlock Text="{Binding Strings.Settings_WipDescription, Source={x:Static local:App.Translator}}"
 										 Foreground="{StaticResource TB.Txt.Dim}"
 										 FontFamily="{StaticResource Font.Secondary}"
 										 FontSize="13"
@@ -368,7 +390,7 @@
 										 TextAlignment="Center"
 										 Margin="0,12,0,0"
 										 LineHeight="20" />
-					<TextBlock Text="Stay tuned for updates!"
+					<TextBlock Text="{Binding Strings.Settings_WipStayTuned, Source={x:Static local:App.Translator}}"
 										 Foreground="{StaticResource TB.Acc.Gold}"
 										 FontFamily="{StaticResource Font.Secondary}"
 										 FontSize="13" FontWeight="SemiBold"
@@ -394,13 +416,13 @@
 
 					<Separator Margin="0,16" Background="{StaticResource TB.Sfc.MedDark.50}" />
 
-					<TextBlock Text="A modern mod launcher for Mount &amp; Blade II: Bannerlord."
+					<TextBlock Text="{Binding Strings.Settings_AboutDescription, Source={x:Static local:App.Translator}}"
 										 Foreground="{StaticResource TB.Txt.Bright}"
 										 FontFamily="{StaticResource Font.Secondary}"
 										 FontSize="14"
 										 HorizontalAlignment="Center"
 										 TextAlignment="Center" />
-					<TextBlock Text="Built by players, for players."
+					<TextBlock Text="{Binding Strings.Settings_AboutTagline, Source={x:Static local:App.Translator}}"
 										 Foreground="{StaticResource TB.Acc.Gold}"
 										 FontFamily="{StaticResource Font.Secondary}"
 										 FontSize="13" FontStyle="Italic"
@@ -420,22 +442,27 @@
 							<RowDefinition Height="Auto" />
 						</Grid.RowDefinitions>
 
-						<TextBlock Grid.Row="0" Grid.Column="0" Text="Publisher"
+						<TextBlock Grid.Row="0" Grid.Column="0"
+											 Text="{Binding Strings.Settings_AboutPublisherLabel, Source={x:Static local:App.Translator}}"
 											 Style="{StaticResource SettingsAboutLabel}" Margin="0,0,0,8" />
 						<TextBlock Grid.Row="0" Grid.Column="1" Text="ThelianTech™"
 											 Style="{StaticResource SettingsAboutValue}" Margin="8,0,0,8" />
 
-						<TextBlock Grid.Row="1" Grid.Column="0" Text="License"
+						<TextBlock Grid.Row="1" Grid.Column="0"
+											 Text="{Binding Strings.Settings_AboutLicenseLabel, Source={x:Static local:App.Translator}}"
 											 Style="{StaticResource SettingsAboutLabel}" Margin="0,0,0,8" />
-						<Button Grid.Row="1" Grid.Column="1" Content="View License"
+						<Button Grid.Row="1" Grid.Column="1"
+										Content="{Binding Strings.Settings_AboutViewLicense, Source={x:Static local:App.Translator}}"
 										Style="{StaticResource SettingsToolButton}"
 										Height="28" Padding="10,4" FontSize="12"
 										Margin="8,0,0,8"
 										Click="ViewLicense_Click" />
 
-						<TextBlock Grid.Row="2" Grid.Column="0" Text="GitHub"
+						<TextBlock Grid.Row="2" Grid.Column="0"
+											 Text="{Binding Strings.Settings_AboutGitHubLabel, Source={x:Static local:App.Translator}}"
 											 Style="{StaticResource SettingsAboutLabel}" />
-						<Button Grid.Row="2" Grid.Column="1" Content="View on GitHub"
+						<Button Grid.Row="2" Grid.Column="1"
+										Content="{Binding Strings.Settings_AboutViewGitHub, Source={x:Static local:App.Translator}}"
 										Style="{StaticResource SettingsToolButton}"
 										Height="28" Padding="10,4" FontSize="12"
 										Margin="8,0,0,0"
@@ -444,12 +471,12 @@
 
 					<Separator Margin="0,16" Background="{StaticResource TB.Sfc.MedDark.50}" />
 
-					<TextBlock Text="© 2026 ThelianTech™ — All rights reserved."
+					<TextBlock Text="{Binding Strings.Settings_AboutCopyright, Source={x:Static local:App.Translator}}"
 										 Foreground="{StaticResource TB.Txt.Dim}"
 										 FontFamily="{StaticResource Font.Secondary}"
 										 FontSize="11"
 										 HorizontalAlignment="Center" />
-					<TextBlock Text="Not affiliated with TaleWorlds Entertainment."
+					<TextBlock Text="{Binding Strings.Settings_AboutDisclaimer, Source={x:Static local:App.Translator}}"
 										 Foreground="{StaticResource TB.Txt.Dim}"
 										 FontFamily="{StaticResource Font.Secondary}"
 										 FontSize="11"

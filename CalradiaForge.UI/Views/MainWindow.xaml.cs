@@ -4,6 +4,8 @@
 	using System.Windows.Controls;
 	using System.Windows.Input;
 
+	using CalradiaForge.Core.Infra.Localization;
+
 	using CalradiaForge.UI.Pages;
 
 	using MahApps.Metro.Controls;
@@ -29,7 +31,42 @@
 
 			// Bind the toast overlay to the shared ToastService
 			ToastHost.ItemsSource = App.Toasts.VisibleToasts;
+
+			// Apply translated nav labels and re-apply when language changes
+			ApplyNavTranslations();
+			App.Translator.Strings.PropertyChanged += (_, _) => Dispatcher.BeginInvoke(ApplyNavTranslations);
 		}
+
+		/// <summary>
+		/// Applies translated strings to the HamburgerMenu nav labels.
+		/// <see cref="HamburgerMenuIconItem.Label"/> is not a DependencyProperty,
+		/// so XAML binding is not supported — we set it in code instead.
+		/// Called on startup and whenever the active language changes.
+		/// </summary>
+		private void ApplyNavTranslations() {
+			TranslationStrings s = App.Translator.Strings;
+
+			// Main nav items (indices 0–2)
+			if (NavBarControler.ItemsSource is HamburgerMenuItemCollection mainItems) {
+				if (mainItems.Count > 0 && mainItems[0] is HamburgerMenuIconItem mods) {
+					mods.Label = s.Nav_ModsTab;
+				}
+				if (mainItems.Count > 1 && mainItems[1] is HamburgerMenuIconItem packs) {
+					packs.Label = s.Nav_ModpacksTab;
+				}
+				if (mainItems.Count > 2 && mainItems[2] is HamburgerMenuIconItem faq) {
+					faq.Label = s.Nav_FaqTab;
+				}
+			}
+
+			// Options item (Settings)
+			if (NavBarControler.OptionsItemsSource is HamburgerMenuItemCollection optItems) {
+				if (optItems.Count > 0 && optItems[0] is HamburgerMenuIconItem settings) {
+					settings.Label = s.Nav_SettingsTab;
+				}
+			}
+		}
+
 		private void MinimizeButton_Click(object sender,RoutedEventArgs e) {
 			this.WindowState = WindowState.Minimized;
 		}
