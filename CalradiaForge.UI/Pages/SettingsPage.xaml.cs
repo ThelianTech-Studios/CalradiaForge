@@ -85,6 +85,9 @@
 			LoadUnblockStatus();
 			SetVersionText();
 			PopulateLanguageComboBox();
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("SettingsPage: Initialized.", new { GameProvider = _config.GameProvider.ToString() });
+			}
 		}
 		#endregion
 
@@ -141,6 +144,15 @@
 
 			// Debug mode toggle
 			DebugModeToggle.IsChecked = _config.DebugMode;
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("SettingsPage: Loaded current values.", new {
+					GameFolderPath,
+					GameLauncherFilePath,
+					SteamWorkshopFolderPath,
+					BLSEExePath,
+					DebugMode = _config.DebugMode
+					});
+			}
 		}
 
 		/// <summary>
@@ -163,6 +175,9 @@
 			LanguageComboBox.SelectedIndex = selectedIndex;
 
 			LanguageComboBox.SelectionChanged += LanguageComboBox_SelectionChanged;
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("SettingsPage: Populated languages.", new { Count = App.Translator.AvailableLanguages.Count, SelectedIndex = selectedIndex });
+			}
 		}
 
 		/// <summary>
@@ -187,6 +202,9 @@
 					WorkshopPathSection.Visibility = Visibility.Visible;
 					break;
 			}
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("SettingsPage: Updated path section visibility.", new { GameProvider = _config.GameProvider.ToString() });
+			}
 		}
 
 		/// <summary>
@@ -197,9 +215,15 @@
 			if (GamePathValidator.ValidateGameFolder(_config.GameFolderPath, out string error)) {
 				GameFolderValidation.Text = "✓ Valid Bannerlord installation detected.";
 				GameFolderValidation.Style = (Style)FindResource("SettingsValidationOk");
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("SettingsPage: Game folder valid.", new { GameFolderPath = _config.GameFolderPath });
+				}
 			} else {
 				GameFolderValidation.Text = $"✗ {error}";
 				GameFolderValidation.Style = (Style)FindResource("SettingsValidationError");
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("SettingsPage: Game folder invalid.", new { GameFolderPath = _config.GameFolderPath, Error = error });
+				}
 			}
 		}
 
@@ -213,12 +237,21 @@
 				&& GamePathValidator.ValidateGameExecutable(_config.BLSEExePath, out _)) {
 				BLSEValidation.Text = "✓ BLSE executable found.";
 				BLSEValidation.Style = (Style)FindResource("SettingsValidationOk");
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("SettingsPage: BLSE path valid.", new { BLSEExePath = _config.BLSEExePath });
+				}
 			} else if (string.IsNullOrWhiteSpace(_config.BLSEExePath)) {
 				BLSEValidation.Text = "Not configured — optional. Select if you use BLSE mods.";
 				BLSEValidation.Style = (Style)FindResource("SettingsValidationOk");
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("SettingsPage: BLSE path not configured.");
+				}
 			} else {
 				BLSEValidation.Text = "✗ The selected BLSE executable was not found.";
 				BLSEValidation.Style = (Style)FindResource("SettingsValidationError");
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("SettingsPage: BLSE path invalid.", new { BLSEExePath = _config.BLSEExePath });
+				}
 			}
 		}
 
@@ -264,6 +297,9 @@
 			if (LanguageComboBox.SelectedItem is LanguageOption selected) {
 				App.Translator.SetLanguage(selected.Code);
 				_logger.Info($"SettingsPage: Language changed to '{selected.Code}' ({selected.DisplayName}).");
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("SettingsPage: Language selection changed.", new { Code = selected.Code, DisplayName = selected.DisplayName });
+				}
 			}
 		}
 
@@ -282,6 +318,9 @@
 			} else {
 				_config.ModpackStartupMode = ModpackStartupMode.LastUsed;
 			}
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("SettingsPage: Modpack startup mode changed.", new { Mode = _config.ModpackStartupMode.ToString() });
+			}
 		}
 
 		/// <summary>
@@ -298,6 +337,9 @@
 				? Logger.LogLevel.Debug
 				: Logger.LogLevel.Info;
 			_logger.Info($"SettingsPage: DebugMode changed to {enabled}. Log level: {_logger.MinimumLevel}");
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("SettingsPage: Debug mode toggled.", new { Enabled = enabled });
+			}
 		}
 
 		#endregion
@@ -313,7 +355,7 @@
 			OpenFolderDialog dialogWindow = new() {Title="Select Bannerlord Game Folder"};
 				if (dialogWindow.ShowDialog() != true) {
 					return;
-				}
+					}
 				selectedPath = dialogWindow.FolderName;
 
 			if (!GamePathValidator.ValidateGameFolder(selectedPath, out string error)) {
@@ -331,6 +373,9 @@
 			GameFolderPath = selectedPath;
 			UpdateGameFolderValidation();
 			_logger.Info($"SettingsPage: Game folder set to '{selectedPath}'");
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("SettingsPage: Game folder selected.", new { GameFolderPath = selectedPath });
+			}
 		}
 
 		/// <summary>
@@ -346,7 +391,7 @@
 				};
 				if (dialogWindow.ShowDialog() != true) {
 					return;
-				}
+					}
 				selectedPath = dialogWindow.FileName;
 
 			if (!GamePathValidator.ValidateGameExecutable(selectedPath, out string error)) {
@@ -362,6 +407,9 @@
 			_config.GameLauncherFilePath = selectedPath;
 			GameLauncherFilePath = selectedPath;
 			_logger.Info($"SettingsPage: Game executable set to '{selectedPath}'");
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("SettingsPage: Game executable selected.", new { GameLauncherFilePath = selectedPath });
+			}
 		}
 
 		/// <summary>
@@ -375,7 +423,7 @@
 				};
 				if (dialogWindow.ShowDialog() != true) {
 					return;
-				}
+					}
 				selectedPath = dialogWindow.FolderName;
 
 			if (!GamePathValidator.ValidateWorkshopFolder(selectedPath, out string error)) {
@@ -391,6 +439,9 @@
 			_config.SteamWorkshopFolderPath = selectedPath;
 			SteamWorkshopFolderPath = selectedPath;
 			_logger.Info($"SettingsPage: Workshop folder set to '{selectedPath}'");
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("SettingsPage: Workshop folder selected.", new { SteamWorkshopFolderPath = selectedPath });
+			}
 		}
 
 		/// <summary>
@@ -424,6 +475,9 @@
 			BLSEExePath = selectedPath;
 			UpdateBLSEValidation();
 			_logger.Info($"SettingsPage: BLSE executable set to '{selectedPath}'");
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("SettingsPage: BLSE executable selected.", new { BLSEExePath = selectedPath });
+			}
 		}
 
 		/// <summary>
@@ -432,6 +486,12 @@
 		/// </summary>
 		private void RedetectGame_Click(object sender, RoutedEventArgs e) {
 			_logger.Info("SettingsPage: Re-detecting game installation...");
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("SettingsPage: Starting game detection.", new {
+					GameFolderPath = _config.GameFolderPath,
+					GameProvider = _config.GameProvider.ToString()
+					});
+			}
 			GamePathsHelper.TryAutoDetectGameFolder(_config);
 
 			GameFolderPath = _config.GameFolderPath;
@@ -443,6 +503,15 @@
 			UpdateGameFolderValidation();
 			UpdateBLSEValidation();
 			_logger.Info($"SettingsPage: Re-detect complete. Platform: {_config.GameProvider}");
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("SettingsPage: Detection results.", new {
+					GameFolderPath = _config.GameFolderPath,
+					GameLauncherFilePath = _config.GameLauncherFilePath,
+					SteamWorkshopFolderPath = _config.SteamWorkshopFolderPath,
+					BLSEExePath = _config.BLSEExePath,
+					GameProvider = _config.GameProvider.ToString()
+					});
+			}
 
 			bool detected = GamePathValidator.ValidateGameFolder(_config.GameFolderPath, out _);
 			App.Toasts.Show(new ToastRequest {
@@ -490,10 +559,13 @@
 
 				_logger.Info($"SettingsPage: Unblock complete. {summary}");
 				App.Toasts.Show(new ToastRequest {
-					Title = "DLL Unblock Complete",
-					Message = summary,
-					Severity = ToastSeverity.Success
-				});
+					Title="DLL Unblock Complete",
+					Message=summary,
+					Severity=ToastSeverity.Success
+					});
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("SettingsPage: Unblock summary.", new { Summary = summary });
+				}
 			} catch (Exception ex) {
 				_logger.Error(ex, "SettingsPage: Unblock operation failed.");
 				UnblockResultText.Text = $"Result:  Error — {ex.Message}";
@@ -523,6 +595,9 @@
 					Message = "Could not clear the mod cache. Check logs for details.",
 					Severity = ToastSeverity.Error
 				});
+			}
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("SettingsPage: Clear mod cache.", new { Success = success });
 			}
 		}
 

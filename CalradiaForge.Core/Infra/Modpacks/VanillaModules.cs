@@ -4,6 +4,7 @@
 	using System.Collections.Generic;
 	using System.Linq;
 
+	using CalradiaForge.Core.Infra.Logging;
 	using CalradiaForge.Core.Models;
 
 	/// <summary>
@@ -18,6 +19,7 @@
 	/// </remarks>
 	public static class VanillaModules
 		{
+		private static readonly Logger _logger = Logger.Instance;
 		/// <summary>
 		/// Display name used for the built-in vanilla modpack template.
 		/// </summary>
@@ -221,6 +223,9 @@
 						installed.ModuleURL));
 				} else {
 					result.Add(new ModpackEntryModel(id, name, fallbackVersion));
+					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+						_logger.Debug("VanillaModules: Using fallback module version.", new { ModuleId = id, ModuleName = name, FallbackVersion = fallbackVersion });
+					}
 				}
 			}
 

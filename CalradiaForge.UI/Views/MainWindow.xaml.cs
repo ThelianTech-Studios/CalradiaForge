@@ -5,6 +5,7 @@
 	using System.Windows.Input;
 
 	using CalradiaForge.Core.Infra.Localization;
+	using CalradiaForge.Core.Infra.Logging;
 
 	using CalradiaForge.UI.Pages;
 
@@ -14,6 +15,7 @@
 	/// Interaction logic for MainWindow.xaml
 	/// </summary>
 	public partial class MainWindow : Window {
+		private readonly Logger _logger = Logger.Instance;
 		private readonly Page[] _pages;
 		private readonly SettingsPage _settingsPage;
 		public MainWindow() {
@@ -26,6 +28,9 @@
 			_settingsPage = new SettingsPage();
 			MainContentFrame.Navigate(_pages[0]);
 
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("MainWindow: Initialized pages.", new { PageCount = _pages.Length });
+			}
 			// Wire the Options item (Settings) — separate from ItemsSource
 			NavBarControler.OptionsItemClick += NavBarControler_OnOptionsItemClick;
 
@@ -94,8 +99,11 @@
 					modspage.RefreshAvailableMods();
 					}
 				MainContentFrame.Navigate(_pages[index]);
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("MainWindow: Navigated to page.", new { PageIndex = index, PageType = targetPage.GetType().Name });
 				}
-				
+				}
+			
 		}
 
 		/// <summary>
@@ -108,6 +116,9 @@
 			// Deselect the main nav so Settings appears as the active context
 			NavBarControler.SelectedIndex = -1;
 			MainContentFrame.Navigate(_settingsPage);
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("MainWindow: Navigated to settings.");
+			}
 		}
 	}
 }

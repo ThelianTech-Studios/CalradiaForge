@@ -31,7 +31,13 @@
 		protected override void OnStartup(StartupEventArgs e) {
 			base.OnStartup(e);
 			_logger.Info("Application Starting");
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("App: Debugging enabled.");
+			}
 			SetupExceptionHandeling();
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("App: Exception handlers wired.");
+			}
 			InitializeConfiguration();
 			InitializeModServices();
 			InitializeModpackServices();
@@ -47,6 +53,9 @@
 		}
 
 		protected override void OnExit(ExitEventArgs e) {
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("App: OnExit begin.");
+			}
 			try {
 				if (ModInstaller?.IsInstalling==true) {
 					_logger.Info("App: Cancelling in-progress mod installation on exit.");
@@ -62,34 +71,68 @@
 			base.OnExit(e);
 			}
 		private void InitializeConfiguration() {
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("App: Initializing configuration.", new { AppPaths.ConfigFilePath });
+			}
 			var appConfig = new AppConfig(AppPaths.ConfigFilePath);
 			appConfig.Load();
 			AppConfig = new AppConfigSettings(appConfig);
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("App: Configuration initialized.", new {
+					AppConfig.DebugMode,
+					AppConfig.Language,
+					AppConfig.GameProvider
+				});
+			}
 		}
 
 		private void InitializeModServices() {
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("App: Initializing mod services.", new { AppPaths.ModsCurrentFilePath, AppPaths.ModsBackupFilePath });
+			}
 			var modsData = new ModsData(AppPaths.ModsCurrentFilePath, AppPaths.ModsBackupFilePath);
 			ModService = new ModService(AppConfig, modsData);
 			ModService.LoadFromCache();
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("App: Mod cache loaded.", new { Count = ModService.CurrentMods.Count });
+			}
 			ModInstaller = new ModInstaller(AppConfig);
 		}
 
 		private void InitializeModpackServices() {
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("App: Initializing modpack services.", new { AppPaths.ModpacksDirectory });
+			}
 			var modpackData = new ModpackData(AppPaths.ModpacksDirectory, AppPaths.LastUsedModsFilePath);
 			ModpackService = new ModpackService(modpackData);
 			ModpackService.LoadAll();
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("App: Modpacks loaded.", new { Count = ModpackService.AllModpacks.Count });
+			}
 		}
 		private void InitializeLauncherService() {
 					GameLauncher = new GameLauncher(AppConfig);
+					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+						_logger.Debug("App: GameLauncher initialized.");
+					}
 		}
 
 		private void InitializeToastService() {
 			Toasts = new ToastService(Dispatcher);
 		}
 		private void InitializeTranslatorService() {
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("App: Initializing translator service.", new { AppPaths.LanguagesDirectory });
+			}
 			var loader = new TranslationManager(AppPaths.LanguagesDirectory);
 			Translator = new TranslationService(loader, AppConfig);
 			Translator.Initialize();
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("App: Translator initialized.", new {
+					Count = Translator.AvailableLanguages.Count,
+					Translator.ActiveLanguageCode
+				});
+			}
 		}
 
 		private void SetupExceptionHandeling() {

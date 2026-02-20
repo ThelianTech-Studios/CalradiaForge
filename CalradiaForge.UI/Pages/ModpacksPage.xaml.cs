@@ -10,6 +10,7 @@
 	using System.Windows.Input;
 	using System.Windows.Media;
 
+	using CalradiaForge.Core.Infra.Logging;
 	using CalradiaForge.Core.Infra.Modpacks;
 	using CalradiaForge.Core.Models;
 
@@ -28,6 +29,7 @@
 	public partial class ModpacksPage : Page, INotifyPropertyChanged {
 		#region Fields
 		private readonly ModpackService _modpackService;
+		private readonly Logger _logger = Logger.Instance;
 		private int _selectedModpackIndex = -1;
 		private int _selectedEntryIndex = -1;
 		private string _selectedCreatedBy = string.Empty;
@@ -154,6 +156,9 @@
 			DataContext = this;
 
 			_modpackService = App.ModpackService;
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("ModpacksPage: Initializing.");
+			}
 			PopulateModpackList();
 			PopulateActiveLoadOrder();
 
@@ -183,6 +188,9 @@
 				Core.Infra.Mods.ModService modService = App.ModService;
 				if (!modService.IsRefreshing) {
 					try {
+						if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+							_logger.Debug("ModpacksPage: Refreshing mods on visibility.");
+						}
 						await modService.RefreshAsync();
 					} catch (OperationCanceledException) {
 						// Refresh was cancelled — proceed with cached data
@@ -197,6 +205,9 @@
 				}
 				PopulateModpackList();
 				PopulateActiveLoadOrder();
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("ModpacksPage: Visibility refresh complete.", new { ModpackCount = _modpackService.AllModpacks.Count, ActiveLoadOrderCount = _modpackService.CurrentLoadOrderEntries.Count });
+				}
 			}
 		}
 
@@ -232,6 +243,9 @@
 					SelectedModpackIndex = index;
 					ModpackComboBox.SelectionChanged += ModpackComboBox_SelectionChanged;
 					LoadSelectedModpackData();
+					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+						_logger.Debug("ModpacksPage: Restored selection.", new { SelectedIndex = SelectedModpackIndex, ModpackName = previousSelection });
+					}
 					return;
 				}
 			}
@@ -243,6 +257,9 @@
 
 			ModpackComboBox.SelectionChanged += ModpackComboBox_SelectionChanged;
 			LoadSelectedModpackData();
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("ModpacksPage: Populated modpack list.", new { Count = ModpackList.Count, SelectedIndex = SelectedModpackIndex });
+			}
 		}
 
 		/// <summary>
@@ -268,6 +285,9 @@
 			foreach (ModpackEntryModel entry in _selectedModpack.LoadOrder) {
 				EditableLoadOrder.Add(entry.Clone());
 			}
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("ModpacksPage: Loaded modpack data.", new { ModpackName = _selectedModpack.ModpackName, EntryCount = _selectedModpack.LoadOrder.Count });
+			}
 		}
 
 		/// <summary>
@@ -281,6 +301,9 @@
 			foreach (ModpackEntryModel entry in _modpackService.CurrentLoadOrderEntries) {
 				ActiveLoadOrder.Add(entry.Clone());
 			}
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("ModpacksPage: Populated active load order.", new { EntryCount = ActiveLoadOrder.Count });
+			}
 		}
 
 		#endregion
@@ -290,6 +313,9 @@
 		private void ModpackComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e) {
 			LoadSelectedModpackData();
 			StatusText = string.Empty;
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("ModpacksPage: Modpack selection changed.", new { SelectedIndex = SelectedModpackIndex, ModpackName = _selectedModpack?.ModpackName });
+			}
 		}
 
 		#endregion
@@ -341,6 +367,9 @@
 			SelectedEntryIndex = index;
 
 			StatusText = $"Updated '{_selectedEntry.ModuleName}' in working copy. Click Save to persist.";
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("ModpacksPage: Entry updated.", new { ModuleId = _selectedEntry.ModuleId, ModuleName = _selectedEntry.ModuleName, Version = _selectedEntry.RequiredVersion });
+			}
 		}
 
 		/// <summary>
@@ -389,6 +418,9 @@
 			EditableLoadOrder.Remove(entry);
 			ClearEditPanel();
 			StatusText = $"Removed '{entry.ModuleName}'. Click Save to persist.";
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("ModpacksPage: Entry removed.", new { ModuleId = entry.ModuleId, ModuleName = entry.ModuleName });
+			}
 		}
 
 		#endregion
@@ -413,6 +445,9 @@
 				return;
 			}
 
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("ModpacksPage: Importing modpack.", new { FilePath = dialog.FileName });
+			}
 			var (success, modpack, message) = _modpackService.Import(dialog.FileName);
 			StatusText = message;
 
@@ -503,27 +538,29 @@
 			_pendingTemplate = template;
 			UpdateTemplateCheckmarks();
 			StatusText = $"Template set to {template}. Click Create New to use it.";
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("ModpacksPage: Template selected.", new { Template = template.ToString() });
+			}
 		}
-
 		/// <summary>
 		/// Toggles the checkmark icon visibility in the template dropdown.
 		/// Only the currently selected template shows its checkmark.
 		/// Mirrors the pattern used by <c>UpdateLaunchTargetCheckmarks</c> on ModsPage.
 		/// </summary>
 		private void UpdateTemplateCheckmarks() {
-			CheckVanilla.Visibility = _pendingTemplate == ModpackTemplate.Vanilla
+			CheckVanilla.Visibility=_pendingTemplate==ModpackTemplate.Vanilla
 				? Visibility.Visible
 				: Visibility.Collapsed;
-			CheckButterLib.Visibility = _pendingTemplate == ModpackTemplate.ButterLib
+			CheckButterLib.Visibility=_pendingTemplate==ModpackTemplate.ButterLib
 				? Visibility.Visible
 				: Visibility.Collapsed;
-			CheckVanillaWarSails.Visibility = _pendingTemplate == ModpackTemplate.VanillaWarSails
+			CheckVanillaWarSails.Visibility=_pendingTemplate==ModpackTemplate.VanillaWarSails
 				? Visibility.Visible
 				: Visibility.Collapsed;
-			CheckButterLibWarSails.Visibility = _pendingTemplate == ModpackTemplate.ButterLibWarSails
+			CheckButterLibWarSails.Visibility=_pendingTemplate==ModpackTemplate.ButterLibWarSails
 				? Visibility.Visible
 				: Visibility.Collapsed;
-		}
+			}
 
 		private void ShowCreatePanel(ModpackTemplate template) {
 			_pendingTemplate = template;
@@ -561,6 +598,9 @@
 			List<ModuleModel> installedMods = App.ModService.CurrentMods;
 			bool success = _modpackService.CreateNew(name, createdBy, _pendingTemplate, installedMods);
 
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("ModpacksPage: Create modpack result.", new { ModpackName = name, Template = _pendingTemplate.ToString(), Success = success, EntryCount = installedMods.Count });
+			}
 			if (success) {
 				HideCreatePanel();
 				PopulateModpackList();
@@ -627,6 +667,9 @@
 
 			bool success = _modpackService.Save(_selectedModpack, entries);
 
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("ModpacksPage: Save modpack result.", new { ModpackName = _selectedModpack.ModpackName, EntryCount = entries.Count, Success = success });
+			}
 			if (success) {
 				PopulateModpackList();
 				PopulateActiveLoadOrder();

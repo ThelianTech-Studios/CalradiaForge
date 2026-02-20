@@ -2,9 +2,11 @@
 	{
 	using System;
 	using System.Reflection;
+	using CalradiaForge.Core.Infra.Logging;
 
 	public static class AppPaths
 		{
+		private static readonly Logger _logger = Logger.Instance;
 		public static string RootDirectory { get; } = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)??AppDomain.CurrentDomain.BaseDirectory;
 
 		private const string ConfigFolderName = "Config";
@@ -29,9 +31,13 @@
 		public static string ConfigFilePath => Path.Combine(ConfigDirectory,ConfigFileName);
 
 		private static string EnsureDirectoryExists(string path) {
-			if (!Directory.Exists(path)) {
+			bool existed = Directory.Exists(path);
+			if (!existed) {
 				Directory.CreateDirectory(path);
 				}
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("AppPaths: Resolved path.", new { Path = path, Created = !existed });
+			}
 			return path;
 			}
 		}

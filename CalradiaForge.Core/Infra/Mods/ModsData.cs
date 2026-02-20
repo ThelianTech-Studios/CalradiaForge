@@ -35,6 +35,9 @@
 		#region Current Mods Data
 		public void SaveCurrent(List<ModuleModel> mods) {
 			lock (_lock) {
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("ModsData: Saving current mods.", new { FilePath = _currentFilePath, Count = mods.Count });
+				}
 				var json = JsonConvert.SerializeObject(mods,Formatting.Indented);
 				File.WriteAllText(_currentFilePath,json);
 				}
@@ -42,16 +45,26 @@
 		public List<ModuleModel> LoadCurrent() {
 			lock (_lock) {
 				if (!File.Exists(_currentFilePath)) {
+					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+						_logger.Debug("ModsData: Current mods file missing.", new { FilePath = _currentFilePath });
+					}
 					return new List<ModuleModel>();
 					}
 				var json = File.ReadAllText(_currentFilePath);
-				return JsonConvert.DeserializeObject<List<ModuleModel>>(json)??new List<ModuleModel>();
+				var mods = JsonConvert.DeserializeObject<List<ModuleModel>>(json)??new List<ModuleModel>();
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("ModsData: Loaded current mods.", new { FilePath = _currentFilePath, Count = mods.Count });
+				}
+				return mods;
 				}
 			}
 		#endregion
 		#region Old Mods Data (Snapshot for Change Detection)
 		public void SaveBackup(List<ModuleModel> mods) {
 			lock (_lock) {
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("ModsData: Saving backup mods.", new { FilePath = _backupFilePath, Count = mods.Count });
+				}
 				var json = JsonConvert.SerializeObject(mods,Formatting.Indented);
 				File.WriteAllText(_backupFilePath,json);
 				}
@@ -59,10 +72,17 @@
 		public List<ModuleModel> LoadBackup() {
 			lock (_lock) {
 				if (!File.Exists(_backupFilePath)) {
+					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+						_logger.Debug("ModsData: Backup mods file missing.", new { FilePath = _backupFilePath });
+					}
 					return new List<ModuleModel>();
 					}
 				var json = File.ReadAllText(_backupFilePath);
-				return JsonConvert.DeserializeObject<List<ModuleModel>>(json)??new List<ModuleModel>();
+				var mods = JsonConvert.DeserializeObject<List<ModuleModel>>(json)??new List<ModuleModel>();
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("ModsData: Loaded backup mods.", new { FilePath = _backupFilePath, Count = mods.Count });
+				}
+				return mods;
 				}
 			}
 		#endregion
@@ -71,6 +91,9 @@
 			lock (_lock) {
 				if (File.Exists(_currentFilePath)) {
 					File.Copy(_currentFilePath,_backupFilePath,overwrite: true);
+					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+						_logger.Debug("ModsData: Rotated mods data files.", new { CurrentFile = _currentFilePath, BackupFile = _backupFilePath });
+					}
 					}
 				}
 			}

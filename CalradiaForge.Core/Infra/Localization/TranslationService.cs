@@ -46,12 +46,18 @@
 		public void Initialize() {
 			AvailableLanguages=_manager.LoadManifest();
 			_logger.Info($"TranslationService: Loaded {AvailableLanguages.Count} language(s) from manifest.");
+			if (_logger.MinimumLevel==Logger.LogLevel.Debug) {
+				_logger.Debug("TranslationService: Manifest loaded.",new { LanguageCount = AvailableLanguages.Count });
+				}
 
 			string savedLanguage = _config.Language;
 			if (string.IsNullOrWhiteSpace(savedLanguage)) {
 				savedLanguage="en-US";
 				}
 
+			if (_logger.MinimumLevel==Logger.LogLevel.Debug) {
+				_logger.Debug("TranslationService: Initial language resolved.",new { SavedLanguage = savedLanguage });
+				}
 			// Validate the saved language has a file on disk
 			if (!_manager.LanguageFileExists(savedLanguage)) {
 				_logger.Warning($"TranslationService: Language file for '{savedLanguage}' not found. Falling back to en-US defaults.");
@@ -77,6 +83,9 @@
 			ActiveLanguageCode=languageCode;
 			_config.Language=languageCode;
 
+			if (_logger.MinimumLevel==Logger.LogLevel.Debug) {
+				_logger.Debug("TranslationService: Setting language.",new { LanguageCode = languageCode });
+				}
 			if (string.Equals(languageCode,"en-US",StringComparison.OrdinalIgnoreCase)) {
 				// English is the hardcoded default — apply an empty dictionary
 				// which leaves all properties at their English default values.
@@ -94,6 +103,9 @@
 
 			Strings.Apply(translations);
 			_logger.Info($"TranslationService: Applied '{languageCode}' with {translations.Count} key(s).");
+			if (_logger.MinimumLevel==Logger.LogLevel.Debug) {
+				_logger.Debug("TranslationService: Language applied.",new { LanguageCode = languageCode,KeyCount = translations.Count });
+				}
 			}
 		}
 	}

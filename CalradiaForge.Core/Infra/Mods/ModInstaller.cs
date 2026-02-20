@@ -100,6 +100,9 @@
 		/// <returns><c>true</c> if the game directory is valid and ready for installation.</returns>
 		public bool ValidateGameDirectory(out string errorMessage) {
 			string gameFolderPath = _appConfig.GameFolderPath;
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("ModInstaller: Validating game directory.", new { GameFolderPath = gameFolderPath, ModulesPath = _appConfig.ModulesDirectoryPath });
+			}
 			if (string.IsNullOrWhiteSpace(gameFolderPath)) {
 				errorMessage = "Game directory has not been set. Please go to Settings and set the game directory path.";
 				return false;
@@ -114,6 +117,9 @@
 				return false;
 			}
 			errorMessage = string.Empty;
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("ModInstaller: Game directory validated.", new { GameFolderPath = gameFolderPath, ModulesPath = modulesPath });
+			}
 			return true;
 		}
 
@@ -135,6 +141,9 @@
 				return false;
 			}
 
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("ModInstaller: Starting install batch.", new { ArchiveCount = archivePaths.Length });
+			}
 			IsInstalling = true;
 			_cts = new CancellationTokenSource();
 			CancellationToken token = _cts.Token;
@@ -196,6 +205,9 @@
 			Queue<string> installQueue = new(archivePaths);
 			int totalArchives = archivePaths.Length;
 			_logger.Info($"ModInstaller: Queued {installQueue.Count} archive(s) for installation.");
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("ModInstaller: Install queue prepared.", new { ArchiveCount = totalArchives, ModulesPath = modulesPath });
+			}
 
 			// Batch-level tracking for cumulative extraction progress
 			DateTime batchStartUtc = DateTime.UtcNow;
@@ -216,6 +228,10 @@
 				string archiveFileName = Path.GetFileName(archivePath);
 				int currentArchiveIndex = archiveIndex;
 				int archiveFilesExtracted = 0;
+
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("ModInstaller: Processing archive.", new { ArchivePath = archivePath, ArchiveIndex = currentArchiveIndex + 1, TotalArchives = totalArchives });
+				}
 
 				// Reject unsupported archive formats before attempting extraction
 				if (!IsAcceptedArchive(archivePath)) {
@@ -264,6 +280,9 @@
 			}
 
 			_logger.Info($"ModInstaller: Batch complete. {summary.ToSummaryString()}");
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("ModInstaller: Batch complete.", new { Results = summary.Results.Count });
+			}
 			return summary;
 		}
 
@@ -282,14 +301,20 @@
 			try {
 				// Extract archive to temp directory with per-file progress
 				tempDir = await ModExtractor.ExtractToTempAsync(archivePath, token, onFileExtracted);
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("ModInstaller: Archive extracted.", new { ArchivePath = archivePath, TempDir = tempDir ?? "<null>" });
+				}
 				if (tempDir is null) {
 					result.Status = ModInstallStatus.Failed;
 					result.Message = "Failed to extract archive.";
 					return result;
-				}
+					}
 
 				// Find the true mod root (handles lazy nested folders)
 				string? modRoot = ModExtractor.FindModRoot(tempDir);
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("ModInstaller: Mod root resolution.", new { TempDir = tempDir, ModRoot = modRoot ?? "<null>" });
+				}
 
 				// ── BLSE fallback ──────────────────────────────────────────────
 				// If no SubModule.xml was found, check if this is a BLSE archive.
@@ -297,6 +322,9 @@
 				// that go into the game's bin directory, not the Modules folder.
 				if (modRoot is null) {
 					if (BLSEInstaller.IsBLSEArchive(tempDir)) {
+						if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+							_logger.Debug("ModInstaller: BLSE fallback triggered.", new { TempDir = tempDir });
+						}
 						return await ProcessBLSEInstallAsync(tempDir, archiveFileName, token);
 					}
 
@@ -314,7 +342,7 @@
 					result.Status = ModInstallStatus.Failed;
 					result.Message = "Failed to parse SubModule.xml from archive.";
 					return result;
-				}
+					}
 
 				result.ModuleId = newMod.ModuleId;
 				result.ModuleName = newMod.ModuleName;
@@ -323,10 +351,17 @@
 				// Determine the target directory in the game's Modules folder
 				string modFolderName = new DirectoryInfo(modRoot).Name;
 				string targetPath = Path.Combine(modulesPath, modFolderName);
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("ModInstaller: Target module path.", new { ModFolderName = modFolderName, TargetPath = targetPath });
+				}
 
 				// Check if mod is already installed — version comparison
 				VersionCheckOutcome versionOutcome = CheckExistingVersion(targetPath, newMod);
 				result.PreviousVersion = versionOutcome.ExistingVersion;
+
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("ModInstaller: Version check outcome.", new { Action = versionOutcome.Action.ToString(), ExistingVersion = versionOutcome.ExistingVersion ?? "<none>", NewVersion = newMod.ModuleVersion });
+				}
 
 				switch (versionOutcome.Action) {
 					case VersionAction.Skip:
@@ -351,6 +386,9 @@
 				// Copy the mod root into the Modules folder
 				await Task.Run(() => CopyDirectory(modRoot, targetPath, token), token);
 				_logger.Info($"ModInstaller: {result.Status} '{newMod.ModuleName}' ({newMod.ModuleVersion}) to '{targetPath}'");
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("ModInstaller: Copy complete.", new { TargetPath = targetPath, Status = result.Status.ToString() });
+				}
 				return result;
 
 			} catch (OperationCanceledException) {
@@ -384,6 +422,9 @@
 			CancellationToken token) {
 
 			_logger.Info($"ModInstaller: Detected BLSE archive in '{archiveFileName}'. Delegating to BLSEInstaller.");
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("ModInstaller: Processing BLSE install.", new { TempDir = tempDir, ArchiveFileName = archiveFileName });
+			}
 
 			BLSEInstallResult blseResult = await BLSEInstaller.InstallAsync(tempDir, _appConfig, token);
 
@@ -397,10 +438,16 @@
 				result.Status = ModInstallStatus.Installed;
 				result.Message = blseResult.Message;
 				_logger.Info($"BLSEInstaller: BLSE installed successfully from '{archiveFileName}'.");
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("ModInstaller: BLSE install success.", new { ArchiveFileName = archiveFileName, Message = blseResult.Message });
+				}
 			} else {
 				result.Status = ModInstallStatus.Failed;
 				result.Message = blseResult.Message;
 				_logger.Warning($"BLSEInstaller: BLSE installation failed from '{archiveFileName}': {blseResult.Message}");
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("ModInstaller: BLSE install failed.", new { ArchiveFileName = archiveFileName, Message = blseResult.Message });
+				}
 			}
 
 			return result;
@@ -450,7 +497,7 @@
 			return new VersionCheckOutcome {
 				Action = VersionAction.Skip,
 				ExistingVersion = existingMod.ModuleVersion
-			};
+				};
 		}
 
 		/// <summary>
@@ -473,6 +520,9 @@
 				return parsedNew.CompareTo(parsedExisting);
 			}
 
+			if (Logger.Instance.MinimumLevel == Logger.LogLevel.Debug) {
+				Logger.Instance.Debug("ModInstaller: Version parse fallback.", new { NewVersion = newVersion, ExistingVersion = existingVersion, CleanNew = cleanNew, CleanExisting = cleanExisting });
+			}
 			// Fallback to string comparison if parsing fails
 			return string.Compare(cleanNew, cleanExisting, StringComparison.OrdinalIgnoreCase);
 		}
@@ -485,6 +535,9 @@
 		/// Recursively copies a directory and all its contents to a target path.
 		/// </summary>
 		private static void CopyDirectory(string sourceDir, string targetDir, CancellationToken token) {
+			if (Logger.Instance.MinimumLevel == Logger.LogLevel.Debug) {
+				Logger.Instance.Debug("ModInstaller: Copying directory.", new { SourceDir = sourceDir, TargetDir = targetDir });
+			}
 			Directory.CreateDirectory(targetDir);
 
 			foreach (string file in Directory.GetFiles(sourceDir)) {
@@ -497,8 +550,12 @@
 				token.ThrowIfCancellationRequested();
 				string targetSubDir = Path.Combine(targetDir, Path.GetFileName(subDir));
 				CopyDirectory(subDir, targetSubDir, token);
+				}
+
+			if (Logger.Instance.MinimumLevel == Logger.LogLevel.Debug) {
+				Logger.Instance.Debug("ModInstaller: Directory copy complete.", new { SourceDir = sourceDir, TargetDir = targetDir });
 			}
-		}
+			}
 
 		/// <summary>
 		/// Safely deletes a directory and all its contents.

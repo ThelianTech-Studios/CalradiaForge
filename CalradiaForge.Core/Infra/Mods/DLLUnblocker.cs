@@ -34,6 +34,9 @@
 		public static async Task<UnblockResult> UnblockAllAsync(
 			string directoryPath,
 			CancellationToken token = default) {
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("DllUnblocker: Starting unblock scan.", new { DirectoryPath = directoryPath });
+			}
 			if (string.IsNullOrWhiteSpace(directoryPath) || !Directory.Exists(directoryPath)) {
 				_logger.Warning($"DllUnblocker: Directory does not exist: '{directoryPath}'");
 				return new UnblockResult();
@@ -61,6 +64,9 @@
 		public static async Task<UnblockResult> UnblockBLSEFilesAsync(
 			string sourceBinDir,
 			CancellationToken token = default) {
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("DllUnblocker: Starting BLSE unblock scan.", new { SourceBinDir = sourceBinDir });
+			}
 			if (string.IsNullOrWhiteSpace(sourceBinDir) || !Directory.Exists(sourceBinDir)) {
 				_logger.Warning($"DllUnblocker: BLSE source directory does not exist: '{sourceBinDir}'");
 				return new UnblockResult();
@@ -78,7 +84,11 @@
 				foreach (string filePath in allFiles) {
 					token.ThrowIfCancellationRequested();
 
-					if (!IsFileBlocked(filePath)) {
+					bool blocked = IsFileBlocked(filePath);
+					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+						_logger.Debug("DllUnblocker: Checking BLSE file.", new { FilePath = filePath, Blocked = blocked });
+					}
+					if (!blocked) {
 						continue;
 					}
 
@@ -91,6 +101,9 @@
 				}
 
 				_logger.Info($"DllUnblocker: BLSE unblock — {result.ToSummaryString()} in '{sourceBinDir}'");
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("DllUnblocker: BLSE unblock complete.", new { SourceBinDir = sourceBinDir, Unblocked = result.UnblockedCount, Failed = result.FailedCount });
+				}
 				return result;
 			}, token);
 		}
@@ -110,7 +123,11 @@
 			foreach (string dllPath in dllFiles) {
 				token.ThrowIfCancellationRequested();
 
-				if (!IsFileBlocked(dllPath)) {
+				bool blocked = IsFileBlocked(dllPath);
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("DllUnblocker: Checking DLL file.", new { FilePath = dllPath, Blocked = blocked });
+				}
+				if (!blocked) {
 					continue;
 				}
 
@@ -123,6 +140,9 @@
 			}
 
 			_logger.Info($"DllUnblocker: {result.ToSummaryString()} in '{directoryPath}'");
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("DllUnblocker: Unblock complete.", new { DirectoryPath = directoryPath, Unblocked = result.UnblockedCount, Failed = result.FailedCount });
+			}
 			return result;
 		}
 

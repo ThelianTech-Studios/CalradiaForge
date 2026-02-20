@@ -58,6 +58,9 @@
 				_logger.Warning($"ModExtractor: Archive not found: '{archivePath}'");
 				return null;
 			}
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("ModExtractor: Starting extraction.", new { ArchivePath = archivePath });
+			}
 			string tempDir = Path.Combine(Path.GetTempPath(), "CalradiaForge", Guid.NewGuid().ToString());
 			try {
 				Directory.CreateDirectory(tempDir);
@@ -76,6 +79,9 @@
 							onFileExtracted?.Invoke(filesExtracted);
 						}
 					}
+					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+						_logger.Debug("ModExtractor: Extraction complete.", new { ArchivePath = archivePath, FilesExtracted = filesExtracted, TempDir = tempDir });
+					}
 				}, token);
 
 				_logger.Info($"ModExtractor: Extracted '{Path.GetFileName(archivePath)}' to temp: '{tempDir}'");
@@ -85,6 +91,9 @@
 				throw;
 			} catch (Exception ex) {
 				_logger.Error(ex, $"ModExtractor: Failed to extract '{archivePath}'");
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("ModExtractor: Extraction failed.", new { ArchivePath = archivePath, TempDir = tempDir }, ex);
+				}
 				CleanupTempDirectory(tempDir);
 				return null;
 			}
@@ -102,8 +111,14 @@
 				return null;
 			}
 
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("ModExtractor: Searching for mod root.", new { ExtractedDir = extractedDir });
+			}
 			// Check if SubModule.xml is directly in the extracted directory
 			if (File.Exists(Path.Combine(extractedDir, "SubModule.xml"))) {
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("ModExtractor: Found SubModule.xml at root.", new { ExtractedDir = extractedDir });
+				}
 				return extractedDir;
 			}
 
@@ -121,6 +136,9 @@
 				// Check each subdirectory for SubModule.xml
 				foreach (string subDir in subDirs) {
 					if (File.Exists(Path.Combine(subDir, "SubModule.xml"))) {
+						if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+							_logger.Debug("ModExtractor: Found SubModule.xml in subdirectory.", new { ExtractedDir = extractedDir, ModRoot = subDir });
+						}
 						return subDir;
 					}
 				}
@@ -137,6 +155,9 @@
 			}
 
 			_logger.Warning($"ModExtractor: No SubModule.xml found in extracted archive at: '{extractedDir}'");
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("ModExtractor: Mod root not found.", new { ExtractedDir = extractedDir });
+			}
 			return null;
 		}
 
@@ -147,9 +168,15 @@
 			try {
 				if (Directory.Exists(tempDir)) {
 					Directory.Delete(tempDir, recursive: true);
+					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+						_logger.Debug("ModExtractor: Cleaned temp directory.", new { TempDir = tempDir });
+					}
 				}
 			} catch (Exception ex) {
 				_logger.Warning($"ModExtractor: Failed to clean up temp directory '{tempDir}': {ex.Message}");
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("ModExtractor: Temp cleanup failed.", new { TempDir = tempDir }, ex);
+				}
 			}
 		}
 	}

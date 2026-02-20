@@ -1,6 +1,7 @@
 ﻿namespace CalradiaForge.Core.Infra.Logging
 	{
 	using CalradiaForge.Core.Infra.Paths;
+	using Newtonsoft.Json;
 
 	public sealed class Logger
 		{
@@ -37,6 +38,39 @@
 
 			CleanupOldLogs(maxAgeDays: 14);
 			}
+
+		#region Public API
+
+		/// <summary>
+		/// Logs a verbose diagnostic message. Only written when
+		/// <see cref="MinimumLevel"/> is set to <see cref="LogLevel.Debug"/>
+		/// (i.e. when the user enables Debug Mode in Settings).
+		/// Use for granular operational detail that would be too noisy for normal use.
+		/// </summary>
+		public void Debug(string message) => Log(message,LogLevel.Debug);
+		public void Debug(string message, object? data) {
+			string? serialized = SerializeDebugData(data);
+			string finalMessage = serialized is null ? message : $"{message} | data: {serialized}";
+			Log(finalMessage, LogLevel.Debug);
+		}
+		public void Debug(string message, Exception ex) {
+			Log(message + Environment.NewLine + ex, LogLevel.Debug);
+		}
+		public void Debug(string message, object? data, Exception ex) {
+			string? serialized = SerializeDebugData(data);
+			string finalMessage = serialized is null ? message : $"{message} | data: {serialized}";
+			Log(finalMessage + Environment.NewLine + ex, LogLevel.Debug);
+		}
+		public void Error(string message) => Log(message,LogLevel.Error);
+		public void Error(string message,Exception ex) => Log(message+Environment.NewLine+ex,LogLevel.Error);
+		public void Error(Exception ex,params string[] additionalInfo) {
+			string errorMessage = ex.ToString();
+			if (additionalInfo.Length>0) {
+				errorMessage+=Environment.NewLine+string.Join(Environment.NewLine,additionalInfo);
+				}
+			Log(errorMessage,LogLevel.Error);
+			}
+		public void Info(string message) => Log(message,LogLevel.Info);
 		public void Log(string message,LogLevel level) {
 			if (level < MinimumLevel) {
 				return;
@@ -54,25 +88,12 @@
 				System.Diagnostics.Debug.WriteLine(logEntry);
 				}
 			}
-
-		/// <summary>
-		/// Logs a verbose diagnostic message. Only written when
-		/// <see cref="MinimumLevel"/> is set to <see cref="LogLevel.Debug"/>
-		/// (i.e. when the user enables Debug Mode in Settings).
-		/// Use for granular operational detail that would be too noisy for normal use.
-		/// </summary>
-		public void Debug(string message) => Log(message,LogLevel.Debug);
-		public void Info(string message) => Log(message,LogLevel.Info);
 		public void Warning(string message) => Log(message,LogLevel.Warning);
-		public void Error(string message) => Log(message,LogLevel.Error);
-		public void Error(string message,Exception ex) => Log(message+Environment.NewLine+ex,LogLevel.Error);
-		public void Error(Exception ex,params string[] additionalInfo) {
-			string errorMessage = ex.ToString();
-			if (additionalInfo.Length>0) {
-				errorMessage+=Environment.NewLine+string.Join(Environment.NewLine,additionalInfo);
-				}
-			Log(errorMessage,LogLevel.Error);
-			}
+
+		#endregion
+
+		#region Private Helpers
+
 		private void CleanupOldLogs(int maxAgeDays) {
 			try {
 				DateTime cutoff = DateTime.Now.AddDays(-maxAgeDays);
@@ -85,5 +106,17 @@
 				System.Diagnostics.Debug.WriteLine($"[Logger] Failed to cleanup logs: {ex.Message}");
 				}
 			}
+		private static string? SerializeDebugData(object? data) {
+			if (data is null) {
+				return null;
+			}
+			try {
+				return JsonConvert.SerializeObject(data, Formatting.None);
+			} catch {
+				return null;
+			}
 		}
+
+		#endregion
 	}
+}

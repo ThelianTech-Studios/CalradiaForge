@@ -51,6 +51,9 @@
 				try {
 					string filePath = ModpackFileHelper.GetModpackFilePath(_modpacksDirectory,modpack.ModpackName);
 					modpack.FileName=ModpackFileHelper.SanitizeFileName(modpack.ModpackName);
+					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+						_logger.Debug("ModpackData: Saving modpack.", new { ModpackName = modpack.ModpackName, FilePath = filePath, EntryCount = modpack.LoadOrder.Count });
+					}
 					string json = JsonConvert.SerializeObject(modpack,Formatting.Indented);
 					File.WriteAllText(filePath,json);
 					_logger.Info($"ModpackData: Saved modpack '{modpack.ModpackName}' to '{filePath}'");
@@ -73,6 +76,9 @@
 				try {
 					if (!File.Exists(filePath)) {
 						_logger.Warning($"ModpackData: Modpack file not found: '{filePath}'");
+						if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+							_logger.Debug("ModpackData: Load failed, file missing.", new { FilePath = filePath });
+						}
 						return null;
 						}
 					string json = File.ReadAllText(filePath);
@@ -80,6 +86,9 @@
 					if (modpack is not null) {
 						modpack.FileName=Path.GetFileNameWithoutExtension(filePath);
 						}
+					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+						_logger.Debug("ModpackData: Loaded modpack.", new { FilePath = filePath, ModpackName = modpack?.ModpackName, EntryCount = modpack?.LoadOrder.Count ?? 0 });
+					}
 					return modpack;
 					}
 				catch (Exception ex) {
@@ -113,6 +122,9 @@
 							}
 						catch (Exception ex) {
 							_logger.Warning($"ModpackData: Skipping invalid modpack file '{file}': {ex.Message}");
+							if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+								_logger.Debug("ModpackData: Invalid modpack skipped.", new { FilePath = file, Error = ex.Message });
+							}
 							}
 						}
 					}
@@ -120,6 +132,9 @@
 					_logger.Error(ex,"ModpackData: Failed to enumerate modpack directory.");
 					}
 				_logger.Info($"ModpackData: Loaded {modpacks.Count} modpack(s) from '{_modpacksDirectory}'");
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("ModpackData: Load all complete.", new { ModpackCount = modpacks.Count, Directory = _modpacksDirectory });
+				}
 				return modpacks;
 				}
 			}
@@ -175,6 +190,9 @@
 					string json = JsonConvert.SerializeObject(modpack,Formatting.Indented);
 					File.WriteAllText(_lastUsedFilePath,json);
 					_logger.Info("ModpackData: Saved last-used load order.");
+					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+						_logger.Debug("ModpackData: Saved last-used file.", new { FilePath = _lastUsedFilePath, EntryCount = modpack.LoadOrder.Count });
+					}
 					return true;
 					}
 				catch (Exception ex) {
@@ -192,10 +210,17 @@
 			lock (_lock) {
 				try {
 					if (!File.Exists(_lastUsedFilePath)) {
+						if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+							_logger.Debug("ModpackData: Last-used file missing.", new { FilePath = _lastUsedFilePath });
+						}
 						return null;
 						}
 					string json = File.ReadAllText(_lastUsedFilePath);
-					return JsonConvert.DeserializeObject<ModpackModel>(json);
+					ModpackModel? modpack = JsonConvert.DeserializeObject<ModpackModel>(json);
+					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+						_logger.Debug("ModpackData: Loaded last-used file.", new { FilePath = _lastUsedFilePath, EntryCount = modpack?.LoadOrder.Count ?? 0 });
+					}
+					return modpack;
 					}
 				catch (Exception ex) {
 					_logger.Error(ex,"ModpackData: Failed to load last-used load order.");
@@ -233,6 +258,9 @@
 						return null;
 						}
 					_logger.Info($"ModpackData: Successfully imported modpack '{modpack.ModpackName}' from '{importFilePath}'");
+					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+						_logger.Debug("ModpackData: Imported modpack file.", new { ImportFilePath = importFilePath, ModpackName = modpack.ModpackName, EntryCount = modpack.LoadOrder.Count });
+					}
 					return modpack;
 					}
 				catch (Exception ex) {
@@ -241,9 +269,7 @@
 					}
 				}
 			}
-
 		#endregion
-
 		#region Helpers
 
 		private static void EnsureDirectoryExists(string path) {

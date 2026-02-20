@@ -34,6 +34,9 @@
 		/// </summary>
 		public List<LanguageOption> LoadManifest() {
 			string manifestPath = Path.Combine(_languagesDirectory,ManifestFileName);
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("TranslationLoader: Loading manifest.", new { ManifestPath = manifestPath });
+			}
 			if (!File.Exists(manifestPath)) {
 				_logger.Warning($"TranslationLoader: Manifest not found at '{manifestPath}'.");
 				return [];
@@ -41,9 +44,15 @@
 			try {
 				string json = File.ReadAllText(manifestPath);
 				List<LanguageOption>? options = JsonConvert.DeserializeObject<List<LanguageOption>>(json);
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("TranslationLoader: Manifest loaded.", new { ManifestPath = manifestPath, Count = options?.Count ?? 0 });
+				}
 				return options?? [];
 				} catch (Exception ex) {
 				_logger.Error(ex,$"TranslationLoader: Failed to read manifest at '{manifestPath}'.");
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("TranslationLoader: Manifest read failed.", new { ManifestPath = manifestPath }, ex);
+				}
 				return [];
 				}
 			}
@@ -59,6 +68,9 @@
 				return new Dictionary<string,string>();
 				}
 			string filePath = Path.Combine(_languagesDirectory,$"{languageCode}.json");
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("TranslationLoader: Loading language file.", new { FilePath = filePath, LanguageCode = languageCode });
+			}
 			if (!File.Exists(filePath)) {
 				_logger.Warning($"TranslationLoader: Language file not found at '{filePath}'.");
 				return new Dictionary<string,string>();
@@ -66,9 +78,15 @@
 			try {
 				string json = File.ReadAllText(filePath);
 				Dictionary<string,string>? pairs = JsonConvert.DeserializeObject<Dictionary<string,string>>(json);
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("TranslationLoader: Language file loaded.", new { FilePath = filePath, Count = pairs?.Count ?? 0 });
+				}
 				return pairs??new Dictionary<string,string>();
 				} catch (Exception ex) {
 				_logger.Error(ex,$"TranslationLoader: Failed to read language file at '{filePath}'.");
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("TranslationLoader: Language file read failed.", new { FilePath = filePath }, ex);
+				}
 				return new Dictionary<string,string>();
 				}
 			}

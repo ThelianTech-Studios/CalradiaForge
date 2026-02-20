@@ -1,12 +1,13 @@
 ﻿namespace CalradiaForge.Core.Infra.Paths
 	{
 	using CalradiaForge.Core.Infra.Config;
+	using CalradiaForge.Core.Infra.Logging;
 
 	using Microsoft.Win32;
 
 	public static class GamePathsHelper
 		{
-
+		private static readonly Logger _logger = Logger.Instance;
 		private const string _steamGameID = "261550";
 		private const string _bannerlordFolderName = "Mount & Blade II Bannerlord";
 
@@ -29,6 +30,9 @@
 		private const bool _enableUnsupportedPlatforms = false;
 
 		public static void TryAutoDetectGameFolder(AppConfigSettings config) {
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("GamePathsHelper: Starting auto-detection.");
+			}
 			if (TryDetectSteam(config))
 				return;
 			if (_enableUnsupportedPlatforms) {
@@ -36,46 +40,70 @@
 					return;
 					}
 				}
-			// GamePass detection is not yet implemented — the GameProvider.GamePass
-			// enum value is preserved for future use. A TryDetectGamePass method
-			// will be added here once testing access is available.
 			config.GameProvider=GameProvider.StandAlone;
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("GamePathsHelper: Auto-detection fallback to standalone.");
+			}
 			}
 		#region Detection Methods
 
 		private static bool TryDetectSteam(AppConfigSettings config) {
 			try {
 				string? steamPath = Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\Valve\Steam","SteamPath",null) as string;
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("GamePathsHelper: Steam registry read.", new { SteamPath = steamPath ?? "<null>" });
+				}
 				if (string.IsNullOrWhiteSpace(steamPath)) {
-					//Implement Logger to log this information
+					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+						_logger.Debug("GamePathsHelper: Steam path missing.");
+					}
 					return false;
 					} else {
 					string gamePath = Path.Combine(steamPath,"steamapps","common",_bannerlordFolderName);
+					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+						_logger.Debug("GamePathsHelper: Checking Steam game path.", new { GamePath = gamePath, Exists = Directory.Exists(gamePath) });
+					}
 					if (!Directory.Exists(gamePath)) {
-						//Implement Logger to log this information
 						return false;
 						} else {
 						config.GameProvider=GameProvider.Steam;
 						config.GameFolderPath=gamePath;
 						config.GameLauncherFilePath=Path.Combine(gamePath,"bin","Win64_Shipping_Client","Bannerlord.exe");
 						string workshopPath = Path.Combine(steamPath,"steamapps","workshop","content",_steamGameID);
+						if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+							_logger.Debug("GamePathsHelper: Checking Steam workshop path.", new { WorkshopPath = workshopPath, Exists = Directory.Exists(workshopPath) });
+						}
 						if (!Directory.Exists(workshopPath)) {
 							throw new DirectoryNotFoundException($"The expected Steam Workshop folder was not found at '{workshopPath}'. Please Check your Settings");
 							} else { config.SteamWorkshopFolderPath=workshopPath; }
 						TryDetectBLSE(config,gamePath);
+						if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+							_logger.Debug("GamePathsHelper: Steam detection succeeded.", new { GamePath = gamePath, WorkshopPath = workshopPath });
+						}
 						return true;
 						}
 					}
-				} catch {
-				//Implement Logger to log this exception
+				} catch (Exception ex) {
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("GamePathsHelper: Steam detection failed.", ex);
+				}
 				return false;
 				}
 			}
 		private static bool TryDetectEpic(AppConfigSettings config) {
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("GamePathsHelper: Starting Epic detection.");
+			}
 			if (!EpicDetector.IsEpicGameInstalled()) {
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("GamePathsHelper: Epic launcher not detected.");
+				}
 				return false;
 				}
 			string? epicPath = EpicManifestReader.TryGetInstallLocation();
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("GamePathsHelper: Epic manifest result.", new { EpicPath = epicPath ?? "<null>" });
+			}
 			if (string.IsNullOrWhiteSpace(epicPath)) {
 				return false;
 				}
@@ -83,6 +111,9 @@
 			config.GameFolderPath=epicPath;
 			config.GameLauncherFilePath=Path.Combine(epicPath,"bin","Win64_Shipping_Client","Bannerlord.exe");
 			TryDetectBLSE(config,epicPath);
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("GamePathsHelper: Epic detection succeeded.", new { GamePath = epicPath });
+			}
 			return true;
 			}
 
@@ -102,7 +133,11 @@
 		/// <param name="gameFolderPath">Root Bannerlord installation folder.</param>
 		private static void TryDetectBLSE(AppConfigSettings config,string gameFolderPath) {
 			string blsePath = Path.Combine(gameFolderPath,"bin","Win64_Shipping_Client",_blseStandaloneExeName);
-			if (File.Exists(blsePath)) {
+			bool exists = File.Exists(blsePath);
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("GamePathsHelper: Checking BLSE path.", new { BlsePath = blsePath, Exists = exists });
+			}
+			if (exists) {
 				config.BLSEExePath=blsePath;
 				}
 			}
@@ -110,10 +145,16 @@
 		#endregion
 
 		public static string GetModulesFolder(AppConfigSettings appConfig) {
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("GamePathsHelper: Resolving modules folder.", new { GameFolderPath = appConfig.GameFolderPath });
+			}
 			if (string.IsNullOrWhiteSpace(appConfig.GameFolderPath)||!Directory.Exists(appConfig.GameFolderPath)) {
 				throw new DirectoryNotFoundException($"The provided path '{appConfig.GameFolderPath}' is not valid or does not exist.");
 				}
 			string modulesPath = Path.GetFullPath(appConfig.GameFolderPath,"Modules");
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("GamePathsHelper: Checking modules folder.", new { ModulesPath = modulesPath, Exists = Directory.Exists(modulesPath) });
+			}
 			if (!Directory.Exists(modulesPath)) {
 				throw new DirectoryNotFoundException($"Modules Folder not found at folderpath: '{modulesPath}'.");
 				}
@@ -122,8 +163,14 @@
 
 		public static string? GetSteamWorkshopFolder(AppConfigSettings appConfig) {
 			if (appConfig.IsGameFromSteam) {
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("GamePathsHelper: Resolving Steam workshop folder.", new { WorkshopPath = appConfig.SteamWorkshopFolderPath });
+				}
 				if (!string.IsNullOrWhiteSpace(appConfig.SteamWorkshopFolderPath)&&Directory.Exists(appConfig.SteamWorkshopFolderPath)) {
 					string workshopPath = Path.GetFullPath(appConfig.SteamWorkshopFolderPath);
+					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+						_logger.Debug("GamePathsHelper: Checking Steam workshop folder.", new { WorkshopPath = workshopPath, Exists = Directory.Exists(workshopPath) });
+					}
 					if (Directory.Exists(workshopPath)) {
 						return workshopPath;
 						}

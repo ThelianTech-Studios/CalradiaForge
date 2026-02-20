@@ -44,6 +44,9 @@
 				return ConvertFromXml(xml);
 			} catch (Exception ex) {
 				_logger.Error(ex, $"NovusConverter: Failed to read file '{xmlFilePath}'");
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("NovusConverter: File read failed.", new { FilePath = xmlFilePath }, ex);
+				}
 				return null;
 			}
 		}
@@ -69,7 +72,7 @@
 				if (presetElement is null || !string.Equals(presetElement.Name.LocalName, "Preset", StringComparison.OrdinalIgnoreCase)) {
 					_logger.Warning("NovusConverter: Root element is not <Preset>.");
 					return null;
-				}
+					}
 
 				string name = presetElement.Attribute("Name")?.Value?.Trim() ?? string.Empty;
 				string createdBy = presetElement.Attribute("CreatedBy")?.Value?.Trim() ?? "Unknown";
@@ -77,14 +80,14 @@
 				if (string.IsNullOrWhiteSpace(name)) {
 					_logger.Warning("NovusConverter: Preset has no Name attribute.");
 					return null;
-				}
+					}
 
 				List<ModpackEntryModel> loadOrder = ParseModuleEntries(presetElement);
 
 				if (loadOrder.Count == 0) {
 					_logger.Warning($"NovusConverter: Preset '{name}' has no module entries.");
 					return null;
-				}
+					}
 
 				ModpackModel modpack = new() {
 					ModpackName = name,
@@ -94,12 +97,18 @@
 				};
 
 				_logger.Info($"NovusConverter: Converted preset '{name}' with {loadOrder.Count} module(s).");
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("NovusConverter: Conversion complete.", new { PresetName = name, CreatedBy = createdBy, EntryCount = loadOrder.Count });
+				}
 				return modpack;
 			} catch (Exception ex) {
 				_logger.Error(ex, "NovusConverter: Failed to parse XML content.");
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("NovusConverter: XML parse failed.", new { Length = xmlContent.Length }, ex);
+				}
 				return null;
 			}
-		}
+			}
 
 		/// <summary>
 		/// Parses all <c>&lt;PresetModule&gt;</c> child elements from the <c>&lt;Preset&gt;</c> root.
@@ -115,8 +124,11 @@
 				string url = module.Attribute("URL")?.Value?.Trim() ?? string.Empty;
 
 				if (string.IsNullOrWhiteSpace(id)) {
+					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+						_logger.Debug("NovusConverter: Skipping module with empty Id.");
+					}
 					continue;
-				}
+					}
 
 				entries.Add(new ModpackEntryModel {
 					ModuleId = id,
@@ -127,6 +139,6 @@
 			}
 
 			return entries;
-		}
+			}
 	}
 }

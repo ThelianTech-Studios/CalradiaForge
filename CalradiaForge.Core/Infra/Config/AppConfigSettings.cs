@@ -4,6 +4,7 @@
 	using System.IO;
 
 	using CalradiaForge.Core.Infra.Launch;
+	using CalradiaForge.Core.Infra.Logging;
 	using CalradiaForge.Core.Infra.Paths;
 
 	/// <summary>
@@ -12,9 +13,13 @@
 	/// </summary>
 	public sealed class AppConfigSettings : INotifyPropertyChanged
 		{
+		private readonly Logger _logger = Logger.Instance;
 		private readonly AppConfig _config;
 		public AppConfigSettings(AppConfig config) {
 			_config=config;
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("AppConfigSettings: Initializing defaults.");
+			}
 			InitDefaults();
 			}
 		#region INotifyPropertyChanged Implementation
@@ -27,6 +32,11 @@
 		private void AddIfMissing(string key,string? defaultValue = null) {
 			if (string.IsNullOrEmpty(_config[key])) {
 				_config[key]=defaultValue??string.Empty;
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("AppConfigSettings: Added default.", new { Key = key, Value = _config[key] });
+				}
+			} else if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("AppConfigSettings: Default already present.", new { Key = key, Value = _config[key] });
 				}
 			}
 		#endregion
@@ -57,7 +67,11 @@
 			get => Enum.TryParse(_config["GamePlatform"],out GameProvider p) ? p : GameProvider.NotInitialized;
 			set {
 				if (_config["GamePlatform"]!=value.ToString()) {
+					string oldValue = _config["GamePlatform"];
 					_config["GamePlatform"]=value.ToString();
+					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+						_logger.Debug("AppConfigSettings: GameProvider changed.", new { OldValue = oldValue, NewValue = _config["GamePlatform"] });
+					}
 					OnPropertyChanged(nameof(GameProvider));
 					OnPropertyChanged(nameof(IsGameFromSteam));
 					}
@@ -68,7 +82,11 @@
 			get => _config["Language"];
 			set {
 				if (_config["Language"]!=value) {
+					string oldValue = _config["Language"];
 					_config["Language"]=value;
+					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+						_logger.Debug("AppConfigSettings: Language changed.", new { OldValue = oldValue, NewValue = value });
+					}
 					OnPropertyChanged(nameof(Language));
 					}
 				}
@@ -77,7 +95,11 @@
 			get => _config["GameFolderPath"];
 			set {
 				if (_config["GameFolderPath"]!=value) {
+					string oldValue = _config["GameFolderPath"];
 					_config["GameFolderPath"]=value;
+					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+						_logger.Debug("AppConfigSettings: GameFolderPath changed.", new { OldValue = oldValue, NewValue = value });
+					}
 					OnPropertyChanged(nameof(GameFolderPath));
 					OnPropertyChanged(nameof(ModulesDirectoryPath));
 					}
@@ -87,7 +109,11 @@
 			get => _config["GameLauncherFilePath"];
 			set {
 				if (_config["GameLauncherFilePath"]!=value) {
+					string oldValue = _config["GameLauncherFilePath"];
 					_config["GameLauncherFilePath"]=value;
+					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+						_logger.Debug("AppConfigSettings: GameLauncherFilePath changed.", new { OldValue = oldValue, NewValue = value });
+					}
 					OnPropertyChanged(nameof(GameLauncherFilePath));
 					}
 				}
@@ -97,7 +123,11 @@
 			get => _config["SteamWorkshopFolderPath"];
 			set {
 				if (_config["SteamWorkshopFolderPath"]!=value) {
+					string oldValue = _config["SteamWorkshopFolderPath"];
 					_config["SteamWorkshopFolderPath"]=value;
+					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+						_logger.Debug("AppConfigSettings: SteamWorkshopFolderPath changed.", new { OldValue = oldValue, NewValue = value });
+					}
 					OnPropertyChanged(nameof(SteamWorkshopFolderPath));
 					}
 				}
@@ -112,7 +142,11 @@
 			get => _config["LastSelectedModpack"];
 			set {
 				if (_config["LastSelectedModpack"]!=value) {
+					string oldValue = _config["LastSelectedModpack"];
 					_config["LastSelectedModpack"]=value;
+					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+						_logger.Debug("AppConfigSettings: LastSelectedModpack changed.", new { OldValue = oldValue, NewValue = value });
+					}
 					OnPropertyChanged(nameof(LastSelectedModpack));
 					}
 				}
@@ -125,7 +159,11 @@
 			get => Enum.TryParse(_config["ModpackStartupMode"],out ModpackStartupMode m) ? m : ModpackStartupMode.LastUsed;
 			set {
 				if (_config["ModpackStartupMode"]!=value.ToString()) {
+					string oldValue = _config["ModpackStartupMode"];
 					_config["ModpackStartupMode"]=value.ToString();
+					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+						_logger.Debug("AppConfigSettings: ModpackStartupMode changed.", new { OldValue = oldValue, NewValue = _config["ModpackStartupMode"] });
+					}
 					OnPropertyChanged(nameof(ModpackStartupMode));
 					}
 				}
@@ -141,7 +179,11 @@
 			set {
 				string stringValue = value.ToString();
 				if (_config["DebugMode"]!=stringValue) {
+					string oldValue = _config["DebugMode"];
 					_config["DebugMode"]=stringValue;
+					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+						_logger.Debug("AppConfigSettings: DebugMode changed.", new { OldValue = oldValue, NewValue = stringValue });
+					}
 					OnPropertyChanged(nameof(DebugMode));
 					}
 				}
@@ -155,51 +197,53 @@
 			get => _config["LastUnblockRunDate"];
 			set {
 				if (_config["LastUnblockRunDate"]!=value) {
+					string oldValue = _config["LastUnblockRunDate"];
 					_config["LastUnblockRunDate"]=value;
+					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+						_logger.Debug("AppConfigSettings: LastUnblockRunDate changed.", new { OldValue = oldValue, NewValue = value });
+					}
 					OnPropertyChanged(nameof(LastUnblockRunDate));
 					}
 				}
 			}
 
-		/// <summary>
-		/// Persisted summary result of the last DLL Unblock tool run.
-		/// Displayed in the Tools tab for user reference and debugging.
-		/// </summary>
 		public string LastUnblockRunResult {
 			get => _config["LastUnblockRunResult"];
 			set {
 				if (_config["LastUnblockRunResult"]!=value) {
+					string oldValue = _config["LastUnblockRunResult"];
 					_config["LastUnblockRunResult"]=value;
+					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+						_logger.Debug("AppConfigSettings: LastUnblockRunResult changed.", new { OldValue = oldValue, NewValue = value });
+					}
 					OnPropertyChanged(nameof(LastUnblockRunResult));
 					}
 				}
 			}
 
-		/// <summary>
-		/// Full path to the BLSE Standalone executable (Bannerlord.BLSE.Standalone.exe).
-		/// Empty by default — populated by auto-detection in <see cref="GamePathsHelper"/>
-		/// or manually via Settings → Game Config.
-		/// </summary>
 		public string BLSEExePath {
 			get => _config["BLSEExePath"];
 			set {
 				if (_config["BLSEExePath"]!=value) {
+					string oldValue = _config["BLSEExePath"];
 					_config["BLSEExePath"]=value;
+					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+						_logger.Debug("AppConfigSettings: BLSEExePath changed.", new { OldValue = oldValue, NewValue = value });
+					}
 					OnPropertyChanged(nameof(BLSEExePath));
 					}
 				}
 			}
 
-		/// <summary>
-		/// The user's preferred launch target for the Play button.
-		/// Persisted across sessions so the split-button selection is restored on startup.
-		/// Defaults to <see cref="LaunchTarget.Bannerlord"/>.
-		/// </summary>
 		public LaunchTarget DefaultLaunchTarget {
 			get => Enum.TryParse(_config["DefaultLaunchTarget"],out LaunchTarget t) ? t : LaunchTarget.Bannerlord;
 			set {
 				if (_config["DefaultLaunchTarget"]!=value.ToString()) {
+					string oldValue = _config["DefaultLaunchTarget"];
 					_config["DefaultLaunchTarget"]=value.ToString();
+					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+						_logger.Debug("AppConfigSettings: DefaultLaunchTarget changed.", new { OldValue = oldValue, NewValue = _config["DefaultLaunchTarget"] });
+					}
 					OnPropertyChanged(nameof(DefaultLaunchTarget));
 					}
 				}

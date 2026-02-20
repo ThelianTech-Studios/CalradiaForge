@@ -4,6 +4,7 @@
 	using System.Linq;
 	using System.Threading;
 	using System.Threading.Tasks;
+	using System.Diagnostics;
 
 	using CalradiaForge.Core.Infra.Config;
 	using CalradiaForge.Core.Infra.Logging;
@@ -66,6 +67,9 @@
 			CurrentMods = _modsData.LoadCurrent();
 			PreviousMods = _modsData.LoadBackup();
 			_logger.Info($"ModService: Loaded {CurrentMods.Count} mods from cache, {PreviousMods.Count} from backup.");
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("ModService: Cache load complete.", new { CurrentCount = CurrentMods.Count, BackupCount = PreviousMods.Count });
+			}
 		}
 
 		#endregion
@@ -86,12 +90,16 @@
 				_logger.Warning("ModService: Refresh already in progress. Skipping duplicate request.");
 				return false;
 			}
+			Stopwatch stopwatch = Stopwatch.StartNew();
 			try {
 				IsRefreshing = true;
 
 				// Rotate current → backup before scanning
 				_modsData.RotateDataFiles();
 				PreviousMods = _modsData.LoadBackup();
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("ModService: Loaded previous mods for refresh.", new { PreviousCount = PreviousMods.Count });
+				}
 
 				// Perform the full directory scan
 				List<ModuleModel> scannedMods = await ModScanner.ScanForModsAsync(_appConfig, token);
@@ -103,11 +111,15 @@
 				// Detect changes
 				bool hasChanges = DetectChanges();
 
+				stopwatch.Stop();
 				_logger.Info(
 					$"ModService: Refresh complete. " +
 					$"{CurrentMods.Count} mods found, " +
 					$"{AddedMods.Count} added, " +
 					$"{RemovedMods.Count} removed.");
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("ModService: Refresh timing.", new { DurationMs = stopwatch.ElapsedMilliseconds });
+				}
 
 				return hasChanges;
 			} catch (OperationCanceledException) {
@@ -172,8 +184,19 @@
 				.Where(m => !string.IsNullOrEmpty(m.ModuleId) && !currentIds.Contains(m.ModuleId))
 				.ToList();
 
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				string addedNames = string.Join(", ", AddedMods.Select(m => m.ModuleName ?? m.ModuleId));
+				string removedNames = string.Join(", ", RemovedMods.Select(m => m.ModuleName ?? m.ModuleId));
+				_logger.Debug("ModService: Change detection result.", new {
+					AddedCount = AddedMods.Count,
+					RemovedCount = RemovedMods.Count,
+					Added = addedNames,
+					Removed = removedNames
+					});
+				}
+
 			return AddedMods.Count > 0 || RemovedMods.Count > 0;
-		}
+			}
 
 		#endregion
 	}

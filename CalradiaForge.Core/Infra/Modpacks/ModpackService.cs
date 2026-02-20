@@ -77,6 +77,9 @@
 			LastUsedModpack=_modpackData.LoadLastUsed();
 			EnsureDefaultModpackExists();
 			_logger.Info($"ModpackService: Loaded {AllModpacks.Count} modpack(s). Last Used: {(LastUsedModpack is not null ? "found" : "none")}");
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("ModpackService: Load complete.", new { ModpackCount = AllModpacks.Count, HasLastUsed = LastUsedModpack is not null });
+			}
 			}
 
 		/// <summary>
@@ -91,6 +94,9 @@
 				_modpackData.SaveModpack(vanilla);
 				AllModpacks.Insert(0,vanilla);
 				_logger.Info("ModpackService: Created default Vanilla modpack.");
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("ModpackService: Default modpack created.", new { ModpackName = vanilla.ModpackName, EntryCount = vanilla.LoadOrder.Count });
+				}
 				}
 			}
 
@@ -105,6 +111,9 @@
 			AllModpacks=_modpackData.LoadAllModpacks();
 			EnsureDefaultModpackExists();
 			_logger.Info($"ModpackService: Refreshed. {AllModpacks.Count} modpack(s) loaded.");
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("ModpackService: Refresh complete.", new { ModpackCount = AllModpacks.Count });
+			}
 			}
 
 		#endregion
@@ -125,6 +134,9 @@
 			if (result) {
 				Refresh();
 				}
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("ModpackService: Saved modpack.", new { ModpackName = modpack.ModpackName, EntryCount = modpack.LoadOrder.Count, Success = result });
+			}
 			return result;
 			}
 
@@ -138,6 +150,9 @@
 		public bool SaveAs(string modpackName,string createdBy,List<ModpackEntryModel> currentLoadOrder) {
 			if (_modpackData.ModpackExists(modpackName)) {
 				_logger.Warning($"ModpackService: Cannot SaveAs — modpack '{modpackName}' already exists.");
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("ModpackService: SaveAs rejected.", new { ModpackName = modpackName });
+				}
 				return false;
 				}
 			ModpackModel newModpack = new(modpackName,createdBy,currentLoadOrder.Select(e => e.Clone()).ToList());
@@ -145,6 +160,9 @@
 			if (result) {
 				Refresh();
 				}
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("ModpackService: SaveAs complete.", new { ModpackName = modpackName, EntryCount = newModpack.LoadOrder.Count, Success = result });
+			}
 			return result;
 			}
 
@@ -168,6 +186,9 @@
 		public bool CreateNew(string modpackName, string createdBy, ModpackTemplate template = ModpackTemplate.Vanilla, List<ModuleModel>? installedMods = null) {
 			if (_modpackData.ModpackExists(modpackName)) {
 				_logger.Warning($"ModpackService: Cannot create — modpack '{modpackName}' already exists.");
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("ModpackService: Create rejected.", new { ModpackName = modpackName });
+				}
 				return false;
 				}
 			List<ModpackEntryModel> defaultOrder = template switch {
@@ -181,6 +202,9 @@
 			if (result) {
 				Refresh();
 				}
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("ModpackService: Created new modpack.", new { ModpackName = modpackName, Template = template.ToString(), EntryCount = defaultOrder.Count, Success = result });
+			}
 			return result;
 			}
 		#endregion
@@ -222,6 +246,9 @@
 				return (false, null, $"Unsupported file type '{extension}'. Use .json (CalradiaForge) or .xml (Novus Launcher).");
 			}
 
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("ModpackService: Import parsed.", new { ImportFilePath = importFilePath, Extension = extension, ModpackName = imported?.ModpackName });
+			}
 			if (_modpackData.ModpackExists(imported.ModpackName)) {
 				return (false, imported, $"A modpack named '{imported.ModpackName}' already exists.");
 			}
@@ -275,15 +302,17 @@
 			if (result) {
 				LastUsedModpack=lastUsed;
 				}
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("ModpackService: Saved last used load order.", new { EntryCount = lastUsed.LoadOrder.Count, Success = result });
+			}
 			return result;
 			}
 
-		/// <summary>
-		/// Loads the "Last Used" data from disk.
-		/// Called on startup to restore the previous session.
-		/// </summary>
 		public void LoadLastUsedFromDisk() {
 			LastUsedModpack=_modpackData.LoadLastUsed();
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("ModpackService: Loaded last used from disk.", new { HasLastUsed = LastUsedModpack is not null });
+			}
 			}
 
 		#endregion
@@ -324,6 +353,9 @@
 					missingModNames.Add(entry.ModuleName);
 					}
 				}
+			if (Logger.Instance.MinimumLevel == Logger.LogLevel.Debug) {
+				Logger.Instance.Debug("ModpackService: Load order validation.", new { ModpackName = modpack.ModpackName, ValidCount = validEntries.Count, MissingCount = missingModNames.Count, Missing = string.Join(", ", missingModNames) });
+			}
 			return (validEntries,missingModNames);
 			}
 
