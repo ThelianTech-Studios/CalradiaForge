@@ -4,6 +4,7 @@
 
 	using CalradiaForge.Core.Infra.Config;
 	using CalradiaForge.Core.Infra.Launch;
+	using CalradiaForge.Core.Infra.Localization;
 	using CalradiaForge.Core.Infra.Logging;
 	using CalradiaForge.Core.Infra.Modpacks;
 	using CalradiaForge.Core.Infra.Mods;
@@ -22,6 +23,7 @@
 		public static ModpackService ModpackService { get; private set; } = null!;
 		public static GameLauncher GameLauncher { get; private set; } = null!;
 		public static ToastService Toasts { get; private set; } = null!;
+		public static TranslationService Translator { get; private set; } = null!;
 		public App() {
 			InitializeComponent();
 		}
@@ -35,6 +37,7 @@
 			InitializeModpackServices();
 			InitializeLauncherService();
 			InitializeToastService();
+			InitializeTranslatorService();
 
 			// Apply saved debug mode to logger verbosity
 			if (AppConfig.DebugMode) {
@@ -82,6 +85,11 @@
 
 		private void InitializeToastService() {
 			Toasts = new ToastService(Dispatcher);
+		}
+		private void InitializeTranslatorService() {
+			var loader = new TranslationManager(AppPaths.LanguagesDirectory);
+			Translator = new TranslationService(loader, AppConfig);
+			Translator.Initialize();
 		}
 
 		private void SetupExceptionHandeling() {
