@@ -1,16 +1,16 @@
-﻿---
-name: "🐛 Bug Report"
+---
+name: Bug report
 about: Report a reproducible problem or crash in CalradiaForge
 title: "[Bug]: "
-labels: ["bug", "triage"]
-assignees: []
+labels: bug
+assignees: ThelianTech
+
 ---
 
 ## 🐛 Bug Summary
-
-A clear and concise description of the issue.
-
+A clear and concise description of the issue:
 > Example: "CalradiaForge fails to detect newly installed mods after restart."
+
 
 > **Note:** During investigation, you may be asked to temporarily **enable Debug Mode in Settings, restart CalradiaForge, and then reproduce the issue again** so that more detailed diagnostic information is captured in the logs.
 
@@ -33,9 +33,6 @@ Please confirm the following before submitting:
 
 - **OS version:**  
   (e.g. `Windows 10 22H2 x64`, `Windows 11 23H2 x64`)
-
-- **.NET Desktop Runtime:**  
-  (e.g. `.NET 10 Desktop Runtime 10.0.3 x64`)
 
 - **Game platform:**  
   - [ ] Steam  
