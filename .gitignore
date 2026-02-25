@@ -27,3 +27,7 @@ CalradiaForge.UI/Docs/
 /global.json
 /TODO_v1.md
 /CalradiaForge.UI/Properties/PublishProfiles
+/CalradiaForge.Core/Infra/Translation/TranslationDataManager.cs
+/CalradiaForge.Core/Models/TranslationModel.cs
+/CalradiaForge_beta-v0.9.22_win-x64.zip
+/desktop.ini
