@@ -4,9 +4,10 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <DebugType>none</DebugType>
     <Title>CalradiaForge.Core</Title>
     <Authors>ThelianTech</Authors>
-    <Version>0.9.38</Version>
+    <Version>0.9.42</Version>
     <Copyright>Copyright © 2026 ThelianTech™</Copyright>
     <PackageProjectUrl>https://github.com/ThelianTech/CalradiaForge</PackageProjectUrl>
     <RepositoryUrl>https://github.com/ThelianTech/CalradiaForge</RepositoryUrl>
@@ -23,7 +24,6 @@
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="SevenZipWrapper" Version="0.9.5-beta" />
-    <PackageReference Include="SharpCompress" Version="0.44.5" />
   </ItemGroup>
 	
 </Project>

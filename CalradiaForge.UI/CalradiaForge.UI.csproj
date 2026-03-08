@@ -8,6 +8,8 @@
     <UseWPF>true</UseWPF>
     <StartupObject>CalradiaForge.UI.App</StartupObject>
     <RootNamespace>CalradiaForge.UI</RootNamespace>
+    <GenerateAssemblyInfo>True</GenerateAssemblyInfo>
+    <DebugType>none</DebugType>
     <SignAssembly>False</SignAssembly>
     <Title>CalradiaForge Launcher</Title>
     <Authors>ThelianTech</Authors>
@@ -23,16 +25,6 @@
     <PackageLicenseFile>EULA.txt</PackageLicenseFile>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
     <ProduceReferenceAssembly>False</ProduceReferenceAssembly>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <GenerateAssemblyInfo>True</GenerateAssemblyInfo>
-    <DebugType>embedded</DebugType>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <GenerateAssemblyInfo>True</GenerateAssemblyInfo>
-    <DebugType>embedded</DebugType>
   </PropertyGroup>
 
   <ItemGroup>
