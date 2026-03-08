@@ -22,6 +22,13 @@ It helps you install mods from archives, arrange and toggle them quickly, and sa
 If you maintain more than one loadout (e.g., vanilla+, hardcore, overhaul), CalradiaForge is designed to keep each setup organized and launchable with minimal friction.
 
 > 🧪 **Open Beta:** CalradiaForge is currently in an open beta phase. Core workflows (mod install, modpacks, launching) are mostly feature-complete and stable enough for everyday use, but you may still encounter UI rough edges or missing quality-of-life improvements.
+>
+> ⚠️ **Beta Notice — Extraction Engine Migration:**
+> The latest beta release has migrated from SharpCompress to a **native 7-Zip extraction wrapper** (SevenZipWrapper) for archive handling. This change restores full `.7z` support at native extraction speeds and improves performance across all archive formats.
+>
+> If you experience any issues with mod installation or archive extraction in the latest beta, please:
+> 1. **File a bug report** on the [GitHub Issues page][CalradiaForge-Repo] with a description of the problem, the archive format used, and any relevant log files from the `Logs` directory.
+> 2. **Revert to the last stable release** — **Beta v0.9.22** — available from the [Releases page][CalradiaForge-Repo] until the issue is resolved.
 
 ---
 
@@ -94,11 +101,11 @@ Rather than ship an untested experience, Epic and GamePass support has been **di
 
 ## 📦 Supported Mod Archive Formats
 
-| Format | Support                  | Notes |
-|--------|--------------------------|-------|
-| `.zip` | ✅ Supported              | Recommended format. Fastest extraction. |
-| `.rar` | ✅ Supported              | Fully supported. |
-| `.7z`  | ⏸️ Temporarily Disabled  | See [FAQ: Why are .7z archives not supported?](#why-are-7z-archives-not-supported) |
+| Format | Support         | Notes |
+|--------|-----------------|-------|
+| `.zip` | ✅ Supported     | Recommended format. Fastest extraction. |
+| `.rar` | ✅ Supported     | Fully supported. |
+| `.7z`  | ✅ Supported     | Extracted via native 7-Zip wrapper at full speed. |
 
 ---
 
@@ -250,16 +257,6 @@ Please:
 
 CalradiaForge includes a built-in **FAQ page** accessible from the navigation menu. Below are some commonly asked questions:
 
-### Why are .7z archives not supported?
-
-CalradiaForge currently uses SharpCompress for archive extraction. The `.7z` format uses **block compression** (LZMA/LZMA2), which SharpCompress must decompress sequentially and entirely in-memory. For large Bannerlord mods with 1,000+ files, this causes extraction times of **~25 minutes** for a single mod — making the install experience unacceptable.
-
-The `.zip` and `.rar` formats use per-file compression, allowing SharpCompress to extract each file individually without this bottleneck.
-
-> **Workaround:** If your mod is only available as a `.7z` file, extract it manually using [7-Zip](https://www.7-zip.org/) and re-archive it as a `.zip` before installing through CalradiaForge.
-
-> **Planned fix:** A future update will integrate native 7-Zip extraction (via the 7-Zip SDK or CLI) to handle `.7z` archives at full speed.
-
 ### Other questions
 
 - Check the in-app **FAQ** page for answers to common questions about mod detection, DLL unblocking, modpacks, importing presets, and more.
@@ -339,7 +336,7 @@ A purpose-built notification overlay rendered in `MainWindow.xaml` via an `Items
 Archives are processed by a service-owned background task that survives page navigation:
 
 1. **Format validation** — `ModInstaller.IsAcceptedArchive()` rejects unsupported extensions before extraction
-2. **Extraction** — `ModExtractor.ExtractToTempAsync()` with per-file progress callbacks via SharpCompress
+2. **Extraction** — `ModExtractor.ExtractToTempAsync()` with per-file progress callbacks
 3. **Root detection** — `ModExtractor.FindModRoot()` walks nested folders to locate `SubModule.xml`
 4. **BLSE fallback** — `BLSEInstaller` handles non-module archives containing BLSE executables
 5. **Version check** — Compares against existing installation (install / upgrade / skip)
