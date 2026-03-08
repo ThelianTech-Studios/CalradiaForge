@@ -102,7 +102,7 @@
 			XElement? metadatas = (XElement?)moduleElement.Element("DependedModuleMetadatas");
 			if (metadatas is not null) {
 				foreach (XElement dep in metadatas.Elements("DependedModuleMetadata")) {
-					string depId = dep.Attribute("Id")?.Value ?? string.Empty;
+					string depId = dep.Attribute("id")?.Value ?? string.Empty;
 					string depVersion = dep.Attribute("version")?.Value ?? "0.0.0";
 					bool isOptional = string.Equals(dep.Attribute("optional")?.Value, "true", StringComparison.OrdinalIgnoreCase);
 					bool hasVersionRequirement = !string.IsNullOrEmpty(depVersion);
