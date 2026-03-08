@@ -29,12 +29,9 @@
 
 		/// <summary>
 		/// Accepted archive file extensions for mod installation (case-insensitive).
-		/// <c>.7z</c> is temporarily excluded due to SharpCompress block-compression
-		/// performance issues causing ~25 minute extraction times for large mods.
-		/// Will be re-enabled once native 7-Zip extraction is implemented.
 		/// </summary>
 		private static readonly HashSet<string> _acceptedExtensions = new(StringComparer.OrdinalIgnoreCase) {
-			".zip", ".rar"
+			".zip", ".rar", ".7z"
 		};
 
 		/// <summary>
@@ -48,7 +45,7 @@
 		/// Supported archive file extensions for the file dialog filter.
 		/// </summary>
 		public static string FileDialogFilter =>
-			"Mod Archives (*.zip;*.rar)|*.zip;*.rar|All Files (*.*)|*.*";
+			"Mod Archives (*.zip;*.rar;*.7z)|*.zip;*.rar;*.7z|All Files (*.*)|*.*";
 
 		/// <summary>
 		/// Indicates whether an installation batch is currently running.
@@ -89,7 +86,7 @@
 		/// Checks whether the given file has an accepted archive extension.
 		/// </summary>
 		/// <param name="filePath">Full path or file name to check.</param>
-		/// <returns><c>true</c> if the extension is <c>.zip</c> or <c>.rar</c>.</returns>
+		/// <returns><c>true</c> if the extension is <c>.zip</c>, <c>.rar</c>, or <c>.7z</c>.</returns>
 		public static bool IsAcceptedArchive(string filePath) {
 			string extension = Path.GetExtension(filePath);
 			return _acceptedExtensions.Contains(extension);
@@ -242,7 +239,7 @@
 					ModInstallResult skipped = new() {
 						ArchiveFileName = archiveFileName,
 						Status = ModInstallStatus.Failed,
-						Message = $"Unsupported archive format '{ext}'. Only .zip and .rar are currently accepted."
+						Message = $"Unsupported archive format '{ext}'. Only .zip, .rar, and .7z are currently accepted."
 					};
 					_logger.Warning($"ModInstaller: Rejected '{archiveFileName}' — unsupported format '{ext}'.");
 					summary.Results.Add(skipped);

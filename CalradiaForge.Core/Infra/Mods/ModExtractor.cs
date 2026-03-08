@@ -5,29 +5,35 @@
 
 	using CalradiaForge.Core.Infra.Logging;
 
-	using SharpCompress.Archives;
-	using SharpCompress.Common;
+	// DEPRECATED: SharpCompress implementation (replaced by SevenZipWrapper)
+	// using SharpCompress.Archives;
+	// using SharpCompress.Common;
+
+	using SevenZipWrapper;
 
 	/// <summary>
-	/// Handles extraction of mod archives using SharpCompress and locates
-	/// the true mod root directory (handling lazy nested folder structures).
+	/// Handles extraction of mod archives using SevenZipWrapper (7z.dll COM interop)
+	/// and locates the true mod root directory (handling lazy nested folder structures).
 	/// </summary>
 	public static class ModExtractor {
 		private static readonly Logger _logger = Logger.Instance;
 
 		/// <summary>
 		/// Heuristic for estimating file count from archive size.
-		/// Used to seed the progress bar maximum before actual counts are known.
+		/// Used as a fallback if the archive cannot be opened for exact counting.
 		/// ~33 files per megabyte based on typical Bannerlord mod archives.
 		/// </summary>
 		public const double FilesPerMBEstimate = 33.0;
 
 		/// <summary>
-		/// Estimates the total file count for an archive based on its file size.
+		/// Gets the exact file count for an archive by opening it with SevenZipWrapper.
+		/// Falls back to a size-based heuristic if the archive cannot be read.
 		/// </summary>
 		/// <param name="archivePath">Full path to the archive file.</param>
-		/// <returns>Estimated file count, minimum 10.</returns>
+		/// <returns>Exact file count from the archive, minimum 10.</returns>
 		public static int EstimateFileCount(string archivePath) {
+			// DEPRECATED: SharpCompress implementation (replaced by SevenZipWrapper)
+			/*
 			try {
 				long bytes = new FileInfo(archivePath).Length;
 				double megabytes = bytes / (1024.0 * 1024.0);
@@ -35,11 +41,26 @@
 			} catch {
 				return 100; // Safe fallback
 			}
+			*/
+
+			try {
+				using ArchiveFile archive = new(archivePath);
+				return Math.Max(10, archive.Entries.Count);
+			} catch {
+				// Fallback to heuristic if archive cannot be opened (corrupt, locked, etc.)
+				try {
+					long bytes = new FileInfo(archivePath).Length;
+					double megabytes = bytes / (1024.0 * 1024.0);
+					return Math.Max(10, (int)(megabytes * FilesPerMBEstimate));
+				} catch {
+					return 100; // Safe fallback
+				}
+			}
 		}
 
 		/// <summary>
 		/// Extracts the archive to a temporary directory.
-		/// SharpCompress auto-detects format (zip, rar, 7z, tar, etc.).
+		/// SevenZipWrapper auto-detects format (zip, rar, 7z, tar, etc.) via 7z.dll.
 		/// </summary>
 		/// <param name="archivePath">Full path to the archive file.</param>
 		/// <param name="token">Cancellation token.</param>
@@ -65,6 +86,8 @@
 			try {
 				Directory.CreateDirectory(tempDir);
 				await Task.Run(() => {
+					// DEPRECATED: SharpCompress implementation (replaced by SevenZipWrapper)
+					/*
 					token.ThrowIfCancellationRequested();
 					int filesExtracted = 0;
 					using IArchive archive = ArchiveFactory.Open(archivePath);
@@ -81,6 +104,14 @@
 					}
 					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 						_logger.Debug("ModExtractor: Extraction complete.", new { ArchivePath = archivePath, FilesExtracted = filesExtracted, TempDir = tempDir });
+					}
+					*/
+
+					using (ArchiveFile archive = new(archivePath)) {
+						archive.Extract(tempDir, overwrite: true, onFileExtracted, token);
+						if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+							_logger.Debug("ModExtractor: Extraction complete.", new { ArchivePath = archivePath, TempDir = tempDir });
+						}
 					}
 				}, token);
 
