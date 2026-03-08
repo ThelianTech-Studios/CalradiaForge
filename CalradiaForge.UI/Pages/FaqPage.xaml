@@ -152,23 +152,6 @@
                                              Text="{Binding Strings.Faq_Q8_Hint, Source={x:Static local:App.Translator}}" />
                     </StackPanel>
                 </Border>
-
-                <!-- Q9 -->
-                <Border Style="{StaticResource SettingsSectionBorder}">
-                    <StackPanel>
-                        <TextBlock Text="{Binding Strings.Faq_Q9_Title, Source={x:Static local:App.Translator}}"
-                                             Style="{StaticResource SettingsSectionHeader}" />
-                        <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
-                                             Text="{Binding Strings.Faq_Q9_Answer1, Source={x:Static local:App.Translator}}" />
-                        <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
-                                             Text="{Binding Strings.Faq_Q9_Answer2, Source={x:Static local:App.Translator}}" />
-                        <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
-                                             Text="{Binding Strings.Faq_Q9_Answer3, Source={x:Static local:App.Translator}}" />
-                        <TextBlock Style="{StaticResource SettingsHint}" TextWrapping="Wrap"
-                                             Text="{Binding Strings.Faq_Q9_Hint, Source={x:Static local:App.Translator}}" />
-                    </StackPanel>
-                </Border>
-
             </StackPanel>
         </ScrollViewer>
     </Grid>

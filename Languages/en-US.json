@@ -131,11 +131,6 @@
 	"Faq_Q8_OpenIssuesButton": "Open GitHub Issues",
 	"Faq_Q8_OpenIssuesHint": "Opens the CalradiaForge Issues page on GitHub in your browser.",
 	"Faq_Q8_Hint": "Tip: Enable Debug Mode in Settings → General before reproducing the issue. This gives more detailed logs for troubleshooting.",
-	"Faq_Q9_Title": "Why are .7z archives not supported?",
-	"Faq_Q9_Answer1": "The .7z format uses block compression (LZMA/LZMA2), which the current extraction library (SharpCompress) must decompress sequentially and entirely in-memory. For large Bannerlord mods with 1,000+ files, this causes extraction times of approximately 25 minutes for a single mod — making the install experience unacceptable.",
-	"Faq_Q9_Answer2": "The .zip and .rar formats use per-file compression, allowing the library to extract each file individually without this bottleneck. These formats install in seconds, even for large mods.",
-	"Faq_Q9_Answer3": "Support for .7z archives has been temporarily disabled while a replacement extraction method is developed. A future update will integrate native 7-Zip extraction to handle .7z archives at full speed.",
-	"Faq_Q9_Hint": "Workaround: If your mod is only available as a .7z file, extract it manually using 7-Zip (7-zip.org) and re-archive it as a .zip before installing through CalradiaForge.",
 
 	"Toast_InstallInProgress": "Install in Progress",
 	"Toast_InstallComplete": "Install Complete",
