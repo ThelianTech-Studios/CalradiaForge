@@ -22,7 +22,8 @@
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+    <PackageReference Include="SevenZipWrapper" Version="0.9.5-beta" />
     <PackageReference Include="SharpCompress" Version="0.44.5" />
   </ItemGroup>
-
+	
 </Project>
