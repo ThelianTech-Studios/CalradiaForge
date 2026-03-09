@@ -3,15 +3,18 @@ CALRADIAFORGE END USER LICENSE AGREEMENT (EULA)
 By installing, launching, or using CalradiaForge, you agree to be bound by the terms of the CalradiaForge Software License.
 
 A full copy of the license is included with this software and available at:
-[GITHUB_LINK_HERE]
+
+https://github.com/ThelianTech/CalradiaForge/blob/master_docs/LICENSE.md
 
 IMPORTANT SUMMARY OF TERMS
 
 • CalradiaForge is free for personal, non-commercial use.
 • You may not modify, repackage, redistribute, or mirror this software.
 • This software may only be downloaded from the official sources:
-  - [GITHUB_LINK_HERE]
+
+  - https://github.com/ThelianTech/CalradiaForge/releases
   - [NEXUSMODS_LINK_HERE]
+
 • You must share links to the official sources instead of sharing the files.
 • Viewing the source code is allowed for learning and contributing.
 • Forking the repository is allowed only for submitting improvements back to the project.

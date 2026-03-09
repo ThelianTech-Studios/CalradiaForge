@@ -1,0 +1,153 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+	<!-- ══════════════════════════════════════════════════════
+	     EULA Window — Title Bar (draggable, matches MainWindow)
+	     ══════════════════════════════════════════════════════ -->
+	<Style x:Key="EulaTitleBar" TargetType="Grid">
+		<Setter Property="Background" Value="{StaticResource TB.Bg.Lighter}" />
+		<Setter Property="Height" Value="40" />
+	</Style>
+
+	<Style x:Key="EulaTitleBarText" TargetType="TextBlock">
+		<Setter Property="Foreground" Value="{StaticResource TB.Txt.Bright}" />
+		<Setter Property="FontFamily" Value="{StaticResource Font.Primary}" />
+		<Setter Property="FontSize" Value="18" />
+		<Setter Property="FontWeight" Value="Bold" />
+	</Style>
+
+	<!-- ══════════════════════════════════════════════════════
+	     EULA Window — Header Title
+	     ══════════════════════════════════════════════════════ -->
+	<Style x:Key="EulaWindowTitle" TargetType="TextBlock">
+		<Setter Property="Foreground" Value="{StaticResource TB.Txt.Bright}" />
+		<Setter Property="FontFamily" Value="{StaticResource Font.Primary}" />
+		<Setter Property="FontSize" Value="36" />
+		<Setter Property="FontWeight" Value="Bold" />
+		<Setter Property="HorizontalAlignment" Value="Center" />
+	</Style>
+
+	<!-- ══════════════════════════════════════════════════════
+	     EULA Window — Subtitle / Version Label
+	     ══════════════════════════════════════════════════════ -->
+	<Style x:Key="EulaVersionLabel" TargetType="TextBlock">
+		<Setter Property="Foreground" Value="{StaticResource TB.Txt.Mid}" />
+		<Setter Property="FontFamily" Value="{StaticResource Font.Secondary}" />
+		<Setter Property="FontSize" Value="13" />
+		<Setter Property="HorizontalAlignment" Value="Center" />
+		<Setter Property="Margin" Value="0,2,0,12" />
+	</Style>
+
+	<!-- ══════════════════════════════════════════════════════
+	     EULA Window — ScrollViewer Container
+	     Mirrors ModsListBox border styling: rounded, surface
+	     background, subtle border, inner clip for content.
+	     ══════════════════════════════════════════════════════ -->
+	<Style x:Key="EulaScrollBorder" TargetType="Border">
+		<Setter Property="Background" Value="{StaticResource TB.Sfc.MedLight.50}" />
+		<Setter Property="BorderBrush" Value="{StaticResource TB.Sfc.Lighter.75}" />
+		<Setter Property="BorderThickness" Value="1" />
+		<Setter Property="CornerRadius" Value="8" />
+		<Setter Property="Padding" Value="2" />
+		<Setter Property="SnapsToDevicePixels" Value="True" />
+	</Style>
+
+	<!-- ══════════════════════════════════════════════════════
+	     EULA Window — Text Display (read-only EULA body)
+	     ══════════════════════════════════════════════════════ -->
+	<Style x:Key="EulaTextDisplay" TargetType="TextBox">
+		<Setter Property="Foreground" Value="{StaticResource TB.Txt.Bright}" />
+		<Setter Property="FontFamily" Value="{StaticResource Font.Secondary}" />
+		<Setter Property="FontSize" Value="13" />
+		<Setter Property="Background" Value="Transparent" />
+		<Setter Property="BorderThickness" Value="0" />
+		<Setter Property="IsReadOnly" Value="True" />
+		<Setter Property="TextWrapping" Value="Wrap" />
+		<Setter Property="AcceptsReturn" Value="True" />
+		<Setter Property="CaretBrush" Value="Transparent" />
+		<Setter Property="Padding" Value="12,8" />
+		<Setter Property="VerticalScrollBarVisibility" Value="Visible" />
+	</Style>
+
+	<!-- ══════════════════════════════════════════════════════
+	     EULA Window — Accept Button (gold, matches Play button)
+	     ══════════════════════════════════════════════════════ -->
+	<ControlTemplate x:Key="EulaAcceptButtonTemplate" TargetType="Button">
+		<Border x:Name="ButtonBorder"
+						Background="{StaticResource TB.Acc.Gold}"
+						BorderThickness="0" CornerRadius="6"
+						Padding="{TemplateBinding Padding}"
+						SnapsToDevicePixels="True">
+			<ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+												RecognizesAccessKey="True" />
+		</Border>
+		<ControlTemplate.Triggers>
+			<Trigger Property="IsMouseOver" Value="True">
+				<Setter TargetName="ButtonBorder" Property="Background"
+								Value="{StaticResource TB.Acc.Amber}" />
+			</Trigger>
+			<Trigger Property="IsPressed" Value="True">
+				<Setter TargetName="ButtonBorder" Property="Opacity" Value="0.85" />
+			</Trigger>
+			<Trigger Property="IsEnabled" Value="False">
+				<Setter TargetName="ButtonBorder" Property="Background"
+								Value="{StaticResource TB.Sfc.MedLight}" />
+				<Setter TargetName="ButtonBorder" Property="Opacity" Value="0.6" />
+				<Setter Property="Foreground"
+								Value="{StaticResource TB.Txt.Dim}" />
+			</Trigger>
+		</ControlTemplate.Triggers>
+	</ControlTemplate>
+
+	<Style x:Key="EulaAcceptButton" TargetType="Button">
+		<Setter Property="Template" Value="{StaticResource EulaAcceptButtonTemplate}" />
+		<Setter Property="Foreground" Value="{StaticResource TB.Txt.Dark}" />
+		<Setter Property="FontFamily" Value="{StaticResource Font.Secondary}" />
+		<Setter Property="FontSize" Value="14" />
+		<Setter Property="FontWeight" Value="SemiBold" />
+		<Setter Property="Padding" Value="14,6" />
+		<Setter Property="Height" Value="36" />
+		<Setter Property="MinWidth" Value="120" />
+		<Setter Property="Cursor" Value="Hand" />
+	</Style>
+
+	<!-- ══════════════════════════════════════════════════════
+	     EULA Window — Decline Button (surface/tool style)
+	     ══════════════════════════════════════════════════════ -->
+	<ControlTemplate x:Key="EulaDeclineButtonTemplate" TargetType="Button">
+		<Border x:Name="ButtonBorder"
+						Background="{StaticResource TB.Sfc.MedDark}"
+						BorderThickness="1"
+						BorderBrush="{StaticResource TB.Sfc.Lighter.75}"
+						CornerRadius="6"
+						Padding="{TemplateBinding Padding}"
+						SnapsToDevicePixels="True">
+			<ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+												RecognizesAccessKey="True" />
+		</Border>
+		<ControlTemplate.Triggers>
+			<Trigger Property="IsMouseOver" Value="True">
+				<Setter TargetName="ButtonBorder" Property="Background"
+								Value="{StaticResource TB.Sfc.Med}" />
+				<Setter TargetName="ButtonBorder" Property="BorderBrush"
+								Value="{StaticResource TB.Acc.Red}" />
+			</Trigger>
+			<Trigger Property="IsPressed" Value="True">
+				<Setter TargetName="ButtonBorder" Property="Opacity" Value="0.85" />
+			</Trigger>
+		</ControlTemplate.Triggers>
+	</ControlTemplate>
+
+	<Style x:Key="EulaDeclineButton" TargetType="Button">
+		<Setter Property="Template" Value="{StaticResource EulaDeclineButtonTemplate}" />
+		<Setter Property="Foreground" Value="{StaticResource TB.Txt.Bright}" />
+		<Setter Property="FontFamily" Value="{StaticResource Font.Secondary}" />
+		<Setter Property="FontSize" Value="14" />
+		<Setter Property="Padding" Value="14,6" />
+		<Setter Property="Height" Value="36" />
+		<Setter Property="MinWidth" Value="120" />
+		<Setter Property="Cursor" Value="Hand" />
+	</Style>
+
+	<!--End of EulaWindow Resources-->
+</ResourceDictionary>
