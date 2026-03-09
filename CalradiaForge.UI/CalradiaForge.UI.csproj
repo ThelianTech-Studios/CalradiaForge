@@ -8,6 +8,7 @@
     <UseWPF>true</UseWPF>
     <StartupObject>CalradiaForge.UI.App</StartupObject>
     <RootNamespace>CalradiaForge.UI</RootNamespace>
+		<AssemblyName>CalradiaForge</AssemblyName>
     <GenerateAssemblyInfo>True</GenerateAssemblyInfo>
     <DebugType>none</DebugType>
     <SignAssembly>False</SignAssembly>
