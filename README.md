@@ -422,7 +422,7 @@ A copy of the software license can be found here:
 
 [CalradiaForge-Repo]: https://github.com/ThelianTech-Studios/CalradiaForge
 [CalradiaForge-Github-Shield]: https://img.shields.io/badge/CalradiaForge-Repo?style=plastic&logo=github&logoColor=%23181717&label=GitHub&color=blue
-[CalradiaForge-Nexus]: chrome://network-error/-106
+[CalradiaForge-Nexus]: https://www.nexusmods.com/mountandblade2bannerlord/mods/10332
 [CalradiaForge-Nexus-Shield]: https://img.shields.io/badge/CalradiaForge-Nexus?style=plastic&label=NexusMods&labelColor=Black&color=orange
 [CalradiaForge-License]: https://github.com/ThelianTech-Studios/CalradiaForge/blob/master_docs/LICENSE.md
 [CalradiaForge-License-Shield]: https://img.shields.io/badge/CalradiaForge-License?style=plastic&label=LICENSE&labelColor=blue&color=green
