@@ -16,7 +16,7 @@ CalradiaForge streamlines mod installation, load order management, modpacks, and
 
 ## 🎯 What is CalradiaForge?
 
-CalradiaForge is a standalone WPF launcher focused on **stable, repeatable mod setups** for Bannerlord.  
+CalradiaForge is a standalone WPF launcher focused on **stable, repeatable mod setups** for Bannerlord. 
 It helps you install mods from archives, arrange and toggle them quickly, and save your setups as **modpacks** that you can re-use or share.
 
 If you maintain more than one loadout (e.g., vanilla+, hardcore, overhaul), CalradiaForge is designed to keep each setup organized and launchable with minimal friction.
@@ -45,18 +45,18 @@ CalradiaForge is distributed as a **portable desktop application** — no tradit
 ### Install & Run
 
 1. **Download the latest release**
-   - From GitHub:  
-     [![GitHub Repo][CalradiaForge-Github-Shield]][CalradiaForge-Repo]
-   - From NexusMods:  
-     [![Nexus][CalradiaForge-Nexus-Shield]][CalradiaForge-Nexus]
+  - From GitHub:  
+    [![GitHub Repo][CalradiaForge-Github-Shield]][CalradiaForge-Repo]
+  - From NexusMods:  
+    [![Nexus][CalradiaForge-Nexus-Shield]][CalradiaForge-Nexus]
 
 2. **Extract the archive**
-   - Extract the downloaded `.zip` to any folder you control (e.g., `C:\Games\CalradiaForge` or another data drive).
-   - Avoid protected locations such as `C:\Program Files` when possible to reduce permission issues.
+  - Extract the downloaded `.zip` to any folder you control (e.g., `C:\Games\CalradiaForge` or another data drive).
+  - Avoid protected locations such as `C:\Program Files` when possible to reduce permission issues.
 
 3. **Run the launcher**
-   - Double-click `CalradiaForge.exe`.
-   - On first run, Windows SmartScreen may warn you because this is a new, unsigned executable. Choose **More info → Run anyway**
+  - Double-click `CalradiaForge.exe`.
+  - On first run, Windows SmartScreen may warn you because this is a new, unsigned executable. Choose **More info → Run anyway**
 
 4. **Accept the EULA**
   - On first launch, CalradiaForge will display a **EULA window** before the main application loads.
@@ -65,7 +65,7 @@ CalradiaForge is distributed as a **portable desktop application** — no tradit
   - This prompt only appears once — your acceptance is persisted in the app configuration and will not be shown again on future launches.
 
 5. **Portable behavior**
-   - CalradiaForge stores its configuration, logs, and modpack definitions alongside the app in dedicated subfolders (see [Directories & Data Locations](#-directories--data-locations)).
+  - CalradiaForge stores its configuration, logs, and modpack definitions alongside the app in dedicated subfolders (see [Directories & Data Locations](#-directories--data-locations)).
    - You can move the app folder or keep multiple copies without breaking your existing configuration.
 
 ### .NET / Runtime Requirements
@@ -141,8 +141,8 @@ Rather than ship an untested experience, Epic and GamePass support has been **di
 
 - Launch **Mount & Blade II: Bannerlord** directly from CalradiaForge
 - Support for multiple platforms:
-  - Steam
-  - GOG / Standalone
+ - Steam
+ - GOG / Standalone
 - Validation checks (e.g., game path presence) before starting to reduce launch errors
 - Launch the game with the **exact active mod setup selected by your current modpack**
 - Optional BLSE (Bannerlord Script Extender) launch support where applicable
@@ -152,36 +152,36 @@ Rather than ship an untested experience, Epic and GamePass support has been **di
 A dedicated **Settings** page provides:
 
 - **Game configuration**
-  - Game installation path selection and validation
+ - Game installation path selection and validation
   - Platform-aware visibility and re-detection of Bannerlord
 - **Startup behavior**
-  - Choose how CalradiaForge selects modpacks on launch:
-    - Last used modpack
-    - A specific default modpack
-    - Always ask at startup
+ - Choose how CalradiaForge selects modpacks on launch:
+   - Last used modpack
+   - A specific default modpack
+   - Always ask at startup
 - **DLL unblock tool**
-  - Run a focused DLL unblocking pass and persist its "has been run" status
+ - Run a focused DLL unblocking pass and persist its "has been run" status
 - **Data management**
-  - Clear mod cache
-  - Open configuration, logs, and modpack folders directly from the UI
+ - Clear mod cache
+ - Open configuration, logs, and modpack folders directly from the UI
 - **Debug options**
-  - Toggle debug mode for more detailed behavior while testing
+ - Toggle debug mode for more detailed behavior while testing
 - **About panel**
-  - App version, publisher information, and direct links to the project and license
+ - App version, publisher information, and direct links to the project and license
 
 ---
 
 ## 🚀 Quick Start
 
 1. **Download & Extract**
-   - Grab the latest official release from:
-     - [![GitHub Repo][CalradiaForge-Github-Shield]][CalradiaForge-Repo]
-     - [![Nexus][CalradiaForge-Nexus-Shield]][CalradiaForge-Nexus]
-   - Extract the `.zip` to a folder of your choice.
+  - Grab the latest official release from:
+    - [![GitHub Repo][CalradiaForge-Github-Shield]][CalradiaForge-Repo]
+    - [![Nexus][CalradiaForge-Nexus-Shield]][CalradiaForge-Nexus]
+  - Extract the `.zip` to a folder of your choice.
 
 2. **Run CalradiaForge**
-   - Launch `CalradiaForge.exe`.
-   - On first run, grant any necessary SmartScreen permission.
+  - Launch `CalradiaForge.exe`.
+  - On first run, grant any necessary SmartScreen permission.
 
 3. **Accept the EULA**
   - On the very first launch, a **EULA window** will appear before the main application loads.
@@ -189,28 +189,28 @@ A dedicated **Settings** page provides:
   - You will only see this prompt once.
 
 4. **Point CalradiaForge at your game**
-   - Open **Settings → Game Config**
-   - Select your Bannerlord installation folder (and executable if requested)
-   - Use the **Detect Game** option if you installed Bannerlord via other *Game Platforms* and need to re-detect the game
+  - Open **Settings → Game Config**
+  - Select your Bannerlord installation folder (and executable if requested)
+  - Use the **Detect Game** option if you installed Bannerlord via other *Game Platforms* and need to re-detect the game
 
 5. **Install your mods**
-   - Go to the **Mods** page
-   - Use the mod installation control to select downloaded archives (`.zip` or `.rar`)
+  - Go to the **Mods** page
+  - Use the mod installation control to select downloaded archives (`.zip` or `.rar`)
    - CalradiaForge will extract to the `Modules` folder and automatically unblock DLLs
 
 6. **Organize and enable mods**
-   - Drag mods between **Active** and **Inactive** lists
-   - Drag within the active list to adjust load order
-   - Use the search box to quickly find specific mods
+  - Drag mods between **Active** and **Inactive** lists
+  - Drag within the active list to adjust load order
+  - Use the search box to quickly find specific mods
 
 7. **Create a modpack**
-   - Save your current selection and ordering as a **modpack**
-   - Name it (e.g., "Vanilla+ QoL", "Overhaul Build") and save
-   - Use the modpack selector on the Mods page to switch between setups
+  - Save your current selection and ordering as a **modpack**
+  - Name it (e.g., "Vanilla+ QoL", "Overhaul Build") and save
+  - Use the modpack selector on the Mods page to switch between setups
 
 8. **Launch the game**
-   - Verify your desired modpack is selected
-   - Click **Play** to start Bannerlord with the chosen active mods and order
+  - Verify your desired modpack is selected
+  - Click **Play** to start Bannerlord with the chosen active mods and order
 
 ---
 
@@ -219,28 +219,28 @@ A dedicated **Settings** page provides:
 CalradiaForge stores its data in a small set of directories relative to the application's root folder. These are resolved and created at runtime by the core path helper:
 
 - Source:  
-  `CalradiaForge.Core\Infra\Paths\AppPaths.cs`
+ `CalradiaForge.Core\Infra\Paths\AppPaths.cs`
 
 Key directories (as defined in `AppPaths`):
 
 - **Config directory**
-  - Logical location: `Config` subfolder next to `CalradiaForge.exe`
-  - Contains: `config.json` and other configuration data
+ - Logical location: `Config` subfolder next to `CalradiaForge.exe`
+ - Contains: `config.json` and other configuration data
 - **Logs directory**
-  - Logical location: `Logs` subfolder next to `CalradiaForge.exe`
-  - Contains: rotating diagnostic logs written by the `Logger` service
+ - Logical location: `Logs` subfolder next to `CalradiaForge.exe`
+ - Contains: rotating diagnostic logs written by the `Logger` service
 - **Modpacks directory**
-  - Logical location: `Modpacks` subfolder next to `CalradiaForge.exe`
-  - Contains: user-created modpack definitions and related metadata
+ - Logical location: `Modpacks` subfolder next to `CalradiaForge.exe`
+ - Contains: user-created modpack definitions and related metadata
 - **Data directory**
-  - Logical location: `Data` subfolder next to `CalradiaForge.exe`
-  - Contains:
-    - `mods_current.data`
-    - `mods_backup.data`
-    - `last_used_mods.data`
+ - Logical location: `Data` subfolder next to `CalradiaForge.exe`
+ - Contains:
+   - `mods_current.data`
+   - `mods_backup.data`
+   - `last_used_mods.data`
 - **Languages directory**
-  - Logical location: `Languages` subfolder next to `CalradiaForge.exe`
-  - Reserved for localization / language resources
+ - Logical location: `Languages` subfolder next to `CalradiaForge.exe`
+ - Reserved for localization / language resources
 
 If you are troubleshooting or preparing a bug report, attaching the relevant log files from the **Logs** directory can be very helpful.
 
@@ -256,10 +256,10 @@ Please:
 
 - Search existing issues before creating a new one.
 - When opening a new issue, include:
-  - A clear description of the problem or request
-  - Steps to reproduce (if applicable)
-  - Your Windows version and game platform (Steam / GOG / Standalone)
-  - Relevant log files from the `Logs` directory (see [Directories & Data Locations](#-directories--data-locations))
+ - A clear description of the problem or request
+ - Steps to reproduce (if applicable)
+ - Your Windows version and game platform (Steam / GOG / Standalone)
+ - Relevant log files from the `Logs` directory (see [Directories & Data Locations](#-directories--data-locations))
 
 > **Note:** A dedicated issue template will be added in a future update to guide you through providing the most useful information.
 
@@ -274,9 +274,9 @@ CalradiaForge includes a built-in **FAQ page** accessible from the navigation me
 - Check the in-app **FAQ** page for answers to common questions about mod detection, DLL unblocking, modpacks, importing presets, and more.
 - Check the repository's **Issues** tab on GitHub for known problems and workarounds.
 - Open a new issue if you run into:
-  - Game not detecting mods launched via CalradiaForge
-  - Installation / extraction errors
-  - Unexpected behavior when switching modpacks
+ - Game not detecting mods launched via CalradiaForge
+ - Installation / extraction errors
+ - Unexpected behavior when switching modpacks
 
 ---
 
@@ -287,29 +287,29 @@ CalradiaForge is built around a **layered architecture** and a strict separation
 ### Architecture at a Glance
 
 - **UI Layer (WPF Application)**
-  - Navigation (Mods, Modpacks, Settings, FAQ)
-  - Visual styling, theming, and interaction
-  - No direct file-system or game-specific logic
+ - Navigation (Mods, Modpacks, Settings, FAQ)
+ - Visual styling, theming, and interaction
+ - No direct file-system or game-specific logic
 
 - **Core Infrastructure (Class Library)**
-  - Paths, configuration, detection, and logging
-  - Services for:
-    - Mod discovery and classification (active/inactive)
-    - Modpack creation, storage, import/export
-    - Game launch handling across Steam/Standalone
+ - Paths, configuration, detection, and logging
+ - Services for:
+   - Mod discovery and classification (active/inactive)
+   - Modpack creation, storage, import/export
+   - Game launch handling across Steam/Standalone
 
 - **Helpers**
-  - Stateless, pure-logic utilities such as path helpers
-  - Receive all required data via parameters (no globals)
+ - Stateless, pure-logic utilities such as path helpers
+ - Receive all required data via parameters (no globals)
 
 - **Config System**
-  - `AppConfig` implements the repository pattern:
-    - JSON read/write
-    - Thread-safe access
-    - Directory safety/validation
-  - `AppConfigSettings` provides strongly-typed, bindable access to configuration
-    - No direct IO
-    - No save logic
+ - `AppConfig` implements the repository pattern:
+   - JSON read/write
+   - Thread-safe access
+   - Directory safety/validation
+ - `AppConfigSettings` provides strongly-typed, bindable access to configuration
+   - No direct IO
+   - No save logic
 
 ### Service Layer
 
@@ -370,16 +370,16 @@ On startup, `App.OnStartup` calls `EulaAcceptance()` before any services or the 
 ### Design Principles
 
 - **UI decides *when*, core decides *how***  
-  UI triggers actions; core provides deterministic, testable behavior.
+ UI triggers actions; core provides deterministic, testable behavior.
 
 - **No global state in helpers or services**  
-  All dependencies are injected explicitly via constructor parameters or method arguments.
+ All dependencies are injected explicitly via constructor parameters or method arguments.
 
 - **Defensive design**  
-  Core components validate inputs and are safe to use independently of the WPF application.
+ Core components validate inputs and are safe to use independently of the WPF application.
 
 - **Service-owned task lifetime**  
-  Long-running operations (mod installation) are owned by the service layer, not the UI page. Navigation away does not cancel or orphan background work.
+ Long-running operations (mod installation) are owned by the service layer, not the UI page. Navigation away does not cancel or orphan background work.
 
 For the complete coding standards, patterns, and contribution rules, see:
 
@@ -391,8 +391,8 @@ For the complete coding standards, patterns, and contribution rules, see:
 
 Contributions are welcome as long as they respect the project's architecture and license.
 
-- Read the contributor rules and patterns in:  
-  [`CONTRIBUTIONS.md`](../../CONTRIBUTIONS.md)
+- Read the contributor rules and patterns in: 
+ [`CONTRIBUTIONS.md`](../../CONTRIBUTIONS.md)
 - Fork the repository and create a feature branch:
  ```git
  git checkout -b feature/my-feature
