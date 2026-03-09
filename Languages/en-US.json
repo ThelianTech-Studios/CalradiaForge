@@ -108,7 +108,7 @@
 	"Faq_Q3_Title": "I'm getting errors when installing mods from an archive.",
 	"Faq_Q3_Answer1": "CalradiaForge extracts mod archives directly into the Bannerlord Modules folder. Make sure the archive contains a valid mod structure with a SubModule.xml file.",
 	"Faq_Q3_Answer2": "If the archive is nested (a folder inside a folder), CalradiaForge will attempt to detect the correct root. If extraction still fails, try extracting the mod manually.",
-	"Faq_Q3_Hint": "Supported archive formats: .zip, .rar — .7z is temporarily disabled (see below).",
+	"Faq_Q3_Hint": "Supported archive formats: .zip, .rar, .7z.",
 	"Faq_Q4_Title": "How do modpacks work?",
 	"Faq_Q4_Answer1": "A modpack is a saved snapshot of your active mods and their load order. You can create multiple modpacks for different playstyles (e.g., Vanilla+, Overhaul, Hardcore).",
 	"Faq_Q4_Answer2": "Switch between modpacks using the dropdown on the Mods page. The selected modpack's load order is applied immediately.",
