@@ -1,9 +1,76 @@
-﻿# Changelog
+# Changelog
 
 All notable changes to CalradiaForge will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+---
+## 0.11.5 - 2026-03-09
+
+> EULA window bug fixes — resource dictionary wiring, WPF shutdown mode, title bar drag support, and toggle switch styling.
+
+### Added
+- `EulaWindow` title bar — draggable title bar with app icon, branded text, and close button reusing `TitleBarCloseButton` style from `TitleBar.xaml`; close button wired to decline the EULA (`Accepted = false`, `DialogResult = false`)
+- `EulaTitleBar` and `EulaTitleBarText` styles added to `EulaWindowStyles.xaml`
+- `TitleBar_MouseLeftButtonDown` drag handler and `CloseButton_Click` decline handler added to `EulaWindow.xaml.cs`
+
+### Changed
+- `App.xaml` — added `ShutdownMode="OnMainWindowClose"` to `<Application>` element to prevent automatic shutdown when the EULA dialog closes before `MainWindow` is created
+- `EulaAcceptance()` — temporarily switches `ShutdownMode` to `OnExplicitShutdown` for the duration of `EulaWindow.ShowDialog()` and restores the previous mode after, preventing WPF from auto-assigning `EulaWindow` as `MainWindow` and terminating on close
+- `EulaWindow.xaml` — replaced plain `CheckBox` with `SettingsToggleSwitch` style (orange track / gold thumb) for visual consistency with the Settings page debug mode toggle; window height increased from 580 to 620 to accommodate the new title bar
+
+### Removed
+- `EulaAcceptCheckBox` style removed from `EulaWindowStyles.xaml` — no longer referenced after toggle switch replacement
+
+### Fixed
+- `EulaWindowStyles.xaml` not loaded at runtime — resource dictionary was missing from `App.xaml` merged dictionaries, causing `XamlParseException: Cannot find resource named 'EulaWindowTitle'` during `EulaWindow.InitializeComponent()`
+- App shutdown on EULA acceptance — default `ShutdownMode.OnLastWindowClose` caused WPF to terminate when `EulaWindow` (the only window) closed before `MainWindow` was created by `StartupUri`
+- App shutdown on EULA acceptance (second occurrence) — WPF auto-assigned `EulaWindow` as `Application.MainWindow` because it was the first window instantiated; `OnMainWindowClose` then triggered shutdown when it closed; fixed by temporarily switching to `OnExplicitShutdown` during the dialog lifetime
+- `EulaWindow` appearing on wrong monitor with no way to reposition — chromeless window with `WindowStyle="None"` had no drag surface; added draggable title bar matching `MainWindow` design
+- Unused `EulaAcceptCheckBox` style left in `EulaWindowStyles.xaml` after toggle switch replacement — removed dead resource
+
+---
+## 0.11.0 - 2026-03-09
+
+> EULA acceptance gate — first-launch EULA window blocks app until accepted, persisted to config.
+
+### Added
+- `EulaService` Core service — reads EULA text from `AppPaths.EulaFilePath`, checks `AppConfigSettings.EulaAccepted` flag, records acceptance on user confirm
+- `AppPaths.EulaFilePath` — single const-based path property for the deployed `Resources\EULA.txt` file, following the existing `ConfigFilePath` / `ModsCurrentFilePath` pattern
+- `AppConfigSettings.EulaAccepted` — boolean config property persisted to `config.json`; no `OnPropertyChanged` since the value is never bound to live UI
+- `EulaWindow` — chromeless modal window matching `MainWindow` gradient background, with scrollable read-only EULA text, acceptance checkbox gating the Accept button, and Decline button
+- `EulaWindowStyles.xaml` — dedicated resource dictionary with styles for scroll container, text display, checkbox, accept button (gold/amber), and decline button (surface/red hover), following the existing per-page resource dictionary pattern
+- `EulaAccepted` default key seeded in `AppConfigSettings.InitDefaults()`
+
+### Changed
+- `App.OnStartup` — EULA gate inserted after `InitializeConfiguration()` and before all service initialization; on decline, logs shutdown reason and calls `Shutdown()` with early `return` to prevent service initialization
+- `EulaAcceptance()` helper returns a pure boolean — caller (`OnStartup`) owns the log message and `Shutdown()` decision, following the "UI decides when, core decides how" principle from `CONTRIBUTING.md`
+- `App.xaml` — `EulaWindowStyles.xaml` added to merged resource dictionaries
+
+---
+## 0.10.8 - 2026-03-08
+
+> Native 7-Zip extraction — SharpCompress replaced with SevenZipWrapper, restoring full `.7z` support. | Third-party software notices added to LICENSE.md for all dependencies.
+
+### Added
+- `SevenZipWrapper` library — custom 7z.dll COM interop wrapper (`ArchiveFile`, `ArchiveEntry`, `SevenZipHandle`) with format auto-detection from extension and file signature, progress reporting via `onFileExtracted` callback, and `CancellationToken` support that maps to 7z.dll `E_ABORT`
+- `.7z` re-added to `ModInstaller._acceptedExtensions` and `FileDialogFilter` — all three formats (`.zip`, `.rar`, `.7z`) now fully supported at native extraction speeds
+- Third-Party Software Notices section in `LICENSE.md` — full original license texts for all third-party dependencies: gong-wpf-dragdrop (BSD 3-Clause), MahApps.Metro (MIT), MahApps.Metro.IconPacks Material (MIT), Newtonsoft.Json (MIT), SevenZipWrapper (MIT), ControlzEx (MIT), Microsoft.XamlBehaviors.Wpf (MIT)
+
+### Changed
+- `ModExtractor.ExtractToTempAsync` — extraction pipeline rewritten from SharpCompress `IArchive`/`IArchiveEntry` iteration to `SevenZipWrapper.ArchiveFile.Extract()` with overwrite, progress callback, and cancellation token pass-through
+- `ModExtractor.EstimateFileCount` — replaced file-size heuristic with exact count via `ArchiveFile.Entries.Count`, falling back to the original size-based estimate only when the archive cannot be opened
+- `ModInstaller` extraction callback — `OnFileExtracted` wiring updated for `SevenZipWrapper`'s cumulative file count parameter (same signature, no UI changes needed)
+- SharpCompress package reference removed from `CalradiaForge.Core.csproj`; `SevenZipWrapper` project reference added
+- `LICENSE.md` — added `# CalradiaForge Software License` title heading for document structure
+
+### Removed
+- Temporary `.7z` limitation FAQ entry (Q9) and README workaround — no longer applicable
+- `.7z` known-issue references from beta README section
+
+### Fixed
+- `.7z` archive extraction performance — SharpCompress LZMA block-compression caused ~25 min extraction for large mods; SevenZipWrapper delegates to native 7z.dll, completing the same archives in seconds
 
 ---
 ## 0.9.22 - 2026-02-25
@@ -12,46 +79,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - `.gitignore` updates for beta release packaging
-- Beta Section in `README.md` with open beta test instructions, known issues, and contribution guidelines
+- Beta section in `README.md` with open beta test instructions, known issues, and contribution guidelines
 - `LICENSE.md` updated to version 1.2 (all prior versions voided)
-- - FAQ page entry Q9 for `.7z` limitation with workaround
-- Updated `README.md` with Supported Mod Archive Formats table, FAQ page reference, and `.7z` limitation entry
+- FAQ page entry Q9 for `.7z` limitation with workaround
+- `README.md` updated with Supported Mod Archive Formats table, built-in FAQ page reference, and `.7z` limitation entry
+
 ### Removed
 - `.7z` archive support temporarily disabled — SharpCompress LZMA block-compression caused ~25 min extraction for large mods; accepted formats narrowed to `.zip` and `.rar`
----
 
+---
 ## 0.9.19 - 2026-02-20
 
 > Code cleanup, debug logging, finalized `.editorconfig`, and open beta preparation.
 
 ### Added
 - Bug report and feature request issue templates added to repository
-- Debug logging in conditional logic blocks across Core and UI layers when running in debug mode
+- Debug logging in conditional logic blocks across Core and UI layers (gated behind debug mode config)
 - XML doc summaries on all public/internal members (Core + UI)
+- `CONTRIBUTING.md` with architecture overview and design pattern guidelines
 - EULA text file included in build output
 - Temporary AI-generated app icon placeholder (pending commissioned artwork)
+- Unit test project (`CalradiaForge.UnitTests` — MSTest SDK, net10.0) scaffolded and retained; intentionally left empty due to tight coupling with file system and WPF dispatcher
 
 ### Changed
 - Finalized `.editorconfig` with project coding conventions
-- Ran full code cleanup pass against finalized `.editorconfig` rules
+- Full code cleanup pass against finalized `.editorconfig` rules
 - Updated `.gitignore` for beta release (removed `AssemblyInfo.cs` tracking, suppressed global warning suppressions file)
 - Updated build parameters for beta release packaging
-- Updated `README.md` with installation instructions and open beta test sections
+- Updated `README.md` with installation instructions and open beta sections; finalized documentation
 - Removed duplicate `CONTRIBUTING.md`
 - Removed obsolete `Author` key-value pair from configuration
 
 ### Fixed
-- Mod installer toast ETA not updating — timer display now refreshes correctly during rapid small-mod installs with a small UI delay
+- Missing mods toast firing multiple times on startup — three independent code paths (constructor `PopulateModpackList`, WPF auto-fired `SelectionChanged`, `StartupRescanAsync`) all raced to call `ApplySelectedModpack` with toasts enabled; fixed with `showToast` parameter gating, `_hasCompletedInitialScan` flag, and `suppressToast` constructor parameter
+- Missing mods toast firing multiple times on page navigation — `RefreshModpackList` and `RefreshAvailableMods` each independently calling `ApplySelectedModpack`; fixed with `suppressApply` parameter so only `RefreshAvailableMods` performs the single authoritative apply
+- Navigation-triggered refresh race during startup — `RefreshModpackList` and `RefreshAvailableMods` could fire from navigation before the initial startup scan completed; fixed with `_hasCompletedInitialScan` early-return guards
+- `StartupRescanAsync` re-entrancy from WPF `Loaded` event — WPF `Frame` layout cycles can fire `Loaded` multiple times; fixed with `_hasCompletedInitialScan` guard at method entry
+- `ModParser` case-sensitive dependency attribute bug — `DependedModuleMetadata` uses lowercase `id` per BUTR schema, but parser used `dep.Attribute("Id")`; fixed casing, added `DependentVersion` fallback for legacy `DependedModules` block, silently skips empty IDs
+- Mod installer toast ETA not updating — timer display now refreshes correctly during rapid small-mod installs
 - XAML binding error from missing `VerticalContentAlignment` setter in styles
-- `RefreshModpackList` missing mods toast firing multiple times — added guard to gate toast to a single authoritative fire per event
+- `RefreshModpackList` missing mods toast firing multiple times — guard added for single authoritative fire
 - Logger null reference on startup — debug logging calls moved after config initialization
-- `AppPaths` getter recursion — `EnsureDirectoryExists()` was cycling the singleton getter; refactored initialization order
+- `AppPaths` getter recursion — `EnsureDirectoryExists()` cycling the singleton getter; refactored initialization order
 - Dependency modules parsing returning empty data — case-sensitive JSON key typo corrected
 - Config value getter debug logging removed (kept setter logging only)
 - Removed unreachable code in titlebar `MouseLeftButtonClick` event handler
 
 ---
-
 ## 0.9.3 - 2026-02-19
 
 > Full translation/localization system — live language switching without restart.
@@ -68,15 +142,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Settings language ComboBox wired to `App.Translator.AvailableLanguages` with live `SetLanguage()` switching
 
 ### Changed
-- All hardcoded `Text="..."` in XAML replaced with `{Binding ..., Source={x:Static local:App.Translator.Strings}}` bindings across ModsPage, ModpacksPage, SettingsPage, FaqPage, and MainWindow
-- Code-behind hardcoded status strings in `.xaml.cs` files replaced with `App.Translator.Strings.*` references
+- All hardcoded `Text="..."` in XAML replaced with translation bindings (`{Binding ..., Source={x:Static local:App.Translator.Strings}}`) across ModsPage, ModpacksPage, SettingsPage, FaqPage, and MainWindow
+- Code-behind hardcoded status strings in `.xaml.cs` files replaced with `App.Translator.Strings.*` references (scope limited to UI text only — mod/modpack names and dynamic data are not translated)
 - Updated `LICENSE.md` to version v1.2
 
 ---
-
 ## 0.8.15 - 2026-02-18
 
-> Toast notification system, `.7z` temporary disable, and extraction progress reporting.
+> Toast notification system, extraction progress reporting, and archive format validation.
 
 ### Added
 - Toast/notification system — `ToastService`, `ToastViewModel`, `ToastRequest`, `ToastSeverity`, `ToastTemplateKeys`, `ToastStyles.xaml` resource dictionary with Default, InstallProgress, InstallSummary, MissingMods templates
@@ -84,34 +157,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Toast integration in Settings page — replaced all 6 TODO markers (`SelectGameFolder_Click`, `SelectGameExe_Click`, `SelectWorkshopFolder_Click`, `RedetectGame_Click`, `UnblockDlls_Click`, `ClearModCache_Click`)
 - Toast integration in ModsPage — install progress, install completion summary, missing mods warning, mod refresh, startup scan, and launch result toasts
 - Extraction progress reporting — `ExtractionProgress` model, `ExtractionProgressChanged` event on `ModInstaller`, per-file callback in `ModExtractor.ExtractToTempAsync`, batch-level cumulative tracking with heuristic file-count estimation, ETA calculation
-- Archive format validation — `ModInstaller.IsAcceptedArchive()`, `_acceptedExtensions` HashSet, pre-extraction rejection with descriptive error
+- Archive format validation — `ModInstaller.IsAcceptedArchive()`, `_acceptedExtensions` HashSet, pre-extraction rejection with descriptive error for unsupported formats
 
 ### Changed
-- Updated some Settings page text labels
+- Updated Settings page text labels
 - Updated `App.xaml` to initialize toast system
 
 ---
-
 ## 0.7.7 - 2026-02-17
 
-> Create New Modpack split button, Epic/GamePass deferral, and modpack bug fixes.
+> Create New Modpack split button, Epic/GamePass deferral, and modpack template system.
 
 ### Added
 - Create New Modpack split button with template selection — conjoined Create New + dropdown, checkmark-selected template, session-only `_pendingTemplate` defaulting to Vanilla
 - Dropdown template items: `Vanilla`, `ButterLib`, `VanillaWarSails`, `ButterLibWarSails`
-- `SetActiveTemplate()` + `UpdateTemplateCheckmarks()` helpers mirroring Play button's pattern
-- Create New left button opens name input panel using selected dropdown template
+- `SetActiveTemplate()` + `UpdateTemplateCheckmarks()` helpers mirroring Play button's `SetActiveLaunchTarget` / `UpdateLaunchTargetCheckmarks` pattern
+- Create New left button opens name input panel using whichever template the dropdown currently has selected
 
 ### Changed
-- Epic Games and GamePass platform support deferred — detection disabled via `_enableUnsupportedPlatforms` const gate in `GamePathsHelper`, launch blocked with safety-net validation in `GameLauncher.CanLaunch()`; all underlying code preserved for future re-enablement
+- Epic Games and GamePass platform support deferred — detection disabled via `_enableUnsupportedPlatforms` const gate in `GamePathsHelper`, launch blocked with safety-net validation in `GameLauncher.CanLaunch()`; all underlying code preserved (`EpicDetector`, `EpicManifestReader`, `TryDetectEpic`, `GameProvider.EpicGames`/`GamePass` enum values, `SettingsPage` visibility branches) for future re-enablement
 - Updated `README.md` to reflect no Epic/GamePass support with developer testing limitations explanation
 - Removed obsolete `Load()` method from modpack service
 
 ---
-
 ## 0.6.18 - 2026-02-16
 
-> BLSE support, Play button split-button, and install cancellation.
+> BLSE support, Play button split-button, and mod install lifecycle management.
 
 ### Added
 - Play button split-button with BLSE support — conjoined Play + dropdown, Bannerlord/BLSE launch targets, checkmark selection, persisted `DefaultLaunchTarget`
@@ -122,11 +193,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BLSE install summary tracking — `ModInstallSummary` separates BLSE from mod counts via `IsBLSEResult` sentinel
 - Settings: BLSE exe path selector (Game Config tab — Select File button for manual BLSE exe selection)
 - `UpdateCanStart()` validates BLSE exe when BLSE launch target is selected (disables Play + shows warning if invalid)
-- Install cancellation support — `CancellationTokenSource` in `ModInstaller`, `CancelInstall()` public method
-- Cancel install on app exit — `App.OnExit` calls `ModInstaller.CancelInstall()` when `IsInstalling` is true
 - Mod installer service-owned task lifetime — `ModInstaller.StartInstallAsync` fire-and-forget on thread pool, survives page navigation
 - Install progress/completion events — `InstallProgressChanged`, `InstallCompleted` for UI subscribe/unsubscribe on page load/unload
 - Install re-entrance guard — `SemaphoreSlim` in `ModInstaller`, `IsInstalling` check in UI before opening dialog
+- Install cancellation support — `CancellationTokenSource` in `ModInstaller`, `CancelInstall()` public method
+- Cancel install on app exit — `App.OnExit` calls `ModInstaller.CancelInstall()` when `IsInstalling` is true
 
 ### Changed
 - Updated Play button styling template for split-button design
@@ -134,7 +205,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated `ModInstallSummary` model for BLSE installation data
 
 ---
-
 ## 0.5.26 - 2026-02-15
 
 > Settings page, FAQ page, game launcher, modpack startup modes, and major bug fixes.
@@ -148,22 +218,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Settings: DLL unblock tool with persisted run status
 - Settings: Data management tools (clear cache, open config/logs/modpacks folders)
 - Settings: About panel (version, publisher, license + GitHub links)
-- Wired navigation for Settings page — `OptionsItemClick` in `MainWindow.xaml.cs`, standalone `SettingsPage` instance
+- Wired navigation for Settings and FAQ pages in `MainWindow.xaml.cs`
 - `SettingsPageStyles` resource dictionary added to App resources
-- F.A.Q. / Help page — `FaqPage.xaml` with 9 Q&A sections covering mods, DLLs, modpacks, platforms, imports, cache, bug reporting, and `.7z` limitation
-- Wired navigation for FAQ page — `_pages[2]` placeholder replaced with `FaqPage` instance
-- FAQ page visible scrollbar — `ScrollViewer.VerticalScrollBarVisibility` set to `Visible`
+- F.A.Q. / Help page — `FaqPage.xaml` with 9 Q&A sections covering mods, DLLs, modpacks, platforms, imports, cache, and bug reporting
 - Game launch handler — `GameLauncher` service with Steam, Epic, StandAlone support + `CanStart` validation
 - Game path validation helpers — `GamePathsHelper` for manual input validation on Settings page
-- Modpack startup mode: AlwaysDefault selects Vanilla modpack by name via `VanillaModules.DefaultModpackName`
-- Modpack startup mode: LastUsed restores `AppConfig.LastSelectedModpack` by name
-- Modpack startup mode: AlwaysAsk with ghost sentinel modpack at index 0 (empty load order, prompt text, auto-removed on first selection)
-- `ResolveStartupModpackIndex()` + `FindModpackIndexByName()` helpers for startup mode resolution
-- `RefreshModpackList()` preserves ghost sentinel across nav-back refreshes when AlwaysAsk is active
-- Steam process check — verifies `steam.exe` is running before launching Steam-based games; starts Steam if not running
-- Modpack templates for WarSails DLC — `VanillaWarSails` and `ButterLibWarSails` templates for Create New
+- Modpack startup modes — AlwaysDefault (Vanilla by name), LastUsed (persisted config), AlwaysAsk (ghost sentinel modpack at index 0 with auto-removal on first selection)
+- `ResolveStartupModpackIndex()` + `FindModpackIndexByName()` helpers; `RefreshModpackList()` preserves ghost sentinel across nav-back refreshes
+- Steam process check — verifies `steam.exe` is running before launching; starts Steam if not running
+- Modpack templates for WarSails DLC — `VanillaWarSails` and `ButterLibWarSails`
 - Active Load Order ListBox on ModpacksPage showing current load order for modpack validation
-- `GameLauncher` service initialization on app startup
 - Debug mode logging wired to app startup
 - `App.OnExit` saves last selected modpack index to config
 
@@ -183,7 +247,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Play button launching issues
 
 ---
-
 ## 0.4.12 - 2026-02-14
 
 > Modpacks page, mod installer/extractor, Novus Launcher import, and core infrastructure.
@@ -195,7 +258,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Mod installer, extractor, and DLL unblocker — `ModInstaller`, `ModExtractor`, `DLLUnblocker` services
 - Models for modpack items and mod install result summaries
 - `ModsData` and `ModService` updated for manual mod cache refresh from ModsPage
-- Game path validation for manual Settings page input — rejects invalid folders
+- Game path validation for manual Settings page input
 - `GameLauncher` service created
 - App config settings for Settings page enums
 - Last Selected Modpack config entry and data filepath
@@ -209,16 +272,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Icon pack cleanup — `MahApps.Metro.IconPacks` narrowed to `MahApps.Metro.IconPacks.Material` only
 
 ---
-
 ## 0.3.9 - 2026-02-13
 
-> Modpacks backend, mod scanner/parser, drag-and-drop, and modpack ComboBox on ModsPage.
+> Modpacks backend, mod scanner/parser, drag-and-drop reorder, and modpack ComboBox on ModsPage.
 
 ### Added
 - Modpacks backend — `ModpackService` with create, save, edit, and ComboBox population
 - ModsPage ↔ ModpacksPage sync — `RefreshModpackList` called on navigation
 - Drag-and-drop reorder — `IDropTarget` with reorder-within and move-between lists on ModsPage
 - Modpack ComboBox on ModsPage for quick modpack switching
+- Save Last Used modpack on launch/exit (`PlayButton_Click` + `App.OnExit`)
+- Modpack delete obsolete code removed (`Delete()` method and region cleaned from `ModpackService`)
 
 ### Changed
 - Updated `App.xaml.cs` to streamline `InitializeConfiguration()` using DI rules for `AppConfig` instance
@@ -226,9 +290,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Modified and deleted old `ModList` code files in prep for new Modpack models
 - Code styling updates with new editor rules
 - Updated `.gitignore`
+- Removed unused file-drop auto-install from ModsPage (`Page_Drop` cleanup)
 
 ---
-
 ## 0.2.5 - 2026-02-11
 
 > Core infrastructure — mod scanning/parsing, centralized paths, theme system, and main window navigation.
@@ -238,7 +302,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ModParser` — XML-to-C# model parsing for `SubModule.xml` files
 - `ModsData` — reading/writing mod module models to JSON data files
 - `ModScanner` — game mods folder detection, Steam Workshop folder auto-detection, scanned mod parsing
-- `ModsPage` — semi-polished UI connected to nav bar and frame display
+- `ModsPage` — semi-polished UI with active/inactive mod management, mod list search, and extraction-based mod installation
+- Automatic DLL unblocking for downloaded mod files
 - `Theme.xaml` — global theming and styling resource dictionary for controls and UI
 - Updated styling resource dictionaries (`TextStyles.xaml`, etc.) used across views
 - Modules directory property added to game folder path config
@@ -257,7 +322,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - WPF app foundation with MahApps Metro HamburgerMenu navigation
 - `MainWindow` wireframe with nav menu controller
 - Basic JSON-serializable models for mod data storage
-- `GamePathsHelper` — auto-detection of game installation paths with manual selection fallback
+- `GamePathsHelper` — auto-detection of game installation paths (Steam, StandAlone) with manual selection fallback
 - `Logger` class with `Log.Error` overload for exception logging
 - `AppConfig` and `AppConfigSettings` — configuration model with JSON persistence
 - Search functionality separated for future `ModListService` absorption
@@ -267,7 +332,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `App.xaml.cs` — Logger and global config instance initialization
 
 ---
-
 ## 0.0.1 - 2026-02-04
 
 > Initial project setup.
