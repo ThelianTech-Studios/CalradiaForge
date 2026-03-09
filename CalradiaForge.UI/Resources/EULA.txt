@@ -13,7 +13,7 @@ IMPORTANT SUMMARY OF TERMS
 • This software may only be downloaded from the official sources:
 
   - https://github.com/ThelianTech/CalradiaForge/releases
-  - [NEXUSMODS_LINK_HERE]
+  - https://www.nexusmods.com/mountandblade2bannerlord/mods/10332
 
 • You must share links to the official sources instead of sharing the files.
 • Viewing the source code is allowed for learning and contributing.
