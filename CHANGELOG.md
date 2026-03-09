@@ -6,19 +6,64 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
-## 0.9.26 - 2026-03-08
+## 0.11.5 - 2026-03-09
 
-> Native 7-Zip extraction — SharpCompress replaced with SevenZipWrapper, restoring full `.7z` support.
+> EULA window bug fixes — resource dictionary wiring, WPF shutdown mode, title bar drag support, and toggle switch styling.
+
+### Added
+- `EulaWindow` title bar — draggable title bar with app icon, branded text, and close button reusing `TitleBarCloseButton` style from `TitleBar.xaml`; close button wired to decline the EULA (`Accepted = false`, `DialogResult = false`)
+- `EulaTitleBar` and `EulaTitleBarText` styles added to `EulaWindowStyles.xaml`
+- `TitleBar_MouseLeftButtonDown` drag handler and `CloseButton_Click` decline handler added to `EulaWindow.xaml.cs`
+
+### Changed
+- `App.xaml` — added `ShutdownMode="OnMainWindowClose"` to `<Application>` element to prevent automatic shutdown when the EULA dialog closes before `MainWindow` is created
+- `EulaAcceptance()` — temporarily switches `ShutdownMode` to `OnExplicitShutdown` for the duration of `EulaWindow.ShowDialog()` and restores the previous mode after, preventing WPF from auto-assigning `EulaWindow` as `MainWindow` and terminating on close
+- `EulaWindow.xaml` — replaced plain `CheckBox` with `SettingsToggleSwitch` style (orange track / gold thumb) for visual consistency with the Settings page debug mode toggle; window height increased from 580 to 620 to accommodate the new title bar
+
+### Removed
+- `EulaAcceptCheckBox` style removed from `EulaWindowStyles.xaml` — no longer referenced after toggle switch replacement
+
+### Fixed
+- `EulaWindowStyles.xaml` not loaded at runtime — resource dictionary was missing from `App.xaml` merged dictionaries, causing `XamlParseException: Cannot find resource named 'EulaWindowTitle'` during `EulaWindow.InitializeComponent()`
+- App shutdown on EULA acceptance — default `ShutdownMode.OnLastWindowClose` caused WPF to terminate when `EulaWindow` (the only window) closed before `MainWindow` was created by `StartupUri`
+- App shutdown on EULA acceptance (second occurrence) — WPF auto-assigned `EulaWindow` as `Application.MainWindow` because it was the first window instantiated; `OnMainWindowClose` then triggered shutdown when it closed; fixed by temporarily switching to `OnExplicitShutdown` during the dialog lifetime
+- `EulaWindow` appearing on wrong monitor with no way to reposition — chromeless window with `WindowStyle="None"` had no drag surface; added draggable title bar matching `MainWindow` design
+- Unused `EulaAcceptCheckBox` style left in `EulaWindowStyles.xaml` after toggle switch replacement — removed dead resource
+
+---
+## 0.11.0 - 2026-03-09
+
+> EULA acceptance gate — first-launch EULA window blocks app until accepted, persisted to config.
+
+### Added
+- `EulaService` Core service — reads EULA text from `AppPaths.EulaFilePath`, checks `AppConfigSettings.EulaAccepted` flag, records acceptance on user confirm
+- `AppPaths.EulaFilePath` — single const-based path property for the deployed `Resources\EULA.txt` file, following the existing `ConfigFilePath` / `ModsCurrentFilePath` pattern
+- `AppConfigSettings.EulaAccepted` — boolean config property persisted to `config.json`; no `OnPropertyChanged` since the value is never bound to live UI
+- `EulaWindow` — chromeless modal window matching `MainWindow` gradient background, with scrollable read-only EULA text, acceptance checkbox gating the Accept button, and Decline button
+- `EulaWindowStyles.xaml` — dedicated resource dictionary with styles for scroll container, text display, checkbox, accept button (gold/amber), and decline button (surface/red hover), following the existing per-page resource dictionary pattern
+- `EulaAccepted` default key seeded in `AppConfigSettings.InitDefaults()`
+
+### Changed
+- `App.OnStartup` — EULA gate inserted after `InitializeConfiguration()` and before all service initialization; on decline, logs shutdown reason and calls `Shutdown()` with early `return` to prevent service initialization
+- `EulaAcceptance()` helper returns a pure boolean — caller (`OnStartup`) owns the log message and `Shutdown()` decision, following the "UI decides when, core decides how" principle from `CONTRIBUTING.md`
+- `App.xaml` — `EulaWindowStyles.xaml` added to merged resource dictionaries
+
+---
+## 0.10.8 - 2026-03-08
+
+> Native 7-Zip extraction — SharpCompress replaced with SevenZipWrapper, restoring full `.7z` support. | Third-party software notices added to LICENSE.md for all dependencies.
 
 ### Added
 - `SevenZipWrapper` library — custom 7z.dll COM interop wrapper (`ArchiveFile`, `ArchiveEntry`, `SevenZipHandle`) with format auto-detection from extension and file signature, progress reporting via `onFileExtracted` callback, and `CancellationToken` support that maps to 7z.dll `E_ABORT`
 - `.7z` re-added to `ModInstaller._acceptedExtensions` and `FileDialogFilter` — all three formats (`.zip`, `.rar`, `.7z`) now fully supported at native extraction speeds
+- Third-Party Software Notices section in `LICENSE.md` — full original license texts for all third-party dependencies: gong-wpf-dragdrop (BSD 3-Clause), MahApps.Metro (MIT), MahApps.Metro.IconPacks Material (MIT), Newtonsoft.Json (MIT), SevenZipWrapper (MIT), ControlzEx (MIT), Microsoft.XamlBehaviors.Wpf (MIT)
 
 ### Changed
 - `ModExtractor.ExtractToTempAsync` — extraction pipeline rewritten from SharpCompress `IArchive`/`IArchiveEntry` iteration to `SevenZipWrapper.ArchiveFile.Extract()` with overwrite, progress callback, and cancellation token pass-through
 - `ModExtractor.EstimateFileCount` — replaced file-size heuristic with exact count via `ArchiveFile.Entries.Count`, falling back to the original size-based estimate only when the archive cannot be opened
 - `ModInstaller` extraction callback — `OnFileExtracted` wiring updated for `SevenZipWrapper`'s cumulative file count parameter (same signature, no UI changes needed)
 - SharpCompress package reference removed from `CalradiaForge.Core.csproj`; `SevenZipWrapper` project reference added
+- `LICENSE.md` — added `# CalradiaForge Software License` title heading for document structure
 
 ### Removed
 - Temporary `.7z` limitation FAQ entry (Q9) and README workaround — no longer applicable
