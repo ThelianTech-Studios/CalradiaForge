@@ -67,9 +67,9 @@
 			AddIfMissing("LastUnblockRunResult");
 			AddIfMissing("BLSEExePath");
 			AddIfMissing("DefaultLaunchTarget", LaunchTarget.Bannerlord.ToString());
+			AddIfMissing("EulaAccepted", "False");
 		}
 		#endregion
-
 		#region Config Settings Not Json
 		/// <summary>
 		/// Gets a value indicating whether the configured platform is Steam.
@@ -289,6 +289,25 @@
 						_logger.Debug("AppConfigSettings: DefaultLaunchTarget changed.", new { OldValue = oldValue, NewValue = _config["DefaultLaunchTarget"] });
 					}
 					OnPropertyChanged(nameof(DefaultLaunchTarget));
+				}
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets whether the user has accepted the EULA.
+		/// Written once on first-launch acceptance; read on every startup to gate the main window.
+		/// No <see cref="PropertyChanged"/> notification — this value is never bound to live UI.
+		/// </summary>
+		public bool EulaAccepted {
+			get => _config.GetBool("EulaAccepted", false);
+			set {
+				string stringValue = value.ToString();
+				if (_config["EulaAccepted"] != stringValue) {
+					string oldValue = _config["EulaAccepted"];
+					_config["EulaAccepted"] = stringValue;
+					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+						_logger.Debug("AppConfigSettings: EulaAccepted changed.", new { OldValue = oldValue, NewValue = stringValue });
+					}
 				}
 			}
 		}

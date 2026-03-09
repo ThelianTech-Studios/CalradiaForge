@@ -18,11 +18,13 @@
 		private const string ModpacksFolderName = "Modpacks";
 		private const string DataFolderName = "Data";
 		private const string LanguagesFolderName = "Languages";
+		private	const string ResourcesFolderName = "Resources";
 
 		private const string ModsCurrentFileName = "mods_current.data";
 		private const string ModsBackupFileName = "mods_backup.data";
 		private const string LastUsedModsFileName = "last_used_mods.data";
 		private const string ConfigFileName = "config.json";
+		private const string EulaFileName = "Eula.txt";
 
 		private static readonly Lazy<ResolvedDirectory> _configDirectory = new(() => ResolveDirectory(Path.Combine(RootDirectory, ConfigFolderName)));
 		private static readonly Lazy<ResolvedDirectory> _logsDirectory = new(() => ResolveDirectory(Path.Combine(RootDirectory, LogsFolderName)));
@@ -66,6 +68,10 @@
 		/// Gets the path to the configuration JSON file.
 		/// </summary>
 		public static string ConfigFilePath => Path.Combine(ConfigDirectory, ConfigFileName);
+		/// <summary>
+		/// Gets the path to the EULA text file deployed with the application.
+		/// </summary>
+		public static string EulaFilePath => Path.Combine(RootDirectory, ResourcesFolderName, EulaFileName);
 
 		/// <summary>
 		/// Logs resolved paths with creation metadata.
