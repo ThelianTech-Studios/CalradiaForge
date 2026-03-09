@@ -23,10 +23,11 @@ If you maintain more than one loadout (e.g., vanilla+, hardcore, overhaul), Calr
 
 > 🧪 **Open Beta:** CalradiaForge is currently in an open beta phase. Core workflows (mod install, modpacks, launching) are mostly feature-complete and stable enough for everyday use, but you may still encounter UI rough edges or missing quality-of-life improvements.
 >
-> ⚠️ **Beta Notice — Extraction Engine Migration:**
-> The latest beta release has migrated from SharpCompress to a **native 7-Zip extraction wrapper** (SevenZipWrapper) for archive handling. This change restores full `.7z` support at native extraction speeds and improves performance across all archive formats.
+> ⚠️ **BetaNotice — EULA Prompt on First Launch (v0.11.5):**
+> Starting with **Beta v0.11.5**, CalradiaForge displays a **EULA (End-User License Agreement) window** on first launch. You must readand accept the agreement before the main application window loads. If declined, the application will close immediately. This prompt only appears once — your acceptance is saved and will not be shown again on subsequent launches.
+> Starting with **Beta v0.11.5**, we migrated from SharpCompress to SevenZipWrapper in the backend code for mod archive extraction. This change was made to improve performance and reliability, especially for larger mod archives. If you encounter any issues with mod installation or archive extraction after this update, please refer to the bug reporting instructions below.
 >
-> If you experience any issues with mod installation or archive extraction in the latest beta, please:
+> If you experience any issues with mod installation or archive extraction, please:
 > 1. **File a bug report** on the [GitHub Issues page][CalradiaForge-Repo] with a description of the problem, the archive format used, and any relevant log files from the `Logs` directory.
 > 2. **Revert to the last stable release** — **Beta v0.9.22** — available from the [Releases page][CalradiaForge-Repo] until the issue is resolved.
 
@@ -57,7 +58,13 @@ CalradiaForge is distributed as a **portable desktop application** — no tradit
    - Double-click `CalradiaForge.exe`.
    - On first run, Windows SmartScreen may warn you because this is a new, unsigned executable. Choose **More info → Run anyway**
 
-4. **Portable behavior**
+4. **Accept the EULA**
+  - On first launch, CalradiaForge will display a **EULA window** before the main application loads.
+  - Read the End-User License Agreement carefully, then click **Accept** to continue.
+  - If you click **Decline** or close the EULA window, the application will shut down.
+  - This prompt only appears once — your acceptance is persisted in the app configuration and will not be shown again on future launches.
+
+5. **Portable behavior**
    - CalradiaForge stores its configuration, logs, and modpack definitions alongside the app in dedicated subfolders (see [Directories & Data Locations](#-directories--data-locations)).
    - You can move the app folder or keep multiple copies without breaking your existing configuration.
 
@@ -72,7 +79,7 @@ CalradiaForge targets **.NET 10 Windows Desktop** and is published as a **framew
 This means you must have the **.NET 10 Desktop Runtime (x64)** installed on your system.
 
 > **Install the required runtime:**
-> - Download and run the official **“.NET 10 Desktop Runtime 10.0.3 (x64)”** installer from Microsoft:  
+> - Download and run the official **".NET 10 Desktop Runtime 10.0.3 (x64)"** installer from Microsoft:  
 >   https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/runtime-desktop-10.0.3-windows-x64-installer
 > - Follow the installer steps, then restart CalradiaForge.
 
@@ -176,27 +183,32 @@ A dedicated **Settings** page provides:
    - Launch `CalradiaForge.exe`.
    - On first run, grant any necessary SmartScreen permission.
 
-3. **Point CalradiaForge at your game**
+3. **Accept the EULA**
+  - On the very first launch, a **EULA window** will appear before the main application loads.
+  - Read the agreement and click **Accept** to proceed. Declining or closing the window will exit the application.
+  - You will only see this prompt once.
+
+4. **Point CalradiaForge at your game**
    - Open **Settings → Game Config**
    - Select your Bannerlord installation folder (and executable if requested)
    - Use the **Detect Game** option if you installed Bannerlord via other *Game Platforms* and need to re-detect the game
 
-4. **Install your mods**
+5. **Install your mods**
    - Go to the **Mods** page
    - Use the mod installation control to select downloaded archives (`.zip` or `.rar`)
    - CalradiaForge will extract to the `Modules` folder and automatically unblock DLLs
 
-5. **Organize and enable mods**
+6. **Organize and enable mods**
    - Drag mods between **Active** and **Inactive** lists
    - Drag within the active list to adjust load order
    - Use the search box to quickly find specific mods
 
-6. **Create a modpack**
+7. **Create a modpack**
    - Save your current selection and ordering as a **modpack**
    - Name it (e.g., "Vanilla+ QoL", "Overhaul Build") and save
    - Use the modpack selector on the Mods page to switch between setups
 
-7. **Launch the game**
+8. **Launch the game**
    - Verify your desired modpack is selected
    - Click **Play** to start Bannerlord with the chosen active mods and order
 
@@ -204,7 +216,7 @@ A dedicated **Settings** page provides:
 
 ## 📁 Directories & Data Locations
 
-CalradiaForge stores its data in a small set of directories relative to the application’s root folder. These are resolved and created at runtime by the core path helper:
+CalradiaForge stores its data in a small set of directories relative to the application's root folder. These are resolved and created at runtime by the core path helper:
 
 - Source:  
   `CalradiaForge.Core\Infra\Paths\AppPaths.cs`
@@ -305,11 +317,12 @@ All core services are instantiated once in `App.xaml.cs` on startup and exposed 
 
 | Service         | Responsibility |
 |-----------------|----------------|
-| `ModService`    | Mod discovery, directory scanning, caching, and change detection |
-| `ModInstaller`  | Batch archive extraction, version comparison, BLSE fallback, format validation |
+| `ModService`   | Mod discovery, directory scanning, caching, and change detection |
+| `ModInstaller` | Batch archive extraction, version comparison, BLSE fallback, format validation |
 | `ModpackService`| Modpack CRUD, import/export, Novus conversion, last-used persistence, template creation |
-| `GameLauncher`  | Platform-aware game launch (Steam auto-start, BLSE support, CLI argument building) |
-| `ToastService`  | Application-wide toast notifications with auto-dismiss, pause/resume, and progress tracking |
+| `GameLauncher` | Platform-aware game launch (Steam auto-start, BLSE support, CLI argument building) |
+| `ToastService` | Application-wide toast notifications with auto-dismiss, pause/resume, and progress tracking |
+| `EulaService`   | EULA text loading, acceptance checking, and persistence via `AppConfigSettings` |
 | `Logger`        | Singleton file-based logger with level gating (Debug/Info/Warning/Error), 14-day cleanup |
 
 ### Config System
@@ -319,7 +332,7 @@ All core services are instantiated once in `App.xaml.cs` on startup and exposed 
 | `AppConfig`         | Low-level JSON key/value storage with thread-safe access | Repository    |
 | `AppConfigSettings` | Strongly-typed properties with `INotifyPropertyChanged` for data binding | Typed Facade / Adapter |
 
-Configuration is created once in `App.xaml.cs`, passed explicitly into services and helpers. `AppConfig` handles persistence and thread safety. `AppConfigSettings` provides typed access — it never performs I/O or saves directly.
+Configuration is created once in `App.xaml.cs`, passed explicitly into services and helpers. `AppConfig` handlespersistence and thread safety. `AppConfigSettings` provides typed access — it never performs I/O or saves directly.
 
 ### Toast System
 
@@ -343,6 +356,16 @@ Archives are processed by a service-owned background task that survives page nav
 6. **File copy** — Recursive copy to `Modules` folder with cancellation support
 7. **DLL unblocking** — `DLLUnblocker` strips `Zone.Identifier` ADS via Win32 `DeleteFile`
 8. **Progress reporting** — Batch-level cumulative tracking with heuristic file-count estimation and ETA
+
+### EULA Acceptance Flow
+
+On startup, `App.OnStartup` calls `EulaAcceptance()` before any services or the main window are initialized:
+
+1. **Check persisted state** — `EulaService.RequiresAcceptance()` reads the `EulaAccepted` flag from `AppConfigSettings`
+2. **Show modal window** — If acceptance is required, `EulaWindow` is displayed as a modal dialog with the full agreement text loaded from the `Resources` directory
+3. **Accept or decline** — The user can **Accept**, **Decline**, or close the window
+4. **Persist decision** — On acceptance, `EulaService.RecordAcceptance()` writes the flag to config. On decline, the application shuts down immediately
+5. **One-time prompt** — Once accepted, the EULA window is never shown again on subsequent launches
 
 ### Design Principles
 
