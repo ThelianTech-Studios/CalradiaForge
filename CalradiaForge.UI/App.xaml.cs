@@ -3,6 +3,7 @@
 	using System.Windows.Threading;
 
 	using CalradiaForge.Core.Infra.Config;
+	using CalradiaForge.Core.Infra.Eula;
 	using CalradiaForge.Core.Infra.Launch;
 	using CalradiaForge.Core.Infra.Localization;
 	using CalradiaForge.Core.Infra.Logging;
@@ -11,6 +12,7 @@
 	using CalradiaForge.Core.Infra.Paths;
 
 	using CalradiaForge.UI.Toasts;
+	using CalradiaForge.UI.Views;
 
 	/// <summary>
 	/// Interaction logic for App.xaml
@@ -39,6 +41,11 @@
 			_logger.Info("Application Starting");
 			SetupExceptionHandeling();
 			InitializeConfiguration();
+			if (!EulaAcceptance()) {
+				_logger.Info("App: EULA declined. Shutting down.");
+				Shutdown();
+				return;
+			}
 			InitializeModServices();
 			InitializeModpackServices();
 			InitializeLauncherService();
@@ -101,6 +108,43 @@
 					AppConfig.GameProvider
 				});
 			}
+		}
+		/// <summary>
+		/// Checks EULA acceptance state and shows the EULA window if the user has not yet accepted.
+		/// Returns <c>true</c> when the user has accepted (or was already accepted).
+		/// Returns <c>false</c> when the user declined — the caller is responsible for shutting down.
+		/// </summary>
+		private bool EulaAcceptance() {
+			EulaService eulaService = new();
+			eulaService.Load();
+
+			if (!eulaService.RequiresAcceptance(AppConfig)) {
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("App: EULA already accepted. Skipping prompt.");
+				}
+				return true;
+			}
+
+			// Temporarily prevent shutdown when the EULA dialog closes.
+			// WPF auto-assigns the first window as MainWindow, so closing
+			// the EulaWindow would trigger OnMainWindowClose before the
+			// real MainWindow (from StartupUri) is ever created.
+			ShutdownMode previousMode = ShutdownMode;
+			ShutdownMode = ShutdownMode.OnExplicitShutdown;
+
+			EulaWindow eulaWindow = new(eulaService.EulaText);
+			bool? result = eulaWindow.ShowDialog();
+
+			// Restore the normal shutdown mode so MainWindow controls lifetime.
+			ShutdownMode = previousMode;
+
+			if (result != true || !eulaWindow.Accepted) {
+				return false;
+			}
+
+			eulaService.RecordAcceptance(AppConfig);
+			_logger.Info("App: EULA accepted.");
+			return true;
 		}
 
 		/// <summary>
