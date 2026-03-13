@@ -1,7 +1,7 @@
 <Solution>
   <Folder Name="/Solution Items/">
     <File Path=".gitignore" />
-    <File Path="Ai-Agents.md" />
+    <File Path="CHANGELOG.md" />
     <File Path="CONTRIBUTIONS.md" />
     <File Path="EULA.txt" />
     <File Path="LICENSE.md" />
