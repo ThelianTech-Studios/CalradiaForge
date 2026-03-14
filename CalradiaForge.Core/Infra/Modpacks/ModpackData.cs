@@ -32,7 +32,7 @@
 			}
 			_modpacksDirectory = modpacksDirectory;
 			_lastUsedFilePath = lastUsedFilePath;
-			EnsureDirectoryExists(_modpacksDirectory);
+			EnsureDirectoryExists(_modpacksDirectory);//this doessnt need to be here as AppPaths ensures the diectory exists, need to remove this from here and the EnsureDirectoryExists method
 			EnsureDirectoryExists(_lastUsedFilePath);
 		}
 
