@@ -41,6 +41,7 @@
 			_logger.Info("Application Starting");
 			SetupExceptionHandeling();
 			InitializeConfiguration();
+			InitializeTranslatorService();
 			if (!EulaAcceptance()) {
 				_logger.Info("App: EULA declined. Shutting down.");
 				Shutdown();
@@ -50,7 +51,7 @@
 			InitializeModpackServices();
 			InitializeLauncherService();
 			InitializeToastService();
-			InitializeTranslatorService();
+
 
 			// Apply saved debug mode to logger verbosity
 			if (AppConfig.DebugMode) {
@@ -108,6 +109,10 @@
 					AppConfig.GameProvider
 				});
 			}
+		}
+
+		private void InitializeLangSelection() {
+			return;
 		}
 		/// <summary>
 		/// Checks EULA acceptance state and shows the EULA window if the user has not yet accepted.
@@ -197,10 +202,13 @@
 		/// Initializes the translation service and loads language data.
 		/// </summary>
 		private void InitializeTranslatorService() {
+			if (!AppConfig.EulaAccepted) {
+				InitializeLangSelection();
+			}
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("App: Initializing translator service.", new { AppPaths.LanguagesDirectory });
 			}
-			var loader = new TranslationManager(AppPaths.LanguagesDirectory);
+			var loader = new TranslationManager(AppPaths.LanguagesDirectory, AppPaths.LanguagesManifestFilePath, AppPaths.DefaultLanguageFilePath);
 			Translator = new TranslationService(loader, AppConfig);
 			Translator.Initialize();
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
@@ -242,9 +250,5 @@
 				_logger.Error(ex0, text);
 			}
 		}
-
-
-
-
 	}
 }
