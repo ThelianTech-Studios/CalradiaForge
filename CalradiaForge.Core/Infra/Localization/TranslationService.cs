@@ -50,12 +50,10 @@
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("TranslationService: Manifest loaded.", new { LanguageCount = AvailableLanguages.Count });
 			}
-
 			string savedLanguage = _config.Language;
 			if (string.IsNullOrWhiteSpace(savedLanguage)) {
 				savedLanguage = "en-US";
 			}
-
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("TranslationService: Initial language resolved.", new { SavedLanguage = savedLanguage });
 			}
@@ -65,10 +63,8 @@
 				ActiveLanguageCode = "en-US";
 				return;
 			}
-
 			SetLanguage(savedLanguage);
 		}
-
 		/// <summary>
 		/// Switches the active language. Loads the translation file from disk,
 		/// applies it to <see cref="Strings"/>, and persists the choice to config.
@@ -87,15 +83,6 @@
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("TranslationService: Setting language.", new { LanguageCode = languageCode });
 			}
-			if (string.Equals(languageCode, "en-US", StringComparison.OrdinalIgnoreCase)) {
-				// English is the hardcoded default — apply an empty dictionary
-				// which leaves all properties at their English default values.
-				// This also resets any previously loaded non-English strings.
-				Strings.Apply(new Dictionary<string, string>());
-				_logger.Info("TranslationService: Applied en-US (hardcoded defaults).");
-				return;
-			}
-
 			Dictionary<string, string> translations = _manager.LoadLanguageFile(languageCode);
 			if (translations.Count == 0) {
 				_logger.Warning($"TranslationService: Language file for '{languageCode}' was empty or failed to load. Keeping current strings.");
