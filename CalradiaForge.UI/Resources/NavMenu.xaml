@@ -22,7 +22,7 @@
 					<Border x:Name="PanelBorder" Background="Transparent"
 									CornerRadius="10"
 									Padding="5,5,5,5" Margin="5,0,5,0">
-						<StackPanel x:Name="RootPanel" MinHeight="50" MaxHeight="80" 
+						<StackPanel x:Name="RootPanel" MinHeight="50" MaxHeight="100" 
 												VerticalAlignment="Center" HorizontalAlignment="Center">
 							<ContentControl x:Name="IconPart" 
 															Content="{Binding Icon}" 
