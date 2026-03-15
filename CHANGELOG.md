@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## 0.12.12 - 2026-03-15
+## 0.12.13 - 2026-03-15
 
 > First-launch localization completion — pre-EULA language selector shipped, EULA chrome localized, and startup wiring finalized.
 
@@ -39,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Initialize translator after persisted language selection
 - `EulaWindow.xaml` hardcoded chrome text replaced with static translation bindings via `App.Translator.Strings.*`
 - EULA window title and close tooltip now use localization bindings instead of literals
+- Updated `zh-CN.json` with new EULA translation keys
 
 ### Fixed
 
