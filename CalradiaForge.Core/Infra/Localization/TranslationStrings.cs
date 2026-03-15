@@ -213,6 +213,15 @@
 			Faq_Q8_OpenIssuesHint = GetOrDefault(translations, nameof(Faq_Q8_OpenIssuesHint), DefaultFaq_Q8_OpenIssuesHint);
 			Faq_Q8_Hint = GetOrDefault(translations, nameof(Faq_Q8_Hint), DefaultFaq_Q8_Hint);
 
+			// EULA Window
+			Eula_WindowTitle = GetOrDefault(translations, nameof(Eula_WindowTitle), DefaultEula_WindowTitle);
+			Eula_CloseTooltip = GetOrDefault(translations, nameof(Eula_CloseTooltip), DefaultEula_CloseTooltip);
+			Eula_Header = GetOrDefault(translations, nameof(Eula_Header), DefaultEula_Header);
+			Eula_VersionLabel = GetOrDefault(translations, nameof(Eula_VersionLabel), DefaultEula_VersionLabel);
+			Eula_AcceptanceText = GetOrDefault(translations, nameof(Eula_AcceptanceText), DefaultEula_AcceptanceText);
+			Eula_DeclineButton = GetOrDefault(translations, nameof(Eula_DeclineButton), DefaultEula_DeclineButton);
+			Eula_AcceptButton = GetOrDefault(translations, nameof(Eula_AcceptButton), DefaultEula_AcceptButton);
+
 			// Toast Messages
 			Toast_InstallInProgress = GetOrDefault(translations, nameof(Toast_InstallInProgress), DefaultToast_InstallInProgress);
 			Toast_InstallComplete = GetOrDefault(translations, nameof(Toast_InstallComplete), DefaultToast_InstallComplete);
@@ -247,7 +256,7 @@
 		public string Nav_ModsTab { get; private set; }
 		private const string DefaultNav_ModsTab = "Mods";
 		public string Nav_ModpacksTab { get; private set; }
-		private const string DefaultNav_ModpacksTab = "Modpacks";
+		private const string DefaultNav_ModpacksTab = "Mod Packs";
 		public string Nav_FaqTab { get; private set; }
 		private const string DefaultNav_FaqTab = "FAQ";
 		public string Nav_SettingsTab { get; private set; }
@@ -545,6 +554,29 @@
 		private const string DefaultFaq_Q8_OpenIssuesHint = "Opens the CalradiaForge Issues page on GitHub in your browser.";
 		public string Faq_Q8_Hint { get; private set; }
 		private const string DefaultFaq_Q8_Hint = "Tip: Enable Debug Mode in Settings \u2192 General before reproducing the issue. This gives more detailed logs for troubleshooting.";
+		#endregion
+
+		#region EULA Window
+		public string Eula_WindowTitle { get; private set; }
+		private const string DefaultEula_WindowTitle = "CalradiaForge - End User License Agreement";
+
+		public string Eula_CloseTooltip { get; private set; }
+		private const string DefaultEula_CloseTooltip = "Close";
+
+		public string Eula_Header { get; private set; }
+		private const string DefaultEula_Header = "End User License Agreement";
+
+		public string Eula_VersionLabel { get; private set; }
+		private const string DefaultEula_VersionLabel = "EULA Version 1.2";
+
+		public string Eula_AcceptanceText { get; private set; }
+		private const string DefaultEula_AcceptanceText = "I have read and agree to the End User License Agreement";
+
+		public string Eula_DeclineButton { get; private set; }
+		private const string DefaultEula_DeclineButton = "Decline";
+
+		public string Eula_AcceptButton { get; private set; }
+		private const string DefaultEula_AcceptButton = "Accept";
 		#endregion
 
 		#region Toast Messages
