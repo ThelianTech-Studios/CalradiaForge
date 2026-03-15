@@ -110,9 +110,34 @@
 				});
 			}
 		}
+		/// <summary>
+		/// Shows the first-run language selection window before translator initialization.
+		/// The selected language is persisted to config and then used by Translator.Initialize().
+		/// </summary>
+		private void InitializeLangSelection(TranslationManager translationManager) {
+			var availableLanguages = translationManager.LoadManifest();
+			if (availableLanguages.Count == 0) {
+				_logger.Warning("App: No languages found in manifest; skipping language selection window.");
+				return;
+			}
 
-		private void InitializeLangSelection() {
-			return;
+			// Prevent app shutdown when the modal language window closes.
+			ShutdownMode previousMode = ShutdownMode;
+			ShutdownMode = ShutdownMode.OnExplicitShutdown;
+
+			try {
+				LanguageSelectWindow languageWindow = new(availableLanguages, AppConfig.Language);
+				bool? result = languageWindow.ShowDialog();
+
+				if (result == true && !string.IsNullOrWhiteSpace(languageWindow.SelectedLanguageCode)) {
+					AppConfig.Language = languageWindow.SelectedLanguageCode;
+					_logger.Info($"App: First-run language selected '{languageWindow.SelectedLanguageCode}'.");
+				} else {
+					_logger.Info("App: Language selection window closed without confirmation. Keeping configured default language.");
+				}
+			} finally {
+				ShutdownMode = previousMode;
+			}
 		}
 		/// <summary>
 		/// Checks EULA acceptance state and shows the EULA window if the user has not yet accepted.
@@ -202,14 +227,14 @@
 		/// Initializes the translation service and loads language data.
 		/// </summary>
 		private void InitializeTranslatorService() {
-			if (!AppConfig.EulaAccepted) {
-				InitializeLangSelection();
-			}
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("App: Initializing translator service.", new { AppPaths.LanguagesDirectory });
 			}
 			var loader = new TranslationManager(AppPaths.LanguagesDirectory, AppPaths.LanguagesManifestFilePath, AppPaths.DefaultLanguageFilePath);
 			Translator = new TranslationService(loader, AppConfig);
+			if (!AppConfig.EulaAccepted) {
+				InitializeLangSelection(loader);
+			}
 			Translator.Initialize();
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("App: Translator initialized.", new {
