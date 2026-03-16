@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## 0.12.15 - 2026-03-16
+
+> EULA packaging hardening — moved from deployed disk file to embedded resource so single-file publish keeps license text internal to the executable.
+
+### Changed
+
+- `CalradiaForge.UI\CalradiaForge.UI.csproj` EULA build item switched from publish-time content copy:
+  - removed `Content Include="Resources\EULA.txt"` with `CopyToOutputDirectory`
+  - added `EmbeddedResource Include="Resources\EULA.txt"` with logical name `CalradiaForge.Resources.EULA.txt`
+- `CalradiaForge.Core\Infra\Eula\EulaService.cs` loading strategy changed from filesystem path (`AppPaths.EulaFilePath` + `File.ReadAllText`) to embedded-resource stream loading via `Assembly.GetEntryAssembly().GetManifestResourceStream(...)`.
+
+### Fixed
+
+- Single-file publish behavior now aligns with release intent: EULA text is bundled inside `CalradiaForge.exe` instead of relying on an external `Resources\EULA.txt` file at runtime.
+- Startup EULA prompt is resilient to missing deployed resource files by reading from the executable payload directly.
+
+---
+
 ## 0.12.14 - 2026-03-16
 
 > Localization release-note follow-up — language pack inventory and manifest updates documented under a dedicated patch bump.

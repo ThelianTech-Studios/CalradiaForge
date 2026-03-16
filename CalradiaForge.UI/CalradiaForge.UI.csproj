@@ -21,8 +21,8 @@
     <IncludeSymbols>False</IncludeSymbols>
     <PackageProjectUrl>https://github.com/ThelianTech/CalradiaForge</PackageProjectUrl>
     <RepositoryUrl>https://github.com/ThelianTech/CalradiaForge</RepositoryUrl>
-    <PackageReleaseNotes>Beta v0.12.14</PackageReleaseNotes>
-    <Version>0.12.14</Version>
+    <PackageReleaseNotes>Beta v0.12.15</PackageReleaseNotes>
+    <Version>0.12.15</Version>
     <PackageLicenseFile>EULA.txt</PackageLicenseFile>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
     <ProduceReferenceAssembly>False</ProduceReferenceAssembly>
@@ -53,11 +53,14 @@
   <ItemGroup>
     <None Include="..\Languages\**" CopyToOutputDirectory="PreserveNewest" LinkBase="Languages" />
   </ItemGroup>
+
+  <!-- Embed EULA into assembly/single-file executable -->
   <ItemGroup>
-    <Content Include="Resources\EULA.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    <EmbeddedResource Include="Resources\EULA.txt">
+      <LogicalName>CalradiaForge.Resources.EULA.txt</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
+
   <ItemGroup>
     <None Include="..\EULA.txt">
       <Pack>True</Pack>
