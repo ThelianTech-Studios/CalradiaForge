@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## 0.12.14 - 2026-03-16
+
+> Localization release-note follow-up — language pack inventory and manifest updates documented under a dedicated patch bump.
+
+### Added
+
+- Language pack files now documented in release notes as part of the localization rollout:
+  - `Languages\en-US.json`
+  - `Languages\es-ES.json`
+  - `Languages\de-DE.json`
+  - `Languages\ru-RU.json`
+  - `Languages\it-IT.json`
+  - `Languages\pl-PL.json`
+  - `Languages\sv-SE.json`
+  - `Languages\tr-TR.json`
+  - `Languages\zh-CN.json`
+
+### Changed
+
+- `Languages\languages.json` manifest updated/verified to register all currently shipped language packs and display names.
+- Changelog coverage expanded to reflect first-launch language selection + manifest-backed language list behavior.
+- Startup localization flow notes aligned with current app behavior (`InitializeLangSelection(TranslationManager)` before translator initialization on first run).
+
+### Fixed
+
+- Patch note completeness gap: prior entry did not explicitly list all language files and manifest scope now present in the repository.
+- Release documentation alignment with current `dev-release` state after recent localization commits.
+
+---
+
 ## 0.12.13 - 2026-03-15
 
 > First-launch localization completion — pre-EULA language selector shipped, EULA chrome localized, and startup wiring finalized.
