@@ -1,6 +1,38 @@
 [
-	{
-		"code": "en-US",
-		"displayName": "English"
-	}
+  {
+    "code": "en-US",
+    "displayName": "English"
+  },
+  {
+    "code": "es-ES",
+    "displayName": "Español"
+  },
+  {
+    "code": "de-DE",
+    "displayName": "Deutsch"
+  },
+  {
+    "code": "ru-RU",
+    "displayName": "Русский"
+  },
+  {
+    "code": "it-IT",
+    "displayName": "Italiano"
+  },
+  {
+    "code": "pl-PL",
+    "displayName": "Polski"
+  },
+  {
+    "code": "sv-SE",
+    "displayName": "Svenska"
+  },
+  {
+    "code": "tr-TR",
+    "displayName": "Türkçe"
+  },
+  {
+    "code": "zh-CN",
+    "displayName": "简体中文"
+  }
 ]
