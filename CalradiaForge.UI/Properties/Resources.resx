@@ -118,7 +118,10 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-  <data name="App_Icon" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\resources\App_Icon.png;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  <data name="CalradiaForgeIco" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\CalradiaForge.ico;System.Drawing.Icon, System.Drawing</value>
+  </data>
+  <data name="IconPNG" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\CFIcon.png;System.Drawing.Bitmap, System.Drawing</value>
   </data>
 </root>
