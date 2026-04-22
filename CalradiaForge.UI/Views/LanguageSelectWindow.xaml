@@ -6,7 +6,8 @@
         WindowStartupLocation="CenterScreen"
         WindowStyle="None"
         AllowsTransparency="True"
-        ResizeMode="NoResize">
+        ResizeMode="NoResize"
+        Icon="/Resources/CalradiaForge.ico">
 	<Control.Background>
 		<LinearGradientBrush StartPoint="0,1" EndPoint="0,0">
 			<GradientStop Color="{StaticResource TC.Bg.Lightest}" Offset="0.0" />
@@ -36,7 +37,7 @@
 
 			<StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center"
 									Margin="10,0,5,0">
-				<Image Source="/Resources/App_Icon.png" Width="30" Height="30" Margin="0,0,8,0" />
+				<Image Source="/Resources/CFIcon.png" Width="30" Height="30" Margin="0,0,8,0" />
 				<TextBlock Text="CalradiaForge" VerticalAlignment="Center"
 									 Style="{StaticResource LangSelectTitleBarText}" />
 			</StackPanel>

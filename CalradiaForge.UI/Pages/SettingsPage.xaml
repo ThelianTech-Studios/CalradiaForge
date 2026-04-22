@@ -405,9 +405,8 @@
 										HorizontalScrollBarVisibility="Disabled"
 										Padding="0,12,0,0">
 				<StackPanel HorizontalAlignment="Center" MaxWidth="500">
-
-					<Image Source="/resources/App_Icon.png" Width="72" Height="72"
-								 HorizontalAlignment="Center" Margin="0,10,0,8" />
+					<Image Source="/Resources/CFIcon.png" Width="72" Height="72"
+       HorizontalAlignment="Center" Margin="0,10,0,8" />
 					<TextBlock Text="CalradiaForge"
 										 Style="{StaticResource SettingsAboutTitle}" />
 					<TextBlock x:Name="VersionText"

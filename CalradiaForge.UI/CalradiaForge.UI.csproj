@@ -26,10 +26,12 @@
     <PackageLicenseFile>EULA.txt</PackageLicenseFile>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
     <ProduceReferenceAssembly>False</ProduceReferenceAssembly>
+		<ApplicationIcon>Resources\CalradiaForge.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Resources\App_Icon.png" />
+    <None Remove="Resources\CFIcon.png" />
+    <None Remove="Resources\CalradiaForge.ico" />
     <None Remove="Resources\EULA.txt" />
   </ItemGroup>
 
@@ -44,7 +46,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="Resources\App_Icon.png">
+    <Resource Include="Resources\CFIcon.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Resources\CalradiaForge.ico">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
   </ItemGroup>
