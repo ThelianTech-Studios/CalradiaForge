@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## 0.12.16 - 2026-04-11
+
+> Official icon rollout stabilization — replaced legacy placeholder icon usage and fixed WPF resource wiring for consistent build and runtime branding.
+
+### Changed
+
+- Updated icon asset usage across UI windows and About panel to use the new official PNG (`Resources\CFIcon.png`) instead of legacy placeholder paths.
+- Set executable icon explicitly via `ApplicationIcon` in `CalradiaForge.UI\CalradiaForge.UI.csproj` to `Resources\CalradiaForge.ico`.
+- Updated window-level icon declarations (`Icon="/Resources/CalradiaForge.ico"`) for consistent taskbar/Alt-Tab/window chrome branding.
+- Updated `CalradiaForge.UI\Properties\Resources.resx` icon file references to align with the renamed PNG asset.
+
+---
+
 ## 0.12.15 - 2026-03-16
 
 > EULA packaging hardening — moved from deployed disk file to embedded resource so single-file publish keeps license text internal to the executable.
