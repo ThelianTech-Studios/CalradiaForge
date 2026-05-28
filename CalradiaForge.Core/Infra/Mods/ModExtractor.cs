@@ -32,17 +32,6 @@
 		/// <param name="archivePath">Full path to the archive file.</param>
 		/// <returns>Exact file count from the archive, minimum 10.</returns>
 		public static int EstimateFileCount(string archivePath) {
-			// DEPRECATED: SharpCompress implementation (replaced by SevenZipWrapper)
-			/*
-			try {
-				long bytes = new FileInfo(archivePath).Length;
-				double megabytes = bytes / (1024.0 * 1024.0);
-				return Math.Max(10, (int)(megabytes * FilesPerMBEstimate));
-			} catch {
-				return 100; // Safe fallback
-			}
-			*/
-
 			try {
 				using ArchiveFile archive = new(archivePath);
 				return Math.Max(10, archive.Entries.Count);
@@ -86,27 +75,6 @@
 			try {
 				Directory.CreateDirectory(tempDir);
 				await Task.Run(() => {
-					// DEPRECATED: SharpCompress implementation (replaced by SevenZipWrapper)
-					/*
-					token.ThrowIfCancellationRequested();
-					int filesExtracted = 0;
-					using IArchive archive = ArchiveFactory.Open(archivePath);
-					foreach (IArchiveEntry entry in archive.Entries) {
-						token.ThrowIfCancellationRequested();
-						if (!entry.IsDirectory) {
-							entry.WriteToDirectory(tempDir, new ExtractionOptions {
-								ExtractFullPath = true,
-								Overwrite = true
-							});
-							filesExtracted++;
-							onFileExtracted?.Invoke(filesExtracted);
-						}
-					}
-					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-						_logger.Debug("ModExtractor: Extraction complete.", new { ArchivePath = archivePath, FilesExtracted = filesExtracted, TempDir = tempDir });
-					}
-					*/
-
 					using (ArchiveFile archive = new(archivePath)) {
 						archive.Extract(tempDir, overwrite: true, onFileExtracted, token);
 						if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
