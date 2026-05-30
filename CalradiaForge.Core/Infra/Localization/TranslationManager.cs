@@ -5,6 +5,7 @@
 
 	using CalradiaForge.Core.Infra.Logging;
 	using CalradiaForge.Core.Infra.Paths;
+	using CalradiaForge.Core.Models;
 
 	using Newtonsoft.Json;
 

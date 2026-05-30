@@ -1,4 +1,4 @@
-﻿namespace CalradiaForge.Core.Infra.Localization {
+﻿namespace CalradiaForge.Core.Models {
 	using Newtonsoft.Json;
 
 	/// <summary>
