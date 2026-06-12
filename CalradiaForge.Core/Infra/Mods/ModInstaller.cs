@@ -175,11 +175,11 @@
 		/// </summary>
 		public void CancelInstall() {
 			if (_cts is { IsCancellationRequested: false } cts) {
-				_logger.Info("ModInstaller: Cancellation requested by user.");
+				_logger.Info("ModInstaller: Cancellation requested.");
 				cts.Cancel();
 			}
 		}
-
+		#region InstallModsAsync
 		/// <summary>
 		/// Installs mods from the given archive file paths.
 		/// Archives are queued and processed sequentially.
@@ -285,6 +285,7 @@
 			}
 			return summary;
 		}
+		#endregion
 
 		#region Single Archive Processing
 
