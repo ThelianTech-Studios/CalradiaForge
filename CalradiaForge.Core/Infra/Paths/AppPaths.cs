@@ -18,6 +18,7 @@
 
 		// Folder Names in AppData\Local\CalradiaForge
 		private const string ModArchivesFolderName = "Downloads";
+		private const string DownloadsMetadataFolderName = "ModsMetadata";
 		private const string TempExtractionFolderName = "TempExtraction";
 
 		// Folder Names in RootDirectory
@@ -45,6 +46,7 @@
 		private static readonly Lazy<ResolvedDirectory> _dataDirectory = new(() => ResolveDirectory(Path.Combine(RootDirectory, DataFolderName)));
 		private static readonly Lazy<ResolvedDirectory> _languagesDirectory = new(() => ResolveDirectory(Path.Combine(RootDirectory, LanguagesFolderName)));
 		private static readonly Lazy<ResolvedDirectory> _DownloadsDirectory = new(() => ResolveDirectory(Path.Combine(LocalAppDataDirectory, AppFolderName, ModArchivesFolderName)));
+		private static readonly Lazy<ResolvedDirectory> _DownloadsMetadataDirectory = new(() => ResolveDirectory(Path.Combine(LocalAppDataDirectory, AppFolderName, DownloadsMetadataFolderName)));
 
 		// Resolved Hidden Paths
 		private static readonly Lazy<ResolvedHiddenDirectory> _TempExtractionDirectory = new(() => ResolveHiddenDirectory(Path.Combine(LocalAppDataDirectory, AppFolderName, TempExtractionFolderName)));
@@ -79,6 +81,10 @@
 		/// Gets the path to the temporary extraction directory in LocalAppData.
 		/// </summary>
 		public static string TempExtractionDirectory => _TempExtractionDirectory.Value.Path;
+		/// <summary>
+		/// Gets the path to the downloads metadata directory.
+		/// </summary>
+		public static string DownloadsMetadataDirectory => _DownloadsMetadataDirectory.Value.Path;
 		/// <summary>
 		/// Gets the path to the current mods cache file.
 		/// </summary>
@@ -122,6 +128,7 @@
 			LogResolvedPath(logger, _dataDirectory.Value);
 			LogResolvedPath(logger, _languagesDirectory.Value);
 			LogResolvedPath(logger, _DownloadsDirectory.Value);
+			LogResolvedPath(logger, _DownloadsMetadataDirectory.Value);
 			LogResolvedHiddenPath(logger, _TempExtractionDirectory.Value);
 
 		}
