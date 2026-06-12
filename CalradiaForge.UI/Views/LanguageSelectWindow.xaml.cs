@@ -7,7 +7,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 
-using CalradiaForge.Core.Infra.Localization;
+using CalradiaForge.Core.Models;
 
 /// <summary>
 /// Modal language selection window shown on first launch before EULA.
