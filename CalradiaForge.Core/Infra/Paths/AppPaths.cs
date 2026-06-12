@@ -12,7 +12,15 @@
 		/// Gets the root directory used for all application data folders.
 		/// </summary>
 		public static string RootDirectory { get; } = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? AppDomain.CurrentDomain.BaseDirectory;
+		public static string LocalAppDataDirectory { get; } = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
 
+		private const string AppFolderName = "CalradiaForge";
+
+		// Folder Names in AppData\Local\CalradiaForge
+		private const string ModArchivesFolderName = "Downloads";
+		private const string TempExtractionFolderName = "TempExtraction";
+
+		// Folder Names in RootDirectory
 		private const string ConfigFolderName = "Config";
 		private const string LogsFolderName = "Logs";
 		private const string ModpacksFolderName = "Modpacks";
@@ -20,6 +28,7 @@
 		private const string LanguagesFolderName = "Languages";
 		private const string ResourcesFolderName = "Resources";
 
+		// File Names
 		private const string ModsCurrentFileName = "mods_current.data";
 		private const string ModsBackupFileName = "mods_backup.data";
 		private const string LastUsedModsFileName = "last_used_mods.data";
@@ -28,12 +37,20 @@
 		private const string DefaulLanguageFileName = "en-US.json";
 		private const string EulaFileName = "Eula.txt";
 
+		#region Resolved Paths
+		// Resolved Paths
 		private static readonly Lazy<ResolvedDirectory> _configDirectory = new(() => ResolveDirectory(Path.Combine(RootDirectory, ConfigFolderName)));
 		private static readonly Lazy<ResolvedDirectory> _logsDirectory = new(() => ResolveDirectory(Path.Combine(RootDirectory, LogsFolderName)));
 		private static readonly Lazy<ResolvedDirectory> _modpacksDirectory = new(() => ResolveDirectory(Path.Combine(RootDirectory, ModpacksFolderName)));
 		private static readonly Lazy<ResolvedDirectory> _dataDirectory = new(() => ResolveDirectory(Path.Combine(RootDirectory, DataFolderName)));
 		private static readonly Lazy<ResolvedDirectory> _languagesDirectory = new(() => ResolveDirectory(Path.Combine(RootDirectory, LanguagesFolderName)));
+		private static readonly Lazy<ResolvedDirectory> _DownloadsDirectory = new(() => ResolveDirectory(Path.Combine(LocalAppDataDirectory, AppFolderName, ModArchivesFolderName)));
 
+		// Resolved Hidden Paths
+		private static readonly Lazy<ResolvedHiddenDirectory> _TempExtractionDirectory = new(() => ResolveHiddenDirectory(Path.Combine(LocalAppDataDirectory, AppFolderName, TempExtractionFolderName)));
+		#endregion
+
+		#region Directory Properties
 		/// <summary>
 		/// Gets the configuration directory path.
 		/// </summary>
@@ -54,6 +71,14 @@
 		/// Gets the languages directory path.
 		/// </summary>
 		public static string LanguagesDirectory => _languagesDirectory.Value.Path;
+		/// <summary>
+		/// Gets the path to the downloads directory in LocalAppData.
+		/// </summary>
+		public static string DownloadsDirectory => _DownloadsDirectory.Value.Path;
+		/// <summary>
+		/// Gets the path to the temporary extraction directory in LocalAppData.
+		/// </summary>
+		public static string TempExtractionDirectory => _TempExtractionDirectory.Value.Path;
 		/// <summary>
 		/// Gets the path to the current mods cache file.
 		/// </summary>
@@ -81,7 +106,9 @@
 		/// Gets the path to the EULA text file deployed with the application.
 		/// </summary>
 		public static string EulaFilePath => Path.Combine(RootDirectory, ResourcesFolderName, EulaFileName);
+		#endregion
 
+		#region ResolvedPaths Logging
 		/// <summary>
 		/// Logs resolved paths with creation metadata.
 		/// </summary>
@@ -94,20 +121,42 @@
 			LogResolvedPath(logger, _modpacksDirectory.Value);
 			LogResolvedPath(logger, _dataDirectory.Value);
 			LogResolvedPath(logger, _languagesDirectory.Value);
+			LogResolvedPath(logger, _DownloadsDirectory.Value);
+			LogResolvedHiddenPath(logger, _TempExtractionDirectory.Value);
+
 		}
 
 		private static void LogResolvedPath(Logger logger, ResolvedDirectory directory) {
 			logger.Debug("AppPaths: Resolved path.", new { directory.Path, directory.Created });
 		}
+		private static void LogResolvedHiddenPath(Logger logger, ResolvedHiddenDirectory directory) {
+			logger.Debug("AppPaths: Resolved hidden path.", new { directory.Path, directory.Created, directory.Hidden });
+		}
+		#endregion
 
+		#region Resolve Methods
 		private static ResolvedDirectory ResolveDirectory(string path) {
 			bool existed = Directory.Exists(path);
-			if (!existed) {
-				Directory.CreateDirectory(path);
+			if (existed) {
+				return new ResolvedDirectory(path, created: false);
 			}
-			return new ResolvedDirectory(path, created: !existed);
+			Directory.CreateDirectory(path);
+			return new ResolvedDirectory(path, created: true);
 		}
+		private static ResolvedHiddenDirectory ResolveHiddenDirectory(string path) {
+			bool existed = Directory.Exists(path);
+			DirectoryInfo info;
+			if (existed) {
+				info = new DirectoryInfo(path);
+				return new ResolvedHiddenDirectory(path, created: false, hidden: info.Attributes.HasFlag(FileAttributes.Hidden));
+			}
+			info = Directory.CreateDirectory(path);
+			info.Attributes |= FileAttributes.Hidden;
+			return new ResolvedHiddenDirectory(path, created: true, hidden: info.Attributes.HasFlag(FileAttributes.Hidden));
+		}
+		#endregion
 
+		#region ResolvedDirectory Classes
 		private sealed class ResolvedDirectory {
 			public ResolvedDirectory(string path, bool created) {
 				Path = path;
@@ -117,5 +166,16 @@
 			public string Path { get; }
 			public bool Created { get; }
 		}
+		private sealed class ResolvedHiddenDirectory {
+			public ResolvedHiddenDirectory(string path, bool created, bool hidden) {
+				Path = path;
+				Created = created;
+				Hidden = hidden;
+			}
+			public string Path { get; }
+			public bool Created { get; }
+			public bool Hidden { get; }
+		}
+		#endregion
 	}
 }
