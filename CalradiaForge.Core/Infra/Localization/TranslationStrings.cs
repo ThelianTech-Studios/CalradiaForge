@@ -509,7 +509,7 @@
 		public string Faq_Q3_Answer2 { get; private set; }
 		private const string DefaultFaq_Q3_Answer2 = "If the archive is nested (a folder inside a folder), CalradiaForge will attempt to detect the correct root. If extraction still fails, try extracting the mod manually.";
 		public string Faq_Q3_Hint { get; private set; }
-		private const string DefaultFaq_Q3_Hint = "Supported archive formats: .zip, .rar \u2014 .7z is temporarily disabled (see below).";
+		private const string DefaultFaq_Q3_Hint = "Supported archive formats: .zip, .rar and .7z";
 		public string Faq_Q4_Title { get; private set; }
 		private const string DefaultFaq_Q4_Title = "How do modpacks work?";
 		public string Faq_Q4_Answer1 { get; private set; }
