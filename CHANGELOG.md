@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Dedicated downloads directory in `LocalAppData\CalradiaForge\Downloads` for managed mod archive storage (prep for Nexus Mod implementation)
+- Dedicated temporary extraction directory in `LocalAppData\CalradiaForge\TempExtraction` for mod archive processing, isolated from system temp folder
+- Dedicated Downloaded Mods Metadata file directory in `LocalAppData\CalradiaForge\ModsMetadata` for tracking downloaded mod archives and metadata
 - `AppPaths.DownloadsDirectory` property for centralized downloads path resolution and auto-creation
 - `AppPaths.DownloadModsFilePath` helper for future mod archive file path construction
 - Isolated temp extraction directory in `LocalAppData\CalradiaForge\TempExtraction` with automatic hidden attribute for extracted archive contents
