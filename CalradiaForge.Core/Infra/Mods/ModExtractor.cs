@@ -4,6 +4,7 @@
 	using System.Threading.Tasks;
 
 	using CalradiaForge.Core.Infra.Logging;
+	using CalradiaForge.Core.Infra.Paths;
 
 	// DEPRECATED: SharpCompress implementation (replaced by SevenZipWrapper)
 	// using SharpCompress.Archives;
@@ -34,7 +35,7 @@
 		public static int EstimateFileCount(string archivePath) {
 			try {
 				using ArchiveFile archive = new(archivePath);
-				return Math.Max(10, archive.Entries.Count);
+				return Math.Max(1, archive.Entries.Count);
 			} catch {
 				// Fallback to heuristic if archive cannot be opened (corrupt, locked, etc.)
 				try {
@@ -71,7 +72,7 @@
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("ModExtractor: Starting extraction.", new { ArchivePath = archivePath });
 			}
-			string tempDir = Path.Combine(Path.GetTempPath(), "CalradiaForge", Guid.NewGuid().ToString());
+			string tempDir = Path.Combine(AppPaths.TempExtractionDirectory, Guid.NewGuid().ToString());
 			try {
 				Directory.CreateDirectory(tempDir);
 				await Task.Run(() => {
