@@ -7,6 +7,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## 0.13.0 - 2026-06-12
+
+> NexusMods Download Manager integration prep — dedicated managed downloads directory and temp extraction isolation from system temp folder.
+
+### Added
+
+- Dedicated downloads directory in `LocalAppData\CalradiaForge\Downloads` for managed mod archive storage (prep for Nexus Mod implementation)
+- `AppPaths.DownloadsDirectory` property for centralized downloads path resolution and auto-creation
+- `AppPaths.DownloadModsFilePath` helper for future mod archive file path construction
+- Isolated temp extraction directory in `LocalAppData\CalradiaForge\TempExtraction` with automatic hidden attribute for extracted archive contents
+- `AppPaths.TempExtractionDirectory` property with `ResolvedHiddenDirectory` support for auto-hiding temporary extraction folders
+- `ResolvedHiddenDirectory` sealed class tracking creation metadata and hidden folder state
+
+### Changed
+
+- `ModExtractor.ExtractToTempAsync` — extraction target changed from system temp folder (via `Path.GetTempPath()`) to managed `AppPaths.TempExtractionDirectory`
+- Temp extraction directories now created as hidden folders (`FileAttributes.Hidden`) to declutter user's `LocalAppData` visibility
+- Extraction directories now use app-managed Guid-based subfolder isolation instead of system temp ephemeral lifecycle
+- `AppPaths` directory resolution refactored to support both standard and hidden directory types via generic `Lazy<ResolvedDirectory>` and `Lazy<ResolvedHiddenDirectory>` patterns
+- `LogResolvedPaths()` extended to log hidden directory state alongside creation metadata
+
+### Fixed
+
+- Extraction temp folder visibility — temp extraction directories now hidden from casual LocalAppData browsing via filesystem attribute
+- Extraction temp folder lifecycle — moved away from reliance on system temp folder cleanup policies; app now owns cleanup responsibility
+
+---
+
+## 0.12.18 - 2026-05-29
+
+> Localization content updates — FAQ page refresh for current feature support.
+
+### Changed
+
+- Updated FAQ Page Q3 Info Hint to change outdated information about .7z files extraction support being disabled when it has been enabled since version 0.10.8; hint now reflects up-to-date info
+- Generated new `en-US.json` file to reflect the above change in the FAQ Page Q3 Info Hint
+
+### Fixed
+
+- Fixed an issue with the wrong namespace of class `LanguageOptionsModel.cs` — now correctly shows it is in `CalradiaForge.Core\Models`
+- Core: Fixed using statements in both `TranslationManager.cs` and `TranslationService.cs` to use the correct namespace for `LanguageOptionsModel.cs`
+- App: Fixed using statements in `LanguageSelectWindow.xaml.cs` to use the correct namespace for `LanguageOptionsModel.cs`
+
+---
+
 ## 0.12.16 - 2026-04-11
 
 > Official icon rollout stabilization — replaced legacy placeholder icon usage and fixed WPF resource wiring for consistent build and runtime branding.
