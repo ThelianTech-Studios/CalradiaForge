@@ -14,4 +14,10 @@
     <ProjectReference Include="..\CalradiaForge.Core\CalradiaForge.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Auth\" />
+    <Folder Include="APIClient\" />
+    <Folder Include="Downloader\" />
+  </ItemGroup>
+
 </Project>

@@ -1,12 +1,8 @@
 <Solution>
   <Folder Name="/Solution Items/">
-    <File Path=".gitignore" />
-    <File Path="CHANGELOG.md" />
-    <File Path="CONTRIBUTIONS.md" />
-    <File Path="EULA.txt" />
-    <File Path="LICENSE.md" />
-    <File Path="README.md" />
-    <File Path="TODO_v1.md" />
+    <File Path="../AGENTS.md" />
+    <File Path="../LICENSE.md" />
+    <File Path="../README.md" />
   </Folder>
   <Project Path="CalradiaForge.ConsoleUtils/CalradiaForge.ConsoleUtils.csproj" Id="1ee13e60-ecfe-40b4-ac5e-2c0dca7cc37e" />
   <Project Path="CalradiaForge.Core/CalradiaForge.Core.csproj" />
@@ -14,4 +10,7 @@
   <Project Path="CalradiaForge.UI/CalradiaForge.UI.csproj">
     <BuildDependency Project="CalradiaForge.Core/CalradiaForge.Core.csproj" />
   </Project>
+  <Properties Name="ExtensibilityGlobals" Scope="PostLoad">
+    <Property Name="FileExplorer" Value="..\docs\" />
+  </Properties>
 </Solution>
