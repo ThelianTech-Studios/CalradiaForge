@@ -72,7 +72,7 @@
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("ModExtractor: Starting extraction.", new { ArchivePath = archivePath });
 			}
-			string tempDir = Path.Combine(AppPaths.TempExtractionDirectory, Guid.NewGuid().ToString());
+			string tempDir = Path.Combine(AppPaths.ExtractionDirectory, Guid.NewGuid().ToString());
 			try {
 				Directory.CreateDirectory(tempDir);
 				await Task.Run(() => {
