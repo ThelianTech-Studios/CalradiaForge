@@ -12,14 +12,6 @@
 		/// Gets the root directory used for all application data folders.
 		/// </summary>
 		public static string RootDirectory { get; } = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? AppDomain.CurrentDomain.BaseDirectory;
-		public static string LocalAppDataDirectory { get; } = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-
-		private const string AppFolderName = "CalradiaForge";
-
-		// Folder Names in AppData\Local\CalradiaForge
-		private const string ModArchivesFolderName = "Downloads";
-		private const string DownloadsMetadataFolderName = "ModsMetadata";
-		private const string TempExtractionFolderName = "TempExtraction";
 
 		// Folder Names in RootDirectory
 		private const string ConfigFolderName = "Config";
@@ -28,6 +20,12 @@
 		private const string DataFolderName = "Data";
 		private const string LanguagesFolderName = "Languages";
 		private const string ResourcesFolderName = "Resources";
+		private const string NexusModsFolderName = "Nexus";
+
+		// Folder Names in RootDirectory/Nexus
+		private const string ModArchivesFolderName = "Downloads";
+		private const string DownloadsMetadataFolderName = "ModsMetadata";
+		private const string ExtractionFolderName = "Extraction";
 
 		// File Names
 		private const string ModsCurrentFileName = "mods_current.data";
@@ -45,11 +43,11 @@
 		private static readonly Lazy<ResolvedDirectory> _modpacksDirectory = new(() => ResolveDirectory(Path.Combine(RootDirectory, ModpacksFolderName)));
 		private static readonly Lazy<ResolvedDirectory> _dataDirectory = new(() => ResolveDirectory(Path.Combine(RootDirectory, DataFolderName)));
 		private static readonly Lazy<ResolvedDirectory> _languagesDirectory = new(() => ResolveDirectory(Path.Combine(RootDirectory, LanguagesFolderName)));
-		private static readonly Lazy<ResolvedDirectory> _DownloadsDirectory = new(() => ResolveDirectory(Path.Combine(LocalAppDataDirectory, AppFolderName, ModArchivesFolderName)));
-		private static readonly Lazy<ResolvedDirectory> _DownloadsMetadataDirectory = new(() => ResolveDirectory(Path.Combine(LocalAppDataDirectory, AppFolderName, DownloadsMetadataFolderName)));
+		private static readonly Lazy<ResolvedDirectory> _DownloadsDirectory = new(() => ResolveDirectory(Path.Combine(RootDirectory, NexusModsFolderName, ModArchivesFolderName)));
+		private static readonly Lazy<ResolvedDirectory> _DownloadsMetadataDirectory = new(() => ResolveDirectory(Path.Combine(RootDirectory, NexusModsFolderName, DownloadsMetadataFolderName)));
 
 		// Resolved Hidden Paths
-		private static readonly Lazy<ResolvedHiddenDirectory> _TempExtractionDirectory = new(() => ResolveHiddenDirectory(Path.Combine(LocalAppDataDirectory, AppFolderName, TempExtractionFolderName)));
+		private static readonly Lazy<ResolvedHiddenDirectory> _ExtractionDirectory = new(() => ResolveHiddenDirectory(Path.Combine(RootDirectory, NexusModsFolderName, ExtractionFolderName)));
 		#endregion
 
 		#region Directory Properties
@@ -80,7 +78,7 @@
 		/// <summary>
 		/// Gets the path to the temporary extraction directory in LocalAppData.
 		/// </summary>
-		public static string TempExtractionDirectory => _TempExtractionDirectory.Value.Path;
+		public static string ExtractionDirectory => _ExtractionDirectory.Value.Path;
 		/// <summary>
 		/// Gets the path to the downloads metadata directory.
 		/// </summary>
@@ -129,7 +127,7 @@
 			LogResolvedPath(logger, _languagesDirectory.Value);
 			LogResolvedPath(logger, _DownloadsDirectory.Value);
 			LogResolvedPath(logger, _DownloadsMetadataDirectory.Value);
-			LogResolvedHiddenPath(logger, _TempExtractionDirectory.Value);
+			LogResolvedHiddenPath(logger, _ExtractionDirectory.Value);
 
 		}
 
