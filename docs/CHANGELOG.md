@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## 0.13.1 - 2026-06-30
+
+> NexusMods directory structure has been reverted to be located in the root directory of the application instead of the LocalAppData folder. This change was made to keep the application aligned as a portable app.
+
+### Added
+
+- More Summary information for methodss and classes in `AppPaths.cs`
+
+### Changed
+
+- Downloads Directory Old: `C:\Users\user\AppData\Local\CalradiaForge\Downloads` New: `<root_directory>\Nexus\Downloads`
+- Downloads Metadata Directory Old: `C:\Users\user\AppData\Local\CalradiaForge\ModsMetadata` New: `<root_directory>\Nexus\ModsMetadata`
+- ExtractionFolderName property changed from `TempExtraction` to `Extraction`
+- ResolvedDirectory property name changed: `_TempExtractionDirectory` to `_ExtractionDirectory` for consistency with the new ExtractionFolderName property.
+- Extraction Directory Old: `C:\Users\user\AppData\Local\CalradiaForge\TempExtraction` New: `<root_directory>\Extraction`
+
+### Fixed
+
+- `ModExtractor.cs` Updated the new extraction directory path property name `_ExtractionDirectory` instead of the old `_TempExtractionDirectory` property name.
+
+---
+
 ## 0.13.0 - 2026-06-12
 
 > NexusMods Download Manager integration prep — dedicated managed downloads directory and temp extraction isolation from system temp folder.
