@@ -47,7 +47,7 @@
 		private static readonly Lazy<ResolvedDirectory> _DownloadsMetadataDirectory = new(() => ResolveDirectory(Path.Combine(RootDirectory, NexusModsFolderName, DownloadsMetadataFolderName)));
 
 		// Resolved Hidden Paths
-		private static readonly Lazy<ResolvedHiddenDirectory> _ExtractionDirectory = new(() => ResolveHiddenDirectory(Path.Combine(RootDirectory, NexusModsFolderName, ExtractionFolderName)));
+		private static readonly Lazy<ResolvedHiddenDirectory> _ExtractionDirectory = new(() => ResolveHiddenDirectory(Path.Combine(RootDirectory, ExtractionFolderName)));
 		#endregion
 
 		#region Directory Properties
@@ -116,6 +116,7 @@
 		/// <summary>
 		/// Logs resolved paths with creation metadata.
 		/// </summary>
+		/// <param name="logger">The logger instance used for logging.</param>
 		public static void LogResolvedPaths(Logger logger) {
 			if (logger.MinimumLevel != Logger.LogLevel.Debug) {
 				return;
@@ -130,16 +131,31 @@
 			LogResolvedHiddenPath(logger, _ExtractionDirectory.Value);
 
 		}
-
+		/// <summary>
+		/// Methods for logging a resolved directory path with creation metadata. Supports regular directories.
+		/// </summary>
+		/// <param name="logger">The logger instance to use for logging.</param>
+		/// <param name="directory">The resolved directory to log.</param>
 		private static void LogResolvedPath(Logger logger, ResolvedDirectory directory) {
 			logger.Debug("AppPaths: Resolved path.", new { directory.Path, directory.Created });
 		}
+		/// <summary>
+		/// Methods for logging a resolved directory path with creation metadata. Supports hidden directories.
+		/// </summary>
+		/// <param name="logger">The logger instance to use for logging.</param>
+		/// <param name="directory">The resolved hidden directory to log.</param>
 		private static void LogResolvedHiddenPath(Logger logger, ResolvedHiddenDirectory directory) {
 			logger.Debug("AppPaths: Resolved hidden path.", new { directory.Path, directory.Created, directory.Hidden });
 		}
 		#endregion
 
 		#region Resolve Methods
+
+		/// <summary>
+		/// Resolves a directory path, creating it if it does not exist.
+		/// </summary>
+		/// <param name="path">The path to the directory to resolve.</param>
+		/// <returns>The resolved directory path.</returns>
 		private static ResolvedDirectory ResolveDirectory(string path) {
 			bool existed = Directory.Exists(path);
 			if (existed) {
@@ -148,6 +164,11 @@
 			Directory.CreateDirectory(path);
 			return new ResolvedDirectory(path, created: true);
 		}
+		/// <summary>
+		/// Resolves a hidden directory path, creating it if it does not exist.
+		/// </summary>
+		/// <param name="path">The path to the directory to resolve.</param>
+		/// <returns>The resolved hidden directory path.</returns>
 		private static ResolvedHiddenDirectory ResolveHiddenDirectory(string path) {
 			bool existed = Directory.Exists(path);
 			DirectoryInfo info;
@@ -162,6 +183,9 @@
 		#endregion
 
 		#region ResolvedDirectory Classes
+		/// <summary>
+		/// Represents a resolved directory with its path and creation status.
+		/// </summary>
 		private sealed class ResolvedDirectory {
 			public ResolvedDirectory(string path, bool created) {
 				Path = path;
@@ -171,6 +195,9 @@
 			public string Path { get; }
 			public bool Created { get; }
 		}
+		/// <summary>
+		/// Represents a resolved hidden directory with its path, creation status, and hidden attribute.
+		/// </summary>
 		private sealed class ResolvedHiddenDirectory {
 			public ResolvedHiddenDirectory(string path, bool created, bool hidden) {
 				Path = path;
