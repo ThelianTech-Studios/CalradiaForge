@@ -1,0 +1,116 @@
+# Result And Workflow Policy
+
+## Purpose
+
+Standardize how risky workflows report success, failure, warnings, progress, cancellation, and user-facing messages.
+
+## Current Source Observations
+
+- `ModInstaller` reports progress through events and stores `LastSummary`.
+- `ModInstallSummary`, `ModInstallResult`, and `BLSEInstallResult` already provide workflow-specific result shapes.
+- `ModsPage.xaml.cs` currently coordinates install completion UI, refresh after install, DLL unblock, status text, and toasts.
+- `ModpacksPage.xaml.cs` uses tuple-style service results for import and booleans for save/create.
+- `SettingsPage.xaml.cs` uses direct messages/toasts around validation and tool operations.
+
+## Policy
+
+Use workflow-specific result types first. Add a broader shared `Result` / `Result<T>` only if repetition justifies it.
+
+Result objects should support:
+
+- Success/failure.
+- Result or error code where useful.
+- User-facing message.
+- Technical/log message.
+- Warnings.
+- Affected file, path, module, or operation where useful.
+- Cancellation state where useful.
+
+## Workflow Coordinator Direction
+
+An install workflow coordinator should eventually own:
+
+- Active install state.
+- Progress updates.
+- Cancellation state.
+- Completion handling.
+- Failure handling.
+- Cleanup after install attempts.
+- UI-facing status/error messages.
+- Toast/status integration.
+- Future Nexus download-to-install handoff.
+
+Core install services must remain UI-independent.
+
+## Shared UI State Direction
+
+Initial shared UI state should support:
+
+- `IsBusy`
+- `StatusMessage`
+- `ErrorMessage`
+- `CanCancel`
+- `CurrentOperation`
+- `LastOperationResult` where useful
+
+The Toast System remains the user-visible notification surface for operation started, operation completed, recoverable warning, operation failed, validation issue, and future Nexus/download/install status events.
+
+## Scanner Result And Warning Planning
+
+Mod scan/refresh results should eventually report structured warnings for Steam Workshop path resolution and scan outcomes. The known Workshop scanning issue remains unresolved by this policy; it should be staged as result/warning work for scanner and path-resolution changes.
+
+Scanner results should distinguish:
+
+- Local modules scanned successfully.
+- Workshop modules scanned successfully.
+- Workshop path detection failed.
+- No Workshop path candidates were discovered.
+- No Workshop mods were installed or no valid Workshop modules were found.
+- Workshop path existed but scan failed.
+
+User-facing messages should be concise and actionable. Technical details, candidate paths, exceptions, and skip reasons should be written to redacted logs.
+
+## Phased Implementation
+
+| Phase | Work | Verification |
+|---|---|---|
+| 1 | Document existing result shapes and normalize naming. | No behavior change. |
+| 2 | Add result types for archive preflight, BLSE validation, persistence recovery, and other high-risk workflows. | Unit tests assert success, warnings, failures, and cancellation where relevant. |
+| 3 | Wrap current install event flow with an install workflow coordinator. | Navigation-away install behavior still works. |
+| 4 | Move UI status fields into shared UI state. | Busy/status/error/cancel states update predictably. |
+| 5 | Add structured scanner warnings for Workshop path detection failure, no candidates, no valid mods, and scan failure when scanner/path work is implemented. | Tests assert warning codes, user messages, and redacted technical/log messages. |
+| 6 | Add ViewModel tests for workflow state transitions. | Tests cover start, progress, success, partial failure, failure, warning, and cancel. |
+
+## Guardrails
+
+- Do not put WPF types in Core results.
+- Do not replace all exceptions with result objects blindly.
+- Do not hide technical failures; log them with redaction.
+- User-facing messages must be clear and non-secret.
+- Do not duplicate installer mechanics inside the coordinator.
+
+## Verification Expectations
+
+- Existing workflows still produce user-visible status and toasts.
+- Install success, failure, partial failure, and cancellation are observable.
+- Result logs follow redaction rules.
+- ViewModel tests cover operation state as UI extraction begins.
+- Future Nexus download-to-install handoff uses the coordinator shape without bypassing `ModInstaller`.
+- Scanner warnings distinguish no Workshop mods installed from Workshop path not resolved and Workshop path scan failure.
+
+## Future Documentation Cross-References
+
+Accepted result/warning decisions should later be migrated into future application-system documentation and structured result-warning documentation. Scanner/path result behavior should cross-reference future platform/path-detection documentation and UI status/error/progress presentation docs.
+
+## Open Questions
+
+- Should install cancellation return a distinct status instead of failed?
+- Which result codes should be public/stable versus internal?
+- Should modpack import/save adopt shared results before MVVM extraction?
+- What warning codes and user-facing messages should be locked for Workshop path detection failures?
+
+## Out Of Scope
+
+- App-wide generic result framework until duplication proves the need.
+- Nexus workflow implementation, except preserving future handoff shape.
+- Moving Core workflow logic into WPF ViewModels.
