@@ -249,6 +249,9 @@
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("ModpackService: Import parsed.", new { ImportFilePath = importFilePath, Extension = extension, ModpackName = imported?.ModpackName });
 			}
+			if (imported is null) {
+				return (false, null, "Failed to read the modpack file.");
+			}
 			if (_modpackData.ModpackExists(imported.ModpackName)) {
 				return (false, imported, $"A modpack named '{imported.ModpackName}' already exists.");
 			}
@@ -338,7 +341,7 @@
 			HashSet<string> installedIds = new(
 				installedMods
 					.Where(m => !string.IsNullOrEmpty(m.ModuleId))
-					.Select(m => m.ModuleId),
+					.Select(m => m.ModuleId!),
 				StringComparer.OrdinalIgnoreCase);
 
 			List<ModpackEntryModel> validEntries = [];
@@ -369,10 +372,10 @@
 		/// <returns>A list of modpack entry models.</returns>
 		public static List<ModpackEntryModel> BuildEntryListFromModules(List<ModuleModel> modules) {
 			return modules.Select(m => new ModpackEntryModel {
-				ModuleId = m.ModuleId,
-				ModuleName = m.ModuleName,
-				RequiredVersion = m.ModuleVersion,
-				ModuleURL = m.ModuleURL
+				ModuleId = m.ModuleId!,
+				ModuleName = m.ModuleName!,
+				RequiredVersion = m.ModuleVersion!,
+				ModuleURL = m.ModuleURL!
 			}).ToList();
 		}
 
