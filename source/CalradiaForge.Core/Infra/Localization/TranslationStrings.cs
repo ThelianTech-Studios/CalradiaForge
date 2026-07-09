@@ -52,9 +52,7 @@
 		/// Fires a single blanket <see cref="PropertyChanged"/> event when complete.
 		/// </summary>
 		public void Apply(Dictionary<string, string> translations) {
-			if (translations is null || translations.Count == 0) {
-				return;
-			}
+			translations ??= new Dictionary<string, string>(StringComparer.Ordinal);
 
 			// Navigation
 			Nav_ModsTab = GetOrDefault(translations, nameof(Nav_ModsTab), DefaultNav_ModsTab);
@@ -247,371 +245,370 @@
 		/// Returns the dictionary value if the key exists, otherwise returns the fallback.
 		/// </summary>
 		private static string GetOrDefault(Dictionary<string, string> translations, string key, string fallback) {
-			return translations.TryGetValue(key, out string? value) && !string.IsNullOrEmpty(value)
-				? value
-				: fallback;
+			return translations.TryGetValue(key, out string? value) && !string.IsNullOrWhiteSpace(value) ? value : fallback;
 		}
 
+
 		#region Navigation
-		public string Nav_ModsTab { get; private set; }
+		public string Nav_ModsTab { get; private set; } = DefaultNav_ModsTab;
 		private const string DefaultNav_ModsTab = "Mods";
-		public string Nav_ModpacksTab { get; private set; }
+		public string Nav_ModpacksTab { get; private set; } = DefaultNav_ModpacksTab;
 		private const string DefaultNav_ModpacksTab = "Mod Packs";
-		public string Nav_FaqTab { get; private set; }
+		public string Nav_FaqTab { get; private set; } = DefaultNav_FaqTab;
 		private const string DefaultNav_FaqTab = "FAQ";
-		public string Nav_SettingsTab { get; private set; }
+		public string Nav_SettingsTab { get; private set; } = DefaultNav_SettingsTab;
 		private const string DefaultNav_SettingsTab = "Settings";
 		#endregion
 
 		#region ModsPage — Header
-		public string Mods_ModpacksLabel { get; private set; }
+		public string Mods_ModpacksLabel { get; private set; } = DefaultMods_ModpacksLabel;
 		private const string DefaultMods_ModpacksLabel = "Mod Packs:";
-		public string Mods_InstallButton { get; private set; }
+		public string Mods_InstallButton { get; private set; } = DefaultMods_InstallButton;
 		private const string DefaultMods_InstallButton = "Install Mods";
-		public string Mods_LoadOrderHeader { get; private set; }
+		public string Mods_LoadOrderHeader { get; private set; } = DefaultMods_LoadOrderHeader;
 		private const string DefaultMods_LoadOrderHeader = "Load Order";
-		public string Mods_AvailableModsHeader { get; private set; }
+		public string Mods_AvailableModsHeader { get; private set; } = DefaultMods_AvailableModsHeader;
 		private const string DefaultMods_AvailableModsHeader = "Available Mods";
-		public string Mods_RefreshTooltip { get; private set; }
+		public string Mods_RefreshTooltip { get; private set; } = DefaultMods_RefreshTooltip;
 		private const string DefaultMods_RefreshTooltip = "Refresh Mods";
 		#endregion
 
 		#region ModsPage — Play Button
-		public string Mods_PlayBannerlord { get; private set; }
+		public string Mods_PlayBannerlord { get; private set; } = DefaultMods_PlayBannerlord;
 		private const string DefaultMods_PlayBannerlord = "Play Bannerlord";
-		public string Mods_PlayWithBLSE { get; private set; }
+		public string Mods_PlayWithBLSE { get; private set; } = DefaultMods_PlayWithBLSE;
 		private const string DefaultMods_PlayWithBLSE = "Play with BLSE";
-		public string Mods_LaunchTargetTooltip { get; private set; }
+		public string Mods_LaunchTargetTooltip { get; private set; } = DefaultMods_LaunchTargetTooltip;
 		private const string DefaultMods_LaunchTargetTooltip = "Choose launch target";
-		public string Mods_LaunchTargetBannerlord { get; private set; }
+		public string Mods_LaunchTargetBannerlord { get; private set; } = DefaultMods_LaunchTargetBannerlord;
 		private const string DefaultMods_LaunchTargetBannerlord = "Bannerlord";
-		public string Mods_LaunchTargetBLSE { get; private set; }
+		public string Mods_LaunchTargetBLSE { get; private set; } = DefaultMods_LaunchTargetBLSE;
 		private const string DefaultMods_LaunchTargetBLSE = "BLSE";
 		#endregion
 
 		#region ModsPage — Status Messages
-		public string Mods_SelectModpackPrompt { get; private set; }
+		public string Mods_SelectModpackPrompt { get; private set; } = DefaultMods_SelectModpackPrompt;
 		private const string DefaultMods_SelectModpackPrompt = "No modpack selected. Choose one from the dropdown above.";
-		public string Mods_InstallInProgress { get; private set; }
+		public string Mods_InstallInProgress { get; private set; } = DefaultMods_InstallInProgress;
 		private const string DefaultMods_InstallInProgress = "Installation in progress...";
-		public string Mods_Launching { get; private set; }
+		public string Mods_Launching { get; private set; } = DefaultMods_Launching;
 		private const string DefaultMods_Launching = "Launching...";
-		public string Mods_ScanningForMods { get; private set; }
+		public string Mods_ScanningForMods { get; private set; } = DefaultMods_ScanningForMods;
 		private const string DefaultMods_ScanningForMods = "Scanning for mods...";
-		public string Mods_NoModsFound { get; private set; }
+		public string Mods_NoModsFound { get; private set; } = DefaultMods_NoModsFound;
 		private const string DefaultMods_NoModsFound = "No mods found. Install mods or check your game path in Settings.";
-		public string Mods_InstallDialogTitle { get; private set; }
+		public string Mods_InstallDialogTitle { get; private set; } = DefaultMods_InstallDialogTitle;
 		private const string DefaultMods_InstallDialogTitle = "Select Mod Archives to Install";
 		#endregion
 
 		#region ModpacksPage — Header
-		public string Modpacks_HeaderLabel { get; private set; }
+		public string Modpacks_HeaderLabel { get; private set; } = DefaultModpacks_HeaderLabel;
 		private const string DefaultModpacks_HeaderLabel = "Mod Packs:";
-		public string Modpacks_CreateNewButton { get; private set; }
+		public string Modpacks_CreateNewButton { get; private set; } = DefaultModpacks_CreateNewButton;
 		private const string DefaultModpacks_CreateNewButton = "Create New";
-		public string Modpacks_ImportButton { get; private set; }
+		public string Modpacks_ImportButton { get; private set; } = DefaultModpacks_ImportButton;
 		private const string DefaultModpacks_ImportButton = "Import";
-		public string Modpacks_SaveButton { get; private set; }
+		public string Modpacks_SaveButton { get; private set; } = DefaultModpacks_SaveButton;
 		private const string DefaultModpacks_SaveButton = "Save to Modpack";
 		#endregion
 
 		#region ModpacksPage — Lists
-		public string Modpacks_ActiveLoadOrderHeader { get; private set; }
+		public string Modpacks_ActiveLoadOrderHeader { get; private set; } = DefaultModpacks_ActiveLoadOrderHeader;
 		private const string DefaultModpacks_ActiveLoadOrderHeader = "Active Load Order";
-		public string Modpacks_SavedDataHeader { get; private set; }
+		public string Modpacks_SavedDataHeader { get; private set; } = DefaultModpacks_SavedDataHeader;
 		private const string DefaultModpacks_SavedDataHeader = "Saved Modpack Data";
-		public string Modpacks_ByLabel { get; private set; }
+		public string Modpacks_ByLabel { get; private set; } = DefaultModpacks_ByLabel;
 		private const string DefaultModpacks_ByLabel = "By:";
-		public string Modpacks_UpdatedLabel { get; private set; }
+		public string Modpacks_UpdatedLabel { get; private set; } = DefaultModpacks_UpdatedLabel;
 		private const string DefaultModpacks_UpdatedLabel = "Updated:";
 		#endregion
 
 		#region ModpacksPage — Edit Panel
-		public string Modpacks_ModuleIdLabel { get; private set; }
+		public string Modpacks_ModuleIdLabel { get; private set; } = DefaultModpacks_ModuleIdLabel;
 		private const string DefaultModpacks_ModuleIdLabel = "Module ID:";
-		public string Modpacks_VersionLabel { get; private set; }
+		public string Modpacks_VersionLabel { get; private set; } = DefaultModpacks_VersionLabel;
 		private const string DefaultModpacks_VersionLabel = "Version:";
-		public string Modpacks_NameLabel { get; private set; }
+		public string Modpacks_NameLabel { get; private set; } = DefaultModpacks_NameLabel;
 		private const string DefaultModpacks_NameLabel = "Name:";
-		public string Modpacks_UrlLabel { get; private set; }
+		public string Modpacks_UrlLabel { get; private set; } = DefaultModpacks_UrlLabel;
 		private const string DefaultModpacks_UrlLabel = "URL:";
-		public string Modpacks_SaveEntryButton { get; private set; }
+		public string Modpacks_SaveEntryButton { get; private set; } = DefaultModpacks_SaveEntryButton;
 		private const string DefaultModpacks_SaveEntryButton = "Save Entry";
 		#endregion
 
 		#region ModpacksPage — Create Panel
-		public string Modpacks_CreateNameLabel { get; private set; }
+		public string Modpacks_CreateNameLabel { get; private set; } = DefaultModpacks_CreateNameLabel;
 		private const string DefaultModpacks_CreateNameLabel = "Name:";
-		public string Modpacks_CreatedByLabel { get; private set; }
+		public string Modpacks_CreatedByLabel { get; private set; } = DefaultModpacks_CreatedByLabel;
 		private const string DefaultModpacks_CreatedByLabel = "Created By:";
-		public string Modpacks_ConfirmButton { get; private set; }
+		public string Modpacks_ConfirmButton { get; private set; } = DefaultModpacks_ConfirmButton;
 		private const string DefaultModpacks_ConfirmButton = "Confirm";
-		public string Modpacks_CancelButton { get; private set; }
+		public string Modpacks_CancelButton { get; private set; } = DefaultModpacks_CancelButton;
 		private const string DefaultModpacks_CancelButton = "Cancel";
 		#endregion
 
 		#region ModpacksPage — Template Names
-		public string Modpacks_TemplateVanilla { get; private set; }
+		public string Modpacks_TemplateVanilla { get; private set; } = DefaultModpacks_TemplateVanilla;
 		private const string DefaultModpacks_TemplateVanilla = "Default Modpack";
-		public string Modpacks_TemplateButterLib { get; private set; }
+		public string Modpacks_TemplateButterLib { get; private set; } = DefaultModpacks_TemplateButterLib;
 		private const string DefaultModpacks_TemplateButterLib = "ButterLib Suite";
-		public string Modpacks_TemplateVanillaWarSails { get; private set; }
+		public string Modpacks_TemplateVanillaWarSails { get; private set; } = DefaultModpacks_TemplateVanillaWarSails;
 		private const string DefaultModpacks_TemplateVanillaWarSails = "Vanilla - WarSails";
-		public string Modpacks_TemplateButterLibWarSails { get; private set; }
+		public string Modpacks_TemplateButterLibWarSails { get; private set; } = DefaultModpacks_TemplateButterLibWarSails;
 		private const string DefaultModpacks_TemplateButterLibWarSails = "ButterLib - WarSails";
 		#endregion
 
 		#region Settings — Nav Tabs
-		public string Settings_GeneralTab { get; private set; }
+		public string Settings_GeneralTab { get; private set; } = DefaultSettings_GeneralTab;
 		private const string DefaultSettings_GeneralTab = "General";
-		public string Settings_GameConfigTab { get; private set; }
+		public string Settings_GameConfigTab { get; private set; } = DefaultSettings_GameConfigTab;
 		private const string DefaultSettings_GameConfigTab = "Game Config";
-		public string Settings_ToolsTab { get; private set; }
+		public string Settings_ToolsTab { get; private set; } = DefaultSettings_ToolsTab;
 		private const string DefaultSettings_ToolsTab = "Tools";
-		public string Settings_WipTab { get; private set; }
+		public string Settings_WipTab { get; private set; } = DefaultSettings_WipTab;
 		private const string DefaultSettings_WipTab = "WIP";
-		public string Settings_AboutTab { get; private set; }
+		public string Settings_AboutTab { get; private set; } = DefaultSettings_AboutTab;
 		private const string DefaultSettings_AboutTab = "About";
 		#endregion
 
 		#region Settings — General
-		public string Settings_LanguageHeader { get; private set; }
+		public string Settings_LanguageHeader { get; private set; } = DefaultSettings_LanguageHeader;
 		private const string DefaultSettings_LanguageHeader = "Language";
-		public string Settings_LanguageLabel { get; private set; }
+		public string Settings_LanguageLabel { get; private set; } = DefaultSettings_LanguageLabel;
 		private const string DefaultSettings_LanguageLabel = "Language";
-		public string Settings_LanguageHint { get; private set; }
+		public string Settings_LanguageHint { get; private set; } = DefaultSettings_LanguageHint;
 		private const string DefaultSettings_LanguageHint = "Select the display language for CalradiaForge.";
-		public string Settings_StartupHeader { get; private set; }
+		public string Settings_StartupHeader { get; private set; } = DefaultSettings_StartupHeader;
 		private const string DefaultSettings_StartupHeader = "Startup Behavior";
-		public string Settings_StartupLabel { get; private set; }
+		public string Settings_StartupLabel { get; private set; } = DefaultSettings_StartupLabel;
 		private const string DefaultSettings_StartupLabel = "On startup, select modpack:";
-		public string Settings_StartupLastUsed { get; private set; }
+		public string Settings_StartupLastUsed { get; private set; } = DefaultSettings_StartupLastUsed;
 		private const string DefaultSettings_StartupLastUsed = "Last Used Modpack";
-		public string Settings_StartupAlwaysDefault { get; private set; }
+		public string Settings_StartupAlwaysDefault { get; private set; } = DefaultSettings_StartupAlwaysDefault;
 		private const string DefaultSettings_StartupAlwaysDefault = "Always Use Default (Vanilla)";
-		public string Settings_StartupAlwaysAsk { get; private set; }
+		public string Settings_StartupAlwaysAsk { get; private set; } = DefaultSettings_StartupAlwaysAsk;
 		private const string DefaultSettings_StartupAlwaysAsk = "Always Ask";
-		public string Settings_StartupHint { get; private set; }
+		public string Settings_StartupHint { get; private set; } = DefaultSettings_StartupHint;
 		private const string DefaultSettings_StartupHint = "Controls which modpack is automatically selected when CalradiaForge starts.";
-		public string Settings_DiagnosticsHeader { get; private set; }
+		public string Settings_DiagnosticsHeader { get; private set; } = DefaultSettings_DiagnosticsHeader;
 		private const string DefaultSettings_DiagnosticsHeader = "Diagnostics";
-		public string Settings_DebugModeLabel { get; private set; }
+		public string Settings_DebugModeLabel { get; private set; } = DefaultSettings_DebugModeLabel;
 		private const string DefaultSettings_DebugModeLabel = "Enable Debug Mode";
-		public string Settings_DebugModeHint { get; private set; }
+		public string Settings_DebugModeHint { get; private set; } = DefaultSettings_DebugModeHint;
 		private const string DefaultSettings_DebugModeHint = "Enables verbose logging and diagnostic data output. Only enable this when requested for troubleshooting.";
 		#endregion
 
 		#region Settings — Game Config
-		public string Settings_GameInstallHeader { get; private set; }
+		public string Settings_GameInstallHeader { get; private set; } = DefaultSettings_GameInstallHeader;
 		private const string DefaultSettings_GameInstallHeader = "Game Installation";
-		public string Settings_GameFolderLabel { get; private set; }
+		public string Settings_GameFolderLabel { get; private set; } = DefaultSettings_GameFolderLabel;
 		private const string DefaultSettings_GameFolderLabel = "Game Folder";
-		public string Settings_SelectFolderButton { get; private set; }
+		public string Settings_SelectFolderButton { get; private set; } = DefaultSettings_SelectFolderButton;
 		private const string DefaultSettings_SelectFolderButton = "Select Folder";
-		public string Settings_GameExeLabel { get; private set; }
+		public string Settings_GameExeLabel { get; private set; } = DefaultSettings_GameExeLabel;
 		private const string DefaultSettings_GameExeLabel = "Game Executable";
-		public string Settings_SelectFileButton { get; private set; }
+		public string Settings_SelectFileButton { get; private set; } = DefaultSettings_SelectFileButton;
 		private const string DefaultSettings_SelectFileButton = "Select File";
-		public string Settings_WorkshopFolderLabel { get; private set; }
+		public string Settings_WorkshopFolderLabel { get; private set; } = DefaultSettings_WorkshopFolderLabel;
 		private const string DefaultSettings_WorkshopFolderLabel = "Steam Workshop Folder";
-		public string Settings_BLSEHeader { get; private set; }
+		public string Settings_BLSEHeader { get; private set; } = DefaultSettings_BLSEHeader;
 		private const string DefaultSettings_BLSEHeader = "Script Extender (BLSE)";
-		public string Settings_BLSEExeLabel { get; private set; }
+		public string Settings_BLSEExeLabel { get; private set; } = DefaultSettings_BLSEExeLabel;
 		private const string DefaultSettings_BLSEExeLabel = "BLSE Standalone Executable";
-		public string Settings_BLSEHint { get; private set; }
+		public string Settings_BLSEHint { get; private set; } = DefaultSettings_BLSEHint;
 		private const string DefaultSettings_BLSEHint = "The Bannerlord Software Extender enables advanced script mods. If installed, CalradiaForge auto-detects it in the game's bin folder. You can also select it manually.";
-		public string Settings_DetectionHeader { get; private set; }
+		public string Settings_DetectionHeader { get; private set; } = DefaultSettings_DetectionHeader;
 		private const string DefaultSettings_DetectionHeader = "Detection";
-		public string Settings_DetectGameButton { get; private set; }
+		public string Settings_DetectGameButton { get; private set; } = DefaultSettings_DetectGameButton;
 		private const string DefaultSettings_DetectGameButton = "\U0001f504  Detect Game";
-		public string Settings_DetectGameHint { get; private set; }
+		public string Settings_DetectGameHint { get; private set; } = DefaultSettings_DetectGameHint;
 		private const string DefaultSettings_DetectGameHint = "Re-runs auto-detection for Steam, Epic, and StandAlone installations. Also detects BLSE if installed. Overwrites current paths.";
 		#endregion
 
 		#region Settings — Tools
-		public string Settings_ModMaintenanceHeader { get; private set; }
+		public string Settings_ModMaintenanceHeader { get; private set; } = DefaultSettings_ModMaintenanceHeader;
 		private const string DefaultSettings_ModMaintenanceHeader = "Mod Maintenance";
-		public string Settings_UnblockDllsButton { get; private set; }
+		public string Settings_UnblockDllsButton { get; private set; } = DefaultSettings_UnblockDllsButton;
 		private const string DefaultSettings_UnblockDllsButton = "\U0001f513  Unblock DLLs";
-		public string Settings_UnblockDllsHint { get; private set; }
+		public string Settings_UnblockDllsHint { get; private set; } = DefaultSettings_UnblockDllsHint;
 		private const string DefaultSettings_UnblockDllsHint = "Removes the Zone.Identifier alternate data stream from all DLL files in the Modules folder. Required for mods downloaded from the internet.";
-		public string Settings_DataManagementHeader { get; private set; }
+		public string Settings_DataManagementHeader { get; private set; } = DefaultSettings_DataManagementHeader;
 		private const string DefaultSettings_DataManagementHeader = "Data Management";
-		public string Settings_ClearCacheButton { get; private set; }
+		public string Settings_ClearCacheButton { get; private set; } = DefaultSettings_ClearCacheButton;
 		private const string DefaultSettings_ClearCacheButton = "\U0001f5d1  Clear Mod Cache";
-		public string Settings_ClearCacheHint { get; private set; }
+		public string Settings_ClearCacheHint { get; private set; } = DefaultSettings_ClearCacheHint;
 		private const string DefaultSettings_ClearCacheHint = "Deletes the cached mod list and forces a fresh rescan on next launch.";
-		public string Settings_OpenConfigButton { get; private set; }
+		public string Settings_OpenConfigButton { get; private set; } = DefaultSettings_OpenConfigButton;
 		private const string DefaultSettings_OpenConfigButton = "\U0001f4c2  Open Config Folder";
-		public string Settings_OpenConfigHint { get; private set; }
+		public string Settings_OpenConfigHint { get; private set; } = DefaultSettings_OpenConfigHint;
 		private const string DefaultSettings_OpenConfigHint = "Opens the CalradiaForge Config directory in Windows Explorer.";
-		public string Settings_OpenLogsButton { get; private set; }
+		public string Settings_OpenLogsButton { get; private set; } = DefaultSettings_OpenLogsButton;
 		private const string DefaultSettings_OpenLogsButton = "\U0001f4c2  Open Logs Folder";
-		public string Settings_OpenLogsHint { get; private set; }
+		public string Settings_OpenLogsHint { get; private set; } = DefaultSettings_OpenLogsHint;
 		private const string DefaultSettings_OpenLogsHint = "Opens the Logs directory in Windows Explorer.";
-		public string Settings_OpenModpacksButton { get; private set; }
+		public string Settings_OpenModpacksButton { get; private set; } = DefaultSettings_OpenModpacksButton;
 		private const string DefaultSettings_OpenModpacksButton = "\U0001f4c2  Open Modpacks Folder";
-		public string Settings_OpenModpacksHint { get; private set; }
+		public string Settings_OpenModpacksHint { get; private set; } = DefaultSettings_OpenModpacksHint;
 		private const string DefaultSettings_OpenModpacksHint = "Opens the Modpacks directory in Windows Explorer.";
 		#endregion
 
 		#region Settings — WIP
-		public string Settings_WipTitle { get; private set; }
+		public string Settings_WipTitle { get; private set; } = DefaultSettings_WipTitle;
 		private const string DefaultSettings_WipTitle = "This tab is reserved for future development.";
-		public string Settings_WipDescription { get; private set; }
+		public string Settings_WipDescription { get; private set; } = DefaultSettings_WipDescription;
 		private const string DefaultSettings_WipDescription = "If there is enough community interest in advanced features\nand functionality beyond the current project scope,\nfuture settings will appear here.";
-		public string Settings_WipStayTuned { get; private set; }
+		public string Settings_WipStayTuned { get; private set; } = DefaultSettings_WipStayTuned;
 		private const string DefaultSettings_WipStayTuned = "Stay tuned for updates!";
 		#endregion
 
 		#region Settings — About
-		public string Settings_AboutDescription { get; private set; }
+		public string Settings_AboutDescription { get; private set; } = DefaultSettings_AboutDescription;
 		private const string DefaultSettings_AboutDescription = "A modern mod launcher for Mount & Blade II: Bannerlord.";
-		public string Settings_AboutTagline { get; private set; }
+		public string Settings_AboutTagline { get; private set; } = DefaultSettings_AboutTagline;
 		private const string DefaultSettings_AboutTagline = "Built by players, for players.";
-		public string Settings_AboutPublisherLabel { get; private set; }
+		public string Settings_AboutPublisherLabel { get; private set; } = DefaultSettings_AboutPublisherLabel;
 		private const string DefaultSettings_AboutPublisherLabel = "Publisher";
-		public string Settings_AboutLicenseLabel { get; private set; }
+		public string Settings_AboutLicenseLabel { get; private set; } = DefaultSettings_AboutLicenseLabel;
 		private const string DefaultSettings_AboutLicenseLabel = "License";
-		public string Settings_AboutViewLicense { get; private set; }
+		public string Settings_AboutViewLicense { get; private set; } = DefaultSettings_AboutViewLicense;
 		private const string DefaultSettings_AboutViewLicense = "View License";
-		public string Settings_AboutGitHubLabel { get; private set; }
+		public string Settings_AboutGitHubLabel { get; private set; } = DefaultSettings_AboutGitHubLabel;
 		private const string DefaultSettings_AboutGitHubLabel = "GitHub";
-		public string Settings_AboutViewGitHub { get; private set; }
+		public string Settings_AboutViewGitHub { get; private set; } = DefaultSettings_AboutViewGitHub;
 		private const string DefaultSettings_AboutViewGitHub = "View on GitHub";
-		public string Settings_AboutCopyright { get; private set; }
+		public string Settings_AboutCopyright { get; private set; } = DefaultSettings_AboutCopyright;
 		private const string DefaultSettings_AboutCopyright = "\u00a9 2026 ThelianTech\u2122 \u2014 All rights reserved.";
-		public string Settings_AboutDisclaimer { get; private set; }
+		public string Settings_AboutDisclaimer { get; private set; } = DefaultSettings_AboutDisclaimer;
 		private const string DefaultSettings_AboutDisclaimer = "Not affiliated with TaleWorlds Entertainment.";
 		#endregion
 
 		#region FAQ Page
-		public string Faq_PageTitle { get; private set; }
+		public string Faq_PageTitle { get; private set; } = DefaultFaq_PageTitle;
 		private const string DefaultFaq_PageTitle = "Frequently Asked Questions";
-		public string Faq_Q1_Title { get; private set; }
+		public string Faq_Q1_Title { get; private set; } = DefaultFaq_Q1_Title;
 		private const string DefaultFaq_Q1_Title = "Why isn't the game detecting my mods?";
-		public string Faq_Q1_Answer1 { get; private set; }
+		public string Faq_Q1_Answer1 { get; private set; } = DefaultFaq_Q1_Answer1;
 		private const string DefaultFaq_Q1_Answer1 = "Make sure your mods are in the Active load order on the Mods page. Only mods listed in the Load Order panel are passed to the game at launch.";
-		public string Faq_Q1_Answer2 { get; private set; }
+		public string Faq_Q1_Answer2 { get; private set; } = DefaultFaq_Q1_Answer2;
 		private const string DefaultFaq_Q1_Answer2 = "Verify that your game installation path is set correctly under Settings \u2192 Game Config. Use the Re-detect button if you're unsure.";
-		public string Faq_Q1_Hint { get; private set; }
+		public string Faq_Q1_Hint { get; private set; } = DefaultFaq_Q1_Hint;
 		private const string DefaultFaq_Q1_Hint = "Tip: If mods were downloaded from the internet, Windows may block their DLLs. Go to Settings \u2192 Tools \u2192 Unblock DLLs to fix this.";
-		public string Faq_Q2_Title { get; private set; }
+		public string Faq_Q2_Title { get; private set; } = DefaultFaq_Q2_Title;
 		private const string DefaultFaq_Q2_Title = "What does 'Unblock DLLs' do?";
-		public string Faq_Q2_Answer1 { get; private set; }
+		public string Faq_Q2_Answer1 { get; private set; } = DefaultFaq_Q2_Answer1;
 		private const string DefaultFaq_Q2_Answer1 = "When you download files from the internet, Windows adds a hidden security marker (Zone.Identifier) to them. This can prevent Bannerlord from loading mod DLLs.";
-		public string Faq_Q2_Answer2 { get; private set; }
+		public string Faq_Q2_Answer2 { get; private set; } = DefaultFaq_Q2_Answer2;
 		private const string DefaultFaq_Q2_Answer2 = "The Unblock DLLs tool in Settings \u2192 Tools removes this marker from all DLL files in your Modules folder. CalradiaForge also does this automatically when you install mods through the app.";
-		public string Faq_Q3_Title { get; private set; }
+		public string Faq_Q3_Title { get; private set; } = DefaultFaq_Q3_Title;
 		private const string DefaultFaq_Q3_Title = "I'm getting errors when installing mods from an archive.";
-		public string Faq_Q3_Answer1 { get; private set; }
+		public string Faq_Q3_Answer1 { get; private set; } = DefaultFaq_Q3_Answer1;
 		private const string DefaultFaq_Q3_Answer1 = "CalradiaForge extracts mod archives directly into the Bannerlord Modules folder. Make sure the archive contains a valid mod structure with a SubModule.xml file.";
-		public string Faq_Q3_Answer2 { get; private set; }
+		public string Faq_Q3_Answer2 { get; private set; } = DefaultFaq_Q3_Answer2;
 		private const string DefaultFaq_Q3_Answer2 = "If the archive is nested (a folder inside a folder), CalradiaForge will attempt to detect the correct root. If extraction still fails, try extracting the mod manually.";
-		public string Faq_Q3_Hint { get; private set; }
+		public string Faq_Q3_Hint { get; private set; } = DefaultFaq_Q3_Hint;
 		private const string DefaultFaq_Q3_Hint = "Supported archive formats: .zip, .rar and .7z";
-		public string Faq_Q4_Title { get; private set; }
+		public string Faq_Q4_Title { get; private set; } = DefaultFaq_Q4_Title;
 		private const string DefaultFaq_Q4_Title = "How do modpacks work?";
-		public string Faq_Q4_Answer1 { get; private set; }
+		public string Faq_Q4_Answer1 { get; private set; } = DefaultFaq_Q4_Answer1;
 		private const string DefaultFaq_Q4_Answer1 = "A modpack is a saved snapshot of your active mods and their load order. You can create multiple modpacks for different playstyles (e.g., Vanilla+, Overhaul, Hardcore).";
-		public string Faq_Q4_Answer2 { get; private set; }
+		public string Faq_Q4_Answer2 { get; private set; } = DefaultFaq_Q4_Answer2;
 		private const string DefaultFaq_Q4_Answer2 = "Switch between modpacks using the dropdown on the Mods page. The selected modpack's load order is applied immediately.";
-		public string Faq_Q4_Answer3 { get; private set; }
+		public string Faq_Q4_Answer3 { get; private set; } = DefaultFaq_Q4_Answer3;
 		private const string DefaultFaq_Q4_Answer3 = "To save changes to a modpack, go to the Mod Packs page and click 'Save to Modpack'. This overwrites the saved data with your current active load order.";
-		public string Faq_Q4_Hint { get; private set; }
+		public string Faq_Q4_Hint { get; private set; } = DefaultFaq_Q4_Hint;
 		private const string DefaultFaq_Q4_Hint = "Make sure you have selected the correct modpack on the Mods Page before you add/remove mods to your load order there, before you go and save any changes in the Modpacks Page else any changes will be lost.";
-		public string Faq_Q5_Title { get; private set; }
+		public string Faq_Q5_Title { get; private set; } = DefaultFaq_Q5_Title;
 		private const string DefaultFaq_Q5_Title = "Why can't I launch the game from CalradiaForge on Epic or GamePass?";
-		public string Faq_Q5_Answer1 { get; private set; }
+		public string Faq_Q5_Answer1 { get; private set; } = DefaultFaq_Q5_Answer1;
 		private const string DefaultFaq_Q5_Answer1 = "TaleWorlds requires authentication through the Epic or Xbox client. This is a platform-level restriction that third-party launchers cannot bypass.";
-		public string Faq_Q5_Answer2 { get; private set; }
+		public string Faq_Q5_Answer2 { get; private set; } = DefaultFaq_Q5_Answer2;
 		private const string DefaultFaq_Q5_Answer2 = "CalradiaForge still provides full mod management, load order arrangement, and modpack features for these platforms \u2014 you just need to press Play from the platform's own launcher.";
-		public string Faq_Q5_Hint { get; private set; }
+		public string Faq_Q5_Hint { get; private set; } = DefaultFaq_Q5_Hint;
 		private const string DefaultFaq_Q5_Hint = "Direct launch support for Epic and GamePass is planned for a future release. For now load orders are not passed to the game's native launcher.";
-		public string Faq_Q6_Title { get; private set; }
+		public string Faq_Q6_Title { get; private set; } = DefaultFaq_Q6_Title;
 		private const string DefaultFaq_Q6_Title = "Can I import presets from Novus Launcher?";
-		public string Faq_Q6_Answer1 { get; private set; }
+		public string Faq_Q6_Answer1 { get; private set; } = DefaultFaq_Q6_Answer1;
 		private const string DefaultFaq_Q6_Answer1 = "Yes. Go to the Mod Packs page and click Import. Select a Novus Launcher preset file (.xml) and CalradiaForge will convert it into a CalradiaForge modpack automatically.";
-		public string Faq_Q6_Answer2 { get; private set; }
+		public string Faq_Q6_Answer2 { get; private set; } = DefaultFaq_Q6_Answer2;
 		private const string DefaultFaq_Q6_Answer2 = "You can also import native CalradiaForge modpack files (.json) the same way.";
-		public string Faq_Q6_Answer3 { get; private set; }
+		public string Faq_Q6_Answer3 { get; private set; } = DefaultFaq_Q6_Answer3;
 		private const string DefaultFaq_Q6_Answer3 = "You can also place CalradiaForge Modpacks directly in the modpacks subdirectory in the app's directory, and the app will automatically refresh the selectable modpacks.";
-		public string Faq_Q6_Hint { get; private set; }
+		public string Faq_Q6_Hint { get; private set; } = DefaultFaq_Q6_Hint;
 		private const string DefaultFaq_Q6_Hint = "Refresh or switch pages for the app to automatically refresh the dropdown menus'.";
-		public string Faq_Q7_Title { get; private set; }
+		public string Faq_Q7_Title { get; private set; } = DefaultFaq_Q7_Title;
 		private const string DefaultFaq_Q7_Title = "When should I clear the mod cache?";
-		public string Faq_Q7_Answer1 { get; private set; }
+		public string Faq_Q7_Answer1 { get; private set; } = DefaultFaq_Q7_Answer1;
 		private const string DefaultFaq_Q7_Answer1 = "Clear the mod cache if you've manually added or removed mods from the Modules folder outside of CalradiaForge, or if the mod list appears stale or incorrect.";
-		public string Faq_Q7_Answer2 { get; private set; }
+		public string Faq_Q7_Answer2 { get; private set; } = DefaultFaq_Q7_Answer2;
 		private const string DefaultFaq_Q7_Answer2 = "Go to Settings \u2192 Tools \u2192 Clear Mod Cache. On next launch, CalradiaForge will rescan the Modules folder and rebuild the cache.";
-		public string Faq_Q8_Title { get; private set; }
+		public string Faq_Q8_Title { get; private set; } = DefaultFaq_Q8_Title;
 		private const string DefaultFaq_Q8_Title = "How do I report a bug or request a feature?";
-		public string Faq_Q8_Answer1 { get; private set; }
+		public string Faq_Q8_Answer1 { get; private set; } = DefaultFaq_Q8_Answer1;
 		private const string DefaultFaq_Q8_Answer1 = "Open an issue on the CalradiaForge GitHub repository. Include a short description of the problem, steps to reproduce it, and any relevant log output.";
-		public string Faq_Q8_OpenIssuesButton { get; private set; }
+		public string Faq_Q8_OpenIssuesButton { get; private set; } = DefaultFaq_Q8_OpenIssuesButton;
 		private const string DefaultFaq_Q8_OpenIssuesButton = "Open GitHub Issues";
-		public string Faq_Q8_OpenIssuesHint { get; private set; }
+		public string Faq_Q8_OpenIssuesHint { get; private set; } = DefaultFaq_Q8_OpenIssuesHint;
 		private const string DefaultFaq_Q8_OpenIssuesHint = "Opens the CalradiaForge Issues page on GitHub in your browser.";
-		public string Faq_Q8_Hint { get; private set; }
+		public string Faq_Q8_Hint { get; private set; } = DefaultFaq_Q8_Hint;
 		private const string DefaultFaq_Q8_Hint = "Tip: Enable Debug Mode in Settings \u2192 General before reproducing the issue. This gives more detailed logs for troubleshooting.";
 		#endregion
 
 		#region EULA Window
-		public string Eula_WindowTitle { get; private set; }
+		public string Eula_WindowTitle { get; private set; } = DefaultEula_WindowTitle;
 		private const string DefaultEula_WindowTitle = "CalradiaForge - End User License Agreement";
 
-		public string Eula_CloseTooltip { get; private set; }
+		public string Eula_CloseTooltip { get; private set; } = DefaultEula_CloseTooltip;
 		private const string DefaultEula_CloseTooltip = "Close";
 
-		public string Eula_Header { get; private set; }
+		public string Eula_Header { get; private set; } = DefaultEula_Header;
 		private const string DefaultEula_Header = "End User License Agreement";
 
-		public string Eula_VersionLabel { get; private set; }
+		public string Eula_VersionLabel { get; private set; } = DefaultEula_VersionLabel;
 		private const string DefaultEula_VersionLabel = "EULA Version 1.2";
 
-		public string Eula_AcceptanceText { get; private set; }
+		public string Eula_AcceptanceText { get; private set; } = DefaultEula_AcceptanceText;
 		private const string DefaultEula_AcceptanceText = "I have read and agree to the End User License Agreement";
 
-		public string Eula_DeclineButton { get; private set; }
+		public string Eula_DeclineButton { get; private set; } = DefaultEula_DeclineButton;
 		private const string DefaultEula_DeclineButton = "Decline";
 
-		public string Eula_AcceptButton { get; private set; }
+		public string Eula_AcceptButton { get; private set; } = DefaultEula_AcceptButton;
 		private const string DefaultEula_AcceptButton = "Accept";
 		#endregion
 
 		#region Toast Messages
-		public string Toast_InstallInProgress { get; private set; }
+		public string Toast_InstallInProgress { get; private set; } = DefaultToast_InstallInProgress;
 		private const string DefaultToast_InstallInProgress = "Install in Progress";
-		public string Toast_InstallComplete { get; private set; }
+		public string Toast_InstallComplete { get; private set; } = DefaultToast_InstallComplete;
 		private const string DefaultToast_InstallComplete = "Install Complete";
-		public string Toast_InstallCompleteWithErrors { get; private set; }
+		public string Toast_InstallCompleteWithErrors { get; private set; } = DefaultToast_InstallCompleteWithErrors;
 		private const string DefaultToast_InstallCompleteWithErrors = "Install Completed with Errors";
-		public string Toast_InstallingMods { get; private set; }
+		public string Toast_InstallingMods { get; private set; } = DefaultToast_InstallingMods;
 		private const string DefaultToast_InstallingMods = "Installing Mods";
-		public string Toast_GameLaunched { get; private set; }
+		public string Toast_GameLaunched { get; private set; } = DefaultToast_GameLaunched;
 		private const string DefaultToast_GameLaunched = "Game Launched";
-		public string Toast_LaunchFailed { get; private set; }
+		public string Toast_LaunchFailed { get; private set; } = DefaultToast_LaunchFailed;
 		private const string DefaultToast_LaunchFailed = "Launch Failed";
-		public string Toast_MissingMods { get; private set; }
+		public string Toast_MissingMods { get; private set; } = DefaultToast_MissingMods;
 		private const string DefaultToast_MissingMods = "Missing Mod(s)";
-		public string Toast_ModListUpdated { get; private set; }
+		public string Toast_ModListUpdated { get; private set; } = DefaultToast_ModListUpdated;
 		private const string DefaultToast_ModListUpdated = "Mod List Updated";
-		public string Toast_RefreshFailed { get; private set; }
+		public string Toast_RefreshFailed { get; private set; } = DefaultToast_RefreshFailed;
 		private const string DefaultToast_RefreshFailed = "Refresh Failed";
-		public string Toast_NoModsFound { get; private set; }
+		public string Toast_NoModsFound { get; private set; } = DefaultToast_NoModsFound;
 		private const string DefaultToast_NoModsFound = "No Mods Found";
-		public string Toast_AutoScanFailed { get; private set; }
+		public string Toast_AutoScanFailed { get; private set; } = DefaultToast_AutoScanFailed;
 		private const string DefaultToast_AutoScanFailed = "Auto-Scan Failed";
 		#endregion
 
 		#region Common / Shared
-		public string Common_AlmostDone { get; private set; }
+		public string Common_AlmostDone { get; private set; } = DefaultCommon_AlmostDone;
 		private const string DefaultCommon_AlmostDone = "almost done";
-		public string Common_Remaining { get; private set; }
+		public string Common_Remaining { get; private set; } = DefaultCommon_Remaining;
 		private const string DefaultCommon_Remaining = "remaining";
-		public string Common_Extracting { get; private set; }
+		public string Common_Extracting { get; private set; } = DefaultCommon_Extracting;
 		private const string DefaultCommon_Extracting = "Extracting";
-		public string Common_FilesExtracted { get; private set; }
+		public string Common_FilesExtracted { get; private set; } = DefaultCommon_FilesExtracted;
 		private const string DefaultCommon_FilesExtracted = "files extracted";
 		#endregion
 	}
