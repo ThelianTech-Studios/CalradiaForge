@@ -7,13 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## 0.13.1 - 2026-06-30
+## 0.13.6 - Internal | 2026-07-08
+
+> Phase 1 refactor cleanup and planning alignment. This is an internal cleanup summary, not a public app version bump.
+
+### Changed
+
+- Reduced build warning noise with low-risk nullability, spelling, and stale-comment cleanup.
+- Updated Phase 1 refactor notes, UI page rename inventory, and documentation handoff tracking.
+- Recorded the Steam Workshop scanner/path-resolution report as unresolved planning work; no scanner behavior was changed.
+- Corrected small README and changelog typos and stale documentation links.
+- Corrected the `ModInstaller` nullability checks for `ModuleModel.ModuleId` and `ModuleModel.ModuleVersion` to use ! at the end because earlier in the workflow the Mod Parser ensures there is default data instead of `?? string.Empty;`
+
+### Fixed
+
+- Fixed localization fallback recomputation so missing or blank translations now fall back to the hardcoded English default on every `Apply()` call.
+
+### Removed
+
+- Removed a Directory Info conditional statement in `ModInstaller.CheckExistingVersion()` method that was redundant because the existingFile conditional check handles the case.
+
+---
+
+## 0.13.1 - Internal | 2026-06-30
 
 > NexusMods directory structure has been reverted to be located in the root directory of the application instead of the LocalAppData folder. This change was made to keep the application aligned as a portable app.
 
 ### Added
 
-- More Summary information for methodss and classes in `AppPaths.cs`
+- More summary information for methods and classes in `AppPaths.cs`
 
 ### Changed
 
@@ -29,7 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## 0.13.0 - 2026-06-12
+## 0.13.0 - Internal | 2026-06-12
 
 > NexusMods Download Manager integration prep — dedicated managed downloads directory and temp extraction isolation from system temp folder.
 
@@ -59,7 +81,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## 0.12.18 - 2026-05-29
+## 0.12.18 - Internal | 2026-05-29
 
 > Localization content updates — FAQ page refresh for current feature support.
 
@@ -76,7 +98,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## 0.12.16 - 2026-04-11
+## 0.12.16 - Internal | 2026-04-11
 
 > Official icon rollout stabilization — replaced legacy placeholder icon usage and fixed WPF resource wiring for consistent build and runtime branding.
 
@@ -89,7 +111,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## 0.12.15 - 2026-03-16
+## 0.12.15 - Public Release | 2026-03-16
 
 > EULA packaging hardening — moved from deployed disk file to embedded resource so single-file publish keeps license text internal to the executable.
 
@@ -107,7 +129,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## 0.12.14 - 2026-03-16
+## 0.12.14 - Internal | 2026-03-16
 
 > Localization release-note follow-up — language pack inventory and manifest updates documented under a dedicated patch bump.
 
@@ -137,7 +159,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## 0.12.13 - 2026-03-15
+## 0.12.13 - Internal | 2026-03-15
 
 > First-launch localization completion — pre-EULA language selector shipped, EULA chrome localized, and startup wiring finalized.
 
@@ -179,7 +201,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## 0.11.16 - 2026-03-14
+## 0.11.16 - Internal | 2026-03-14
 
 > Localization pipeline modernization — default English generation tooling, translation model rewrite, startup localization flow prep, and new Simplified Chinese language pack.
 
@@ -216,7 +238,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## 0.11.5 - 2026-03-09
+## 0.11.5 - public Release | 2026-03-09
 
 > EULA window bug fixes — resource dictionary wiring, WPF shutdown mode, title bar drag support, and toggle switch styling.
 
@@ -246,7 +268,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## 0.11.0 - 2026-03-09
+## 0.11.0 - Internal | 2026-03-09
 
 > EULA acceptance gate — first-launch EULA window blocks app until accepted, persisted to config.
 
@@ -267,7 +289,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## 0.10.8 - 2026-03-08
+## 0.10.8 - Internal | 2026-03-08
 
 > Native 7-Zip extraction — SharpCompress replaced with SevenZipWrapper, restoring full `.7z` support. | Third-party software notices added to LICENSE.md for all dependencies.
 
@@ -296,7 +318,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## 0.9.22 - 2026-02-25
+## 0.9.22 - Public Release | 2026-02-25
 
 > Open beta release — feature-complete for v1.0 scope with known `.7z` limitation.
 
@@ -314,7 +336,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## 0.9.19 - 2026-02-20
+## 0.9.19 - Internal | 2026-02-20
 
 > Code cleanup, debug logging, finalized `.editorconfig`, and open beta preparation.
 
@@ -356,7 +378,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## 0.9.3 - 2026-02-19
+## 0.9.3 - Internal | 2026-02-19
 
 > Full translation/localization system — live language switching without restart.
 
@@ -380,7 +402,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## 0.8.15 - 2026-02-18
+## 0.8.15 - Internal | 2026-02-18
 
 > Toast notification system, extraction progress reporting, and archive format validation.
 
@@ -400,7 +422,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## 0.7.7 - 2026-02-17
+## 0.7.7 - Internal | 2026-02-17
 
 > Create New Modpack split button, Epic/GamePass deferral, and modpack template system.
 
@@ -419,7 +441,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## 0.6.18 - 2026-02-16
+## 0.6.18 - Internal | 2026-02-16
 
 > BLSE support, Play button split-button, and mod install lifecycle management.
 
@@ -447,7 +469,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## 0.5.26 - 2026-02-15
+## 0.5.26 - Internal | 2026-02-15
 
 > Settings page, FAQ page, game launcher, modpack startup modes, and major bug fixes.
 
@@ -493,7 +515,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## 0.4.12 - 2026-02-14
+## 0.4.12 - Internal | 2026-02-14
 
 > Modpacks page, mod installer/extractor, Novus Launcher import, and core infrastructure.
 
@@ -521,7 +543,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## 0.3.9 - 2026-02-13
+## 0.3.9 - Internal | 2026-02-13
 
 > Modpacks backend, mod scanner/parser, drag-and-drop reorder, and modpack ComboBox on ModsPage.
 
@@ -545,7 +567,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## 0.2.5 - 2026-02-11
+## 0.2.5 - Internal | 2026-02-11
 
 > Core infrastructure — mod scanning/parsing, centralized paths, theme system, and main window navigation.
 
@@ -569,7 +591,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## 0.1.7 - 2026-02-08
+## 0.1.7 - Internal | 2026-02-08
 
 > WPF app foundation — main window, navigation, models, and core services.
 
@@ -589,7 +611,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## 0.0.1 - 2026-02-04
+## 0.0.1 - Internal | 2026-02-04
 
 > Initial project setup.
 
