@@ -63,41 +63,54 @@ The public app version must be used for:
 - Release artifact names.
 - Installer/package names if applicable.
 
+## Changelog Heading Format
+
+When Codex updates `docs/CHANGELOG.md`, preserve the existing heading form:
+
+```text
+## VERSION - TAG | YYYY-MM-DD
+```
+
+- `VERSION` is the approved app version, prerelease version, or internal placeholder version already consistent with this policy.
+- `TAG` is the release classification, such as `Internal` or `Public Release`.
+- Default new Codex-created sections to `Internal` unless the owner explicitly instructs Codex to use `Public Release`.
+- Follow user changelog instructions first when they conflict with the default flow.
+
+This heading format applies to both newly created sections and updates to the latest existing section.
+
 ## Experimental Nexus Builds
 
 Experimental Nexus builds use prerelease labels:
 
 ```text
-v0.13.0-experimental.nexus.1
+v[MAJOR.MINOR.PATCH]-experimental.nexus.1
 ```
 
-Release title pattern:
+Example release title pattern for Github Releases:
 
 ```text
-CalradiaForge v0.13.0-experimental.nexus.1 - Nexus API Experimental Release
+CalradiaForge v[MAJOR.MINOR.PATCH]-experimental.nexus.1 - Nexus API Experimental Release
 ```
 
-Acceptable progression:
+Acceptable example progression:
 
-- `v0.13.0-experimental.nexus.1`
-- `v0.13.0-experimental.nexus.2`
-- `v0.13.0-preview.1`
-- `v0.13.0-beta`
-- `v0.13.0-rc.1`
-- `v0.13.0`
+- `v[MAJOR.MINOR.PATCH]-experimental.nexus.1`
+- `v[MAJOR.MINOR.PATCH]-experimental.nexus.2`
+- `v[MAJOR.MINOR.PATCH]-beta.1`
+- `v[MAJOR.MINOR.PATCH]-beta.2`
+- `v1.0`
 
 ## Changelog Mapping
 
 | Change type | Before v1.0 | After v1.0 |
 |---|---|---|
 | New milestone/module | MINOR | MINOR |
-| App-wide rewrite/foundation change | Usually MINOR | MAJOR |
-| WPF to AvaloniaUI or major shell redesign | Pre-1.0 milestone | MAJOR |
+| App-wide rewrite/foundation change | Usually MINOR | MAJOR + MINOR |
+| WPF to AvaloniaUI or major shell redesign | MINOR | MAJOR |
 | Bug fixes | PATCH | PATCH |
 | Small UI polish | PATCH | PATCH |
 | Docs/internal only | Usually no app version bump | Usually no app version bump |
-| Nexus SSO/API experimental work | Prerelease label | Prerelease label or MINOR |
-| Release candidate | `rc.N` | `rc.N` |
+| Nexus SSO/API experimental work | Prerelease label | MINOR |
 
 ## Phased Implementation
 

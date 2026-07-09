@@ -449,12 +449,16 @@ Verification:
 - Report completed deliverables, deferred items, risks, source/docs used, and verification results.
 
 Changelog update:
-- After verifying that all requested changes are implemented, update docs/CHANGELOG.md.
-- Follow the existing internal style of docs/CHANGELOG.md when adding a new changelog summary section.
-- Follow docs/refactor/versioning_policy.md when choosing the changelog version, prerelease label, release wording, and whether a docs/internal-only change should receive an app version entry.
+- After verifying requested changes are implemented, update `docs/CHANGELOG.md` unless the user explicitly says not to.
+- If the user gives changelog-specific instructions, follow those instructions first.
+- Preserve the existing heading format: `## VERSION - TAG | YYYY-MM-DD`.
+- Default newly created sections to the `Internal` tag. Use `Public Release` only when the owner explicitly instructs Codex to do so.
+- Follow `docs/refactor/versioning_policy.md` when choosing the version, prerelease label, release wording, and whether docs/internal-only work should receive an app version entry.
+- Create a new section only when the completed work justifies a new build/release summary, the task date is newer than the latest changelog section date, or the user explicitly asks for a new section.
+- Append to the latest existing section when the user asks for that, when the latest section already matches the current date and build/release context, or when the completed work is small and does not justify a new section.
 - Do not change major/minor version numbers without owner approval.
 - Do not describe planned, deferred, or experimental work as shipped.
-- Always document completed changes in docs/CHANGELOG.md, even when the app is not being published as a release build. If the phase is not release-worthy on its own, use the changelog's existing unreleased, in-progress, or internal-summary style rather than skipping the changelog entry.
+- Always document completed changes in `docs/CHANGELOG.md`, even when the app is not being published as a release build.
 ```
 
 ## Open Questions Before Implementation
