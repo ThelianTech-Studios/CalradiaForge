@@ -342,15 +342,15 @@
 				// Parse mod metadata from the extracted SubModule.xml
 				string xmlPath = Path.Combine(modRoot, "SubModule.xml");
 				ModuleModel? newMod = ModParser.Parse(xmlPath, modRoot);
-				if (newMod is null || string.IsNullOrEmpty(newMod.ModuleId)) {
+				if (newMod is null || string.IsNullOrWhiteSpace(newMod.ModuleId)) {
 					result.Status = ModInstallStatus.Failed;
 					result.Message = "Failed to parse SubModule.xml from archive.";
 					return result;
 				}
 
 				result.ModuleId = newMod.ModuleId;
-				result.ModuleName = newMod.ModuleName;
-				result.InstalledVersion = newMod.ModuleVersion;
+				result.ModuleName = newMod.ModuleName!;
+				result.InstalledVersion = newMod.ModuleVersion!;
 
 				// Determine the target directory in the game's Modules folder
 				string modFolderName = new DirectoryInfo(modRoot).Name;
@@ -473,10 +473,6 @@
 		/// Returns whether to install fresh, upgrade, or skip.
 		/// </summary>
 		private static VersionCheckOutcome CheckExistingVersion(string targetPath, ModuleModel newMod) {
-			if (!Directory.Exists(targetPath)) {
-				return new VersionCheckOutcome { Action = VersionAction.Install };
-			}
-
 			// Try to parse the existing installed mod's SubModule.xml
 			string existingXml = Path.Combine(targetPath, "SubModule.xml");
 			if (!File.Exists(existingXml)) {
@@ -485,11 +481,11 @@
 			}
 
 			ModuleModel? existingMod = ModParser.Parse(existingXml, targetPath);
-			if (existingMod is null || string.IsNullOrEmpty(existingMod.ModuleVersion)) {
+			if (existingMod is null || string.IsNullOrWhiteSpace(existingMod.ModuleVersion)) {
 				return new VersionCheckOutcome { Action = VersionAction.Install };
 			}
 
-			int comparison = CompareModVersions(newMod.ModuleVersion, existingMod.ModuleVersion);
+			int comparison = CompareModVersions(newMod.ModuleVersion!, existingMod.ModuleVersion);
 
 			if (comparison > 0) {
 				return new VersionCheckOutcome {
