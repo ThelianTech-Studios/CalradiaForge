@@ -24,7 +24,7 @@ If you maintain more than one loadout (e.g., vanilla+, hardcore, overhaul), Calr
 > 🧪 **Open Beta:** CalradiaForge is currently in an open beta phase. Core workflows (mod install, modpacks, launching) are mostly feature-complete and stable enough for everyday use, but you may still encounter UI rough edges or missing quality-of-life improvements.
 >
 > ⚠️ **BetaNotice — EULA Prompt on First Launch (v0.11.5):**
-> Starting with **Beta v0.11.5**, CalradiaForge displays a **EULA (End-User License Agreement) window** on first launch. You must readand accept the agreement before the main application window loads. If declined, the application will close immediately. This prompt only appears once — your acceptance is saved and will not be shown again on subsequent launches.
+> Starting with **Beta v0.11.5**, CalradiaForge displays a **EULA (End-User License Agreement) window** on first launch. You must read and accept the agreement before the main application window loads. If declined, the application will close immediately. This prompt only appears once — your acceptance is saved and will not be shown again on subsequent launches.
 > Starting with **Beta v0.11.5**, we migrated from SharpCompress to SevenZipWrapper in the backend code for mod archive extraction. This change was made to improve performance and reliability, especially for larger mod archives. If you encounter any issues with mod installation or archive extraction after this update, please refer to the bug reporting instructions below.
 >
 > If you experience any issues with mod installation or archive extraction, please:
@@ -383,7 +383,7 @@ On startup, `App.OnStartup` calls `EulaAcceptance()` before any services or the 
 
 For the complete coding standards, patterns, and contribution rules, see:
 
-- [`CONTRIBUTINGS.md`](../../CONTRIBUTINGS.md)
+- [`CONTRIBUTIONS.md`](docs/CONTRIBUTIONS.md)
 
 ---
 
@@ -392,7 +392,7 @@ For the complete coding standards, patterns, and contribution rules, see:
 Contributions are welcome as long as they respect the project's architecture and license.
 
 - Read the contributor rules and patterns in: 
- [`CONTRIBUTIONS.md`](../../CONTRIBUTIONS.md)
+ [`CONTRIBUTIONS.md`](docs/CONTRIBUTIONS.md)
 - Fork the repository and create a feature branch:
  ```git
  git checkout -b feature/my-feature
@@ -424,5 +424,5 @@ A copy of the software license can be found here:
 [CalradiaForge-Github-Shield]: https://img.shields.io/badge/CalradiaForge-Repo?style=plastic&logo=github&logoColor=%23181717&label=GitHub&color=blue
 [CalradiaForge-Nexus]: https://www.nexusmods.com/mountandblade2bannerlord/mods/10332
 [CalradiaForge-Nexus-Shield]: https://img.shields.io/badge/CalradiaForge-Nexus?style=plastic&label=NexusMods&labelColor=Black&color=orange
-[CalradiaForge-License]: https://github.com/ThelianTech-Studios/CalradiaForge/blob/master_docs/LICENSE.md
+[CalradiaForge-License]: https://github.com/ThelianTech-Studios/CalradiaForge/blob/master/LICENSE.md
 [CalradiaForge-License-Shield]: https://img.shields.io/badge/CalradiaForge-License?style=plastic&label=LICENSE&labelColor=blue&color=green
