@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Replace static application service access over time with explicit composition using `Microsoft.Extensions.DependencyInjection`.
+Replace static application service access over time with explicit composition using `Microsoft.Extensions.DependencyInjection`, then stage legacy logger call-site migration after the DI foundation is in place.
 
 ## Current Source Observations
 
@@ -18,8 +18,9 @@ Replace static application service access over time with explicit composition us
 - Keep UI-only services in UI.
 - Keep Core services free of WPF.
 - Add platform adapters for Windows-specific operations.
+- Split the work into `Phase 5.A - DI And Platform Adapter Foundation` and `Phase 5.B - Legacy Logger Call-Site Migration`.
 - Support test-friendly service replacement.
-- Leave room for `Microsoft.Extensions.Hosting` / Host Builder only if later justified.
+- Keep `Microsoft.Extensions.Hosting` / Host Builder deferred and not planned unless later justified.
 
 ## Steam And Bannerlord Path Adapter Planning
 
@@ -74,7 +75,8 @@ The preferred shape is to resolve candidate Steam library roots first, then eval
 | 2 | Register existing Core services without behavior changes. | Startup, scan, install, modpack load, settings, and launch still work. |
 | 3 | Introduce platform adapter interfaces, including Steam/Bannerlord path-resolution adapter targets. | Game path detection, Workshop path candidate resolution, explorer/url launch, file dialogs, and process launch remain functional. |
 | 4 | Resolve ViewModels through DI as MVVM extraction begins. | ViewModel tests can replace services. |
-| 5 | Consider Host Builder only if app lifetime/logging/config needs justify it. | Decision documented before implementation. |
+| 5.A | DI And Platform Adapter Foundation | Composition root, service lifetimes, and platform adapters are in place without behavior changes. | Build; startup smoke test |
+| 5.B | Legacy Logger Call-Site Migration | Convert legacy logger call sites in staged batches after the DI foundation exists, using the approved logging path. | Build; logging smoke test |
 
 ## Guardrails
 
@@ -83,6 +85,7 @@ The preferred shape is to resolve candidate Steam library roots first, then eval
 - Do not make Core depend on WPF abstractions.
 - Do not convert every class at once.
 - Do not add Host Builder complexity without a documented reason.
+- Do not treat `ILogger<T>` as the current target for this plan.
 
 ## Verification Expectations
 
@@ -98,9 +101,7 @@ Accepted platform adapter decisions should later be migrated into future platfor
 
 ## Open Questions
 
-- Should the first DI pass preserve `App.*` as a compatibility bridge?
 - Which platform adapters should be first: dialogs, explorer/url launch, registry/game detection, or filesystem?
-- Is Host Builder worth the added startup complexity for this app?
 - Should Workshop scanning check all Steam libraries by default or prefer the Bannerlord install library first?
 - Should a manual Workshop path override be exposed or preserved in Settings?
 

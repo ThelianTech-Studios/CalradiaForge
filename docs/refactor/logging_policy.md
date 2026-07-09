@@ -59,9 +59,14 @@ Path logging should stay inside the app's trust boundary:
 |---|---|
 | Implementation | Serilog. |
 | Sink | File sink for app log files. |
+| Async sink | Use `Serilog.Sinks.Async` where the logging pipeline benefits from buffered writes. |
+| Debug sink | Use the debug sink for local development output. |
 | File behavior | Rolling logs with retention limits. |
 | Structure | Message templates and structured properties. |
 | Context | `SourceContext` or class context where practical. |
+| Thread enrichment | Include thread enrichment where it helps session diagnostics. |
+| Exception enrichment | Use structured exception enrichment for richer failure context. |
+| Minimum level | Preserve current minimum-level behavior tied to `AppConfigSettings.DebugMode`. |
 | Debug level | Controlled by Serilog configuration/debug setting rather than repeated manual guards. |
 | Expensive diagnostics | Guard with level checks only when constructing the diagnostic payload is costly. |
 | Redaction | Apply before writing sensitive or user-provided runtime values. |
@@ -72,9 +77,10 @@ Path logging should stay inside the app's trust boundary:
 |---|---|
 | 1 | Add central redaction to the current `Logger`. |
 | 2 | Reduce raw path/value logging where it is noisy or sensitive. |
-| 3 | Plan Serilog migration with file sink, rolling files, retention, message templates, and `SourceContext`. |
-| 4 | Migrate call sites in controlled batches. |
-| 5 | Remove repeated manual debug guards except around expensive diagnostic construction. |
+| 3 | Plan Serilog infrastructure with file sink, rolling files, retention, message templates, and `SourceContext`. |
+| 4 | Keep the current `Logger` API as a compatibility path during Phase 2 while the Serilog foundation is introduced. |
+| 5.A | Remove repeated manual debug guards except around expensive diagnostic construction. |
+| 5.B | Migrate legacy logger call sites in controlled batches after the Serilog foundation and DI work exist. |
 | 6 | Add tests for redaction and minimum-level behavior. |
 
 ## Verification Expectations
@@ -92,6 +98,7 @@ Path logging should stay inside the app's trust boundary:
 - Do not log secrets, raw auth headers, raw tokens, or secret-bearing URLs.
 - Do not introduce remote telemetry as part of this refactor.
 - Do not rewrite every logging call site in one uncontrolled pass.
+- Do not move call-site migration into Phase 2.
 - Do not make Core depend on WPF logging APIs.
 - Do not allow future Nexus auth logs to bypass redaction.
 
@@ -107,8 +114,6 @@ Accepted logging and redaction decisions should later be migrated into future lo
 - Persisting user workflow state in logs.
 
 ## Open Questions
-
-- Should Serilog migration keep a temporary adapter matching the current `Logger` API?
 - What retention policy should replace or preserve the current 14-day cleanup?
 - Should diagnostic bundles redact or omit user-specific filesystem paths?
 - Which path components should remain visible when diagnosing multi-library Steam Workshop detection?

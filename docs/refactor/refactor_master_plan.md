@@ -114,10 +114,11 @@ As refactor phases produce accepted decisions, migrate only stable decisions int
 | Phase | Name | Primary outcome |
 |---:|---|---|
 | 1 | Cleanup And Low-Risk Consistency Fixes | Reduce noise before deeper refactors. |
-| 2 | Serilog Migration And Logging Cleanup | Establish structured logging and redaction foundation. |
+| 2 | Serilog Infrastructure Foundation | Establish structured logging and redaction foundation while keeping the legacy logger compatibility path in place. |
 | 3 | Small Safety Refactors | Harden compact high-risk areas: BLSE, archive preflight, persistence. |
 | 4 | Initial Tests Around Changed Risky Areas | Add regression coverage around changed safety and persistence behavior. |
-| 5 | DI And Platform Adapter Foundation | Introduce service composition and isolate Windows-specific behavior. |
+| 5.A | DI And Platform Adapter Foundation | Introduce service composition and isolate Windows-specific behavior. |
+| 5.B | Legacy Logger Call-Site Migration | Stage legacy logger callers onto the Serilog path after the foundation is verified. |
 | 6 | Result Types And Workflow Coordinator | Standardize operation outcomes and long-running workflow state. |
 | 7 | Staged MVVM Shell/ViewModel Rewrite | Move WPF presentation toward consistent MVVM. |
 | 8 | Final Documentation And Versioning Cleanup | Prepare next beta docs, changelog, and version consistency. |
@@ -127,12 +128,13 @@ As refactor phases produce accepted decisions, migrate only stable decisions int
 | Phase | Depends on | Main work slices | Deliverables | Verification |
 |---:|---|---|---|---|
 | 1 | None | Cleanup, naming, stale comments, low-risk warnings | Deferred-risk notes; clean build | `dotnet build source/CalradiaForge.slnx` |
-| 2 | Phase 1 preferred | Serilog, rolling logs, retention, redaction, source context, scanner diagnostics planning | Logging policy implemented; secret-safe logs | Build; log creation; redaction checks |
+| 2 | Phase 1 preferred | Serilog infrastructure, rolling logs, retention, redaction, source context, scanner diagnostics planning | Logging foundation implemented; secret-safe logs; legacy logger compatibility preserved | Build; log creation; redaction checks |
 | 3 | Phase 1 preferred; Phase 2 helpful | BLSE allowlist, archive preflight, atomic JSON writes, `AppConfig` secret blocking, scanner/path-resolution investigation | Safer install/persistence behavior; scanner issue confirmed, deferred, or fixed only by explicit scoped work | Build; BLSE/archive/persistence smoke checks |
 | 4 | Phase 3 initial changes | Core tests, persistence tests, archive/BLSE tests, modpack workflow tests, fake Steam library scanner tests | Test project and meaningful regression coverage | `dotnet test source/CalradiaForge.slnx` |
-| 5 | Phases 1 and 3; Phase 4 preferred | DI setup, service lifetimes, platform adapters, path-resolution abstractions | Clear composition root and adapter targets | Build; startup smoke test |
-| 6 | Phases 2, 3, and 5 | Workflow result types, install coordinator, progress/cancel/failure state, scanner warnings | Consistent workflow outcomes and UI state path | Build; workflow smoke tests; targeted tests |
-| 7 | Phases 5 and 6; Phase 4 preferred | MVVM conventions, shell/navigation, page ViewModels, command/state patterns, scanner status surfacing | Major UI workflows extracted to ViewModels | Build; ViewModel tests; UI smoke test |
+| 5.A | Phases 1 and 3; Phase 4 preferred | DI setup, service lifetimes, platform adapters, path-resolution abstractions | Clear composition root and adapter targets | Build; startup smoke test |
+| 5.B | Phases 2 and 5.A | Legacy logger call-site batches, compatibility cleanup, staged Serilog caller migration | Legacy logger usage migrated in verified batches; compatibility path retired after verification | Build; staged logging smoke tests; redaction checks |
+| 6 | Phases 2, 3, and 5.B | Workflow result types, install coordinator, progress/cancel/failure state, scanner warnings | Consistent workflow outcomes and UI state path | Build; workflow smoke tests; targeted tests |
+| 7 | Phases 5.A, 5.B, and 6; Phase 4 preferred | MVVM conventions, shell/navigation, page ViewModels, command/state patterns, scanner status surfacing | Major UI workflows extracted to ViewModels | Build; ViewModel tests; UI smoke test |
 | 8 | Prior implementation phases settled | Version source, changelog, release docs, final doc alignment, documentation alignment handoff | Release-ready docs and version consistency | Build; UI version check; docs review |
 
 ## Phase Dependency Map
@@ -140,10 +142,11 @@ As refactor phases produce accepted decisions, migrate only stable decisions int
 ```mermaid
 flowchart TD
     P1["Phase 1: Cleanup"]
-    P2["Phase 2: Logging"]
+    P2["Phase 2: Serilog Foundation"]
     P3["Phase 3: Safety Refactors"]
     P4["Phase 4: Tests"]
-    P5["Phase 5: DI + Platform Adapters"]
+    P5A["Phase 5.A: DI + Platform Adapters"]
+    P5B["Phase 5.B: Legacy Logger Migration"]
     P6["Phase 6: Results + Workflow Coordinator"]
     P7["Phase 7: MVVM Rewrite"]
     P8["Phase 8: Docs + Versioning"]
@@ -151,22 +154,23 @@ flowchart TD
     P1 --> P2
     P1 --> P3
     P3 --> P4
-    P3 --> P5
-    P2 --> P6
-    P5 --> P6
+    P3 --> P5A
+    P2 --> P5B
+    P5A --> P5B
+    P5B --> P6
     P4 --> P7
-    P5 --> P7
     P6 --> P7
     P7 --> P8
 ```
 
 ## Phase Deliverables Checklist
 
-- [ ] Phase 1: Low-risk cleanup completed or deferred with notes; build passes.
-- [ ] Phase 2: Serilog logging, retention, source context, and redaction are implemented and documented.
+- [X] Phase 1: Low-risk cleanup completed or deferred with notes; build passes. (Completed)
+- [ ] Phase 2: Serilog infrastructure, retention, source context, and redaction are implemented and documented while the legacy logger compatibility path remains in place.
 - [ ] Phase 3: BLSE/archive/persistence/`AppConfig` safety changes are implemented or explicitly deferred.
 - [ ] Phase 4: Core test project exists and covers changed risky behavior.
-- [ ] Phase 5: DI composition root, lifetimes, and platform adapter boundaries are documented and usable.
+- [ ] Phase 5.A: DI composition root, lifetimes, and platform adapter boundaries are documented and usable.
+- [ ] Phase 5.B: Legacy logger call sites are migrated in verified batches and the compatibility path is retired only after verification.
 - [ ] Phase 6: Workflow result contracts and coordinator state are implemented for selected high-risk workflows.
 - [ ] Phase 7: Shell/navigation and major page workflows use consistent ViewModel patterns.
 - [ ] Phase 8: Versioning, changelog, release notes, and refactor docs match shipped reality.
@@ -215,19 +219,19 @@ Before broad MVVM extraction or future Nexus UI work begins, create a short owne
 
 Record the end-user Steam Workshop scanning report as a deferred-risk item. The app already uses Bannerlord AppID `261550`; Phase 1 should only identify current scanner/path-resolution ownership and preserve the likely investigation focus on Steam library discovery and Workshop path resolution.
 
-## Phase 2 - Serilog Migration And Logging Cleanup
+## Phase 2 - Serilog Infrastructure Foundation
 
 | Work-order field | Detail |
 |---|---|
-| Purpose | Move logging toward Serilog with structured file logs, retention, source context, and strict redaction before future Nexus auth/download work. |
-| Included work | Serilog design; rolling file sink; retention policy; structured message templates; `SourceContext`; central redaction; compatibility bridge if needed; reduce repeated manual debug-condition patterns; scanner/path-resolution diagnostic event planning. |
-| Excluded work | Rewriting every call site in one pass; logging raw secrets; Nexus auth implementation; telemetry or remote logging. |
-| Affected areas | `CalradiaForge.Core` logging infrastructure, existing logger call sites, future Nexus logging boundary, and debug-mode settings. |
-| Implementation notes | Normal debug logs should call `logger.Debug(...)`. Guard only expensive diagnostic construction. Redaction applies to debug and normal logs. Plan structured diagnostic events for Steam/Bannerlord path resolution: detected platform, detected Steam client path if available, discovered Steam library roots, Bannerlord install path, resolved Workshop path candidates, selected Workshop path, scanner result counts, and skipped/missing candidate reasons. |
-| Dependency ordering | Should precede Nexus auth implementation and broader result/workflow logging. Can happen before DI with a bridge. |
+| Purpose | Build the Serilog infrastructure foundation while keeping the current custom `Logger` class and all existing logger call sites in place for later migration. |
+| Included work | New Serilog infrastructure files under the existing logging source directory; setup/factory/configuration methods needed for later migration; rolling file sink; debug sink; async sink; thread enrichment; exception enrichment; retention/archive planning; central redaction planning; a short legacy/deprecated compatibility note in the old `Logger` file. |
+| Excluded work | Rewriting every call site; injecting Serilog into every service; moving to `Microsoft.Extensions.Logging.ILogger<T>`; adding extra logging/configuration package dependencies; replacing the existing custom app config JSON manager; full dependency injection conversion; Host Builder adoption; logging raw secrets; Nexus auth implementation; telemetry or remote logging. |
+| Affected areas | New Serilog logging infrastructure, the existing logger implementation, future logging plumbing, and debug-mode settings. |
+| Implementation notes | Keep the current custom `Logger` API working. Build the new Serilog foundation first so later call-site migration can happen in Phase 5.B. Normal debug logs should call `logger.Debug(...)`. Guard only expensive diagnostic construction. Redaction applies to debug and normal logs. Plan structured diagnostic events for Steam/Bannerlord path resolution: detected platform, detected Steam client path if available, discovered Steam library roots, Bannerlord install path, resolved Workshop path candidates, selected Workshop path, scanner result counts, and skipped/missing candidate reasons. |
+| Dependency ordering | Should precede Nexus auth implementation and broader result/workflow logging. Must be complete before Phase 5.B call-site migration. |
 | Do before | Define redaction rules and secret-like patterns. Identify current logger behavior that must be preserved. |
-| Do after | Remove obsolete custom logger paths only after equivalent Serilog behavior is verified. |
-| Exit criteria | Serilog writes rolling app logs with retention; redaction is centralized; no known secret-bearing values are logged raw; scanner/path diagnostics are planned or implemented only as part of the logging scope. |
+| Do after | Keep the legacy logger compatibility path in place until Phase 5.B verification confirms equivalent Serilog behavior, then remove obsolete custom logger paths. |
+| Exit criteria | Serilog infrastructure exists, rolling app logs and redaction work, and the current custom logger plus existing call sites still function as the compatibility path. |
 | Risk notes | Broad call-site changes can obscure failures. Redaction that is too aggressive can reduce diagnostic value. Path diagnostics can expose user-specific filesystem details unless shared bundles/log exports sanitize path segments according to policy. |
 | Verification | Build succeeds; log file is created; debug and normal logs respect configuration; redaction examples are verified. |
 | Codex guardrails | Do not add Nexus credentials or auth flow. Do not store logging secrets in `AppConfig`. |
@@ -283,6 +287,10 @@ Use fake temp directories to cover Steam client installed on one root while Bann
 
 ## Phase 5 - DI And Platform Adapter Foundation
 
+Phase 5 is split into 5.A and 5.B. Phase 5.A establishes DI and platform adapters. Phase 5.B migrates legacy logger call sites after the Serilog foundation from Phase 2 is in place and verified.
+
+### Phase 5.A - DI And Platform Adapter Foundation
+
 | Work-order field | Detail |
 |---|---|
 | Purpose | Introduce a cleaner composition model and isolate Windows-specific APIs behind explicit boundaries. |
@@ -290,7 +298,7 @@ Use fake temp directories to cover Steam client installed on one root while Bann
 | Excluded work | Full Host Builder unless later justified; service locator misuse; cross-platform UI rewrite; moving WPF into Core; moving Nexus networking into Core. |
 | Affected areas | UI startup/composition, Core service construction, paths, Registry access, Steam library discovery, Bannerlord install detection, Workshop path resolution, process launching, URL/file explorer launching, archive extraction details, and future NXM handler registration. |
 | Implementation notes | Prefer explicit constructor dependencies. Keep adapter interfaces near the owning layer. Do not make DI a hidden global service locator. Keep Windows-specific registry/file-system probing behind adapters and make scanner/path resolution testable with fake path providers and fake filesystem roots. |
-| Dependency ordering | Follows cleanup and initial safety work. Precedes broad MVVM rewrite. Can precede workflow coordinator registration. |
+| Dependency ordering | Follows cleanup and initial safety work. Precedes Phase 5.B and broad MVVM rewrite. Can precede workflow coordinator registration. |
 | Do before | Inventory current static `App.*` service access. Define lifetime rules for config, logging, services, pages, ViewModels, and coordinators. |
 | Do after | Migrate consumers gradually. Add test replacements for adapter-driven services. |
 | Exit criteria | Composition root is clear; new services can be registered consistently; Windows-specific behavior has adapter targets or a documented path; scanner/path-resolution boundaries are explicit or documented for follow-up; Core remains WPF-free. |
@@ -298,6 +306,24 @@ Use fake temp directories to cover Steam client installed on one root while Bann
 | Verification | Build succeeds; startup smoke test succeeds; existing workflows resolve services; tests can substitute key services/adapters. |
 | Codex guardrails | Do not introduce a global service locator. Do not retarget Core or add WPF references without explicit approval. |
 | Documentation updates | Update `dependency_injection_plan.md` and project architecture docs for composition, adapter ownership, and future platform/path-detection documentation. |
+
+### Phase 5.B - Legacy Logger Call-Site Migration
+
+| Work-order field | Detail |
+|---|---|
+| Purpose | Convert legacy `Logger.Instance` usage to the approved Serilog logging caller methods or logging abstraction in controlled batches after the DI foundation is in place. |
+| Included work | App-wide logger call-site migration in staged batches; preserving behavior while improving structured logging; keeping redaction and minimum-level behavior intact; retiring the legacy logger compatibility path only after equivalent Serilog behavior is verified. |
+| Excluded work | One uncontrolled pass over all call sites; new logging packages or Host Builder adoption; changing app configuration architecture; adding `ILogger<T>` as the target for this phase. |
+| Affected areas | Existing logger call sites, shared logging call patterns, and compatibility cleanup after verification. |
+| Implementation notes | Keep the migration staged so failures stay reviewable. Preserve existing behavior while moving callers onto the new Serilog foundation. Remove the old logger compatibility path only after verification shows the Serilog path is equivalent for the migrated call sites. |
+| Dependency ordering | Follows Phase 5.A and Phase 2. Completes before later workflow/UI phases depend on the updated logging shape. |
+| Do before | Verify the Phase 2 Serilog foundation is stable. Inventory the remaining logger call sites and group them into manageable batches. |
+| Do after | Remove obsolete custom logger paths only after equivalent Serilog behavior is verified. |
+| Exit criteria | Legacy logger call sites are migrated in verified batches; the compatibility path is no longer needed; redaction and minimum-level behavior remain intact. |
+| Risk notes | Batch migration can expose hidden logger assumptions. Removing the compatibility path too early can break behavior. |
+| Verification | Build succeeds; migrated scenarios log through Serilog; redaction and minimum-level checks still pass; legacy logger removal is deferred until verification is complete. |
+| Codex guardrails | Do not bypass the staged migration sequence. Do not add unrelated logging architecture changes. |
+| Documentation updates | Update `docs/refactor/logging_policy.md` and `docs/refactor/dependency_injection_plan.md` if the broader refactor plan is later allowed to change them. |
 
 ### Steam Workshop Path Adapter Planning
 
@@ -312,7 +338,7 @@ Move Steam library discovery, Bannerlord install detection, and Workshop path re
 | Excluded work | App-wide generic `Result<T>` unless repetition justifies it; WPF dependencies in Core; duplicate installer logic; Nexus download implementation. |
 | Affected areas | Install workflow, archive validation, BLSE validation/install, persistence save/load/recovery, mod scan/refresh, Steam Workshop path detection, modpack import/export, future Nexus auth/download workflows, and toast/status state. |
 | Implementation notes | Result objects should support success/failure, code, user-facing message, technical/log message, warnings, and affected path/mod where useful. Coordinator may initially wrap current installer/event flow. Mod scan/refresh should distinguish "no Workshop mods installed," "Workshop path could not be resolved," and "Workshop path exists but scan failed." |
-| Dependency ordering | Follows logging and safety foundations. Works best after DI foundation. Should precede or coordinate with MVVM extraction. |
+| Dependency ordering | Follows logging and safety foundations. Works best after Phase 5.B. Should precede or coordinate with MVVM extraction. |
 | Do before | Identify current mixed result styles. Decide first workflows to standardize. |
 | Do after | Use coordinator state in ViewModels during Phase 7. Add or update tests for result-producing workflows. |
 | Exit criteria | High-risk workflows have clearer result contracts; install completion/failure/cancellation paths are observable; scanner/path warnings have a structured result path when scanner work is implemented; UI can show busy/status/error/result state consistently. |
@@ -334,7 +360,7 @@ Mod scan/refresh should report structured warnings when Workshop path detection 
 | Excluded work | One-pass full UI rewrite; unrelated visual redesign; unrelated new features; business logic in ViewModels that belongs in Core; Nexus networking in UI. |
 | Affected areas | `MainWindow`, `ModsPage`, `ModpacksPage`, `SettingsPage`, `FaqPage`, dialogs/windows, Toast/status state, and ViewModel registrations. |
 | Implementation notes | Start with conventions before extraction. Extract highest-risk workflows first. Keep code-behind for view-only behavior where appropriate. Before page ViewModel extraction, revisit the UI page rename review checklist and obtain an owner-approved rename map if any `.xaml` page rename is desired. |
-| Dependency ordering | Follows DI foundation. Uses result/coordinator patterns from Phase 6 where available. |
+| Dependency ordering | Follows Phase 5.B and Phase 6. Uses result/coordinator patterns from Phase 6 where available. |
 | Do before | Freeze expected behavior for target pages. Ensure high-risk Core workflows have tests where practical. Define command and state conventions. Complete the deferred UI page rename review checkpoint before broad page extraction or future Nexus UI work. |
 | Do after | Remove obsolete code-behind only after equivalent ViewModel behavior is verified. Add ViewModel tests for extracted workflows. |
 | Exit criteria | Shell/navigation and major pages use consistent ViewModel patterns; high-risk workflow logic is not buried in code-behind; operation state is visible and testable; scanner status can explain whether local modules were scanned, Workshop modules were scanned, or Workshop scanning was skipped due to path detection when scanner work is implemented. |
@@ -459,6 +485,19 @@ Changelog update:
 - Do not change major/minor version numbers without owner approval.
 - Do not describe planned, deferred, or experimental work as shipped.
 - Always document completed changes in `docs/CHANGELOG.md`, even when the app is not being published as a release build.
+
+Migration map update:
+- Do not update `docs/refactor/refactor_migration_map.md` until after the changelog has been updated and the owner has manually verified and committed the source changes to origin.
+- Only update the migration map when the owner explicitly asks for the migration map update.
+- Before updating the migration map, read the metadata block at the top of `docs/refactor/refactor_migration_map.md`.
+- Confirm the latest existing migration map section matches the metadata `Last Changelog Version`.
+- Use the metadata `Last Git Commit ID` as the starting point for git diff checks, using `Last Git Commit ID...HEAD`.
+- Compare the source-code diff against the latest changelog section and verify the overall code changes relatively match the changelog entry.
+- If the changelog and git diff do not line up, report the mismatch to the CLI/terminal, pause the agent's current migration-map workflow, wait for user instructions, then follow those instructions before continuing; do not guess, do not invent information, and only report the mismatched information found.
+- Add a new version-scoped migration section using the changelog version.
+- Map source-code changes with files, classes, methods, variables, refs, and summarized change details for that workflow.
+- Keep documentation-only files out of the migration map unless the owner explicitly changes that policy.
+- After adding the new migration section, update the metadata block with the newest changelog version, the latest `HEAD` commit id used to compile the map, the compile date in `YYYY-MM-DD` format, and the branch name formatted as `BranchName(HEAD)`.
 ```
 
 ## Open Questions Before Implementation
