@@ -39,7 +39,7 @@
 		protected override void OnStartup(StartupEventArgs e) {
 			base.OnStartup(e);
 			_logger.Info("Application Starting");
-			SetupExceptionHandeling();
+			SetupExceptionHandling();
 			InitializeConfiguration();
 			InitializeTranslatorService();
 			if (!EulaAcceptance()) {
@@ -247,30 +247,30 @@
 		/// <summary>
 		/// Wires global exception handlers for application-level errors.
 		/// </summary>
-		private void SetupExceptionHandeling() {
+		private void SetupExceptionHandling() {
 			AppDomain.CurrentDomain.UnhandledException += delegate (object s, UnhandledExceptionEventArgs e) {
-				LogUnhadledException((Exception)e.ExceptionObject, "AppDomain.CurrentDomain.UnhandledException");
+				LogUnhandledException((Exception)e.ExceptionObject, "AppDomain.CurrentDomain.UnhandledException");
 			};
 			base.DispatcherUnhandledException += delegate (object s, DispatcherUnhandledExceptionEventArgs e) {
-				LogUnhadledException(e.Exception, "Application.Current.DispatcherUnhandledException");
+				LogUnhandledException(e.Exception, "Application.Current.DispatcherUnhandledException");
 				e.Handled = true;
 			};
 			TaskScheduler.UnobservedTaskException += delegate (object? s, UnobservedTaskExceptionEventArgs e) {
-				LogUnhadledException(e.Exception, "TaskScheduler.UnobservedTaskException");
+				LogUnhandledException(e.Exception, "TaskScheduler.UnobservedTaskException");
 				e.SetObserved();
 			};
 		}
 		/// <summary>
 		/// Logs unhandled exceptions with context information.
 		/// </summary>
-		public void LogUnhadledException(Exception ex0, string source) {
+		public void LogUnhandledException(Exception ex0, string source) {
 			string text = $"Unhandled exception from {source}";
 			try {
 				var name = System.Reflection.Assembly.GetExecutingAssembly().GetName();
 				text += $" in {name.Name} v{name.Version}";
 
 			} catch (Exception ex) {
-				_logger.Error(ex, "Exception in LogUnhandeledExceeption");
+				_logger.Error(ex, "Exception in LogUnhandledException");
 			} finally {
 				_logger.Error(ex0, text);
 			}
