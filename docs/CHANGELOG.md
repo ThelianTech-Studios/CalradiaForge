@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 0.13.6 - Internal | 2026-07-08
 
-> Phase 1 refactor cleanup and planning alignment. This is an internal cleanup summary, not a public app version bump.
+> Refactor Phase 1: cleanup for nullability, localization fallback behavior, documentation alignment, and scanner/path-resolution planning.
 
 ### Changed
 
