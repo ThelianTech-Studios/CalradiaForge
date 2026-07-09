@@ -28,7 +28,7 @@
 		/// When disabled, auto-detection skips Epic/GamePass and falls through
 		/// to <see cref="GameProvider.StandAlone"/>.
 		/// </summary>
-		private const bool _enableUnsupportedPlatforms = false;
+		private static readonly bool _enableUnsupportedPlatforms = false;
 
 		/// <summary>
 		/// Attempts to auto-detect the game installation and update configuration values.
@@ -81,8 +81,10 @@
 							_logger.Debug("GamePathsHelper: Checking Steam workshop path.", new { WorkshopPath = workshopPath, Exists = Directory.Exists(workshopPath) });
 						}
 						if (!Directory.Exists(workshopPath)) {
-							throw new DirectoryNotFoundException($"The expected Steam Workshop folder was not found at '{workshopPath}'. Please Check your Settings");
-						} else { config.SteamWorkshopFolderPath = workshopPath; }
+							throw new DirectoryNotFoundException($"The expected Steam Workshop folder was not found at '{workshopPath}'. Please check your Settings");
+						} else {
+							config.SteamWorkshopFolderPath = workshopPath;
+						}
 						TryDetectBLSE(config, gamePath);
 						if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 							_logger.Debug("GamePathsHelper: Steam detection succeeded.", new { GamePath = gamePath, WorkshopPath = workshopPath });
@@ -172,7 +174,7 @@
 				_logger.Debug("GamePathsHelper: Checking modules folder.", new { ModulesPath = modulesPath, Exists = Directory.Exists(modulesPath) });
 			}
 			if (!Directory.Exists(modulesPath)) {
-				throw new DirectoryNotFoundException($"Modules Folder not found at folderpath: '{modulesPath}'.");
+				throw new DirectoryNotFoundException($"Modules folder not found at folder path: '{modulesPath}'.");
 			}
 			return modulesPath;
 		}
@@ -193,7 +195,7 @@
 					if (Directory.Exists(workshopPath)) {
 						return workshopPath;
 					}
-					throw new DirectoryNotFoundException($"The Steam Workshop folder does not exist at: '{workshopPath}'. Please Check your Settings");
+					throw new DirectoryNotFoundException($"The Steam Workshop folder does not exist at: '{workshopPath}'. Please check your Settings");
 				} else {
 					throw new DirectoryNotFoundException($"The Steam Workshop folder path '{appConfig.SteamWorkshopFolderPath}' is not valid or does not exist. Please check your settings.");
 				}
@@ -201,26 +203,5 @@
 				return null;
 			}
 		}
-
-		#region Old Code - References only, not used anymore.
-		//Old Way to detect steam marked as Depreacated and Obselete. Leaving here as ref to Old code for Learning purposes
-		//public static void TryAutoDetectSteamWorkshopFolder(AppConfigSettings config) {
-		//	try {
-		//		string? steamPath = Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\Valve\Steam","SteamPath",null) as string;
-		//		if (!string.IsNullOrWhiteSpace(steamPath) && Directory.Exists(steamPath)) {
-		//			string workshopPath = Path.Combine(steamPath,"steamapps","workshop","content",_steamGameID);
-		//			if (Directory.Exists(workshopPath)) {
-		//				config.SteamWorkshopFolderPath = workshopPath;
-		//				config.Save();
-		//				return;
-		//			} else {
-		//				throw new DirectoryNotFoundException($"The expected Steam Workshop folder was not found at '{workshopPath}'.");
-		//			}
-		//		}
-		//	} catch {
-		//		throw new DirectoryNotFoundException("Unable to auto-detect the Steam Workshop folder. Please select it manually in the settings.");
-		//	}
-		//}
-		#endregion
 	}
 }

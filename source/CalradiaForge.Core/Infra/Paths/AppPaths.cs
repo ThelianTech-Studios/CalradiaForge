@@ -33,7 +33,7 @@
 		private const string LastUsedModsFileName = "last_used_mods.data";
 		private const string ConfigFileName = "config.json";
 		private const string LanguagesManifestFileName = "languages.json";
-		private const string DefaulLanguageFileName = "en-US.json";
+		private const string DefaultLanguageFileName = "en-US.json";
 		private const string EulaFileName = "Eula.txt";
 
 		#region Resolved Paths
@@ -43,11 +43,11 @@
 		private static readonly Lazy<ResolvedDirectory> _modpacksDirectory = new(() => ResolveDirectory(Path.Combine(RootDirectory, ModpacksFolderName)));
 		private static readonly Lazy<ResolvedDirectory> _dataDirectory = new(() => ResolveDirectory(Path.Combine(RootDirectory, DataFolderName)));
 		private static readonly Lazy<ResolvedDirectory> _languagesDirectory = new(() => ResolveDirectory(Path.Combine(RootDirectory, LanguagesFolderName)));
-		private static readonly Lazy<ResolvedDirectory> _DownloadsDirectory = new(() => ResolveDirectory(Path.Combine(RootDirectory, NexusModsFolderName, ModArchivesFolderName)));
-		private static readonly Lazy<ResolvedDirectory> _DownloadsMetadataDirectory = new(() => ResolveDirectory(Path.Combine(RootDirectory, NexusModsFolderName, DownloadsMetadataFolderName)));
+		private static readonly Lazy<ResolvedDirectory> _downloadsDirectory = new(() => ResolveDirectory(Path.Combine(RootDirectory, NexusModsFolderName, ModArchivesFolderName)));
+		private static readonly Lazy<ResolvedDirectory> _downloadsMetadataDirectory = new(() => ResolveDirectory(Path.Combine(RootDirectory, NexusModsFolderName, DownloadsMetadataFolderName)));
 
 		// Resolved Hidden Paths
-		private static readonly Lazy<ResolvedHiddenDirectory> _ExtractionDirectory = new(() => ResolveHiddenDirectory(Path.Combine(RootDirectory, ExtractionFolderName)));
+		private static readonly Lazy<ResolvedHiddenDirectory> _extractionDirectory = new(() => ResolveHiddenDirectory(Path.Combine(RootDirectory, ExtractionFolderName)));
 		#endregion
 
 		#region Directory Properties
@@ -72,17 +72,17 @@
 		/// </summary>
 		public static string LanguagesDirectory => _languagesDirectory.Value.Path;
 		/// <summary>
-		/// Gets the path to the downloads directory in LocalAppData.
+		/// Gets the path to the downloads directory under the app root.
 		/// </summary>
-		public static string DownloadsDirectory => _DownloadsDirectory.Value.Path;
+		public static string DownloadsDirectory => _downloadsDirectory.Value.Path;
 		/// <summary>
-		/// Gets the path to the temporary extraction directory in LocalAppData.
+		/// Gets the path to the temporary extraction directory under the app root.
 		/// </summary>
-		public static string ExtractionDirectory => _ExtractionDirectory.Value.Path;
+		public static string ExtractionDirectory => _extractionDirectory.Value.Path;
 		/// <summary>
 		/// Gets the path to the downloads metadata directory.
 		/// </summary>
-		public static string DownloadsMetadataDirectory => _DownloadsMetadataDirectory.Value.Path;
+		public static string DownloadsMetadataDirectory => _downloadsMetadataDirectory.Value.Path;
 		/// <summary>
 		/// Gets the path to the current mods cache file.
 		/// </summary>
@@ -104,7 +104,7 @@
 		/// <summary>
 		/// Gets the path to the default language JSON file (e.g. <c>en-US.json</c>) in the languages directory.
 		/// </summary>
-		public static string DefaultLanguageFilePath => Path.Combine(LanguagesDirectory, DefaulLanguageFileName);
+		public static string DefaultLanguageFilePath => Path.Combine(LanguagesDirectory, DefaultLanguageFileName);
 
 		/// <summary>
 		/// Gets the path to the EULA text file deployed with the application.
@@ -126,9 +126,9 @@
 			LogResolvedPath(logger, _modpacksDirectory.Value);
 			LogResolvedPath(logger, _dataDirectory.Value);
 			LogResolvedPath(logger, _languagesDirectory.Value);
-			LogResolvedPath(logger, _DownloadsDirectory.Value);
-			LogResolvedPath(logger, _DownloadsMetadataDirectory.Value);
-			LogResolvedHiddenPath(logger, _ExtractionDirectory.Value);
+			LogResolvedPath(logger, _downloadsDirectory.Value);
+			LogResolvedPath(logger, _downloadsMetadataDirectory.Value);
+			LogResolvedHiddenPath(logger, _extractionDirectory.Value);
 
 		}
 		/// <summary>
