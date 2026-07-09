@@ -170,13 +170,13 @@
 			HashSet<string> currentIds = new(
 				CurrentMods
 					.Where(m => !string.IsNullOrEmpty(m.ModuleId))
-					.Select(m => m.ModuleId),
+					.Select(m => m.ModuleId!),
 				StringComparer.OrdinalIgnoreCase);
 
 			HashSet<string> previousIds = new(
 				PreviousMods
 					.Where(m => !string.IsNullOrEmpty(m.ModuleId))
-					.Select(m => m.ModuleId),
+					.Select(m => m.ModuleId!),
 				StringComparer.OrdinalIgnoreCase);
 
 			AddedMods = CurrentMods

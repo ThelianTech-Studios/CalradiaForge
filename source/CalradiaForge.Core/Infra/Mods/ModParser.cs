@@ -23,7 +23,7 @@
 			}
 			try {
 				XDocument doc = XDocument.Load(modXMLPath);
-				XElement moduleElement = doc.Root;
+				XElement? moduleElement = doc.Root;
 				if (moduleElement is null || moduleElement.Name.LocalName != "Module") {
 					_logger.Warning($"Invalid SubModule.xml format: Root element is missing or not 'Module' in '{modXMLPath}'");
 					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {

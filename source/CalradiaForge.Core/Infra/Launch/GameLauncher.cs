@@ -217,7 +217,7 @@
 
 			List<string> ids = loadOrder
 				.Where(m => !string.IsNullOrWhiteSpace(m.ModuleId))
-				.Select(m => m.ModuleId)
+				.Select(m => m.ModuleId!)
 				.ToList();
 
 			if (ids.Count == 0) {

@@ -207,7 +207,7 @@
 			// Build a lookup by ModuleId for O(1) resolution
 			Dictionary<string, ModuleModel>? lookup = installedMods?
 				.Where(m => !string.IsNullOrEmpty(m.ModuleId))
-				.GroupBy(m => m.ModuleId, StringComparer.OrdinalIgnoreCase)
+				.GroupBy(m => m.ModuleId!, StringComparer.OrdinalIgnoreCase)
 				.ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
 
 			List<ModpackEntryModel> result = [];
