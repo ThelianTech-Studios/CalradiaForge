@@ -36,6 +36,8 @@ Useful structured events include:
 - Discovered Steam library roots.
 - Detected Bannerlord install path.
 - Workshop path candidates composed under `steamapps/workshop/content/261550`.
+  - Log Game Installation and Steam workshop folderpaths, but redact user-specific path segments when exporting or sharing logs, however, keep the drive letter visible for diagnostics.
+    > Bug Found: Auto Steam workshop mod scanning failure with game installation in separate drive path installed separately from Steam install drive.Needs logging for diagnostics.
 - Selected Workshop path, if any.
 - Reasons candidate Workshop paths were skipped, missing, empty, invalid, or failed during scan.
 - Scanner result counts for local modules and Workshop modules.
@@ -57,31 +59,61 @@ Path logging should stay inside the app's trust boundary:
 
 | Target behavior | Direction |
 |---|---|
-| Implementation | Serilog. |
-| Sink | File sink for app log files. |
+| Implementation | Serilog infrastructure in `CalradiaForge.Core`. |
+| Source location | Add all new Serilog infrastructure files under the existing Core logging folder, `source/CalradiaForge.Core/Infra/Logging/`. |
+| File sink | Use `Serilog.Sinks.File` for app log files. |
 | Async sink | Use `Serilog.Sinks.Async` where the logging pipeline benefits from buffered writes. |
-| Debug sink | Use the debug sink for local development output. |
+| Debug sink | Use `Serilog.Sinks.Debug` only in Debug builds via a conditional `PackageReference` and `#if DEBUG` sink configuration; exclude it from Release/Public Release artifacts. |
+| Console sink | Do not add `Serilog.Sinks.Console`; CalradiaForge is a WPF app and CLI execution must not be treated as interactive runtime verification. |
 | File behavior | Rolling logs with retention limits. |
 | Structure | Message templates and structured properties. |
 | Context | `SourceContext` or class context where practical. |
 | Thread enrichment | Include thread enrichment where it helps session diagnostics. |
 | Exception enrichment | Use structured exception enrichment for richer failure context. |
-| Minimum level | Preserve current minimum-level behavior tied to `AppConfigSettings.DebugMode`. |
+| Minimum level | Preserve current minimum-level behavior tied to `AppConfigSettings.DebugMode`; Release/Public Release builds may still write Debug-level events to file logs when runtime DebugMode is enabled. |
 | Debug level | Controlled by Serilog configuration/debug setting rather than repeated manual guards. |
 | Expensive diagnostics | Guard with level checks only when constructing the diagnostic payload is costly. |
 | Redaction | Apply before writing sensitive or user-provided runtime values. |
+
+## Approved Package Set
+
+The Serilog refactor must use only the packages already approved for `CalradiaForge.Core` unless the owner explicitly approves a later package change.
+
+```xml
+<ItemGroup>
+	<PackageReference Include="Serilog" Version="4.3.1" />
+	<PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+	<PackageReference Include="Serilog.Sinks.Async" Version="2.1.0" />
+	<PackageReference Include="Serilog.Exceptions" Version="8.4.0" />
+	<PackageReference Include="Serilog.Enrichers.Thread" Version="4.0.0" />
+</ItemGroup>
+
+<ItemGroup Condition="'$(Configuration)' == 'Debug'">
+	<PackageReference Include="Serilog.Sinks.Debug" Version="3.0.0" PrivateAssets="all" />
+</ItemGroup>
+```
+
+Do not add `Serilog.Settings.Configuration`, `Microsoft.Extensions.Configuration.Json`, `Serilog.Extensions.Logging`, `Serilog.Extensions.Hosting`, or `Serilog.Sinks.Console` as part of Phase 2. The app keeps the existing custom JSON configuration manager for now and does not adopt `Microsoft.Extensions.Logging.ILogger<T>` or Host Builder in this phase.
+
+## Migration Direction
+
+Phase 2 creates the Serilog infrastructure only. It must not convert app-wide legacy logger call sites and must not remove the existing `Logger` compatibility path.
+
+- Keep the current `Logger` class file in place.
+- Add only a short legacy/deprecated compatibility summary to the current `Logger` file.
+- Keep every existing `Logger.Instance` call site in Core and UI intact during Phase 2.
+- Do not initialize the new Serilog service through the WPF app service startup path until the dependency-injection refactor establishes the service composition path.
+- Migrate legacy logger call sites only in Phase 5.B, after Phase 5.A dependency injection work and the Phase 2 Serilog foundation are verified.
+- Retire the legacy logger compatibility path only after the Phase 5.B migration verifies equivalent Serilog behavior.
 
 ## Phased Implementation
 
 | Phase | Scope |
 |---|---|
-| 1 | Add central redaction to the current `Logger`. |
-| 2 | Reduce raw path/value logging where it is noisy or sensitive. |
-| 3 | Plan Serilog infrastructure with file sink, rolling files, retention, message templates, and `SourceContext`. |
-| 4 | Keep the current `Logger` API as a compatibility path during Phase 2 while the Serilog foundation is introduced. |
-| 5.A | Remove repeated manual debug guards except around expensive diagnostic construction. |
-| 5.B | Migrate legacy logger call sites in controlled batches after the Serilog foundation and DI work exist. |
-| 6 | Add tests for redaction and minimum-level behavior. |
+| 2 | Create the Serilog infrastructure files, redaction support, rolling file configuration, retention/archive helpers, source context support, thread enrichment, exception enrichment, and Debug-build-only debug sink configuration under `source/CalradiaForge.Core/Infra/Logging/`. Keep the legacy `Logger` file and all current call sites intact. |
+| 5.A | Establish dependency-injection composition and service initialization patterns. Do not use this phase to migrate all legacy logger callers. |
+| 5.B | Migrate legacy `Logger.Instance` call sites in controlled batches after the Serilog foundation and DI work exist. Remove repeated manual debug guards except around expensive diagnostic construction as call sites are migrated. |
+| Later verification | Add or expand tests for redaction, minimum-level behavior, Release artifact exclusion of Debug-only sinks, and legacy compatibility retirement when migration is complete. |
 
 ## Verification Expectations
 
@@ -114,6 +146,7 @@ Accepted logging and redaction decisions should later be migrated into future lo
 - Persisting user workflow state in logs.
 
 ## Open Questions
+
 - What retention policy should replace or preserve the current 14-day cleanup?
 - Should diagnostic bundles redact or omit user-specific filesystem paths?
 - Which path components should remain visible when diagnosing multi-library Steam Workshop detection?
