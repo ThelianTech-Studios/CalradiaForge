@@ -5,7 +5,10 @@
 
 	/// <summary>
 	/// Provides thread-safe logging for application diagnostics and user-facing events.
+	/// This legacy compatibility path remains in place for existing Core and UI call sites for the time being.
+	/// Migration and retirement are deferred to Phase 5.B after DI and Serilog behavior are verified in the Full Refactor workstream.
 	/// </summary>
+	[Obsolete("This class is now marked as Legacy and will be removed in a future version after the refactor to Serilog is in place.")]
 	public sealed class Logger {
 		/// <summary>
 		/// Represents the severity level of a log entry.
