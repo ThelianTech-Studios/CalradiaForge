@@ -32,8 +32,6 @@
 			}
 			_modpacksDirectory = modpacksDirectory;
 			_lastUsedFilePath = lastUsedFilePath;
-			EnsureDirectoryExists(_modpacksDirectory);//this doessnt need to be here as AppPaths ensures the diectory exists, need to remove this from here and the EnsureDirectoryExists method
-			EnsureDirectoryExists(_lastUsedFilePath);
 		}
 
 		#region Modpack CRUD
@@ -262,18 +260,7 @@
 		#endregion
 		#region Helpers
 
-		/// <summary>
-		/// Ensures the target directory exists for the provided path.
-		/// </summary>
-		private static void EnsureDirectoryExists(string path) {
-			string? directory = Path.GetDirectoryName(path);
-			if (string.IsNullOrEmpty(directory)) {
-				directory = path;
-			}
-			if (!Directory.Exists(directory)) {
-				Directory.CreateDirectory(directory);
-			}
-		}
+		//Region for helper methods, if any, can be added here.
 
 		#endregion
 	}
