@@ -8,7 +8,7 @@ CalradiaForge must keep ordinary settings, diagnostics, and future Nexus credent
 
 - `AppConfig` and `AppConfigSettings` are non-secret settings managers.
 - Existing settings include language, game paths, platform, debug mode, last selected modpack, BLSE path, default launch target, and EULA acceptance.
-- `Logger` currently logs plain messages and structured debug payloads without central redaction.
+- The live legacy `Logger` still logs plain messages and structured debug payloads without the Phase 2 Serilog formatter. The completed but not yet wired Serilog infrastructure includes `RedactingTextFormatter` and `LogRedactor`; their presence does not make all current callers safe.
 - Nexus integration is optional and future credentials must not be stored in config.
 - Nexus architecture requires DPAPI CurrentUser credential storage and explicit operation-scoped decryption.
 
@@ -23,6 +23,10 @@ CalradiaForge must keep ordinary settings, diagnostics, and future Nexus credent
 - Debug logs must follow the same redaction rules as normal logs.
 - Logs must support diagnostics without becoming a data store for sensitive runtime state.
 - Feature flags for experimental Nexus behavior may be stored in normal settings only when they contain no secrets.
+- Performance benchmarks, profiler output, environment metadata, and exported result files must follow the same secret boundary as application logs.
+- Use synthetic Nexus-like values for redaction and logging-performance tests; never use real credentials or secret-bearing URLs.
+- Phase 5.B must review migrated templates, structured/destructured properties, exception data, URLs/query strings, and future Nexus request/response details for secret safety.
+- Removing or narrowing the central formatter/redactor is a separate owner decision. It requires caller-discipline evidence, synthetic-secret tests, exception-rendering review, residual-risk documentation, and explicit approval; performance evidence alone is insufficient.
 
 ## Blocked Config Content
 
@@ -65,8 +69,10 @@ CalradiaForge must keep ordinary settings, diagnostics, and future Nexus credent
 - Attempts to persist secret-like config keys fail or are rejected.
 - Logger redacts common token, key, auth header, and secret URL patterns.
 - Debug structured payloads pass through the same redaction path.
+- If central redaction is ever removed, synthetic tests prove caller-safe templates/properties and exception rendering across Debug and Release paths before approval.
 - Nexus auth tests must prove credentials are not written to `config.json`, Nexus metadata, or log files.
 - NXM links fail when authentication is missing, per Nexus architecture.
+- Benchmark and profiler artifacts do not expose credentials, secret URLs, auth headers, or sensitive imported values.
 
 ## Guardrails
 
@@ -76,6 +82,8 @@ CalradiaForge must keep ordinary settings, diagnostics, and future Nexus credent
 - Do not add automatic startup auth, polling, or update checks.
 - Do not expose decrypted credentials outside explicit operation scope.
 - Do not store Nexus metadata in `ModuleModel`.
+- Do not bypass redaction in production or benchmark code to improve logging performance.
+- Do not describe the planned caller-discipline option as implemented, and do not weaken redaction merely because rendered-property tests pass.
 
 ## Out Of Scope
 

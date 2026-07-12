@@ -53,6 +53,12 @@ CalradiaForge persisted data must have clear ownership, safe writes, graceful re
 | 6 | Add `schemaVersion` only where model evolution justifies it. |
 | 7 | Consider quarantine/recovery folders for corrupt persisted files. |
 
+## Performance Verification
+
+Later performance work may measure JSON read/write, serialization, atomic replacement, backup recovery, cache hit/miss behavior, and modpack export costs. Correctness and recovery tests must pass or have documented dispositions before performance comparisons are interpreted.
+
+Measurements should distinguish app-owned serialization and I/O work from filesystem, antivirus, storage, and cache variance. Component benchmarks should separate setup and cleanup from the measured operation while end-to-end measurements retain the user-visible persistence cost.
+
 ## Verification Expectations
 
 - Valid writes produce readable JSON and preserve expected model fields.
@@ -69,6 +75,7 @@ CalradiaForge persisted data must have clear ownership, safe writes, graceful re
 - Do not duplicate `ModsData` or `ModpackData` behavior in services.
 - Do not introduce WPF dependencies into Core persistence helpers.
 - Do not introduce a migration framework before a real persisted model change needs it.
+- Do not weaken atomicity, backup recovery, corruption handling, or safe defaults to improve throughput.
 
 ## Out Of Scope
 

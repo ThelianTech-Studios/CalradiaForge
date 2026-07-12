@@ -2,7 +2,7 @@
 
 ## Purpose
 
-CalradiaForge should move from manual/runtime verification toward phased automated coverage, starting with Core behavior that is risky, file-heavy, or easy to regress.
+CalradiaForge should move from manual/runtime verification toward phased automated coverage, starting with Core behavior that is risky, file-heavy, or easy to regress. The strategy also establishes reusable benchmark infrastructure without treating early measurements as the final post-refactor performance baseline.
 
 ## Current Grounding
 
@@ -13,97 +13,205 @@ CalradiaForge should move from manual/runtime verification toward phased automat
 - `ModpackService` owns modpack workflow behavior, validation, import/export, and default modpack creation.
 - `ModInstaller`, `ModExtractor`, and `BLSEInstaller` own install and extraction behavior that needs coverage before Nexus downloads.
 - `Logger` currently writes session logs directly and has no central redaction layer.
+- Test framework, benchmark framework, analyzer tools, benchmark project path, result storage, and CI blocking policy are not selected.
 
 ## Test Layers
 
 | Layer | Timing | Scope |
 |---|---|---|
 | Core unit tests | First | Parser behavior, persistence helpers, modpack validation, result mapping, BLSE allowlist rules. |
-| Integration-style filesystem tests | Early | Atomic writes, backup recovery, archive preflight, temp extraction containment, install destination checks. |
+| Regression tests | With each changed risk area | Preserve observed behavior for cleanup, safety, logging, DI, workflow, and MVVM changes. |
+| Integration-style filesystem tests | Early | Atomic writes, backup recovery, archive preflight, extraction containment, install destination checks, and realistic file ownership. |
+| Benchmark fixtures | Phase 4 | Reusable controlled datasets and setup/cleanup helpers for later measurement. |
+| Benchmark execution | Phase 4 infrastructure, Phase 8 authoritative audit, Phase 9 comparison, Phase 10 final verification | Relative speed, throughput, allocations, scaling, and user-visible workflow components. |
 | ViewModel tests | After MVVM extraction begins | Commands, state transitions, busy/error/status state, operation results. |
-| CI validation | After test projects exist | Build, test, and later format/analyzer checks. |
-| WPF UI automation | Later | Only high-value user flows that justify maintenance cost. |
+| Manual WPF smoke checks | When UI behavior is in scope | Startup, navigation, responsiveness, dialogs, toasts, and UI-thread-sensitive workflows that CLI tests cannot prove. |
+| CI validation | After test projects exist and stability is demonstrated | Build, tests, and later approved analyzer or benchmark checks. |
+
+## Conventional Tests And Performance Benchmarks
+
+Conventional tests verify correctness and deterministic behavior. They should cover initialization, parsing, persistence, recovery, filesystem behavior, validation, dependency ordering, error handling, cancellation, cleanup, and state preservation.
+
+Benchmarks measure relative speed, throughput, allocations, scaling, repeated-operation cost, startup components, extraction orchestration, parsing, scanning, serialization, caching, and logging overhead.
+
+Do not put narrow exact-duration assertions in ordinary unit or integration tests. Timing is sensitive to machine load, virtualization, filesystem caching, antivirus activity, and environment differences. Benchmark results should be reported with variance rather than treated as a universal pass/fail result.
+
+## Benchmark Infrastructure Direction
+
+Phase 4 should establish a benchmark project or approved equivalent harness only after the framework, project placement, package set, and repository naming conventions are selected. The exact path and package choice remain open.
+
+The infrastructure should support:
+
+- Release-build execution.
+- Warmup and repeated iterations.
+- Allocation measurement where technically supported.
+- Parameterized small, medium, and representative datasets.
+- Stable fixture creation and cleanup.
+- Component-only and end-to-end benchmarks.
+- Environment metadata capture.
+- Reviewable result export and raw-result retention.
+- A documented local execution command.
+- CI execution only when stability and runtime cost justify it.
+
+Do not add a test framework, benchmark framework, analyzer package, project, or package dependency merely because this strategy mentions it. Any new package, analyzer, large fixture, or blocking threshold requires owner approval.
+
+## Benchmark Fixture Categories
+
+Where applicable, use fixtures for:
+
+- Representative module XML.
+- Mod directories with varying module counts.
+- Valid, invalid, empty, and duplicate metadata.
+- Modpack/load-order graphs of varying sizes.
+- JSON persistence payloads of varying sizes.
+- Small and representative archives.
+- Extraction destinations with controlled state.
+- Logging payloads with active and inactive levels.
+- Cache-hit and cache-miss paths.
+
+Fixtures must use fake roots or isolated temporary directories. They must not read or write real user configuration, Steam directories, Bannerlord installations, real logs, Nexus credentials, or network services.
+
+## Benchmark Execution Rules
+
+- Run benchmarks in Release configuration unless explicitly evaluating Debug-only behavior.
+- Record operating system, CPU, memory, storage context where relevant, .NET runtime/SDK, commit, branch, build configuration, benchmark framework/version, analyzer/tool versions, and filesystem/antivirus notes.
+- Use warmup and repeated iterations where appropriate.
+- Record distributions, variance, throughput, scaling, and allocations where supported.
+- Separate cold-cache and warm-cache behavior when relevant.
+- Keep component setup and cleanup outside the measured region, while providing end-to-end measurements when setup and cleanup are part of user-visible cost.
+- Do not compare materially different archives, machines, runtimes, builds, harnesses, or cache states without recording the limitation.
+- Keep raw results separate from hand-written report conclusions.
+
+## Baseline Lifecycle
+
+| Phase | Baseline meaning |
+|---|---|
+| Phase 4 | Infrastructure validation, fixture calibration, or provisional pre-refactor baseline. Not authoritative for final post-refactor claims. |
+| Phase 8 | Authoritative post-Phase-7 baseline captured against the settled substantive refactor. |
+| Phase 9 | Finding-specific before/after comparison against the Phase 8 baseline. |
+| Phase 10 | Final full-suite comparison and verification after approved changes. |
+
+Phase 4 measurements must be labeled explicitly as `Infrastructure validation`, `Provisional pre-refactor baseline`, `Fixture calibration`, or `Not comparable to final post-refactor baseline` where applicable.
+
+## Performance Regression Thresholds
+
+Any proposed threshold must identify:
+
+- The measured workflow and fixture.
+- Baseline source and retention rule.
+- Threshold or tolerance.
+- Why the tolerance is reasonable.
+- Expected environment variance.
+- Whether the result is informational or blocking.
+- How the baseline is updated.
+- How regressions are reviewed.
+
+Results remain informational by default until stable across intended environments. Do not make filesystem, startup, or archive benchmarks blocking from one developer-machine baseline.
+
+## SevenZipWrapper Comparison
+
+SevenZipWrapper benchmark values are potential comparison evidence, not automatically valid baselines. Prefer a same-harness A/B comparison between direct SevenZipWrapper extraction and the full CalradiaForge extraction path.
+
+Comparisons must control or record archive format, exact content, compressed size, extracted size, file count, destination state, machine, operating system, runtime, SDK, build configuration, SevenZipWrapper version, warmup, iterations, cache state, antivirus interference, setup/cleanup placement, and progress/cancellation instrumentation.
+
+Do not subtract historical values when their source, archive, environment, or methodology is unknown. Mark them `Not directly comparable` and create or recommend a controlled baseline instead.
+
+The final report must separate total extraction duration, the extraction-library baseline, estimated orchestration overhead, allocations, setup/cleanup, validation, metadata processing, destination preparation, and post-extraction parsing/scanning.
 
 ## Report-Driven Test Categories
 
-The documentation alignment report calls for a real testing/QA strategy that covers safety-sensitive and release-sensitive systems. Refactor test planning should represent these categories where relevant:
+Maintain coverage targets for:
 
-- Scanner/path behavior, including Steam library and Workshop path resolution.
-- Installer/archive behavior, including extraction, preflight, overwrite safety, and BLSE validation.
+- Scanner/path behavior using fake Steam libraries and Workshop roots.
+- Installer/archive behavior, including extraction, preflight, containment, overwrite safety, and BLSE validation.
 - Persistence behavior, including config, mod cache, modpacks, backups, and corrupt-file handling.
 - Modpack workflows, including import, export, validation, save, save-as, and last-used behavior.
-- Nexus metadata boundaries, when implemented, without storing credentials in `ModuleModel` or `AppConfig`.
-- Logging/redaction behavior, including secret and path redaction expectations.
-- UI/ViewModel behavior, including commands, status, warning, error, progress, and cancel states.
-
-These categories are planning coverage targets. They do not make refactor docs canonical architecture until accepted decisions are migrated into stable documentation, ADRs, or release notes.
+- Nexus metadata boundaries when implemented, without credentials in `ModuleModel` or `AppConfig`.
+- Logging/redaction behavior, including secret and path redaction.
+- UI/ViewModel behavior, including commands, status, warning, error, progress, and cancellation.
 
 ## Scanner And Path Test Categories
 
-Scanner/path tests must use fake temp directories only. They must not require a real Steam install, real Bannerlord install, real Workshop folder, or real user path.
+Scanner/path tests must use fake temporary directories only. Required categories include:
 
-Required categories include:
-
-- Steam client installed on one fake root while Bannerlord is installed under another fake Steam library root.
+- Steam client installed on one fake root while Bannerlord is under another fake library root.
 - Multiple fake Steam library roots.
-- Workshop content located under the Bannerlord library root.
-- Workshop content missing.
-- Workshop content exists but contains no valid modules.
-- Workshop content exists with invalid or incomplete module content.
-- Empty Workshop content directories.
-- Manual Workshop path override, if supported.
-- Invalid manual Workshop path override, if supported.
-- No Workshop path candidates discovered.
+- Workshop content under the Bannerlord library root.
+- Missing, empty, invalid, or incomplete Workshop content.
+- No Workshop path candidates.
+- Manual Workshop path override and invalid override if supported.
 
-Tests should verify that the scanner can distinguish local module scan results from Workshop scan results and that missing/invalid Workshop paths produce structured warnings rather than requiring real environment state.
+Tests should distinguish local module results from Workshop results and should produce structured warnings for missing or invalid Workshop paths.
+
+## Logger Lifecycle Test And Measurement Coverage
+
+Conventional tests must cover the planned Phase 5.A logger lifecycle without depending on wall-clock timing:
+
+- one DI factory registration and one shared logger identity;
+- factory creation exactly once, cleanup exactly once, and cleanup before the active sink opens;
+- preservation of the active file when no file exists, a destination collision occurs, an archive name cannot be resolved, or access/move fails;
+- collision-safe archive naming with no overwrite;
+- the selected retention semantics after the count-versus-age decision is approved;
+- minimum-level behavior, Debug sink exclusion from Release, and expected formatter output;
+- current redaction while the formatter is active, plus synthetic caller/property/exception tests if redaction removal is proposed;
+- exactly-once logger close/disposal, shutdown waiting for logging-producing work, and active-handle release before rename.
+
+Logger benchmarks may measure construction, disabled-level calls, formatter/redactor cost, structured-property rendering, async sink throughput and backpressure, cleanup scaling, flush/close, archive move, startup contribution, and allocations. These are measurements, not permission to remove redaction, validation, diagnostics, or lifecycle waits. Use representative fixtures and report environment-sensitive filesystem results without fragile exact-time unit assertions or single-machine blocking thresholds.
 
 ## Phased Implementation
 
 | Phase | Scope | Notes |
 |---|---|---|
-| 1 | Core unit test project | Add tests for pure or mostly-pure Core behavior first. |
-| 2 | Persistence tests | Cover `AppConfig`, `ModsData`, and `ModpackData` save/load/default/corruption paths using temp directories. |
-| 3 | Modpack workflow tests | Cover `ModpackService.Save`, `SaveAs`, `CreateNew`, `Import`, `Export`, `SaveLastUsed`, and `ValidateLoadOrder`. |
-| 4 | Installer safety tests | Cover archive openability, module identity preflight, reserved module folder blocks, BLSE allowlist validation, and overwrite decisions. |
-| 5 | Logging/security tests | Verify redaction and secret-key blocking after those policies are implemented. |
-| 6 | Integration-style file tests | Cover realistic file-system workflows that cannot be trusted through unit mocks alone. |
-| 7 | Scanner/path tests | Cover fake Steam client roots, multiple fake library roots, Bannerlord library Workshop content, missing/empty/invalid Workshop content, and manual override behavior if supported. |
-| 8 | ViewModel tests | Add only after MVVM extraction creates stable ViewModels. |
-| 9 | CI | Run `dotnet build` first, then `dotnet test source/CalradiaForge.slnx` once tests exist. |
-| 10 | WPF UI automation | Defer until specific high-value UI flows justify the maintenance cost. |
+| 1-3 | Establish initial Core correctness coverage around changed behavior. | Preserve completed Phase 1 history and add tests as safety work is implemented. |
+| 4 | Add Core unit/regression tests, integration-style filesystem tests, reusable benchmark fixtures, benchmark harness infrastructure, analyzer/measurement readiness, and provisional baselines. | Separate correctness tests from benchmarks. Do not claim final post-refactor performance results. |
+| 5.A-7 | Expand tests and benchmark cases as DI, logging, workflow, and MVVM changes alter stable boundaries. | Verify one-provider/singleton rules and use manual UI checks where required. |
+| 8 | Run the report-only performance audit and capture authoritative post-Phase-7 baselines. | Do not edit production code. Stop for developer decisions. |
+| 9 | Test and benchmark explicitly approved `PERF-NNN` findings. | Compare before/after under comparable conditions and record ineffective or harmful changes. |
+| 10 | Run the full bounded build/test/benchmark/analyzer/architecture/manual-smoke loop. | Update the same audit report and stop when practical criteria are met. |
+| 11 | Use final verified results for release and documentation closeout. | Do not describe recommendations as shipped changes. |
 
 ## Verification Expectations
 
-- Tests must use isolated temp folders and must not read or modify a real Bannerlord install, real app config, real modpacks, or real logs.
-- Persistence tests should verify missing file behavior, valid JSON round trips, invalid JSON handling, backup recovery once implemented, and atomic write behavior once implemented.
-- Modpack tests should verify missing installed mods are reported without mutating saved modpack data.
-- Installer tests should verify blocked unsafe inputs do not write outside the intended temp or destination roots.
-- Scanner/path tests should verify fake Steam libraries, Workshop candidates, missing paths, empty paths, invalid module content, and manual override behavior without touching real Steam or Bannerlord directories.
-- Logging tests should verify debug and normal logs follow the same redaction rules.
-- CI should fail on test failures once tests exist.
+- `dotnet build source/CalradiaForge.slnx` succeeds when the relevant phase is implemented.
+- `dotnet test source/CalradiaForge.slnx` runs meaningful deterministic tests once a test project exists.
+- Tests use isolated temporary paths and do not touch real installations or user data.
+- Timing-sensitive claims remain in benchmarks rather than normal tests.
+- Relevant Release benchmarks run with documented environment and fixture metadata.
+- Allocation results are captured where supported and interpreted with environment limitations.
+- WPF startup and responsiveness are verified through manual smoke checks when CLI execution cannot prove interactive behavior.
+- SevenZipWrapper evidence is either comparable with metadata or explicitly recorded as unavailable/incomparable.
+- Benchmark failures or unavailable commands are reported honestly rather than fabricated.
 
 ## Guardrails
 
 - Keep Core tests free of WPF references.
-- Do not require Nexus credentials, network access, or real user paths.
+- Do not require Nexus credentials, network access, real user paths, Steam, or Bannerlord.
 - Do not bypass `ModInstaller`, `ModExtractor`, `ModsData`, or `ModpackData` to make tests easier.
-- Test observable behavior rather than private implementation details unless no stable boundary exists yet.
-- Do not add broad WPF UI automation during the initial testing phase.
+- Preserve observable behavior, safety, redaction, cancellation, cleanup, and ownership boundaries.
+- Do not add timing assertions to ordinary unit tests.
+- Do not add packages, analyzers, large fixtures, or blocking thresholds without approval.
+- Do not perform speculative production optimization in Phase 4.
+- Do not treat provisional Phase 4 measurements as authoritative Phase 8 baselines.
+- Do not weaken archive containment, module identity, persistence atomicity, recovery, or logging to improve benchmark results.
 
 ## Future Documentation Cross-References
 
-Accepted test strategy decisions should later be migrated into future testing/QA documentation and linked from platform/path-detection, installer/archive, persistence, modpack, Nexus metadata, logging/security, and UI/MVVM docs as those documents are created or expanded.
-
-## Out Of Scope
-
-- Full WPF UI automation in the initial test phase.
-- Nexus API integration tests before Nexus auth/download boundaries exist.
-- Large MVVM test coverage before ViewModels exist.
-- Requiring contributors to have Bannerlord installed to run automated tests.
+Accepted testing and benchmark decisions should later be migrated into canonical testing/QA documentation and linked from platform/path, installer/archive, persistence, modpack, logging/security, performance, and UI/MVVM documentation as those documents are accepted.
 
 ## Open Questions
 
 - Which test framework should be standard: xUnit, NUnit, or MSTest?
-- Should file-system helpers be wrapped in adapters before broad persistence tests?
-- What minimum coverage should block CI once the test project exists?
-- Which archive fixtures can be checked in without licensing or size concerns?
+- Which benchmark framework and project path should be approved?
+- Which allocation/analyzer tools are acceptable without adding unnecessary dependencies?
+- Where should raw benchmark results be retained?
+- What fixture archives can be checked in legally and without unreasonable repository cost?
+- What minimum coverage should block CI once tests exist?
+- Which performance thresholds, if any, should become blocking after stability is demonstrated?
+
+## Out Of Scope
+
+- Full WPF UI automation in the initial test phase.
+- Nexus API integration tests before Nexus boundaries exist.
+- Large MVVM test coverage before ViewModels exist.
+- Requiring contributors to install Bannerlord.
+- Selecting unapproved test or benchmark packages by implication.

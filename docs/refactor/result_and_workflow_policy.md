@@ -70,6 +70,12 @@ Scanner results should distinguish:
 
 User-facing messages should be concise and actionable. Technical details, candidate paths, exceptions, and skip reasons should be written to redacted logs.
 
+## Performance Verification
+
+Later performance work may measure result allocation, progress-update frequency, cancellation checks, event dispatch, cleanup, and coordinator overhead where stable boundaries exist. These measurements must preserve progress, cancellation, failure mapping, cleanup, and user-facing diagnostics.
+
+Phase 5.A logger shutdown must not close or archive the active logger while a workflow can still emit progress, cancellation, failure, cleanup, or completion events. Quiescence and completion must be confirmed before logger close; this lifecycle rule does not authorize a Phase 6 result-model redesign.
+
 ## Phased Implementation
 
 | Phase | Work | Verification |
@@ -88,6 +94,7 @@ User-facing messages should be concise and actionable. Technical details, candid
 - Do not hide technical failures; log them with redaction.
 - User-facing messages must be clear and non-secret.
 - Do not duplicate installer mechanics inside the coordinator.
+- Do not drop progress, cancellation, cleanup, or result reporting to improve throughput.
 
 ## Verification Expectations
 
@@ -97,6 +104,7 @@ User-facing messages should be concise and actionable. Technical details, candid
 - ViewModel tests cover operation state as UI extraction begins.
 - Future Nexus download-to-install handoff uses the coordinator shape without bypassing `ModInstaller`.
 - Scanner warnings distinguish no Workshop mods installed from Workshop path not resolved and Workshop path scan failure.
+- Performance checks preserve result semantics, progress frequency requirements, cancellation behavior, and user-visible diagnostics.
 
 ## Future Documentation Cross-References
 

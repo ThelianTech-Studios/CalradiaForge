@@ -6,13 +6,13 @@ Logging should provide useful local diagnostics while protecting secrets, keepin
 
 ## Current Grounding
 
-- `Logger` is a singleton session logger.
-- Logs are written to `AppPaths.LogsDirectory`.
-- A new session log file is created per app session.
-- Old logs are cleaned after 14 days.
-- `MinimumLevel` controls verbosity and is tied to `AppConfigSettings.DebugMode`.
-- Structured debug payloads are serialized with Newtonsoft.Json.
-- Current logging has no central redaction layer.
+- The live application still uses the legacy `Logger.Instance` session logger. Its existing cleanup behavior is separate from the unused Serilog factory path.
+- Phase 2 Serilog infrastructure exists under `source/CalradiaForge.Core/Infra/Logging/`, but WPF startup does not currently initialize it and Phase 2 did not migrate callers or establish lifecycle ownership.
+- `SerilogLoggerFactory` is an instance class constructed with `AppConfigSettings`; its current public method is `Create()`, not `Build()`. It creates and returns a logger but does not retain it.
+- The current Serilog path targets `AppPaths.LogsFilePath`, named `CalradiaForge_Latest.log`, with `RollingInterval.Infinite`, `shared: false`, and asynchronous file output. It does not create daily rolled files.
+- `Create()` currently invokes custom cleanup on every factory call. `LogRetentionPolicy.Cleanup(...)` interprets the setting as an age in days, while `AppConfigSettings.RetainedFileCount` is named and documented as a file count; this mismatch is unresolved.
+- `retainedFileCountLimit: default` passes null to the nullable Serilog option, so it does not impose the normal file-count limit. `fileSizeLimitBytes` and `rollOnFileSizeLimit` are not configured, so the active-file size policy remains an owner decision.
+- `RedactingTextFormatter` and `LogRedactor` are active in the Serilog infrastructure. The formatter redacts rendered message, exception, and property text; structured/destructured-value safety still requires explicit verification. The legacy logger does not receive this protection merely because the files exist.
 
 ## Policy
 
@@ -63,9 +63,9 @@ Path logging should stay inside the app's trust boundary:
 | Source location | Add all new Serilog infrastructure files under the existing Core logging folder, `source/CalradiaForge.Core/Infra/Logging/`. |
 | File sink | Use `Serilog.Sinks.File` for app log files. |
 | Async sink | Use `Serilog.Sinks.Async` where the logging pipeline benefits from buffered writes. |
-| Debug sink | Use `Serilog.Sinks.Debug` only in Debug builds via a conditional `PackageReference` and `#if DEBUG` sink configuration; exclude it from Release/Public Release artifacts. |
+| Debug sink | Use `Serilog.Sinks.Debug` only in Debug builds via a conditional `PackageReference` with `PrivateAssets="all"` and `#if DEBUG` sink configuration; exclude it from Release/Public Release artifacts. |
 | Console sink | Do not add `Serilog.Sinks.Console`; CalradiaForge is a WPF app and CLI execution must not be treated as interactive runtime verification. |
-| File behavior | Rolling logs with retention limits. |
+| File behavior | Current: one infinite-rolling active `CalradiaForge_Latest.log`, custom cleanup, and no time-based Serilog rolling. Planned Phase 5.A: explicit startup cleanup, close-before-archive, and collision-safe archive. |
 | Structure | Message templates and structured properties. |
 | Context | `SourceContext` or class context where practical. |
 | Thread enrichment | Include thread enrichment where it helps session diagnostics. |
@@ -73,7 +73,31 @@ Path logging should stay inside the app's trust boundary:
 | Minimum level | Preserve current minimum-level behavior tied to `AppConfigSettings.DebugMode`; Release/Public Release builds may still write Debug-level events to file logs when runtime DebugMode is enabled. |
 | Debug level | Controlled by Serilog configuration/debug setting rather than repeated manual guards. |
 | Expensive diagnostics | Guard with level checks only when constructing the diagnostic payload is costly. |
-| Redaction | Apply before writing sensitive or user-provided runtime values. |
+| Redaction | Current Serilog formatter applies `LogRedactor` to rendered values; structured/destructured property safety is not assumed until tested. Phase 5.B reviews callers, templates, properties, exceptions, URLs, and Nexus request/response data. Removing or narrowing central redaction requires separate owner approval. |
+
+## Retention And File-Size Policy
+
+The current cleanup helper uses the configured integer as an age in days and falls back to seven days for non-positive values. The setting is named `RetainedFileCount` and defaults to 14, so the current code does not establish whether the intended policy is "14 files" or "14 days." Phase 5.A must resolve the meaning, document active-file exclusion, define cleanup timing, and verify cleanup occurs once at startup before the active sink opens. Cleanup must not be inferred from Serilog's nullable `retainedFileCountLimit`, which is currently null.
+
+The active sink has no explicit file-size setting. Before implementation, the owner must choose whether to preserve the library default approximate size limit, set an explicit limit and roll policy, or use another deliberate strategy. Tests must cover the selected behavior; docs must not call the current active file unlimited merely because time-based rolling is infinite.
+
+## Logger Lifecycle
+
+Phase 5.A owns the planned application lifecycle. Startup performs retention cleanup once, before opening `CalradiaForge_Latest.log`, then constructs the one shared logger through the one factory singleton. Runtime callers use that shared instance after DI composition is active. Shutdown must stop new logging-producing work, request cancellation, await or confirm active workflows and asynchronous log production are quiescent, close the logger exactly once, confirm the non-shared file handle is released, attempt a collision-safe archive, and preserve the active file if archiving fails. Provider disposal must not create or close a second logger.
+
+The final implementation must choose factory-owned or DI-owned logger disposal and must separately decide whether the instance is assigned to `Serilog.Log.Logger`. `Log.CloseAndFlush()` is not a substitute for direct ownership unless the global assignment is intentional and there is exactly one global close path.
+
+Archive behavior must never overwrite an existing file. It must distinguish no active file, collision without a safe alternate name, access/move failure, and success, and must retain the active file when the move fails. Timestamp-only names are not sufficient if they can collide; a deterministic sequence or equivalent collision-safe strategy is required.
+
+## Formatter And Redaction Decision Gate
+
+The current central formatter/redactor remains the default safety rule. A future proposal to remove it or rely on caller discipline must be a separate owner decision, not a performance optimization. Before approval, Phase 5.B must review every migrated call site, template, structured/destructured property, exception-data path, URL/query-string path, and future Nexus boundary; add synthetic-secret tests; verify exception rendering; document residual risk; and preserve equivalent Debug/Release protection. The stale `source/CalradiaForge.Core/Infra/Logging/SERILOG_WORKFLOW_GUIDE.md` is deferred and is not a current source of lifecycle guidance.
+
+## Performance Verification
+
+Later audit work should measure logging behavior without weakening required diagnostics or redaction. Applicable comparisons include disabled-level message construction, interpolated strings versus message-template construction, structured payload construction, enrichment and source-context cost, redaction and formatter cost, async sink buffering and file-write behavior, and retention cleanup.
+
+Do not infer that `Serilog.Sinks.Async` is always faster. Measure relevant user-visible or component behavior under comparable Release conditions, and keep expensive diagnostic guards only where payload construction is genuinely costly.
 
 ## Approved Package Set
 
@@ -120,10 +144,15 @@ Phase 2 creates the Serilog infrastructure only. It must not convert app-wide le
 - Logs are created in the expected logs directory.
 - Minimum level suppresses lower-priority messages.
 - Session logs retain expected lifecycle behavior or have an intentional Serilog replacement.
-- Redaction applies to plain messages, exception details, and structured payloads.
+- Redaction applies to plain messages, exception details, and rendered structured values; destructured-value safety must be proven before it is claimed.
 - Log cleanup preserves recent files and removes old session logs according to retention rules.
 - Sample Nexus-like secrets are redacted even in debug logs.
 - Steam/Bannerlord path-resolution diagnostics redact user-specific path details in shared/exported diagnostics where required.
+- Performance and profiler output follows the same redaction and secret-boundary rules.
+- One factory invocation produces one shared logger instance; repeated factory creation and duplicate providers are detected.
+- Cleanup runs once before the active sink opens; the active file is preserved on archive failure; archive collisions never overwrite; access/move failures are recoverable and visible.
+- Shutdown waits for logging-producing work, closes exactly once, releases the active handle before archive, and does not rely on an unassigned global close.
+- The selected retention semantics, file-size behavior, minimum level, Debug-only sink exclusion, formatter output, and redaction behavior are verified in relevant Debug/Release paths.
 
 ## Guardrails
 
@@ -133,6 +162,9 @@ Phase 2 creates the Serilog infrastructure only. It must not convert app-wide le
 - Do not move call-site migration into Phase 2.
 - Do not make Core depend on WPF logging APIs.
 - Do not allow future Nexus auth logs to bypass redaction.
+- Do not remove required logging, redaction, or diagnostics solely to improve benchmark results.
+- Do not present disabled-level, sink, or enrichment savings as measured without comparable evidence.
+- Do not remove or bypass the formatter/redactor for performance without separate owner approval and caller-safety evidence.
 
 ## Future Documentation Cross-References
 
@@ -147,6 +179,12 @@ Accepted logging and redaction decisions should later be migrated into future lo
 
 ## Open Questions
 
-- What retention policy should replace or preserve the current 14-day cleanup?
+- Should `RetainedFileCount` mean file count or file age, and what exact retention/active-file/archive policy should replace or preserve the current cleanup?
+- Should the active file preserve the Serilog default approximate size limit, use explicit size rolling, or use another policy?
+- Should logger ownership belong to `SerilogLoggerFactory` or the DI provider?
+- Should the shared logger be assigned to `Serilog.Log.Logger`, or be directly disposed through DI?
+- What is the exact provider/logger disposal order after workflow quiescence?
+- What collision-safe archive naming and failure-reporting contract should be used?
+- Should central formatter/redactor protection remain, or can caller discipline replace it after Phase 5.B review and owner approval?
 - Should diagnostic bundles redact or omit user-specific filesystem paths?
 - Which path components should remain visible when diagnosing multi-library Steam Workshop detection?

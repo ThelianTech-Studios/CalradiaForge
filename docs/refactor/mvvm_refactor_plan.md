@@ -65,6 +65,12 @@ During page and ViewModel extraction, scan/refresh state should be able to surfa
 - Core workflow tests should exist where practical before high-risk page extractions.
 - ViewModel tests should grow with each stable ViewModel.
 
+## Performance And Responsiveness Verification
+
+The final performance audit should inspect UI-thread blocking, startup and navigation construction, repeated transient UI work, scan/install/settings workflows, and service calls that can delay interaction. Use component benchmarks where they provide a stable boundary and manual responsiveness smoke checks for interactive WPF behavior.
+
+Do not encode fragile wall-clock expectations in ViewModel unit tests. Preserve current UX behavior unless a separate owner-approved change exists.
+
 ## Guardrails
 
 - Do not rewrite the whole UI in one pass.
@@ -73,6 +79,7 @@ During page and ViewModel extraction, scan/refresh state should be able to surfa
 - Preserve the Toast System as the user-visible notification surface.
 - Keep current UX behavior unless a later task explicitly changes it.
 - Keep visual redesign out of this architecture phase.
+- Do not improve benchmark output by moving work off the UI thread without verifying behavior, cancellation, state ownership, and user-visible ordering.
 
 ## Verification Expectations
 
@@ -80,6 +87,7 @@ During page and ViewModel extraction, scan/refresh state should be able to surfa
 - ViewModel tests cover start/progress/success/failure/cancel states as workflows are extracted.
 - Manual smoke tests cover navigation, mod scan, install, BLSE, modpack save/load/import/export, settings, language selection, debug-mode toggle, and toasts.
 - No new WPF references appear in Core.
+- Manual smoke checks cover UI responsiveness and UI-thread-sensitive workflows where CLI execution cannot provide evidence.
 
 ## Future Documentation Cross-References
 

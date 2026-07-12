@@ -2,111 +2,227 @@
 
 ## Purpose
 
-Replace static application service access over time with explicit composition using `Microsoft.Extensions.DependencyInjection`, then stage legacy logger call-site migration after the DI foundation is in place.
+Replace static application service construction and access over time with explicit composition using `Microsoft.Extensions.DependencyInjection`, while preserving the UI/Core/Nexus boundaries and staging legacy logger call-site migration after the DI foundation is verified.
+
+This document defines the locked Phase 5.A composition model. It is a planned architecture and does not claim that DI is implemented in the current source tree.
 
 ## Current Source Observations
 
-- `App.xaml.cs` initializes services and exposes static properties such as `AppConfig`, `ModService`, `ModInstaller`, `ModpackService`, `GameLauncher`, `Toasts`, and `Translator`.
+- `App.xaml.cs` initializes services manually and exposes static properties such as `AppSettingsInstance`, `ModService`, `ModInstaller`, `ModpackService`, `GameLauncher`, `Toasts`, and `Translator`.
 - Core services already accept important dependencies explicitly, such as `ModService(AppConfigSettings, ModsData)` and `ModInstaller(AppConfigSettings)`.
-- Pages currently pull services from `App.*`.
+- Pages currently retrieve services through static `App.*` access.
+- `App.xaml` currently uses `StartupUri` for `MainWindow` construction.
+- `SerilogLoggerFactory` currently exposes `Create()`, not `Build()`. The current method performs cleanup, creates a logger, and returns it without retaining the instance; current startup does not resolve or assign this factory/logger through DI.
+- The current sink targets `CalradiaForge_Latest.log` with infinite rolling, `shared: false`, asynchronous output, and no explicit `fileSizeLimitBytes` or `rollOnFileSizeLimit` setting. Current cleanup is invoked per `Create()` call, not once at application startup.
+- Current `App.OnExit` requests installer cancellation but does not await fire-and-forget install work before shutdown. This plan must not describe current shutdown as quiescent.
 - `CalradiaForge.Nexus` is a reserved boundary and should gain registrations only when Nexus services exist.
 
-## Target Direction
+## Locked Composition Model
 
-- Register services once during app startup.
-- Inject services into ViewModels and workflow coordinators.
-- Keep UI-only services in UI.
-- Keep Core services free of WPF.
-- Add platform adapters for Windows-specific operations.
-- Split the work into `Phase 5.A - DI And Platform Adapter Foundation` and `Phase 5.B - Legacy Logger Call-Site Migration`.
-- Support test-friendly service replacement.
-- Keep `Microsoft.Extensions.Hosting` / Host Builder deferred and not planned unless later justified.
+The application will use one `IServiceCollection` and one application-level `ServiceProvider` for the process lifetime.
+
+```mermaid
+flowchart TD
+    A[App.xaml.cs startup] --> B[Create IServiceCollection]
+    B --> C[AddCoreServices]
+    B --> D[AddUiServices]
+    C --> E[Build one ServiceProvider]
+    D --> E
+    E --> F[Resolve MainWindow]
+    F --> G[Run application]
+    G --> H[Dispose ServiceProvider on exit]
+```
+
+Required rules:
+
+- `App.xaml.cs` is the application composition root.
+- Configuration bootstrap occurs before registrations that require loaded settings.
+- Startup creates one `IServiceCollection`.
+- `AddCoreServices(...)` and `AddUiServices(...)` contribute registrations to that same collection.
+- Startup builds exactly one application-level `ServiceProvider`.
+- The provider resolves `MainWindow` and its constructor dependencies.
+- Provider disposal occurs during application shutdown.
+- Separate Core and UI providers are prohibited because they can duplicate singleton instances and split application state.
+- The root provider must not become a hidden service locator used by arbitrary pages, controls, or Core services.
+
+## Registration Ownership
+
+Core and UI registration modules are separate, but they operate on the same collection.
+
+### Core Registration Ownership
+
+Core registration may own:
+
+- Configuration and typed settings.
+- Serilog infrastructure and the shared logger.
+- Core application services and stateful data helpers.
+- Core infrastructure and platform-abstraction implementations that belong in Core.
+
+Core registration must remain WPF-free. It must not register windows, pages, ViewModels, dialogs, toast services, or other WPF-specific types.
+
+### UI Registration Ownership
+
+UI registration owns:
+
+- `MainWindow` and other windows.
+- Pages and ViewModels.
+- Dialog and file-picker services.
+- Toast, navigation, and other UI-only services.
+- WPF-specific platform implementations.
+
+### Nexus Registration Ownership
+
+`CalradiaForge.Nexus` remains a separate boundary. Future Nexus services may contribute a Nexus-owned registration module when implementation exists. Nexus authentication, networking, API calls, downloader mechanics, and transport must not move into Core.
+
+## App.xaml.cs Responsibility
+
+`App.xaml.cs` remains responsible for orchestration rather than individual service construction:
+
+1. Load and bootstrap configuration.
+2. Create the one `IServiceCollection`.
+3. Call Core and UI registration methods.
+4. Build the one `ServiceProvider`.
+5. Resolve and show `MainWindow`.
+6. Preserve startup exception handling and diagnostics.
+7. Dispose the provider during shutdown.
+
+When DI-resolved startup becomes active, remove or replace `StartupUri` in `App.xaml`. WPF must not construct a second unmanaged `MainWindow` instance. Migrated windows, pages, controls, and ViewModels should receive dependencies through constructors instead of reading static `App.*` service properties.
+
+## Serilog Relationship
+
+`SerilogLoggerFactory` is planned as an application singleton. The current source exposes non-retaining `Create()`; `Build()` is only a possible future naming/contract target. Phase 5.A must explicitly decide whether the factory owns and disposes the retained logger or whether DI owns disposal of the logger returned by the factory. Either model must yield one shared logger and exactly one disposal path.
+
+```text
+App.xaml.cs
+  -> AddCoreServices()
+      -> SerilogLoggerFactory singleton
+           -> planned Build()/current Create()
+               -> shared Serilog.ILogger singleton
+```
+
+Required behavior:
+
+- Register `SerilogLoggerFactory` once as a singleton.
+- Register the shared `Serilog.ILogger` once as a singleton resolved through the factory's single retained result after the final contract is chosen.
+- Do not call `Create()`/`Build()` repeatedly, create loggers from multiple registration factories, build logger instances through separate providers, or hide logger construction outside the composition root.
+- Choose and document one disposal owner: factory-owned disposal or DI/provider-owned disposal. Prohibit both, and do not rely on `Serilog.Log.CloseAndFlush()` unless the shared instance is intentionally assigned to `Serilog.Log.Logger` and no direct disposal path remains.
+- Perform retention cleanup once during startup before opening the active file. The current per-factory cleanup is an observation to replace, not a lifecycle guarantee.
+- On shutdown, stop new logging-producing work, request cancellation, await or confirm active workflow completion, dispose/stop log-producing services, close the logger exactly once, confirm the active handle is released, attempt archive, and then dispose remaining provider-owned resources according to the selected ownership model.
+- The archive helper contract must return false for no active file, an unresolvable collision, or move/access failure; it must never overwrite an existing archive, must use collision-safe deterministic naming, and must preserve the active file when archiving fails.
+- Phase 5.A establishes construction and lifetime.
+- Phase 5.B migrates legacy logger call sites in controlled batches after the Serilog foundation and DI composition are verified.
+
+## Initial Lifetime Direction
+
+| Service category | Initial lifetime |
+|---|---|
+| `AppConfig`, `AppConfigSettings`, `SerilogLoggerFactory`, shared `Serilog.ILogger` | Singleton |
+| Stateful Core application services and app-scoped data helpers | Singleton |
+| Platform adapters without per-operation state | Singleton |
+| Toast and other app-wide UI services | Singleton |
+| Windows, pages, and ViewModels | Transient unless preserved state requires a documented exception |
+| Operation-specific state or future scoped workflows | Explicitly designed later; do not introduce scopes without a demonstrated lifecycle need |
+
+Any lifetime exception must document state ownership, state-retention behavior, thread-safety, disposal ownership, navigation implications, and why the default lifetime is unsuitable. Lifetime changes must not be made solely to improve synthetic benchmark output.
+
+## Logger Lifecycle Decision Register
+
+The following decisions remain intentionally unresolved until implementation review:
+
+- Whether the factory retains and disposes the logger or DI retains and disposes the logger returned by the factory.
+- Whether the shared logger is assigned to global `Serilog.Log.Logger` or remains directly DI-owned and disposed.
+- The exact provider/logger disposal order after logging-producing workflows are quiescent.
+- The archive filename timestamp/sequence format and collision strategy.
+- Whether the retention setting means file count or file age, and how existing active/archived files are excluded.
+- Whether the active file retains the Serilog default approximate size limit, uses explicit size rolling, or adopts another owner-approved policy.
+
+No unresolved option is an implemented architecture decision.
+
+## Logger Lifecycle Verification Cases
+
+Phase 5.A implementation must cover one factory invocation, one logger identity, cleanup once and before sink open, no duplicate providers, DI/global ownership consistency, shutdown quiescence, exactly-once close/disposal, active-handle release before rename, no-overwrite archive collisions, no-file behavior, access/move failure preservation, and provider disposal without a second logger close. Phase 5.B must add caller/property/exception-data review and synthetic-secret coverage; it must not silently remove central redaction.
 
 ## Steam And Bannerlord Path Adapter Planning
 
-Steam library discovery, Bannerlord install detection, and Steam Workshop path resolution should be planned as explicit platform/path-resolution boundaries before scanner work expands. The known Workshop scanning issue remains unresolved by this plan; it is staged here because the likely investigation area is Steam library discovery and path resolution, not the Bannerlord AppID `261550` string.
+Steam library discovery, Bannerlord install detection, and Steam Workshop path resolution should be explicit platform/path-resolution boundaries before scanner work expands. The known Workshop scanning issue remains unresolved by this plan; the likely investigation area is Steam library and path resolution, not the Bannerlord AppID `261550` string.
 
 Adapter planning should support:
 
-- Steam client install path detection as separate from Steam library root discovery.
-- Bannerlord install detection as separate from the selected Workshop content root.
+- Steam client install path detection separately from Steam library root discovery.
+- Bannerlord install detection separately from the selected Workshop content root.
 - Multiple Steam library roots.
 - Workshop candidate composition under `steamapps/workshop/content/261550`.
-- Workshop content under the Bannerlord library root, even when the Steam client is installed elsewhere.
-- Manual Workshop path override behavior, if supported, unless a later owner decision removes it.
+- Workshop content under the Bannerlord library root even when Steam is installed elsewhere.
+- Manual Workshop path override behavior if supported, unless a later owner decision removes it.
 - Fakeable path providers and fake filesystem roots for tests.
 - Windows-specific registry and filesystem probing behind adapters.
-- Core remains WPF-free.
-
-The preferred shape is to resolve candidate Steam library roots first, then evaluate valid Bannerlord and Workshop path candidates without assuming that Workshop content lives under the main Steam client install folder.
-
-## Proposed Lifetimes
-
-| Service type | Lifetime |
-|---|---|
-| `AppConfig`, `AppConfigSettings` | Singleton |
-| Data helpers such as `ModsData`, `ModpackData` | Singleton or app-scoped singleton |
-| Core services such as `ModService`, `ModInstaller`, `ModpackService`, `GameLauncher` | Singleton while they hold app-wide state |
-| Toast and dialog services | Singleton UI services |
-| ViewModels | Transient unless navigation requires preserved state |
-| Platform adapters | Singleton unless they hold operation state |
-| Future Nexus auth/download services | Register in Nexus boundary with explicit lifetimes when implemented |
-
-## Platform Adapter Candidates
-
-- Game path detection.
-- Steam client path detection.
-- Steam library root discovery.
-- Bannerlord install detection.
-- Steam Workshop path resolution.
-- Registry access.
-- External process launching.
-- URL and file explorer launching.
-- File dialogs.
-- Archive extraction implementation details where isolation improves testability.
-- File-system operations that need containment checks.
-- Future OS-specific Nexus/NXM handler registration.
+- Core remaining WPF-free.
 
 ## Phased Implementation
 
 | Phase | Work | Verification |
 |---|---|---|
-| 1 | Add DI package and composition root in UI startup. | Build succeeds; service instances match current startup behavior. |
-| 2 | Register existing Core services without behavior changes. | Startup, scan, install, modpack load, settings, and launch still work. |
-| 3 | Introduce platform adapter interfaces, including Steam/Bannerlord path-resolution adapter targets. | Game path detection, Workshop path candidate resolution, explorer/url launch, file dialogs, and process launch remain functional. |
-| 4 | Resolve ViewModels through DI as MVVM extraction begins. | ViewModel tests can replace services. |
-| 5.A | DI And Platform Adapter Foundation | Composition root, service lifetimes, and platform adapters are in place without behavior changes. | Build; startup smoke test |
-| 5.B | Legacy Logger Call-Site Migration | Convert legacy logger call sites in staged batches after the DI foundation exists, using the approved logging path. | Build; logging smoke test |
+| 5.A | Add the approved DI package; create Core and UI registration modules; compose one collection and one provider; resolve `MainWindow`; transition away from `StartupUri`; establish lifetimes, logger ownership, startup cleanup, shutdown quiescence, exact-once close, archive, disposal, platform adapters, and test replacements. | Build; startup/shutdown smoke test; singleton identity; factory count; cleanup timing; handle release; archive collision/failure; constructor resolution; duplicate-window check; provider disposal; Core boundary; adapter substitution. |
+| 5.B | Migrate legacy logger call sites in staged batches after the Phase 2 Serilog foundation and Phase 5.A composition are verified, including secret-safe structured-property and exception-data review. | Build; logging smoke tests; redaction/property and minimum-level checks; equivalent-behavior review; separate owner decision for any redactor removal. |
+
+## Performance Verification Relationship
+
+Later performance phases should measure this architecture rather than redesign it for synthetic results. Applicable measurements include:
+
+- Registration and provider-build cost.
+- Representative first-resolution and repeated-resolution cost.
+- Accidental duplicate provider or singleton creation.
+- Repeated logger construction.
+- Startup work that can safely be deferred.
+- Disposal and lifetime leaks.
+- Transient UI construction churn where navigation creates measurable repeated work.
+- Static `App` access or ad hoc provider resolution that bypasses the intended graph.
+
+Correctness checks for one provider, singleton identity, DI-resolved `MainWindow`, and provider disposal are not substitutes for timing benchmarks.
 
 ## Guardrails
 
-- Do not use DI as a hidden service locator.
-- Do not move Nexus networking into Core.
-- Do not make Core depend on WPF abstractions.
-- Do not convert every class at once.
-- Do not add Host Builder complexity without a documented reason.
-- Do not treat `ILogger<T>` as the current target for this plan.
+- Do not create separate Core and UI service providers.
+- Do not build a provider inside a registration module.
+- Do not use the provider as a hidden service locator.
+- Do not register WPF types from Core.
+- Do not retain `StartupUri` when `MainWindow` is resolved and shown through DI.
+- Do not register multiple independently built `Serilog.ILogger` instances, repeat factory creation, or introduce multiple close/disposal paths.
+- Do not change a service lifetime without documenting the required rationale.
+- Do not move Nexus networking, authentication, downloader mechanics, or transport into Core.
+- Do not add Host Builder complexity without a documented reason and separate approval.
+- Do not treat `Microsoft.Extensions.Logging.ILogger<T>` as the current logging target.
+- Do not use DI to rewrite services only for style.
 
 ## Verification Expectations
 
 - `dotnet build source/CalradiaForge.slnx` succeeds.
-- Existing startup initializes the same app services once.
-- Singleton services that hold app-wide state are not accidentally duplicated.
-- Tests can substitute key services or adapters.
+- Startup uses one `IServiceCollection` and one application-level `ServiceProvider`.
+- `AddCoreServices(...)` and `AddUiServices(...)` contribute to the same collection.
+- `MainWindow` is resolved exactly once through DI when DI startup is active.
+- WPF does not also construct `MainWindow` through `StartupUri`.
+- Intended singleton services resolve to the same instance for all consumers.
+- The planned factory contract supplies one retained shared `Serilog.ILogger` instance; current source exposes non-retaining `Create()` and must not be documented as already migrated.
+- Cleanup occurs once before active-file open; shutdown quiesces log-producing work, closes exactly once, releases the active handle before archive, never overwrites on collision, preserves the active file on archive failure, and disposes the provider without a second logger close.
+- Migrated consumers use constructor injection rather than static `App.*` access.
+- Tests can replace key services and adapters.
 - Core remains WPF-free.
 
 ## Future Documentation Cross-References
 
-Accepted platform adapter decisions should later be migrated into future platform/path-detection documentation, especially for Steam library discovery, Bannerlord install detection, Workshop content path policy, manual override behavior, Windows registry probing, and fakeable filesystem/path-provider test boundaries. This plan should remain a staging artifact until those decisions are accepted.
+Accepted composition and platform-adapter decisions should later be migrated into canonical architecture, platform/path-detection, testing, UI/MVVM, and logging documentation. This plan remains a staging artifact until those decisions are accepted and implemented.
 
 ## Open Questions
 
-- Which platform adapters should be first: dialogs, explorer/url launch, registry/game detection, or filesystem?
+- Which platform adapters should be implemented first: dialogs, explorer/URL launch, registry/game detection, or filesystem?
 - Should Workshop scanning check all Steam libraries by default or prefer the Bannerlord install library first?
 - Should a manual Workshop path override be exposed or preserved in Settings?
+- Which specific UI services require preserved state rather than the transient default?
 
 ## Out Of Scope
 
 - Full Host Builder migration unless separately approved.
+- A generic service-locator abstraction.
 - Rewriting services only to satisfy DI style.
-- Moving networking, auth, downloader, or Nexus transport into Core.
+- Moving WPF references into Core.
+- Moving networking, authentication, downloader mechanics, or Nexus transport into Core.

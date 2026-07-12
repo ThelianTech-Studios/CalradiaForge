@@ -20,6 +20,7 @@ Improve mod archive, overwrite, and BLSE install safety without bypassing the cu
 - Do not treat BLSE as a normal module.
 - Never allow archive paths to escape the extraction or install destination.
 - Never silently overwrite official/reserved Bannerlord module folders.
+- Do not weaken archive containment, module identity validation, cleanup, or user-visible diagnostics for benchmark output.
 
 ## Current Risk Areas
 
@@ -65,6 +66,14 @@ BLSE remains a special-case install path:
 - Unexpected files must be blocked and reported.
 - Logs should record accepted, skipped, blocked, and overwritten BLSE files.
 - User-facing status/toast messages should explain blocked unsafe files.
+
+## Performance And Benchmark Verification
+
+Later performance work may measure the archive workflow, but safety remains part of the required end-to-end pipeline. Do not remove validation, containment, module identity checks, cancellation, cleanup, or result reporting to improve benchmark results.
+
+Where applicable, distinguish archive open and inspection, extraction-library execution, temporary destination preparation, containment and module identity validation, metadata processing, destination copy/move work, post-extraction parsing/scanning, cleanup, and progress/cancellation integration.
+
+SevenZipWrapper values are comparison evidence only when archive content, format, sizes, destination conditions, machine, runtime, build configuration, warmup, iterations, cache state, antivirus interference, and setup/cleanup placement are comparable. Otherwise mark the values as historical or not directly comparable and do not subtract them from CalradiaForge results.
 
 ## Phased Implementation
 

@@ -112,6 +112,12 @@ Acceptable example progression:
 | Docs/internal only | Usually no app version bump | Usually no app version bump |
 | Nexus SSO/API experimental work | Prerelease label | MINOR |
 
+## Performance Work And Versioning
+
+Documentation-only Phase 8 audit/report work usually does not require an application version bump. Implemented performance changes follow the existing before-v1.0 patch/milestone rules and require owner approval.
+
+Changelog and release documentation must distinguish measured, implemented, and verified performance improvements from audit recommendations. Rejected, deferred, inconclusive, reverted, theoretical, and unverified findings are not shipped changes.
+
 ## Phased Implementation
 
 | Phase | Work | Verification |
@@ -129,6 +135,7 @@ Acceptable example progression:
 - Docs-only changes usually do not require an app version bump.
 - Assembly-specific versioning needs a documented technical reason.
 - Do not describe experimental Nexus features as stable.
+- Do not describe performance audit findings or recommendations as shipped optimizations.
 
 ## Open Questions
 
