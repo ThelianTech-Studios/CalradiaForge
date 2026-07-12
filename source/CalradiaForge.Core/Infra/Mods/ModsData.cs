@@ -31,8 +31,6 @@
 			}
 			_currentFilePath = currentFilePath;
 			_backupFilePath = backupFilePath;
-			EnsureDirectoryExists(_currentFilePath);
-			EnsureDirectoryExists(_backupFilePath);
 		}
 		#region Current Mods Data
 		/// <summary>
@@ -143,18 +141,5 @@
 		}
 
 		#endregion
-
-		#region Helpers
-		/// <summary>
-		/// Ensures the parent directory exists for the specified file path.
-		/// </summary>
-		private void EnsureDirectoryExists(string filePath) {
-			string? directory = Path.GetDirectoryName(filePath);
-			if (directory != null && !Directory.Exists(directory)) {
-				Directory.CreateDirectory(directory);
-			}
-		}
-		#endregion
-
 	}
 }
