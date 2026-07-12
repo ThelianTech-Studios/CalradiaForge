@@ -19,8 +19,9 @@
 	/// </summary>
 	public partial class App : Application {
 		private static Logger _logger = Logger.Instance;
-		public static AppConfigSettings AppConfig { get; private set; } = null!;
+		public static AppConfigSettings AppSettingsInstance { get; private set; } = null!;
 		public static ModService ModService { get; private set; } = null!;
+		public static object? ModManagerService { get; private set; }//ModManagerService Instance for managing the future Mod pipeline needs to change from obj to ModManagerService class once this has been developed.
 		public static ModInstaller ModInstaller { get; private set; } = null!;
 		public static ModpackService ModpackService { get; private set; } = null!;
 		public static GameLauncher GameLauncher { get; private set; } = null!;
@@ -54,7 +55,7 @@
 
 
 			// Apply saved debug mode to logger verbosity
-			if (AppConfig.DebugMode) {
+			if (AppSettingsInstance.DebugMode) {
 				_logger.MinimumLevel = Logger.LogLevel.Debug;
 				_logger.Info("App: Debug mode enabled — logging verbose diagnostic messages.");
 			}
@@ -64,7 +65,7 @@
 		/// Handles application shutdown and performs cleanup.
 		/// </summary>
 		protected override void OnExit(ExitEventArgs e) {
-			if (AppConfig.DebugMode) {
+			if (AppSettingsInstance.DebugMode) {
 				_logger.Debug("App: OnExit begin.");
 			}
 			try {
@@ -87,26 +88,26 @@
 		private void InitializeConfiguration() {
 			var appConfig = new AppConfig(AppPaths.ConfigFilePath);
 			appConfig.Load();
-			AppConfig = new AppConfigSettings(appConfig);
-			if (AppConfig.DebugMode) {
+			AppSettingsInstance = new AppConfigSettings(appConfig);
+			if (AppSettingsInstance.DebugMode) {
 				_logger.MinimumLevel = Logger.LogLevel.Debug;
 				_logger.Info("App: Debug mode enabled — logging verbose diagnostic messages.");
 			}
-			if (AppConfig.DebugMode) {
+			if (AppSettingsInstance.DebugMode) {
 				_logger.Debug("App: Initializing configuration.", new { AppPaths.ConfigFilePath });
 			}
-			if ((AppConfig.GameProvider == GameProvider.NotInitialized) || string.IsNullOrWhiteSpace(AppConfig.GameFolderPath)) {
+			if ((AppSettingsInstance.GameProvider == GameProvider.NotInitialized) || string.IsNullOrWhiteSpace(AppSettingsInstance.GameFolderPath)) {
 				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 					_logger.Debug("App: Game paths not initialized. Running auto-detection.");
 				}
-				GamePathsHelper.TryAutoDetectGameFolder(AppConfig);
+				GamePathsHelper.TryAutoDetectGameFolder(AppSettingsInstance);
 			}
 
-			if (AppConfig.DebugMode) {
+			if (AppSettingsInstance.DebugMode) {
 				_logger.Debug("App: Configuration initialized.", new {
-					AppConfig.DebugMode,
-					AppConfig.Language,
-					AppConfig.GameProvider
+					AppSettingsInstance.DebugMode,
+					AppSettingsInstance.Language,
+					AppSettingsInstance.GameProvider
 				});
 			}
 		}
@@ -126,11 +127,11 @@
 			ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
 			try {
-				LanguageSelectWindow languageWindow = new(availableLanguages, AppConfig.Language);
+				LanguageSelectWindow languageWindow = new(availableLanguages, AppSettingsInstance.Language);
 				bool? result = languageWindow.ShowDialog();
 
 				if (result == true && !string.IsNullOrWhiteSpace(languageWindow.SelectedLanguageCode)) {
-					AppConfig.Language = languageWindow.SelectedLanguageCode;
+					AppSettingsInstance.Language = languageWindow.SelectedLanguageCode;
 					_logger.Info($"App: First-run language selected '{languageWindow.SelectedLanguageCode}'.");
 				} else {
 					_logger.Info("App: Language selection window closed without confirmation. Keeping configured default language.");
@@ -148,7 +149,7 @@
 			EulaService eulaService = new();
 			eulaService.Load();
 
-			if (!eulaService.RequiresAcceptance(AppConfig)) {
+			if (!eulaService.RequiresAcceptance(AppSettingsInstance)) {
 				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 					_logger.Debug("App: EULA already accepted. Skipping prompt.");
 				}
@@ -172,7 +173,7 @@
 				return false;
 			}
 
-			eulaService.RecordAcceptance(AppConfig);
+			eulaService.RecordAcceptance(AppSettingsInstance);
 			_logger.Info("App: EULA accepted.");
 			return true;
 		}
@@ -185,12 +186,12 @@
 				_logger.Debug("App: Initializing mod services.", new { AppPaths.ModsCurrentFilePath, AppPaths.ModsBackupFilePath });
 			}
 			var modsData = new ModsData(AppPaths.ModsCurrentFilePath, AppPaths.ModsBackupFilePath);
-			ModService = new ModService(AppConfig, modsData);
+			ModService = new ModService(AppSettingsInstance, modsData);
 			ModService.LoadFromCache();
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("App: Mod cache loaded.", new { Count = ModService.CurrentMods.Count });
 			}
-			ModInstaller = new ModInstaller(AppConfig);
+			ModInstaller = new ModInstaller(AppSettingsInstance);
 		}
 
 		/// <summary>
@@ -211,7 +212,7 @@
 		/// Initializes the game launcher service.
 		/// </summary>
 		private void InitializeLauncherService() {
-			GameLauncher = new GameLauncher(AppConfig);
+			GameLauncher = new GameLauncher(AppSettingsInstance);
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("App: GameLauncher initialized.");
 			}
@@ -231,8 +232,8 @@
 				_logger.Debug("App: Initializing translator service.", new { AppPaths.LanguagesDirectory });
 			}
 			var loader = new TranslationManager(AppPaths.LanguagesDirectory, AppPaths.LanguagesManifestFilePath, AppPaths.DefaultLanguageFilePath);
-			Translator = new TranslationService(loader, AppConfig);
-			if (!AppConfig.EulaAccepted) {
+			Translator = new TranslationService(loader, AppSettingsInstance);
+			if (!AppSettingsInstance.EulaAccepted) {
 				InitializeLangSelection(loader);
 			}
 			Translator.Initialize();
