@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Preserved the legacy `Logger` implementation and all existing `Logger.Instance` call sites as the compatibility path for the planned Phase 5.B migration.
 - Configured `Serilog.Sinks.Debug` for Debug builds only; application composition, one-time cleanup, logger ownership, shutdown flushing, and active-log archival remain deferred to Phase 5.A.
+- Removed duplicate directory-creation calls and `EnsureDirectoryExists` helpers from `ModpackData` and `ModsData`, leaving `AppPaths` as the directory-resolution owner.
+- Renamed the static `App` configuration facade from `AppConfig` to `AppSettingsInstance`, updated the references inside `App`, and added the nullable `ModManagerService` placeholder for future mod-pipeline work.
 
 ---
 
