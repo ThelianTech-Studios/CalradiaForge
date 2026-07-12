@@ -68,9 +68,10 @@
 			AddIfMissing("BLSEExePath");
 			AddIfMissing("DefaultLaunchTarget", LaunchTarget.Bannerlord.ToString());
 			AddIfMissing("EulaAccepted", "False");
+			AddIfMissing("LogFileDaysToKeep", "7");
 		}
 		#endregion
-		#region Config Settings Not Json
+		#region Internal Config Settings
 		/// <summary>
 		/// Gets a value indicating whether the configured platform is Steam.
 		/// </summary>
@@ -307,6 +308,23 @@
 					_config["EulaAccepted"] = stringValue;
 					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 						_logger.Debug("AppConfigSettings: EulaAccepted changed.", new { OldValue = oldValue, NewValue = stringValue });
+					}
+				}
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the number of days to keep log files.
+		/// </summary>
+		public int LogFileDaysToKeep {
+			get => _config.GetInt("LogFileDaysToKeep", 7);
+			set {
+				string stringValue = value.ToString();
+				if (_config["LogFileDaysToKeep"] != stringValue) {
+					string oldValue = _config["LogFileDaysToKeep"];
+					_config["LogFileDaysToKeep"] = stringValue;
+					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+						_logger.Debug("AppConfigSettings: LogFileDaysToKeep changed.", new { OldValue = oldValue, NewValue = stringValue });
 					}
 				}
 			}
