@@ -32,6 +32,7 @@
 		private const string ModsBackupFileName = "mods_backup.data";
 		private const string LastUsedModsFileName = "last_used_mods.data";
 		private const string ConfigFileName = "config.json";
+		private const string LogsFileName = "CalradiaForge_Latest.log";
 		private const string LanguagesManifestFileName = "languages.json";
 		private const string DefaultLanguageFileName = "en-US.json";
 		private const string EulaFileName = "Eula.txt";
@@ -50,7 +51,8 @@
 		private static readonly Lazy<ResolvedHiddenDirectory> _extractionDirectory = new(() => ResolveHiddenDirectory(Path.Combine(RootDirectory, ExtractionFolderName)));
 		#endregion
 
-		#region Directory Properties
+		#region Path Properties
+		// The Filepath properties need to be resolved so we reduce the need of calling Path.Combine() every time the property is accessed. 
 		/// <summary>
 		/// Gets the configuration directory path.
 		/// </summary>
@@ -99,7 +101,13 @@
 		/// Gets the path to the configuration JSON file.
 		/// </summary>
 		public static string ConfigFilePath => Path.Combine(ConfigDirectory, ConfigFileName);
-
+		/// <summary>
+		/// Gets the path to the log file.
+		/// </summary>
+		public static string LogsFilePath => Path.Combine(LogsDirectory, LogsFileName);
+		/// <summary>
+		/// Gets the path to the languages manifest file.
+		/// </summary>
 		public static string LanguagesManifestFilePath => Path.Combine(LanguagesDirectory, LanguagesManifestFileName);
 		/// <summary>
 		/// Gets the path to the default language JSON file (e.g. <c>en-US.json</c>) in the languages directory.
