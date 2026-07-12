@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## 0.13.x - Internal | 2026-07-12
+## 0.13.14 - Internal | 2026-07-12
 
 > Refactor Phase 2: Serilog infrastructure foundation and secret-safe logging preparation.
 
