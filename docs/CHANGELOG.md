@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## 0.13.x - Internal | 2026-07-12
+
+> Refactor Phase 2: Serilog infrastructure foundation and secret-safe logging preparation.
+
+### Added
+
+- Added a Core-only Serilog foundation with asynchronous file output to the infinite active `CalradiaForge_Latest.log`, thread enrichment, exception enrichment, and log-context support for later composition.
+- Added the `LogRedactor`, `RedactingTextFormatter`, and custom `LogRetentionPolicy` infrastructure for secret-like message, exception, and rendered-property redaction and age-based log cleanup.
+
+### Changed
+
+- Preserved the legacy `Logger` implementation and all existing `Logger.Instance` call sites as the compatibility path for the planned Phase 5.B migration.
+- Configured `Serilog.Sinks.Debug` for Debug builds only; application composition, one-time cleanup, logger ownership, shutdown flushing, and active-log archival remain deferred to Phase 5.A.
+
+---
+
 ## 0.13.6 - Internal | 2026-07-08
 
 > Refactor Phase 1: cleanup for nullability, localization fallback behavior, documentation alignment, and scanner/path-resolution planning.
