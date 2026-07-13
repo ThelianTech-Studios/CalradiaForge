@@ -1,9 +1,11 @@
 # Migration Map
 
+> Historical implementation record: the Phase 2 redaction entries below describe what was previously added. They are not active logging policy; the 2026-07-12 owner decision removed automatic redaction and retained only neutral formatting.
+
 ```text
 <Metadata>
 Last Changelog Version: v0.13.14
-Last Git Commit ID: 091974d95ce1d0a269b1c8b836c4223c9b6b04a1
+Last Git Commit ID: 1b23045a2cc2326a6b7a0bb06e6a469a51360c2b
 Last Git Branch Used: dev-V0-14-CodeRefactor(HEAD)
 Last Map Compile Date: 2026-07-12
 </Metadata>
@@ -38,7 +40,7 @@ Workflow rules for when and how to update this file are owned by `docs/refactor/
 
 | Version | Migration scope | Source comparison | Status |
 |---|---|---|---|
-| `v0.13.14` | Serilog infrastructure foundation, log-retention configuration, data-helper cleanup, and application configuration-property rename | `37c322e...091974d` | Mapped from committed build diff |
+| `v0.13.14` | Serilog infrastructure foundation, log-retention configuration, data-helper cleanup, application configuration-property rename, and neutral formatter/redaction-removal follow-up | `37c322e...HEAD` | Mapped from committed build diff |
 | `v0.13.6` | Cleanup/nullability/path/logging-message migration rows listed in this document | `dev-release...HEAD` | Mapped from current committed branch diff |
 
 <details open>
@@ -74,6 +76,32 @@ Workflow rules for when and how to update this file are owned by `docs/refactor/
 | `source/CalradiaForge.Core/Infra/Mods/ModsData.cs` | Modified | constructor; removed `EnsureDirectoryExists` | The constructor created current/backup file directories locally; those calls and the helper were removed. | Removes duplicate directory creation from the mods data helper. |
 | `source/CalradiaForge.Core/Infra/Paths/AppPaths.cs` | Modified | `LogsFileName`, `LogsFilePath` | `AppPaths` had no dedicated active-log filename/path; it now resolves `CalradiaForge_Latest.log` under `LogsDirectory`. | Gives the Serilog factory a stable application-owned active-log path. |
 | `source/CalradiaForge.UI/App.xaml.cs` | Modified | `AppConfig` → `AppSettingsInstance`, `ModManagerService`, `InitializeConfiguration`, `InitializeModServices`, `InitializeTranslatorService` | The static configuration facade was named `AppConfig`; it is renamed to `AppSettingsInstance`, the affected references inside `App` are updated, and a nullable `ModManagerService` placeholder is added. | Records the committed UI configuration-surface rename as part of this build's complete source diff. |
+
+</details>
+
+</details>
+
+<details open>
+<summary><strong>v0.13.14 follow-up</strong> - Internal source-only follow-up: removed automatic logging redaction and retained neutral Serilog text formatting.</summary>
+
+**Source comparison:** `091974d...1b23045`
+**Status:** Mapped from committed source-only follow-up diff
+**Changed source files:** 4
+**Scope rule:** Documentation-only files, Nexus files, and other non-source changes are excluded.
+
+| Area | Files | Summary |
+|---|---:|---|
+| Logging redaction removal and neutral formatting | 4 | Removed the automatic redaction layer, replaced the sink formatter with neutral event rendering, and kept the Serilog factory wired to the new formatter. |
+
+<details>
+<summary><strong>Detailed file map</strong></summary>
+
+| File | Change | Key Identifiers | Original vs Updated | Summary |
+|---|---|---|---|---|
+| `source/CalradiaForge.Core/Infra/Logging/LogRedactor.cs` | Deleted | `LogRedactor`, `Redact`, `RedactValue`, `RenderProperty` | The shared regex and structured-value redaction component was removed. | Eliminates automatic secret-like message, URL, exception, and property filtering from the logging pipeline. |
+| `source/CalradiaForge.Core/Infra/Logging/RedactingTextFormatter.cs` | Deleted | `RedactingTextFormatter`, `Format` | The sink formatter that routed rendered messages, exceptions, and properties through `LogRedactor` was removed. | Removes formatter-level redaction and preserves ordinary Serilog event rendering. |
+| `source/CalradiaForge.Core/Infra/Logging/SerilogLoggerFactory.cs` | Modified | `SerilogTextFormatter` construction; file/Debug sink formatter arguments | The factory instantiated `RedactingTextFormatter`; it now instantiates `SerilogTextFormatter` for both configured text sinks. | Keeps the existing Serilog sink composition while removing the formatter security boundary. |
+| `source/CalradiaForge.Core/Infra/Logging/SerilogTextFormatter.cs` | Added | `SerilogTextFormatter`, `Format`, `AppendPropertyIfPresent` | No neutral formatter existed; the new formatter renders timestamps, levels, messages, selected context properties, structured properties, and exceptions without filtering. | Provides the active presentation formatter for local Serilog text output. |
 
 </details>
 

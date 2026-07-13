@@ -9,19 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 0.13.14 - Internal | 2026-07-12
 
-> Refactor Phase 2: Serilog infrastructure foundation and secret-safe logging preparation.
+> Refactor Phase 2: Serilog infrastructure foundation with neutral local text formatting.
 
 ### Added
 
 - Added a Core-only Serilog foundation with asynchronous file output to the infinite active `CalradiaForge_Latest.log`, thread enrichment, exception enrichment, and log-context support for later composition.
-- Added the `LogRedactor`, `RedactingTextFormatter`, and custom `LogRetentionPolicy` infrastructure for secret-like message, exception, and rendered-property redaction and age-based log cleanup.
+- Added the neutral `SerilogTextFormatter` for rendering local Serilog text-sink output without changing event values.
+- Added the custom `LogRetentionPolicy` infrastructure for age-based local log cleanup.
 
 ### Changed
 
 - Preserved the legacy `Logger` implementation and all existing `Logger.Instance` call sites as the compatibility path for the planned Phase 5.B migration.
+- Updated `SerilogLoggerFactory` to use the neutral formatter for file and Debug sinks; messages, exceptions, and structured properties are rendered as supplied by the event.
 - Configured `Serilog.Sinks.Debug` for Debug builds only; application composition, one-time cleanup, logger ownership, shutdown flushing, and active-log archival remain deferred to Phase 5.A.
 - Removed duplicate directory-creation calls and `EnsureDirectoryExists` helpers from `ModpackData` and `ModsData`, leaving `AppPaths` as the directory-resolution owner.
 - Renamed the static `App` configuration facade from `AppConfig` to `AppSettingsInstance`, updated the references inside `App`, and added the nullable `ModManagerService` placeholder for future mod-pipeline work.
+
+### Removed
+
+- Removed `LogRedactor` and `RedactingTextFormatter`; automatic regex-based secret-like value and secret-bearing URL-parameter redaction is no longer part of the logging pipeline, so callers remain responsible for not intentionally logging credentials or secret-bearing values.
 
 ---
 
