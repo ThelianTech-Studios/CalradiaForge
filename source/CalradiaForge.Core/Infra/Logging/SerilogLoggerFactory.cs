@@ -34,7 +34,7 @@ public sealed class SerilogLoggerFactory {
 	/// <summary>Creates an isolated logger for later DI composition or smoke testing.</summary>
 	public Serilog.ILogger Create() {
 		LogRetentionPolicy.Cleanup(_logDirectory, _configInstance.LogFileDaysToKeep);
-		var formatter = new RedactingTextFormatter();
+		var formatter = new SerilogTextFormatter();
 		var configuration = new LoggerConfiguration()
 			.MinimumLevel.Is(_configInstance.DebugMode ? LogEventLevel.Debug : LogEventLevel.Information)
 			.Enrich.FromLogContext()
