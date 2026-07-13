@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Logging should provide useful local diagnostics while protecting secrets, keeping output compact, and avoiding hidden business state.
+Logging should provide useful local diagnostics, keep output compact, and avoid hidden business state. It is not an automatic privacy or secret-sanitization layer.
 
 ## Current Grounding
 
@@ -12,18 +12,18 @@ Logging should provide useful local diagnostics while protecting secrets, keepin
 - The current Serilog path targets `AppPaths.LogsFilePath`, named `CalradiaForge_Latest.log`, with `RollingInterval.Infinite`, `shared: false`, and asynchronous file output. It does not create daily rolled files.
 - `Create()` currently invokes custom cleanup on every factory call. `LogRetentionPolicy.Cleanup(...)` interprets the setting as an age in days, while `AppConfigSettings.RetainedFileCount` is named and documented as a file count; this mismatch is unresolved.
 - `retainedFileCountLimit: default` passes null to the nullable Serilog option, so it does not impose the normal file-count limit. `fileSizeLimitBytes` and `rollOnFileSizeLimit` are not configured, so the active-file size policy remains an owner decision.
-- `RedactingTextFormatter` and `LogRedactor` are active in the Serilog infrastructure. The formatter redacts rendered message, exception, and property text; structured/destructured-value safety still requires explicit verification. The legacy logger does not receive this protection merely because the files exist.
+- As of the 2026-07-12 audit of commit `1381dda6c30d159e0101699b729c10b4ece30f47`, the neutral `SerilogTextFormatter` is the custom `ITextFormatter`. It renders event values without inspecting, masking, redacting, sanitizing, or replacing them. The legacy `Logger.Instance` path remains live and separate from the future Serilog factory path.
 
 ## Policy
 
-- All log output must pass through central redaction before file or debug output.
+- The logging pipeline performs no automatic secret filtering, path masking, sanitization, or value replacement.
 - Info logs should record lifecycle summaries and important operation outcomes.
 - Warning logs should record recoverable problems.
 - Error logs should record failures with enough context to diagnose.
-- Debug logs may include structured context but must remain compact and redacted.
-- Logging must not store credentials, auth headers, bearer tokens, API keys, credential objects, or secret-bearing URLs.
+- Debug logs may include structured context and full relevant local filesystem paths when they are useful for diagnosis.
+- Logging callers and credential-owning components must not intentionally pass credentials, auth headers, bearer tokens, API keys, credential objects, or secret-bearing URLs to the logger.
 - Logging should not replace persisted domain data in `AppConfig`, `ModsData`, or `ModpackData`.
-- Future Nexus logs must pass through the same redaction layer as Core/UI logs.
+- Future Nexus logging code must follow the same caller-discipline rule. Nexus credentials remain in purpose-built credential components and are decrypted only for explicit operations.
 
 ## Steam And Bannerlord Path Diagnostics
 
@@ -36,24 +36,23 @@ Useful structured events include:
 - Discovered Steam library roots.
 - Detected Bannerlord install path.
 - Workshop path candidates composed under `steamapps/workshop/content/261550`.
-  - Log Game Installation and Steam workshop folderpaths, but redact user-specific path segments when exporting or sharing logs, however, keep the drive letter visible for diagnostics.
+  - Log game-installation and Steam Workshop folder paths when they are needed to diagnose the scanner; no automatic path masking is applied.
     > Bug Found: Auto Steam workshop mod scanning failure with game installation in separate drive path installed separately from Steam install drive.Needs logging for diagnostics.
 - Selected Workshop path, if any.
 - Reasons candidate Workshop paths were skipped, missing, empty, invalid, or failed during scan.
 - Scanner result counts for local modules and Workshop modules.
 
-User-facing messages should stay concise. Technical details should go to logs after redaction.
+User-facing messages should stay concise. Technical details should go to logs as appropriate diagnostic data. Users control whether they share local log files.
 
-## Path Redaction And Trust Boundaries
+## Path Diagnostics And Trust Boundaries
 
-Logs must not expose credentials, secret URLs, or unrelated personal filesystem data. Path diagnostics should record enough to diagnose Steam library and Workshop detection problems, but shared diagnostic bundles or exported logs should redact or sanitize user-specific path segments when policy requires it.
+The logger does not redact or sanitize filesystem paths. Relevant Steam, Bannerlord, Workshop, app-data, and selected override paths may appear in local logs. Logging callers remain responsible for not intentionally supplying credentials or authentication material. A future log-export, telemetry, or shared-diagnostic feature requires its own separately approved data-handling policy.
 
 Path logging should stay inside the app's trust boundary:
 
 - Do not log directory listings unrelated to Bannerlord, Steam library discovery, app data, selected override paths, or the active scan.
-- Do not log raw secret-bearing URLs.
-- Do not treat paths as secrets by default, but handle them as user-specific diagnostic data.
-- Apply the same redaction rules to debug payloads and normal logs.
+- Do not intentionally log credential-bearing URLs or credential values.
+- Do not treat relevant diagnostic paths as values that the logger must hide.
 
 ## Serilog Target
 
@@ -73,7 +72,7 @@ Path logging should stay inside the app's trust boundary:
 | Minimum level | Preserve current minimum-level behavior tied to `AppConfigSettings.DebugMode`; Release/Public Release builds may still write Debug-level events to file logs when runtime DebugMode is enabled. |
 | Debug level | Controlled by Serilog configuration/debug setting rather than repeated manual guards. |
 | Expensive diagnostics | Guard with level checks only when constructing the diagnostic payload is costly. |
-| Redaction | Current Serilog formatter applies `LogRedactor` to rendered values; structured/destructured property safety is not assumed until tested. Phase 5.B reviews callers, templates, properties, exceptions, URLs, and Nexus request/response data. Removing or narrowing central redaction requires separate owner approval. |
+| Formatting | `SerilogTextFormatter` is a neutral presentation template connected to the file and Debug sinks. It renders timestamp, level, message, applicable source context, thread information, properties, and exception information without rewriting event values. |
 
 ## Retention And File-Size Policy
 
@@ -89,13 +88,13 @@ The final implementation must choose factory-owned or DI-owned logger disposal a
 
 Archive behavior must never overwrite an existing file. It must distinguish no active file, collision without a safe alternate name, access/move failure, and success, and must retain the active file when the move fails. Timestamp-only names are not sufficient if they can collide; a deterministic sequence or equivalent collision-safe strategy is required.
 
-## Formatter And Redaction Decision Gate
+## Formatter Decision
 
-The current central formatter/redactor remains the default safety rule. A future proposal to remove it or rely on caller discipline must be a separate owner decision, not a performance optimization. Before approval, Phase 5.B must review every migrated call site, template, structured/destructured property, exception-data path, URL/query-string path, and future Nexus boundary; add synthetic-secret tests; verify exception rendering; document residual risk; and preserve equivalent Debug/Release protection. The stale `source/CalradiaForge.Core/Infra/Logging/SERILOG_WORKFLOW_GUIDE.md` is deferred and is not a current source of lifecycle guidance.
+The 2026-07-12 owner decision removes automatic secret redaction, path sanitization, secret-pattern filtering, and generic key-name blocking from the current implementation and future refactor requirements. Preserve the custom formatter concept as a readable presentation template. The named `source/CalradiaForge.Core/Infra/Logging/SERILOG_WORKFLOW_GUIDE.md` and `docs/Serilog_Logger_Follow_Up_Summary_2026-07-12.md` were not found in the current package; current source inspection is authoritative until those documents are created or restored.
 
 ## Performance Verification
 
-Later audit work should measure logging behavior without weakening required diagnostics or redaction. Applicable comparisons include disabled-level message construction, interpolated strings versus message-template construction, structured payload construction, enrichment and source-context cost, redaction and formatter cost, async sink buffering and file-write behavior, and retention cleanup.
+Later audit work should measure logging behavior without weakening required diagnostics. Applicable comparisons include disabled-level message construction, interpolated strings versus message-template construction, structured payload construction, enrichment and source-context cost, neutral formatter rendering, async sink buffering and file-write behavior, and retention cleanup.
 
 Do not infer that `Serilog.Sinks.Async` is always faster. Measure relevant user-visible or component behavior under comparable Release conditions, and keep expensive diagnostic guards only where payload construction is genuinely costly.
 
@@ -134,41 +133,40 @@ Phase 2 creates the Serilog infrastructure only. It must not convert app-wide le
 
 | Phase | Scope |
 |---|---|
-| 2 | Create the Serilog infrastructure files, redaction support, rolling file configuration, retention/archive helpers, source context support, thread enrichment, exception enrichment, and Debug-build-only debug sink configuration under `source/CalradiaForge.Core/Infra/Logging/`. Keep the legacy `Logger` file and all current call sites intact. |
+| 2 | Create the Serilog infrastructure files, neutral formatting, rolling file configuration, retention/archive helpers, source context support, thread enrichment, exception enrichment, and Debug-build-only debug sink configuration under `source/CalradiaForge.Core/Infra/Logging/`. Keep the legacy `Logger` file and all current call sites intact. |
 | 5.A | Establish dependency-injection composition and service initialization patterns. Do not use this phase to migrate all legacy logger callers. |
 | 5.B | Migrate legacy `Logger.Instance` call sites in controlled batches after the Serilog foundation and DI work exist. Remove repeated manual debug guards except around expensive diagnostic construction as call sites are migrated. |
-| Later verification | Add or expand tests for redaction, minimum-level behavior, Release artifact exclusion of Debug-only sinks, and legacy compatibility retirement when migration is complete. |
+| Later verification | Add or expand tests for formatter output, minimum-level behavior, Release artifact exclusion of Debug-only sinks, and legacy compatibility retirement when migration is complete. |
 
 ## Verification Expectations
 
 - Logs are created in the expected logs directory.
 - Minimum level suppresses lower-priority messages.
 - Session logs retain expected lifecycle behavior or have an intentional Serilog replacement.
-- Redaction applies to plain messages, exception details, and rendered structured values; destructured-value safety must be proven before it is claimed.
+- Formatter output includes the applicable timestamp, level, message, source context, thread information, properties, and exception details without value rewriting.
 - Log cleanup preserves recent files and removes old session logs according to retention rules.
-- Sample Nexus-like secrets are redacted even in debug logs.
-- Steam/Bannerlord path-resolution diagnostics redact user-specific path details in shared/exported diagnostics where required.
-- Performance and profiler output follows the same redaction and secret-boundary rules.
+- Logging callers do not intentionally pass credentials or authentication material to the logger.
+- Relevant local Steam/Bannerlord path-resolution diagnostics remain available without automatic path masking.
+- Any future performance, profiler, export, or telemetry output policy is defined separately when that feature is designed.
 - One factory invocation produces one shared logger instance; repeated factory creation and duplicate providers are detected.
 - Cleanup runs once before the active sink opens; the active file is preserved on archive failure; archive collisions never overwrite; access/move failures are recoverable and visible.
 - Shutdown waits for logging-producing work, closes exactly once, releases the active handle before archive, and does not rely on an unassigned global close.
-- The selected retention semantics, file-size behavior, minimum level, Debug-only sink exclusion, formatter output, and redaction behavior are verified in relevant Debug/Release paths.
+- The selected retention semantics, file-size behavior, minimum level, Debug-only sink exclusion, formatter output, and caller credential-boundary behavior are verified in relevant Debug/Release paths.
 
 ## Guardrails
 
-- Do not log secrets, raw auth headers, raw tokens, or secret-bearing URLs.
+- Do not intentionally pass credentials, raw auth headers, raw tokens, or secret-bearing URLs to the logger.
 - Do not introduce remote telemetry as part of this refactor.
 - Do not rewrite every logging call site in one uncontrolled pass.
 - Do not move call-site migration into Phase 2.
 - Do not make Core depend on WPF logging APIs.
-- Do not allow future Nexus auth logs to bypass redaction.
-- Do not remove required logging, redaction, or diagnostics solely to improve benchmark results.
+- Keep future Nexus credential mechanics outside ordinary logging and AppConfig.
+- Do not remove required logging or diagnostics solely to improve benchmark results.
 - Do not present disabled-level, sink, or enrichment savings as measured without comparable evidence.
-- Do not remove or bypass the formatter/redactor for performance without separate owner approval and caller-safety evidence.
 
 ## Future Documentation Cross-References
 
-Accepted logging and redaction decisions should later be migrated into future logging, security, and trust-boundary documentation. Scanner/path diagnostics should cross-reference future platform/path-detection documentation so path logging, redaction, and user-facing scan warnings stay aligned.
+Accepted logging and credential-boundary decisions should later be migrated into future logging, security, and trust-boundary documentation. Scanner/path diagnostics should cross-reference future platform/path-detection documentation so path logging and user-facing scan warnings stay aligned.
 
 ## Out Of Scope
 
@@ -185,6 +183,3 @@ Accepted logging and redaction decisions should later be migrated into future lo
 - Should the shared logger be assigned to `Serilog.Log.Logger`, or be directly disposed through DI?
 - What is the exact provider/logger disposal order after workflow quiescence?
 - What collision-safe archive naming and failure-reporting contract should be used?
-- Should central formatter/redactor protection remain, or can caller discipline replace it after Phase 5.B review and owner approval?
-- Should diagnostic bundles redact or omit user-specific filesystem paths?
-- Which path components should remain visible when diagnosing multi-library Steam Workshop detection?

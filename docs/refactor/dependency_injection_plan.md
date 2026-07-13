@@ -140,7 +140,7 @@ No unresolved option is an implemented architecture decision.
 
 ## Logger Lifecycle Verification Cases
 
-Phase 5.A implementation must cover one factory invocation, one logger identity, cleanup once and before sink open, no duplicate providers, DI/global ownership consistency, shutdown quiescence, exactly-once close/disposal, active-handle release before rename, no-overwrite archive collisions, no-file behavior, access/move failure preservation, and provider disposal without a second logger close. Phase 5.B must add caller/property/exception-data review and synthetic-secret coverage; it must not silently remove central redaction.
+Phase 5.A implementation must cover one factory invocation, one logger identity, cleanup once and before sink open, no duplicate providers, DI/global ownership consistency, shutdown quiescence, exactly-once close/disposal, active-handle release before rename, no-overwrite archive collisions, no-file behavior, access/move failure preservation, and provider disposal without a second logger close. Phase 5.B should review migrated callers and structured properties so credential-owning components do not intentionally pass credentials or authentication material to logs.
 
 ## Steam And Bannerlord Path Adapter Planning
 
@@ -163,7 +163,7 @@ Adapter planning should support:
 | Phase | Work | Verification |
 |---|---|---|
 | 5.A | Add the approved DI package; create Core and UI registration modules; compose one collection and one provider; resolve `MainWindow`; transition away from `StartupUri`; establish lifetimes, logger ownership, startup cleanup, shutdown quiescence, exact-once close, archive, disposal, platform adapters, and test replacements. | Build; startup/shutdown smoke test; singleton identity; factory count; cleanup timing; handle release; archive collision/failure; constructor resolution; duplicate-window check; provider disposal; Core boundary; adapter substitution. |
-| 5.B | Migrate legacy logger call sites in staged batches after the Phase 2 Serilog foundation and Phase 5.A composition are verified, including secret-safe structured-property and exception-data review. | Build; logging smoke tests; redaction/property and minimum-level checks; equivalent-behavior review; separate owner decision for any redactor removal. |
+| 5.B | Migrate legacy logger call sites in staged batches after the Phase 2 Serilog foundation and Phase 5.A composition are verified, including caller and structured-property review. | Build; logging smoke tests; formatter/minimum-level checks; equivalent-behavior review; caller credential-boundary review. |
 
 ## Performance Verification Relationship
 

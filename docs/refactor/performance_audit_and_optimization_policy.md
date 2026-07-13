@@ -19,8 +19,8 @@ Applicable areas may include:
 - Paths, filesystem checks, Steam library and Workshop discovery.
 - Mod scanning, parsing, version comparison, modpack validation, and persistence.
 - Archive inspection, extraction orchestration, validation, destination preparation, parsing, scanning, and cleanup.
-- Logging construction, disabled-level work, enrichment, redaction, and sink behavior.
-- Logger lifecycle targets include duplicate construction, factory invocation count, active-sink startup, cleanup cost and scaling, formatter/redactor cost, disabled-level work, async sink throughput/backpressure, flush/close, active-file rename, shutdown races, file-size behavior, retained-file cleanup, and allocations.
+- Logging construction, disabled-level work, enrichment, neutral formatter rendering, and sink behavior.
+- Logger lifecycle targets include duplicate construction, factory invocation count, active-sink startup, cleanup cost and scaling, formatter cost, disabled-level work, async sink throughput/backpressure, flush/close, active-file rename, shutdown races, file-size behavior, retained-file cleanup, and allocations.
 - Async work, cancellation, locking, contention, collections, serialization, allocations, and memory retention.
 - UI-thread-sensitive workflows and manual responsiveness observations.
 
@@ -204,8 +204,7 @@ Performance work must not:
 - Remove validation to improve a result.
 - Weaken archive containment, module identity checks, persistence atomicity, recovery, or filesystem safety.
 - Remove required logging or diagnostics without approval.
-- Bypass redaction.
-- Treat removal or narrowing of `RedactingTextFormatter`/`LogRedactor` as a performance optimization. Any such change requires a separate owner decision, Phase 5.B caller/property/exception safety review, synthetic-secret tests, and residual-risk documentation.
+- Introduce automatic secret or path filtering as a performance tactic.
 - Introduce unsafe or unbounded concurrency.
 - Add caching without ownership, invalidation, and stale-state rules.
 - Pool objects or buffers without evidence and safe lifetime handling.
@@ -374,7 +373,7 @@ Before editing:
 - Read the Phase 8 section in `docs/refactor/refactor_master_plan.md`.
 - Read `docs/refactor/performance_audit_and_optimization_policy.md` and `docs/refactor/testing_strategy.md`.
 - Read `docs/refactor/dependency_injection_plan.md` and verify the one-collection, one-provider, Core/UI registration, DI-resolved startup, lifetime, Serilog, and disposal rules.
-- For logger-related findings, read `docs/Serilog_Logger_Follow_Up_Summary_2026-07-12.md` and the logger follow-up requirements; distinguish current `Create()`/non-retaining behavior from planned Phase 5.A ownership.
+- For logger-related findings, inspect the current source under `source/CalradiaForge.Core/Infra/Logging/`; distinguish current `Create()`/non-retaining behavior from planned Phase 5.A ownership.
 - Read every relevant supporting document in `docs/refactor` and `docs/Architecture`.
 - Read the completed test and benchmark infrastructure and the finalized source files in scope.
 - Locate the exact dated report path selected for this phase.
@@ -390,7 +389,7 @@ Audit requirements:
 - Build and run correctness tests before drawing performance conclusions.
 - Run approved Release benchmarks with warmup and repeated iterations; capture allocations where supported.
 - Inspect startup, one-provider DI composition, singleton identity, MainWindow construction, lifetime/disposal, Serilog construction, filesystem, scanning, parsing, persistence, extraction, logging, async/concurrency, UI-sensitive workflows, and memory behavior where applicable.
-- For logging, inspect factory invocation count, active-sink startup, cleanup scaling, formatter/redactor cost, async backpressure, flush/close, archive rename and handle release, shutdown races, file-size behavior, retention behavior, and allocations. Performance evidence must not authorize redactor removal.
+- For logging, inspect factory invocation count, active-sink startup, cleanup scaling, neutral formatter cost, async backpressure, flush/close, archive rename and handle release, shutdown races, file-size behavior, retention behavior, and allocations. Performance evidence does not define credential ownership or future export policy.
 - Classify every finding, assign priority/confidence, and assign a stable `PERF-NNN` ID.
 - Preserve theoretical, maintainability-only, rejected, deferred, out-of-scope, and needs-more-evidence findings.
 
@@ -402,7 +401,7 @@ SevenZipWrapper:
 
 Production boundary:
 - Do not edit production source code.
-- Do not weaken validation, archive safety, persistence safety, logging, redaction, cancellation, cleanup, or architecture boundaries.
+- Do not weaken validation, archive safety, persistence safety, logging, cancellation, cleanup, or architecture boundaries.
 - Add or adjust benchmark/test code only when explicitly needed to gather audit evidence.
 - Do not silently transition into Phase 9.
 
@@ -423,7 +422,7 @@ Implement only performance findings explicitly approved by the developer.
 Before editing:
 - Read the Phase 9 section in `docs/refactor/refactor_master_plan.md`.
 - Read this policy, `docs/refactor/testing_strategy.md`, and `docs/refactor/dependency_injection_plan.md`.
-- For logger-related findings, read `docs/Serilog_Logger_Follow_Up_Summary_2026-07-12.md` and the logger follow-up requirements; formatter/redactor removal is outside ordinary performance approval.
+- For logger-related findings, inspect the current logger source under `source/CalradiaForge.Core/Infra/Logging/`; formatter behavior is a presentation concern and credential ownership remains with callers and Nexus components.
 - Read the exact approved dated performance audit report and the developer's finding-specific decisions.
 - Read every supporting refactor and architecture document governing the approved source areas.
 - Read all required source, test, benchmark, fixture, and configuration files.
@@ -442,9 +441,9 @@ Shared workflow:
 Implementation rules:
 - Preserve externally observable behavior unless separately approved.
 - Preserve UI/Core/Nexus layering, one collection, one provider, Core/UI registration ownership, DI-resolved startup, provider disposal, and Serilog singleton identity.
-- Preserve the selected logger ownership, cleanup-before-open, quiescent shutdown, exact-once close, handle-release-before-archive, no-overwrite archive, and central redaction rules unless each change has separate owner approval.
+- Preserve the selected logger ownership, cleanup-before-open, quiescent shutdown, exact-once close, handle-release-before-archive, and no-overwrite archive rules.
 - Keep ModInstaller and ModExtractor authoritative.
-- Do not weaken archive containment, module validation, persistence safety, redaction, logging, cancellation, cleanup, or diagnostics.
+- Do not weaken archive containment, module validation, persistence safety, logging, cancellation, cleanup, or diagnostics.
 - Do not introduce unsafe concurrency, stale caches, undocumented assumptions, or complexity without measured benefit.
 - Implement in small batches so attribution remains possible.
 

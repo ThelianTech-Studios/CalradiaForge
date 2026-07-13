@@ -12,7 +12,7 @@ CalradiaForge should move from manual/runtime verification toward phased automat
 - `ModpackData` owns modpack and last-used file I/O.
 - `ModpackService` owns modpack workflow behavior, validation, import/export, and default modpack creation.
 - `ModInstaller`, `ModExtractor`, and `BLSEInstaller` own install and extraction behavior that needs coverage before Nexus downloads.
-- `Logger` currently writes session logs directly and has no central redaction layer.
+- `Logger` currently writes session logs directly. The future Serilog formatter is presentation-only and performs no automatic secret or path filtering.
 - Test framework, benchmark framework, analyzer tools, benchmark project path, result storage, and CI blocking policy are not selected.
 
 ## Test Layers
@@ -127,7 +127,7 @@ Maintain coverage targets for:
 - Persistence behavior, including config, mod cache, modpacks, backups, and corrupt-file handling.
 - Modpack workflows, including import, export, validation, save, save-as, and last-used behavior.
 - Nexus metadata boundaries when implemented, without credentials in `ModuleModel` or `AppConfig`.
-- Logging/redaction behavior, including secret and path redaction.
+- Logging behavior, including minimum levels, formatter output, sink selection, and lifecycle.
 - UI/ViewModel behavior, including commands, status, warning, error, progress, and cancellation.
 
 ## Scanner And Path Test Categories
@@ -153,10 +153,10 @@ Conventional tests must cover the planned Phase 5.A logger lifecycle without dep
 - collision-safe archive naming with no overwrite;
 - the selected retention semantics after the count-versus-age decision is approved;
 - minimum-level behavior, Debug sink exclusion from Release, and expected formatter output;
-- current redaction while the formatter is active, plus synthetic caller/property/exception tests if redaction removal is proposed;
+- formatter output with message, source context, thread information, properties, and exception details;
 - exactly-once logger close/disposal, shutdown waiting for logging-producing work, and active-handle release before rename.
 
-Logger benchmarks may measure construction, disabled-level calls, formatter/redactor cost, structured-property rendering, async sink throughput and backpressure, cleanup scaling, flush/close, archive move, startup contribution, and allocations. These are measurements, not permission to remove redaction, validation, diagnostics, or lifecycle waits. Use representative fixtures and report environment-sensitive filesystem results without fragile exact-time unit assertions or single-machine blocking thresholds.
+Logger benchmarks may measure construction, disabled-level calls, neutral formatter rendering, structured-property rendering, async sink throughput and backpressure, cleanup scaling, flush/close, archive move, startup contribution, and allocations. These are measurements, not permission to remove validation, diagnostics, or lifecycle waits. Use representative fixtures and report environment-sensitive filesystem results without fragile exact-time unit assertions or single-machine blocking thresholds.
 
 ## Phased Implementation
 
@@ -187,7 +187,7 @@ Logger benchmarks may measure construction, disabled-level calls, formatter/reda
 - Keep Core tests free of WPF references.
 - Do not require Nexus credentials, network access, real user paths, Steam, or Bannerlord.
 - Do not bypass `ModInstaller`, `ModExtractor`, `ModsData`, or `ModpackData` to make tests easier.
-- Preserve observable behavior, safety, redaction, cancellation, cleanup, and ownership boundaries.
+- Preserve observable behavior, safety, caller credential boundaries, cancellation, cleanup, and ownership boundaries.
 - Do not add timing assertions to ordinary unit tests.
 - Do not add packages, analyzers, large fixtures, or blocking thresholds without approval.
 - Do not perform speculative production optimization in Phase 4.

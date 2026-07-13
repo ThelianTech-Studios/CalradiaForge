@@ -1,5 +1,7 @@
 # CalradiaForge Codebase Deep Audit Summary
 
+> Historical audit. Recommendations to add automatic logging redaction, path sanitization, or an AppConfig secret-key denylist are historical findings from 2026-07-07 and were superseded on 2026-07-12. They are not current implementation requirements.
+
 Generated: `2026-07-07 15:14 local time (America/Denver)`
 Repository audited: `T:\ThelianTech\ThelianTech-Studios\ProjectsDirectory\CalradiaForge`
 Audit folder: `docs/audit_07-07-26/`

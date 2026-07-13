@@ -66,7 +66,7 @@ Deferred investigation focus:
 - Multiple Steam library roots.
 - Manual Workshop path override behavior.
 - Fake-directory scanner/path tests before implementation.
-- Structured scanner warnings and redacted diagnostics in later phases.
+- Structured scanner warnings and ordinary local diagnostics in later phases; no automatic path or secret filtering is required.
 
 ## Deferred Cleanup
 
@@ -74,9 +74,9 @@ Deferred investigation focus:
 |---|---|
 | Broad README encoding cleanup | Larger documentation encoding pass outside Phase 1 source cleanup. |
 | `TODO_v1.md` Nexus roadmap wording | Requires owner decision on roadmap wording and timing. |
-| Version source-of-truth implementation | Phase 8 work; owner approval needed before major/minor changes. |
+| Version source-of-truth implementation | Deferred to master Phase 11; owner approval is needed before major/minor changes. |
 | Platform analyzer warnings | Phase 5 adapter/platform-targeting work. |
-| Archive, BLSE, persistence, logging redaction, DI, MVVM, and result/workflow changes | Explicitly excluded from Phase 1. |
+| Archive, BLSE, persistence, logger lifecycle, DI, MVVM, and result/workflow changes | Explicitly excluded from Phase 1. |
 | Steam Workshop scanner fix | Requires scoped implementation and verification in a later phase. |
 | UI page `.xaml` renames | Requires owner-approved rename map. |
 

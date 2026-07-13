@@ -33,7 +33,7 @@ CalradiaForge persisted data must have clear ownership, safe writes, graceful re
 
 | File/data area | Initial rule |
 |---|---|
-| `AppConfig` | Atomic save plus secret-like key rejection. |
+| `AppConfig` | Atomic save; credential ownership remains outside `AppConfig` by design, without generic key-name filtering. |
 | `ModsData` current cache | Atomic save plus backup recovery. |
 | `ModsData` backup cache | Atomic save; used as recovery input. |
 | `ModpackData` modpacks | Atomic save plus recovery policy for important user-created files. |
@@ -43,7 +43,7 @@ CalradiaForge persisted data must have clear ownership, safe writes, graceful re
 
 ## Phased Implementation
 
-| Phase | Scope |
+| Step | Scope |
 |---|---|
 | 1 | Add shared atomic JSON write helper or equivalent owner-specific atomic write pattern. |
 | 2 | Apply atomic saves to `AppConfig`, `ModsData.SaveCurrent`, `ModsData.SaveBackup`, `ModpackData.SaveModpack`, and `ModpackData.SaveLastUsed`. |
@@ -66,7 +66,7 @@ Measurements should distinguish app-owned serialization and I/O work from filesy
 - Missing files fall back to safe defaults or empty lists as appropriate.
 - Corrupt files are reported and recovered or skipped without app crash.
 - Services continue to delegate persistence to their owning data helpers.
-- Future Nexus metadata tests verify credentials are not written to metadata files.
+- Future Nexus metadata tests verify credentials are not written to metadata files or `AppConfig`.
 
 ## Guardrails
 

@@ -7,6 +7,8 @@ Source Inputs:
   - docs.zip
   - OniForge_Docs.zip
 Status: Review Draft
+
+Historical note: redaction, path-sanitization, and generic AppConfig secret-key filtering recommendations in this 2026-07-08 draft are historical inputs. The 2026-07-12 owner decision removes those automatic behaviors while preserving Nexus credential ownership boundaries.
 ---
 
 # CalradiaForge Documentation Alignment Report

@@ -68,7 +68,7 @@ Scanner results should distinguish:
 - No Workshop mods were installed or no valid Workshop modules were found.
 - Workshop path existed but scan failed.
 
-User-facing messages should be concise and actionable. Technical details, candidate paths, exceptions, and skip reasons should be written to redacted logs.
+User-facing messages should be concise and actionable. Technical details, candidate paths, exceptions, and skip reasons should be written to local logs as appropriate. The logger does not automatically redact or sanitize them; callers must not intentionally supply credentials or authentication material.
 
 ## Performance Verification
 
@@ -76,22 +76,22 @@ Later performance work may measure result allocation, progress-update frequency,
 
 Phase 5.A logger shutdown must not close or archive the active logger while a workflow can still emit progress, cancellation, failure, cleanup, or completion events. Quiescence and completion must be confirmed before logger close; this lifecycle rule does not authorize a Phase 6 result-model redesign.
 
-## Phased Implementation
+## Local Implementation Steps
 
-| Phase | Work | Verification |
+| Step | Work | Verification |
 |---|---|---|
 | 1 | Document existing result shapes and normalize naming. | No behavior change. |
 | 2 | Add result types for archive preflight, BLSE validation, persistence recovery, and other high-risk workflows. | Unit tests assert success, warnings, failures, and cancellation where relevant. |
 | 3 | Wrap current install event flow with an install workflow coordinator. | Navigation-away install behavior still works. |
 | 4 | Move UI status fields into shared UI state. | Busy/status/error/cancel states update predictably. |
-| 5 | Add structured scanner warnings for Workshop path detection failure, no candidates, no valid mods, and scan failure when scanner/path work is implemented. | Tests assert warning codes, user messages, and redacted technical/log messages. |
+| 5 | Add structured scanner warnings for Workshop path detection failure, no candidates, no valid mods, and scan failure when scanner/path work is implemented. | Tests assert warning codes, user messages, and useful technical/log messages. |
 | 6 | Add ViewModel tests for workflow state transitions. | Tests cover start, progress, success, partial failure, failure, warning, and cancel. |
 
 ## Guardrails
 
 - Do not put WPF types in Core results.
 - Do not replace all exceptions with result objects blindly.
-- Do not hide technical failures; log them with redaction.
+- Do not hide technical failures; log them with useful diagnostic context.
 - User-facing messages must be clear and non-secret.
 - Do not duplicate installer mechanics inside the coordinator.
 - Do not drop progress, cancellation, cleanup, or result reporting to improve throughput.
@@ -100,7 +100,7 @@ Phase 5.A logger shutdown must not close or archive the active logger while a wo
 
 - Existing workflows still produce user-visible status and toasts.
 - Install success, failure, partial failure, and cancellation are observable.
-- Result logs follow redaction rules.
+- Result logs preserve useful diagnostic values; credential-owning callers must not intentionally pass credentials to them.
 - ViewModel tests cover operation state as UI extraction begins.
 - Future Nexus download-to-install handoff uses the coordinator shape without bypassing `ModInstaller`.
 - Scanner warnings distinguish no Workshop mods installed from Workshop path not resolved and Workshop path scan failure.

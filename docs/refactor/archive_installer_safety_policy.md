@@ -75,9 +75,9 @@ Where applicable, distinguish archive open and inspection, extraction-library ex
 
 SevenZipWrapper values are comparison evidence only when archive content, format, sizes, destination conditions, machine, runtime, build configuration, warmup, iterations, cache state, antivirus interference, and setup/cleanup placement are comparable. Otherwise mark the values as historical or not directly comparable and do not subtract them from CalradiaForge results.
 
-## Phased Implementation
+## Local Implementation Steps
 
-| Phase | Work | Verification |
+| Step | Work | Verification |
 |---|---|---|
 | 1 | Add named archive/module preflight result types around current extraction flow. | Unit tests for valid module, invalid archive, and missing `SubModule.xml`. |
 | 2 | Add reserved/official module folder protection. | Tests prove official folders are blocked. |

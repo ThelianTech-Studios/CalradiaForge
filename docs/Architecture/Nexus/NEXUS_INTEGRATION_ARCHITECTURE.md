@@ -57,7 +57,7 @@ CalradiaForge.Nexus -> CalradiaForge.Core
 ## Credential Lifecycle
 - Decrypt only when a Nexus action needs the secret.
 - Do not keep credentials decrypted longer than the active operation requires.
-- Do not log raw credentials or secret-bearing URLs.
+- Credential-owning components must not intentionally pass credentials or secret-bearing URLs to the logger; the logger itself performs no automatic redaction.
 
 ## Authentication UI Behavior
 ### Planned / Locked Architecture
@@ -193,7 +193,7 @@ ModInstaller
 - Credentials must not be placed in `AppConfig`.
 
 ## Logging And Diagnostics
-- Logs must never expose credentials or secret URLs.
+- Credential-owning components must not intentionally pass credentials or secret URLs to logs; any future export or telemetry feature requires a separate data-handling policy.
 - Diagnostics should describe state and failures without leaking sensitive request data.
 
 ## Toast And Dialog Integration
@@ -257,4 +257,4 @@ ModInstaller
 - Download cache cleanup is manual only.
 - User-facing update states are `Unknown`, `Up To Date`, `Update Available`, `Error`.
 - Tooltips provide per-mod contextual detail.
-- Logs must never expose credentials or secret URLs.
+- Credential-owning components must not intentionally pass credentials or secret URLs to logs.

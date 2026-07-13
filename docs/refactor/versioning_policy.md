@@ -6,7 +6,7 @@ Make one public app version authoritative across project files, UI display, chan
 
 ## Current Source Observations
 
-- `CalradiaForge.UI.csproj` has `<Version>0.12.15</Version>` and package release notes.
+- As verified on 2026-07-12 at audit commit `1381dda6c30d159e0101699b729c10b4ece30f47`, `CalradiaForge.UI.csproj` has `<Version>0.12.15</Version>` and package release notes.
 - `CalradiaForge.Core.csproj` also has `<Version>0.12.15</Version>`.
 - `CalradiaForge.Nexus.csproj` and `CalradiaForge.ConsoleUtils.csproj` do not currently declare versions.
 - The audit reports `docs/CHANGELOG.md` contains newer entries than the project metadata.
@@ -118,9 +118,9 @@ Documentation-only Phase 8 audit/report work usually does not require an applica
 
 Changelog and release documentation must distinguish measured, implemented, and verified performance improvements from audit recommendations. Rejected, deferred, inconclusive, reverted, theoretical, and unverified findings are not shipped changes.
 
-## Phased Implementation
+## Local Implementation Steps
 
-| Phase | Work | Verification |
+| Step | Work | Verification |
 |---|---|---|
 | 1 | Inventory existing version drift. | Confirm `.csproj`, changelog, UI display, and release-note values are known. |
 | 2 | Move shared version properties into `Directory.Build.props`. | `dotnet build source/CalradiaForge.slnx` succeeds. |

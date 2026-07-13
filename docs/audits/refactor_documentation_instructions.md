@@ -1,5 +1,7 @@
 # CalradiaForge Refactor Documentation Generation Prompt
 
+> Historical source document. Its former central-redaction and AppConfig key-blocking decision was superseded by the owner decision recorded in the 2026-07-12 deep-audit report. Preserve its historical planning context, but do not use those former requirements as active policy.
+
 Use this prompt in Codex to generate the CalradiaForge refactor planning documentation.
 
 ## Task
@@ -939,4 +941,3 @@ After generating or updating the docs, Codex should report:
 - any source-code observations that changed the plan
 - any unresolved questions
 - any topics intentionally deferred
-

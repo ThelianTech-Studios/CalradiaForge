@@ -43,9 +43,9 @@ If a later owner-approved rename map exists, verification must include:
 
 Renames should happen before the affected page is extracted into a ViewModel whenever the rename would otherwise churn bindings, navigation, or generated partial classes twice.
 
-## Phased Implementation
+## Local Implementation Steps
 
-| Phase | Work | Verification |
+| Step | Work | Verification |
 |---|---|---|
 | 1 | Define base ViewModel, command, UI state, and navigation conventions. | Existing pages still build and behave unchanged. |
 | 2 | Extract install/refresh state from `ModsPage` into a ViewModel. | Install progress, completion, toasts, refresh, and navigation-away behavior still work. |
@@ -56,7 +56,7 @@ Renames should happen before the affected page is extracted into a ViewModel whe
 
 ## Scan Warning Presentation Planning
 
-During page and ViewModel extraction, scan/refresh state should be able to surface Steam Workshop scan warnings without burying them only in logs. The relevant page/ViewModel should distinguish concise user-facing states such as local modules scanned, Workshop modules scanned, Workshop path detection skipped, no Workshop candidates found, no Workshop mods found, and Workshop scan failed. Technical path details belong in redacted logs and structured workflow results.
+During page and ViewModel extraction, scan/refresh state should be able to surface Steam Workshop scan warnings without burying them only in logs. The relevant page/ViewModel should distinguish concise user-facing states such as local modules scanned, Workshop modules scanned, Workshop path detection skipped, no Workshop candidates found, no Workshop mods found, and Workshop scan failed. Technical path details belong in local logs and structured workflow results. The logger does not automatically redact or sanitize paths; callers must not intentionally pass credentials or authentication material.
 
 ## Dependency Rules
 
