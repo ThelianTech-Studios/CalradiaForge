@@ -3,6 +3,7 @@
 	using System.Collections.Generic;
 
 	using CalradiaForge.Core.Infra.Logging;
+	using CalradiaForge.Core.Infra.Persistence;
 	using CalradiaForge.Core.Models;
 
 	using Newtonsoft.Json;
@@ -51,7 +52,7 @@
 						_logger.Debug("ModpackData: Saving modpack.", new { ModpackName = modpack.ModpackName, FilePath = filePath, EntryCount = modpack.LoadOrder.Count });
 					}
 					string json = JsonConvert.SerializeObject(modpack, Formatting.Indented);
-					File.WriteAllText(filePath, json);
+					AtomicFileWriter.WriteAllText(filePath, json);
 					_logger.Info($"ModpackData: Saved modpack '{modpack.ModpackName}' to '{filePath}'");
 					return true;
 				} catch (Exception ex) {
@@ -179,7 +180,7 @@
 			lock (_lock) {
 				try {
 					string json = JsonConvert.SerializeObject(modpack, Formatting.Indented);
-					File.WriteAllText(_lastUsedFilePath, json);
+					AtomicFileWriter.WriteAllText(_lastUsedFilePath, json);
 					_logger.Info("ModpackData: Saved last-used load order.");
 					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 						_logger.Debug("ModpackData: Saved last-used file.", new { FilePath = _lastUsedFilePath, EntryCount = modpack.LoadOrder.Count });
