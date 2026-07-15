@@ -4,10 +4,10 @@
 
 ```text
 <Metadata>
-Last Changelog Version: v0.13.22
-Last Git Commit ID: 710881c7cd336032e48197d20b9135e142625d09
+Last Changelog Version: v0.13.23
+Last Git Commit ID: 1f037b11912fc30ec4454546dd0d45318c82c9e6
 Last Git Branch Used: dev-V0-14-CodeRefactor(HEAD)
-Last Map Compile Date: 2026-07-14
+Last Map Compile Date: 2026-07-15
 </Metadata>
 ```
 
@@ -40,9 +40,78 @@ Workflow rules for when and how to update this file are owned by `docs/refactor/
 
 | Version | Migration scope | Source comparison | Status |
 |---|---|---|---|
+| `v0.13.23` | Phase 4 Core tests and provisional benchmarks plus partially reverted Steam multi-library resolver, UI, and regression work | `710881c...1f037b1` | Mapped from committed broken internal build; 13 compile errors acknowledged |
 | `v0.13.22` | Atomic persistence, mod-cache recovery, archive/install preflight guardrails, and UI configuration-reference repair | `1b23045...710881c` | Mapped from committed build diff |
 | `v0.13.14` | Serilog infrastructure foundation, log-retention configuration, data-helper cleanup, application configuration-property rename, and neutral formatter/redaction-removal follow-up | `37c322e...HEAD` | Mapped from committed build diff |
 | `v0.13.6` | Cleanup/nullability/path/logging-message migration rows listed in this document | `dev-release...HEAD` | Mapped from current committed branch diff |
+
+<details open>
+<summary><strong>v0.13.23</strong> - Internal build: Phase 4 test and provisional benchmark infrastructure plus a partially reverted Steam multi-library implementation.</summary>
+
+**Source comparison:** `710881c...1f037b1`
+
+**Status:** Mapped from committed broken internal build; `dotnet build source/CalradiaForge.slnx -c Debug --no-restore` fails with 13 errors
+
+**Changed implementation/test/build files:** 36
+
+**Scope rule:** Includes every committed source-code, test, benchmark, runner, project, and solution file in this build range. The benchmark README, all `docs/` changes, and `.gitignore` are excluded as documentation-only or repository housekeeping.
+
+| Area | Files | Summary |
+|---|---:|---|
+| Solution and test-project foundation | 2 | Added the xUnit project and registered the test and benchmark projects in the solution. |
+| Core correctness and regression coverage | 14 | Added isolated tests for configuration, persistence, modpacks, parsing/scanning, installers, extraction, logging format, results, and Steam/Novus scenarios. |
+| Benchmark project and runner | 3 | Added the BenchmarkDotNet executable project, entry point, and metadata-validating Phase 4 PowerShell runner. |
+| Benchmark cases and fixtures | 5 | Added provisional parser, scanner, modpack-validation, and mod-cache benchmarks with managed fixture ownership. |
+| Platform namespace and scaffolding | 4 | Moved Epic and provider types under `Infra.GamePlatform` and added an empty future detection-resolver placeholder. |
+| Steam resolution components | 4 | Added registry isolation, library/manifest resolution, structured results, and bounded KeyValues parsing. |
+| Localization and incomplete UI/path integration | 3 | Added missing-Workshop strings and UI calls to path APIs absent from the committed legacy helper, leaving the build broken. |
+| Core test visibility | 1 | Granted the test assembly access to internal Core types. |
+
+<details>
+<summary><strong>Detailed file map</strong></summary>
+
+| File | Change | Key Identifiers | Original vs Updated | Summary |
+|---|---|---|---|---|
+| `source/CalradiaForge.slnx` | Modified | `CalradiaForge.Tests`; `CalradiaForge.Benchmarks`; solution items | The solution contained only application projects and two root files; it now registers the test and benchmark projects and exposes additional documentation as solution items. | Makes the Phase 4 developer projects part of solution build orchestration; the current accepted solution does not compile because of the incomplete Steam integration described below. |
+| `source/CalradiaForge.Tests/CalradiaForge.Tests.csproj` | Added | `net10.0`; `Microsoft.NET.Test.Sdk`; `xunit`; `xunit.runner.visualstudio`; `coverlet.collector`; Core `ProjectReference` | No checked-in test project existed; the new non-packable project references Core and reserves Core, Nexus, and UI ownership folders. | Establishes the approved xUnit test surface without adding WPF or Nexus runtime dependencies. |
+| `source/CalradiaForge.Tests/Core.Tests/Config/AppConfigTests.cs` | Added | `AppConfigTests`; `Load_WhenFileIsMissing_CreatesReadableJson`; `Settings_WhenConfigIsCorrupt_SeedTypedDefaultsWithoutCrashing`; `Indexer_PersistsUpdatedValuesImmediately` | Configuration behavior lacked automated coverage; the tests use isolated files to cover creation, malformed JSON fallback, typed defaults, and immediate persistence. | Protects accepted configuration persistence behavior without touching real user configuration. |
+| `source/CalradiaForge.Tests/Core.Tests/Logging/SerilogTextFormatterTests.cs` | Added | `SerilogTextFormatterTests`; `Format_RendersMessageContextThreadPropertiesAndException` | Neutral formatter output had no automated test; the new test verifies rendered message, context, thread, properties, and exception text. | Covers the existing neutral presentation formatter only; it does not claim Phase 5.A logger lifecycle coverage. |
+| `source/CalradiaForge.Tests/Core.Tests/Modpacks/ModpackDataTests.cs` | Added | `ModpackDataTests`; `SaveModpack_RoundTripsThroughSanitizedFileName`; `LoadAllModpacks_SkipsInvalidJsonWithoutDiscardingValidFiles`; `SaveLastUsed_RoundTripsSeparatelyFromNamedModpacks` | Named and last-used modpack persistence lacked isolated regression tests. | Covers filename sanitization, malformed-file isolation, and the separate last-used store. |
+| `source/CalradiaForge.Tests/Core.Tests/Modpacks/ModpackServiceTests.cs` | Added | `ModpackServiceTests`; `LoadAll_WhenVanillaIsMissing_CreatesDefaultOnDisk`; `ValidateLoadOrder_ReturnsMissingEntriesWithoutMutatingSavedOrder`; `SaveAs_ClonesCallerEntriesBeforePersisting`; `ImportAndExport_RoundTripThroughServiceWorkflow` | Modpack workflow behavior was unprotected by automated tests. | Covers default creation, validation, cloning, import, and export through the authoritative service. |
+| `source/CalradiaForge.Tests/Core.Tests/Modpacks/SteamMultiLibraryNovusRegressionTests.cs` | Added | `SteamMultiLibraryNovusRegressionTests`; `ImportedNovusPreset_AfterAlternateSteamLibraryScan_HasNoMissingWorkshopModules`; `TestSteamClientRootProvider`; `NovusSteamFixture` | No end-to-end fake-root Steam/Workshop-to-Novus regression existed; the new test calls an integration API absent from the committed helper. | Records the intended 8-local plus 3-Workshop Novus contract, but it cannot compile or verify the accepted `HEAD`. |
+| `source/CalradiaForge.Tests/Core.Tests/Mods/BLSEInstallerTests.cs` | Added | `BLSEInstallerTests`; `IsBLSEArchive_RequiresStandaloneExecutableMarker`; `InstallAsync_UsesPlatformBinAndUpdatesConfiguredExecutablePath` | BLSE marker detection and platform-bin installation lacked focused tests. | Covers current BLSE detection, copy, and configured executable-path behavior without claiming deferred allowlist enforcement. |
+| `source/CalradiaForge.Tests/Core.Tests/Mods/ModExtractorTests.cs` | Added | `ModExtractorTests`; `FindModRoot_FollowsSingleDirectoryWrappers`; `CleanupTempDirectory_RefusesUnmanagedDirectory`; `ExtractToTempResultAsync_*` | Archive root discovery, containment, extraction, and managed cleanup lacked automated coverage. | Exercises the authoritative extractor with generated contained and traversal archive fixtures. |
+| `source/CalradiaForge.Tests/Core.Tests/Mods/ModInstallerTests.cs` | Added | `ModInstallerTests`; `IsAcceptedArchive_UsesApprovedExtensionSet`; `StartInstallAsync_*`; `RunInstallAsync` | Normal-module extension, preflight, target preservation, and install flow lacked integration-style tests. | Covers accepted extensions, successful installation, multi-module blocking, and identity mismatch through `ModInstaller`. |
+| `source/CalradiaForge.Tests/Core.Tests/Mods/ModParserTests.cs` | Added | `ModParserTests`; `Parse_ReadsAttributesInnerTextAndDeduplicatesDependencies`; `Parse_WhenRootIsNotModule_ReturnsNull` | Module XML parsing behavior lacked focused coverage. | Protects supported XML representations, dependency deduplication, and invalid-root rejection. |
+| `source/CalradiaForge.Tests/Core.Tests/Mods/ModScannerTests.cs` | Added | `ModScannerTests`; `ScanForModsAsync_*`; `SplitDriveFixture` | Scanner merging and filtering lacked fake-root regression coverage; the suite now includes 11-module split-root, eight-module known-bug, configured Workshop, filtering, and missing-override cases. | Proves configured-root scanner behavior independently, while retaining a characterization of the unresolved provider/detection failure. |
+| `source/CalradiaForge.Tests/Core.Tests/Paths/GamePathsHelperTests.cs` | Added | `GamePathsHelperTests`; `ResolveAndApplySteamGamePaths_*`; `ResolveBannerlord_*`; `TryRepairSteamProviderForGameFolder_*`; `FakeSteamClientRootProvider`; `SteamPathFixture` | No resolver/path test suite existed; the new suite models library discovery, manifest validation, precedence, diagnostics, traversal, and provider repair. | Direct resolver tests are present, but helper-integration tests reference missing methods and are among the compile failures at this `HEAD`. |
+| `source/CalradiaForge.Tests/Core.Tests/Persistence/ModsDataTests.cs` | Added | `ModsDataTests`; `SaveAndLoadCurrent_RoundTripsModuleMetadata`; `LoadCurrent_WhenCurrentIsCorrupt_RecoversAndRepairsFromBackup`; `RotateDataFiles_WhenCurrentIsInvalid_PreservesExistingBackup`; `ClearCache_RemovesCurrentAndBackupFiles` | Mod-cache persistence and recovery lacked isolated coverage. | Protects Phase 3 atomic persistence, recovery, rotation, and cleanup behavior. |
+| `source/CalradiaForge.Tests/Core.Tests/Results/ModInstallSummaryTests.cs` | Added | `ModInstallSummaryTests`; `Counts_ExcludeBLSEFromNormalInstalledTotal`; `ToSummaryString_SurfacesFirstNormalFailureReason` | Install summary counting and failure detail lacked tests. | Covers BLSE exclusion from normal totals and first normal failure reporting. |
+| `source/CalradiaForge.Tests/Core.Tests/Support/TestDirectory.cs` | Added | `TestDirectory`; `CreateDirectory`; `WriteFile`; `CreateModule`; `CreateZip`; `Dispose` | Tests had no shared isolated fixture owner. | Centralizes temporary directory, module XML, zip generation, and cleanup without accessing real installations or user data. |
+| `source/CalradiaForge.Benchmarks/CalradiaForge.Benchmarks.csproj` | Added | `net10.0`; `BenchmarkDotNet` `0.15.2`; DiagnosticsHub diagnosers; Core `ProjectReference` | No benchmark project existed; the new executable project references Core and reserves Core, Nexus, and UI benchmark folders. | Establishes the approved developer-only benchmark dependency boundary. |
+| `source/CalradiaForge.Benchmarks/Program.cs` | Added | `Program`; `Main`; `BenchmarkSwitcher` | No benchmark entry point existed. | Routes command-line filters and artifacts options into BenchmarkDotNet discovery and execution. |
+| `source/CalradiaForge.Benchmarks/run-phase4-benchmarks.ps1` | Added | `Filter`; `ArtifactsPath`; `phase4-environment.txt`; `BenchmarkDotNet.Artifacts`; report validation | No standard Phase 4 benchmark runner existed; the script runs Release benchmarks, records branch/commit/tree/.NET metadata, and rejects missing or `NA` result reports. | Labels output as infrastructure validation/provisional and not comparable to the final post-refactor baseline. |
+| `source/CalradiaForge.Benchmarks/Core.Benchmarks/ModParserBenchmarks.cs` | Added | `ModParserBenchmarks`; `DependencyCount`; `Setup`; `ParseModuleXml`; `Cleanup` | Parser scaling had no repeatable benchmark case. | Adds a short-run, memory-diagnosed provisional component benchmark with generated dependency fixtures. |
+| `source/CalradiaForge.Benchmarks/Core.Benchmarks/ModScannerBenchmarks.cs` | Added | `ModScannerBenchmarks`; `ModuleCount`; `Setup`; `ScanModules`; `Cleanup` | Module scanning had no controlled filesystem benchmark. | Adds fake-root end-to-end scanner measurements without using real Bannerlord or Steam data. |
+| `source/CalradiaForge.Benchmarks/Core.Benchmarks/ModpackValidationBenchmarks.cs` | Added | `ModpackValidationBenchmarks`; `ModuleCount`; `Setup`; `ValidateLoadOrder` | Load-order validation scaling had no benchmark case. | Measures representative validation workloads as a provisional component baseline. |
+| `source/CalradiaForge.Benchmarks/Core.Benchmarks/ModsDataBenchmarks.cs` | Added | `ModsDataBenchmarks`; `ModuleCount`; `Setup`; `LoadCurrent`; `SaveCurrent`; `Cleanup` | Mod-cache persistence had no controlled filesystem benchmark. | Measures current load and save operations with generated module data and isolated paths. |
+| `source/CalradiaForge.Benchmarks/Core.Benchmarks/Support/BenchmarkFixtureDirectory.cs` | Added | `BenchmarkFixtureDirectory`; `CreateDirectory`; `WriteFile`; `CreateModule`; `Dispose` | Benchmarks had no shared fixture-lifetime helper. | Owns generated benchmark directories and cleanup outside measured operations. |
+| `source/CalradiaForge.Core/Infra/GamePlatform/Epic/EpicDetector.cs` | Renamed/Modified | namespace `CalradiaForge.Core.Infra.GamePlatform.Epic`; `EpicDetector` | The type lived under `Infra.Paths`; the file and namespace moved without material detector logic changes. | Begins platform-specific namespace separation; callers require the updated namespace. |
+| `source/CalradiaForge.Core/Infra/GamePlatform/Epic/EpicManifestReader.cs` | Renamed/Modified | namespace `CalradiaForge.Core.Infra.GamePlatform.Epic`; `EpicManifestReader` | The type lived under `Infra.Paths`; the file and namespace moved without material manifest-reader logic changes. | Keeps Epic metadata handling grouped under the platform boundary. |
+| `source/CalradiaForge.Core/Infra/GamePlatform/GamePlatformDetectionResolver.cs` | Added | `GamePlatformDetectionResolver` | No cross-platform resolver placeholder existed; the new internal class is empty except for planning comments. | This is scaffolding only and must not be interpreted as an implemented detection coordinator. |
+| `source/CalradiaForge.Core/Infra/GamePlatform/GameProvider.cs` | Renamed | namespace/path `Infra.GamePlatform`; `GameProvider` | The enum moved from the Paths folder with no content change. | Rehomes provider identity under the new platform namespace, requiring updated imports at call sites. |
+| `source/CalradiaForge.Core/Infra/GamePlatform/Steam/ISteamClientRootProvider.cs` | Added | `ISteamClientRootProvider`; `WindowsSteamClientRootProvider`; `GetSteamClientRoot`; registry constants | Steam registry lookup was embedded in `GamePathsHelper`; the new public boundary and Windows implementation isolate the current-user registry read. | Enables fake-root provider substitution without adding a global hook, but is not wired into the committed application helper. |
+| `source/CalradiaForge.Core/Infra/GamePlatform/Steam/SteamInstallationResolver.cs` | Added | `ISteamInstallationResolver`; `SteamInstallationResolver`; `ResolveBannerlord`; `DiscoverLibraryRoots`; `TryResolveGameFromLibrary`; `ResolveWorkshopPath`; `WorkshopCandidate` | No defensive multi-library/manifest resolver existed; the new resolver normalizes roots, parses library/app/workshop metadata, validates containment, and selects one Workshop path with diagnostics. | Implements a reusable Core resolver component, but application integration was partially reverted and is absent at the accepted `HEAD`. |
+| `source/CalradiaForge.Core/Infra/GamePlatform/Steam/SteamResolutionResult.cs` | Added | `SteamResolutionStatus`; `WorkshopPathSource`; `SteamPathDiagnostic`; `SteamResolutionOptions`; `SteamResolutionResult`; `IsGameResolved` | Steam path discovery previously returned only configuration side effects and a boolean. | Adds structured statuses, options, selected paths, and diagnostic evidence for the standalone resolver. |
+| `source/CalradiaForge.Core/Infra/GamePlatform/Steam/ValveKeyValuesParser.cs` | Added | `ValveKeyValuesParser`; `Node`; `TryParse`; `Parser`; `Tokenizer`; `TokenKind`; `Token` | Core had no local VDF/ACF parser. | Adds a bounded internal KeyValues1 parser supporting objects, quoted/unquoted text, comments, escapes, BOM, and format errors. |
+| `source/CalradiaForge.Core/Infra/Localization/TranslationStrings.cs` | Modified | `Toast_SteamWorkshopNotFoundTitle`; `Toast_SteamWorkshopNotFoundMessage`; default strings; `Apply` | No localized fallback existed for a resolved Steam game without Workshop content. | Adds English fallback and translation application keys consumed by the Settings warning path. |
+| `source/CalradiaForge.Core/Infra/Paths/GamePathsHelper.cs` | Modified | `using CalradiaForge.Core.Infra.GamePlatform.Epic`; legacy `TryAutoDetectGameFolder`; legacy `TryDetectSteam` | The Epic namespace import changed after the file move, but the old registry/single-root Steam implementation otherwise remains. The resolver-application, re-detection, manual-repair, and result APIs expected by UI/tests are absent. | This partial regression/revert is the central compatibility break: Steam resolution is not integrated and dependent projects fail compilation. |
+| `source/CalradiaForge.Core/Properties/AssemblyInfo.cs` | Modified | `InternalsVisibleTo("CalradiaForge.Tests")`; `ObfuscateAssembly` | Assembly metadata exposed no internals to tests; it now grants the test project access while preserving obfuscation metadata. | Supports direct testing of internal Core helpers and result contracts. |
+| `source/CalradiaForge.UI/Pages/SettingsPage.xaml.cs` | Modified | `GamePlatformDetectionResult`; `ApplyManualGameFolderSelection`; `RedetectGamePaths`; `ShowSteamWorkshopWarningIfNeeded`; `TranslationStrings`; toast severity | Settings previously assigned a selected path directly and called the legacy auto-detect method; it now expects structured manual repair/re-detection and displays localized missing-Workshop warnings. | The UI intent is documented, but its required Core type and methods are absent, producing four of the accepted build's compilation errors. |
+
+</details>
+
+</details>
 
 <details open>
 <summary><strong>v0.13.22</strong> - Internal build: Phase 3 persistence and archive/install safety plus the accepted UI configuration-reference repair.</summary>

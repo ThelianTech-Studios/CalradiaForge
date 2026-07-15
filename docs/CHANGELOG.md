@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## 0.13.23 - Internal | 2026-07-15
+
+> Refactor Phase 4: Core correctness-test and provisional benchmark infrastructure, plus a partially reverted Steam multi-library implementation that leaves this accepted internal build in a known non-compiling state.
+
+### Added
+
+- Added the `CalradiaForge.Tests` xUnit project with isolated Core coverage for configuration fallback and persistence, mod-cache recovery, modpack workflows, parsing and scanning, archive extraction and installation, BLSE installation, neutral log formatting, and install-summary mapping.
+- Added the `CalradiaForge.Benchmarks` BenchmarkDotNet project with provisional Release benchmarks for parser dependency scaling, modpack validation, mod-cache persistence, and fake-root module scanning, plus a runner that records environment and comparability metadata.
+- Added Steam library and Bannerlord manifest resolution types, a bounded Valve KeyValues parser, structured resolution diagnostics, and a Windows registry boundary intended to support deterministic multi-library discovery without adding a Steamworks or network dependency.
+- Added fake-root Steam resolver, scanner, and Novus regression cases covering alternate libraries, Workshop-path precedence, malformed metadata, traversal rejection, missing Workshop content, and split-root module discovery.
+
+### Changed
+
+- Added the test and benchmark projects to the solution, exposed Core internals to the test assembly, and reserved project folders for later UI and Nexus coverage.
+- Moved the Epic detector, Epic manifest reader, and game-provider enum into the new `Infra.GamePlatform` namespace structure; added an empty detection-resolver placeholder for later platform coordination.
+- Added localized missing-Workshop warning strings and changed the Settings page to request manual-path repair and explicit re-detection results, refresh platform-specific path state, and display success or warning toasts.
+
+### Known Issues
+
+- This accepted internal build does not compile. A partial regression/revert left the legacy single-root `GamePathsHelper` implementation in place while the Settings page and new tests still reference the removed `GamePlatformDetectionResult`, `ApplyManualGameFolderSelection`, `RedetectGamePaths`, `ResolveAndApplySteamGamePathsWithProvider`, and `TryRepairSteamProviderWithResolver` integration APIs.
+- The committed Steam resolver components and fixtures are not wired into the application path-detection pipeline at this `HEAD`; therefore this entry does not claim that Steam multi-library detection or the Workshop path-resolution defect is fixed.
+- Current verification: `dotnet build source/CalradiaForge.slnx -c Debug --no-restore` fails with 13 compilation errors. Test and benchmark execution cannot validate this accepted build until the missing integration surface is restored or the dependent UI/tests are reconciled.
+
+---
+
 ## 0.13.22 - Internal | 2026-07-14
 
 > Refactor Phase 3: atomic persistence and safer archive extraction and normal-module installation, plus the accepted UI configuration-reference repair included in this build.
