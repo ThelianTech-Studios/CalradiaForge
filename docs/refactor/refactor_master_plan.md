@@ -602,101 +602,471 @@ Documentation-only planning or audit work does not receive a migration-map sourc
 
 ## Pasteable Codex Implementation Prompt
 
-Use this prompt when starting a later implementation task for one phase or a clearly bounded phase slice:
-
-Implement Phase 2 from `docs/refactor/refactor_master_plan.md` for CalradiaForge.
-
-Implement Phase 2 Changelog and migration map instructions from `docs/refactor/refactor_master_plan.md` for CalradiaForge.
+Use these prompts when starting a later implementation task for one phase or a clearly bounded phase slice:
 
 ```text
+Implement Phase x from `docs/refactor/refactor_master_plan.md` for CalradiaForge.
+
+This workflow is for source implementation, supporting documentation changes, verification, and implementation closeout only.
+
+Do not update `docs/CHANGELOG.md` or `docs/MIGRATION_MAP.md` during this workflow.
 
 Before editing:
-- If current user instructs to implement Phase X Changelog and migration map updates: Treat the source codebase as read only files, Otherwise use reasoning and validation from docs to determine what is explictly needed for editing existing source code files.
-- Read the Phase N section in `docs/refactor/refactor_master_plan.md`.
-- Read the supporting docs in `docs/refactor` that apply to Phase N.
-- For Phase 5.A/5.B logging work, inspect the current logger source under `source/CalradiaForge.Core/Infra/Logging/` before editing. The previously named follow-up summary is not present in this package.
-- Read the relevant `docs/Architecture` files.
-- Read the existing source files named by the phase and supporting docs.
+- Read the Phase x section in `docs/refactor/refactor_master_plan.md`.
+- Read the supporting documents in `docs/refactor` that apply to Phase x.
+- Read and follow `docs/refactor/task_execution_optimization_policy.md`.
+- Read the relevant files under `docs/Architecture`.
+- Read the existing source files named by the phase and supporting documentation.
+- Treat the current source codebase as the implementation source of truth where it conflicts with stale assumptions in planning documents.
+- Use the phase requirements, accepted architecture rules, and current implementation together to determine the exact required source changes.
+- For Phase x logging work:
+  - inspect the current logger source under `source/CalradiaForge.Core/Infra/Logging/` before editing,
+  - inspect all existing logger initialization and call sites that could be affected,
+  - account for the fact that the previously named follow-up summary is not present in this package.
+
+Scope determination:
+- Build a concrete implementation checklist from the Phase x section, applicable supporting documents, architecture constraints, and current source.
+- Identify:
+  - required deliverables,
+  - explicitly excluded work,
+  - dependencies,
+  - affected source files,
+  - affected supporting documentation,
+  - required verification commands,
+  - owner decisions or approvals already recorded in the documentation.
+- Do not expand the phase merely because adjacent work would be convenient.
+- When documentation is ambiguous, prefer the narrowest interpretation consistent with the accepted architecture and current user instructions.
+- Report material contradictions before implementing a change that would require guessing an architectural decision.
 
 Subagent workflow:
-- The main agent may use subagents to split the workflow only when the phase is large enough, risky enough, or parallel enough to justify it.
-- If subagents are used, assign each subagent a clear, non-overlapping scope and instruct them not to revert, overwrite, or modify unrelated work.
+- The main agent may use subagents only when the phase is large enough, risky enough, or parallel enough to justify decomposition.
+- If subagents are used:
+  - assign each subagent a clear, non-overlapping scope,
+  - identify the exact files or concerns owned by each assignment,
+  - instruct each subagent not to revert, overwrite, or modify unrelated work,
+  - instruct each subagent to preserve changes made by other agents or by the owner,
+  - require each subagent to report files reviewed, files changed, verification performed, unresolved concerns, and any detected scope conflicts.
 - Wait for all implementation subagents to finish before finalizing the phase.
-- After implementation subagents finish, create a reviewer subagent to compare the completed implementation against the current phase, supporting documentation, architecture rules, requested scope, and project constraints.
-- If the reviewer finds missing work, regressions, implementation artifacts, documentation inconsistencies, or scope drift, record the findings and either:
-  - assign narrowly scoped follow-up work to additional subagents, or
-  - complete the fix locally if the required change is small, isolated, and low risk.
-- Repeat reviewer/fix passes until the reviewer finds no remaining required changes or the remaining items are explicitly documented as deferred, blocked, or requiring owner approval.
-- Include all subagent assignments, reviewer findings, follow-up work, deferred items, and verification outcomes in the final report.
+- After implementation subagents finish, create a reviewer subagent to compare the completed implementation against:
+  - the current Phase x requirements,
+  - supporting refactor documentation,
+  - applicable architecture rules,
+  - current user instructions,
+  - the approved scope,
+  - current project constraints,
+  - the actual source diff.
+- The reviewer must look for:
+  - missing required work,
+  - regressions,
+  - incomplete integrations,
+  - stale or contradictory documentation,
+  - temporary implementation artifacts,
+  - accidental unrelated edits,
+  - scope drift,
+  - unverified behavior,
+  - unsupported completion claims.
+- If the reviewer finds issues:
+  - record each finding,
+  - assign narrowly scoped follow-up work to an appropriate subagent, or
+  - complete the fix locally when the change is small, isolated, and low risk.
+- Repeat reviewer and fix passes until:
+  - no required findings remain, or
+  - remaining items are explicitly documented as deferred, blocked, excluded, or requiring owner approval.
+- Include all subagent assignments, reviewer findings, follow-up work, deferred items, and verification outcomes in the final implementation report.
 
-Task Execution Optimization:
-- Read and follow `docs/refactor/task_execution_optimization_policy.md`.
-- Apply the policy throughout planning, task decomposition, implementation, verification, and reviewer workflows.
-- When runtime capabilities differ from the policy, follow the intent of the policy using the closest supported behavior rather than skipping the workflow.
+Task execution optimization:
+- Follow `docs/refactor/task_execution_optimization_policy.md` throughout:
+  - planning,
+  - file discovery,
+  - task decomposition,
+  - implementation,
+  - verification,
+  - reviewer workflows,
+  - final reporting.
+- When runtime capabilities differ from the policy, preserve the intent of the policy using the closest supported behavior.
+- Do not skip required review or verification merely because an exact workflow mechanism is unavailable.
 
-Constraints:
-- Keep the change scoped to Phase N or the explicitly requested phase slice.
-- Do not implement excluded work.
+Implementation constraints:
+- Keep all changes scoped to Phase 2 or an explicitly requested Phase 2 slice.
+- Do not implement excluded, deferred, or future-phase work.
 - Preserve UI/Core/Nexus layering.
 - Keep `CalradiaForge.Core` free of WPF references.
 - Keep Nexus authentication, networking, API calls, downloader mechanics, and transport inside `CalradiaForge.Nexus`.
-- Do not use `AppConfig` as a credential manager or persist Nexus credentials through it.
+- Do not use `AppConfig` as a credential manager.
+- Do not persist Nexus credentials through `AppConfig`.
 - Do not add startup update checks, timed polling, silent scans, or background Nexus polling.
 - Do not store Nexus metadata in `ModuleModel`.
 - Do not bypass `ModInstaller` or `ModExtractor`.
 - Do not rename UI page `.xaml` files without an owner-approved rename map.
-- Do not claim the Steam Workshop scanner/path-resolution issue is fixed unless that phase both implements and verifies the fix.
+- Do not claim the Steam Workshop scanner or path-resolution issue is fixed unless this phase both implements and verifies that fix.
 - Keep refactor plans as planning artifacts until accepted decisions are migrated into canonical documentation or ADRs.
-- Do not change major or minor version numbers without owner approval.
-- Update relevant documentation only when behavior or architecture changes.
-- For Phase 2 logging work, create new Serilog infrastructure only under `source/CalradiaForge.Core/Infra/Logging/`, preserve the old `Logger` file, preserve all existing logger call sites, and do not initialize the new Serilog service through WPF singleton startup before the DI composition phase.
-- For Phase 2 logging work, use only the approved Serilog package set listed in `docs/refactor/logging_policy.md`; keep `Serilog.Sinks.Debug` Debug-build-only and do not add `Serilog.Sinks.Console`.
+- Do not change major or minor application version numbers without owner approval.
+- Update supporting documentation only when the implemented behavior or architecture changes require it.
+- Do not update `docs/CHANGELOG.md` during this implementation workflow.
+- Do not update `docs/MIGRATION_MAP.md` during this implementation workflow.
+
+Phase 2 logging constraints:
+- Create new Serilog infrastructure only under:
+  - `source/CalradiaForge.Core/Infra/Logging/`
+- Preserve the existing `Logger` file unless the phase explicitly identifies an owner-approved modification.
+- Preserve all existing logger call sites.
+- Do not perform a broad logger-call-site migration as part of this phase unless explicitly required.
+- Do not initialize the new Serilog service through WPF singleton startup before the dependency-injection composition phase.
+- Use only the approved Serilog package set listed in `docs/refactor/logging_policy.md`.
+- Keep `Serilog.Sinks.Debug` limited to Debug builds.
+- Do not add `Serilog.Sinks.Console`.
+- Do not introduce secret-redaction or sanitization infrastructure unless a current owner instruction explicitly restores that requirement.
+- Keep any approved logger text-format template isolated and manually editable as required by the current logging documentation.
+
+Source-editing discipline:
+- Preserve unrelated owner changes already present in the working tree.
+- Do not revert files merely to simplify the implementation diff.
+- Do not perform broad formatting, renaming, namespace cleanup, or modernization unrelated to Phase 2.
+- Do not leave placeholder code, commented-out replacement implementations, temporary debug output, or abandoned experimental files.
+- Do not suppress warnings merely to make verification pass unless suppression is explicitly justified by project policy.
+- Do not fabricate missing APIs, requirements, test results, or architectural decisions.
 
 Verification:
-- Run the verification commands listed for the phase whenever practical.
-- If a verification command cannot be run, explain why.
-- Report completed deliverables, deferred items, risks, documentation reviewed, source files reviewed, and verification results.
-- Follow `Shared Implementation Phase Closeout Workflow` before changelog or migration-map work.
+- Run every verification command listed for Phase 2 whenever practical.
+- Run additional targeted verification when required by the actual changes.
+- At minimum, evaluate:
+  - project or solution restore,
+  - compilation,
+  - relevant automated tests,
+  - architecture or dependency constraints,
+  - package references,
+  - Debug and Release configuration differences where applicable,
+  - affected logger initialization and disposal behavior,
+  - any phase-specific manual inspection requirements.
+- Verify the actual diff for unintended files or scope drift.
+- If a verification command cannot be run:
+  - identify the exact command,
+  - explain why it could not be run,
+  - state what alternative validation was performed,
+  - do not report the unavailable verification as passed.
+- Do not claim behavior was verified through runtime execution when only static inspection or compilation was performed.
 
-Changelog update:
-- After implementation verification, reviewer/fix passes, and manual developer inspection and approval, update `docs/CHANGELOG.md` unless the user explicitly instructs otherwise.
-- If the user provides changelog-specific instructions, follow those instructions first.
-- Preserve the existing heading format: `## VERSION - TAG | YYYY-MM-DD`.
-- Default newly created sections to the `Internal` tag. Use `Public Release` only when the owner explicitly instructs you to do so.
-- Follow `docs/refactor/versioning_policy.md` when determining the version, prerelease label, release wording, and whether documentation-only or internal-only work should receive an application version entry.
+Implementation closeout:
+- Follow the `Shared Implementation Phase Closeout Workflow` defined in the current refactor documentation.
+- Complete all implementation verification and reviewer/fix passes before preparing the final report.
+- Do not perform changelog work as part of this closeout.
+- Do not perform migration-map work as part of this closeout.
+- Leave source commit and push decisions to the owner unless the user explicitly requests Git publication in the current task.
+
+Final implementation report:
+- Report:
+  - completed deliverables,
+  - exact source files changed,
+  - supporting documentation changed,
+  - source files reviewed,
+  - documentation reviewed,
+  - verification commands and outcomes,
+  - reviewer findings,
+  - fixes made after review,
+  - deferred or excluded items,
+  - unresolved risks,
+  - owner actions still required.
+- Clearly identify every accepted source-code change that the later changelog workflow must document.
+- Provide a concise implementation summary suitable for comparison against the Git diff during changelog and migration-map closeout.
+- State explicitly that:
+  - `docs/CHANGELOG.md` was not updated,
+  - `docs/MIGRATION_MAP.md` was not updated,
+  - the owner must manually inspect and approve the implementation,
+  - accepted source changes must be committed and pushed to `origin` before running the separate changelog and migration-map workflow.
+```
+
+### Phase X Changelog and Migration-Map Closeout Workflow
+
+```text
+Complete the Phase x changelog and migration-map closeout workflow for CalradiaForge.
+
+This workflow is documentation-only.
+
+The accepted Phase x source-code changes have already been:
+- manually inspected by the owner,
+- approved by the owner,
+- committed to Git,
+- pushed to `origin`.
+
+Update `docs/CHANGELOG.md` first.
+
+Immediately after the changelog update is complete and validated, update `docs/MIGRATION_MAP.md`.
+
+Do not require the changelog to be committed or pushed before compiling the migration map. The changelog and migration-map changes may remain together in the working tree so the owner can review, commit, and push both documentation files afterward.
+
+Source-code read-only rule:
+- Treat all source-code files as read-only throughout this workflow.
+- Do not modify implementation files.
+- Do not fix implementation defects during this workflow.
+- Do not modify project files, package references, tests, configuration files, or generated source.
+- The only files that may be edited are:
+  - `docs/CHANGELOG.md`,
+  - `docs/MIGRATION_MAP.md`.
+- Other documentation may be read for context but must not be edited unless the user explicitly expands the scope.
+
+Before editing:
+- Read the Phase x section in `docs/refactor/refactor_master_plan.md`.
+- Read the supporting Phase x documents under `docs/refactor`.
+- Read `docs/refactor/versioning_policy.md`.
+- Read `docs/refactor/task_execution_optimization_policy.md`.
+- Read the `Shared Implementation Phase Closeout Workflow`.
+- Read the relevant files under `docs/Architecture`.
+- Read the current `docs/CHANGELOG.md`.
+- Read the metadata block and latest version section in `docs/MIGRATION_MAP.md`.
+- Read the final Phase x implementation report when it is available.
+- Inspect the committed Git history and source-code diff needed to reconstruct the accepted implementation.
+- Read affected source files only as necessary to accurately document committed changes.
+
+Repository preflight:
+- Record:
+  - the current branch,
+  - the current `HEAD` commit ID,
+  - the configured upstream branch,
+  - the upstream commit ID,
+  - the working-tree status.
+- Verify that the accepted source-code changes are committed.
+- Verify that the accepted source-code commits have been pushed to `origin`.
+- Verify that the current `HEAD` is the accepted source state that will be documented.
+- Do not pull, merge, rebase, reset, amend, cherry-pick, or otherwise alter Git history.
+- Documentation changes already present in the working tree may be preserved when they are part of this requested workflow.
+- If uncommitted source-code changes are present:
+  - report them,
+  - do not include them in the changelog or migration map,
+  - stop the workflow before editing either documentation file unless the owner explicitly instructs otherwise.
+- If local `HEAD` contains accepted source commits that have not been pushed to the configured `origin` branch:
+  - report the discrepancy,
+  - stop before editing,
+  - do not push automatically unless the owner explicitly requests it.
+
+Task execution optimization:
+- Follow `docs/refactor/task_execution_optimization_policy.md` throughout:
+  - documentation review,
+  - Git diff analysis,
+  - changelog compilation,
+  - migration-map compilation,
+  - verification,
+  - final reporting.
+- When runtime capabilities differ from the policy, follow its intent using the closest supported behavior.
+
+Subagent workflow:
+- The main agent may use subagents when the Git comparison range or source-change set is large enough to justify parallel analysis.
+- If subagents are used:
+  - assign non-overlapping file groups or implementation areas,
+  - keep all source files read-only,
+  - instruct subagents not to modify any files,
+  - require structured reports identifying changed files, symbols, behavior, and corresponding changelog or migration-map coverage.
+- After the changelog and migration map are drafted, use a reviewer subagent when practical to compare:
+  - the committed source diff,
+  - the target changelog section,
+  - the new migration-map section,
+  - the migration-map metadata,
+  - the Phase 2 documentation and constraints.
+- Resolve documentation omissions or inaccuracies before finalizing.
+- Do not use reviewer findings as permission to change source code.
+
+Changelog workflow:
+- Complete the changelog update before beginning migration-map edits.
+- Use the following as evidence:
+  - the committed source-code diff,
+  - the final implementation report,
+  - Phase x requirements,
+  - applicable supporting documentation,
+  - affected source files,
+  - verification results recorded during implementation.
+- Git history and the committed source state are authoritative for what was actually implemented.
+- Do not document planned, deferred, experimental, rejected, or incomplete work as completed.
+- Never guess, fabricate, or infer implementation details that cannot be verified from the committed source, implementation report, or accepted documentation.
+
+Changelog heading and tag rules:
+- Preserve the existing heading format:
+  - `## VERSION - TAG | YYYY-MM-DD`
+- Default newly created changelog sections to:
+  - `Internal`
+- Use `Public Release` only when the owner explicitly instructs you to do so.
+- Follow `docs/refactor/versioning_policy.md` when determining:
+  - the application version,
+  - patch or prerelease increments,
+  - prerelease labels,
+  - release wording,
+  - whether documentation-only or internal-only work receives an application-version entry.
+- Do not change major or minor version numbers without owner approval.
+
+Changelog section-selection rules:
 - Create a new changelog section only when:
-  - the completed work justifies a new build or release summary,
-  - the task date is newer than the latest changelog section date, or
-  - the user explicitly requests a new section.
+  - the completed accepted work justifies a new build or release summary,
+  - the current task date is newer than the latest changelog section date,
+  - the accepted source state corresponds to a new build version,
+  - or the user explicitly requests a new section.
 - Otherwise append to the latest existing section when:
   - the user explicitly requests it,
-  - the latest section already matches the current date and build context, or
-  - the completed work is too small to justify a separate section.
-- Do not change major or minor version numbers without owner approval.
-- Do not describe planned, deferred, experimental, or incomplete work as shipped.
-- Always document completed accepted source-code changes in `docs/CHANGELOG.md`, even when the application is not being published as a release build. Each build-version entry must cover phase work and manually made source changes alike; phase scope must not be used to omit accepted source changes from the build record.
+  - the latest section already matches the current date and build context,
+  - or the completed work is too small to justify a separate version section.
+- Do not create multiple sections for the same accepted build merely to separate phase work from manually implemented work.
 
-Migration map update:
-- Do not update `docs/MIGRATION_MAP.md` until after the changelog has been updated, the owner has manually verified the source changes, and the owner has committed and pushed the accepted source and changelog changes to `origin`.
-- Update the migration map only when the owner explicitly requests the migration-map workflow.
-- Before updating the migration map, read the metadata block at the top of `docs/MIGRATION_MAP.md`.
-- Verify that the latest migration-map section matches the metadata value for **Last Changelog Version**.
-- Use the metadata value for **Last Git Commit ID** as the starting point for Git diff analysis using `LastGitCommitID...HEAD`.
-- Compare the Git diff against the latest build-version changelog section and verify that every committed source-code change in the comparison range has build-version documentation. The migration map must include every such source file, regardless of phase or whether the change was manually made.
-- If the changelog and Git diff do not align:
-  - report the mismatch in the CLI/terminal,
-  - pause the migration-map workflow,
-  - wait for owner instructions,
-  - continue only after those instructions are received.
-- Never guess, fabricate, or infer undocumented implementation details.
-- Add a new version-scoped migration section using the changelog version.
-- Map every source-code change including affected files, classes, methods, properties, fields, variables, references, and a concise summary of the implementation. Do not omit manually made or non-phase source changes from the build-version section.
+Changelog coverage requirements:
+- Document every completed and accepted source-code change included in the target build scope.
+- Include Phase x changes and manually made source changes alike.
+- Do not use phase boundaries to omit accepted source changes from the build record.
+- Each build-version entry must accurately describe the full accepted source-code state represented by that build.
+- Keep descriptions user-relevant and implementation-accurate.
+- Do not overstate verification or describe static inspection as runtime validation.
+- Include fixed defects only when the committed source actually contains and verifies the fix.
+- Do not claim the Steam Workshop scanner or path-resolution issue is fixed unless the committed implementation both contains and verifies the fix.
+
+Changelog validation:
+- After editing `docs/CHANGELOG.md`, verify:
+  - heading format,
+  - version-policy compliance,
+  - tag correctness,
+  - date correctness,
+  - coverage of all accepted source changes,
+  - absence of planned or deferred work presented as shipped,
+  - consistency with the committed Git diff,
+  - consistency with the final implementation report.
+- Record the exact changelog version and section that will be used for the migration map.
+- Do not commit or push the changelog before proceeding to migration-map work.
+- Continue directly into migration-map compilation using the newly updated changelog content from the working tree.
+
+Migration-map workflow:
+- Begin migration-map work immediately after the changelog update has been completed and validated.
+- An intermediate changelog commit or push is not required.
+- The migration map must analyze committed source-code changes only.
+- The uncommitted changelog edit is an intentional documentation input and must not be treated as part of the source-code Git comparison range.
+
+Migration-map preflight:
+- Read the metadata block at the top of `docs/MIGRATION_MAP.md`.
+- Record the existing metadata values for:
+  - **Last Changelog Version**,
+  - **Last Git Commit ID**,
+  - **Compile Date**,
+  - **Branch**.
+- Verify that the latest existing migration-map section matches the metadata value for **Last Changelog Version**.
+- Verify that the metadata value for **Last Git Commit ID** identifies a valid commit reachable from the current branch.
+- Use the metadata value for **Last Git Commit ID** as the exclusive comparison starting point.
+- Use the current accepted source `HEAD` as the comparison endpoint.
+- Analyze the Git comparison range:
+  - `LastGitCommitID...HEAD`
+- Do not change the comparison endpoint merely because `docs/CHANGELOG.md` is currently modified in the working tree.
+- The source comparison must remain anchored to the committed accepted source `HEAD`.
+
+Git diff analysis:
+- Inspect every committed file change in `LastGitCommitID...HEAD`.
+- Separate:
+  - source-code changes,
+  - project or build-system changes that affect source implementation,
+  - tests,
+  - documentation-only changes.
 - Exclude documentation-only files from the migration map unless the owner explicitly changes that policy.
-- After completing the migration section, update the metadata block with:
-  - the newest changelog version,
-  - the latest `HEAD` commit ID used to compile the migration map,
-  - the compile date in `YYYY-MM-DD` format,
-  - the current branch formatted as `BranchName(HEAD)`.
+- Include every source-code file in the comparison range, regardless of:
+  - phase association,
+  - whether the change was made manually,
+  - whether the file was named in the original Phase 2 plan.
+- Do not omit accepted non-phase changes from the build-version migration section.
+
+Changelog-to-diff reconciliation:
+- Compare the committed source-code diff against the newly updated target changelog section.
+- Verify that every committed source-code change in the comparison range has appropriate build-version documentation.
+- Verify that every source-code claim in the changelog is supported by the comparison range or accepted implementation evidence.
+- The changelog does not need to enumerate every symbol, but it must accurately cover every material accepted source change.
+- The migration map must provide the detailed source-level mapping.
+
+Mismatch handling:
+- If the changelog and committed Git diff do not align:
+  - report the exact mismatch in the CLI or terminal output,
+  - identify the affected files and missing, unsupported, or inaccurate changelog coverage,
+  - do not edit `docs/MIGRATION_MAP.md`,
+  - preserve the completed changelog draft for owner review,
+  - stop the migration-map portion of the workflow,
+  - do not guess or silently repair ambiguous implementation history.
+- Resume migration-map work only after the discrepancy has been resolved through explicit owner instruction or a corrected changelog.
+- A changelog correction may be made within this workflow when the correct wording is unambiguous and fully supported by the committed diff.
+- Do not modify source code to force alignment.
+
+Migration-section creation:
+- Add one new version-scoped migration section using the exact target changelog version.
+- Follow the established structure and formatting conventions already present in `docs/MIGRATION_MAP.md`.
+- Map every included source-code change.
+- For each affected area, document as applicable:
+  - file path,
+  - namespace,
+  - class,
+  - interface,
+  - record,
+  - enum,
+  - method,
+  - constructor,
+  - property,
+  - field,
+  - variable,
+  - event,
+  - dependency,
+  - package or project reference,
+  - call-site relationship,
+  - concise implementation summary,
+  - migration or compatibility significance.
+- Include renamed, added, removed, and materially modified symbols.
+- Include manually made and non-phase source changes that are part of the build comparison range.
+- Do not invent symbol-level details not present in the committed source.
+- Do not include documentation-only files unless explicitly instructed.
+- Do not describe planned follow-up work as part of the completed migration.
+
+Migration-map metadata update:
+- After completing and validating the new migration section, update the metadata block with:
+  - **Last Changelog Version**: the exact changelog version documented by the new migration section,
+  - **Last Git Commit ID**: the current accepted source `HEAD` commit ID used as the comparison endpoint,
+  - **Compile Date**: the current date in `YYYY-MM-DD` format,
+  - **Branch**: the current branch formatted as `BranchName(HEAD)`.
+- The **Last Git Commit ID** must remain the accepted committed source `HEAD`.
+- Do not replace it with a future documentation commit ID.
+- Do not predict the commit ID that will later contain the changelog and migration-map edits.
+
+Final reconciliation:
+- Compare:
+  - `LastGitCommitID...HEAD`,
+  - the target changelog section,
+  - the new migration-map section,
+  - the updated migration-map metadata.
+- Verify:
+  - every committed source file is represented,
+  - every material source change has changelog coverage,
+  - symbol-level migration details are accurate,
+  - no documentation-only files were incorrectly mapped,
+  - no uncommitted source changes were included,
+  - no planned or deferred work is represented as completed,
+  - the changelog version matches the migration-section version,
+  - the migration metadata references the correct source `HEAD`,
+  - the branch metadata uses `BranchName(HEAD)`,
+  - both edited documentation files are internally consistent.
+
+Final repository state:
+- Do not commit or push automatically unless the user explicitly requests Git publication.
+- Leave `docs/CHANGELOG.md` and `docs/MIGRATION_MAP.md` together in the working tree for owner review.
+- The owner may commit and push both documentation updates together after manual verification.
+- Do not require or recommend an intermediate changelog-only commit.
+- Do not modify the already accepted source-code commit.
+
+Final report:
+- Report:
+  - the changelog version created or updated,
+  - whether a new section was created or an existing section was appended,
+  - the changelog tag and date,
+  - the previous migration-map commit ID,
+  - the accepted source `HEAD` used as the comparison endpoint,
+  - the exact Git comparison range,
+  - the current branch,
+  - all source files included in the migration map,
+  - documentation-only files excluded,
+  - changelog-to-diff reconciliation results,
+  - migration-map metadata changes,
+  - reviewer findings and corrections,
+  - unresolved mismatches or risks,
+  - verification performed.
+- State explicitly that:
+  - source files remained read-only,
+  - accepted source changes were already committed and pushed before this workflow,
+  - the changelog was updated before the migration map,
+  - no intermediate changelog commit or push was required,
+  - the changelog and migration-map edits remain ready for the owner to review, commit, and push together.
 ```
 
 ## Open Questions Before Implementation
