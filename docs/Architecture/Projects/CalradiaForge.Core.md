@@ -10,6 +10,7 @@ Provide the deterministic, UI-agnostic behavior that the WPF app consumes.
 ## Responsibilities
 ### Currently Implemented
 - Resolve application paths and create required folders.
+- Resolve Steam client, library, Bannerlord, and Workshop paths through testable Core boundaries.
 - Persist and read configuration data.
 - Provide strongly typed configuration access.
 - Parse and scan Bannerlord modules.
@@ -43,7 +44,7 @@ Provide the deterministic, UI-agnostic behavior that the WPF app consumes.
 - Configuration: `AppConfig`, `AppConfigSettings`, `AppPaths`
 - Logging: `Logger`
 - Localization: `TranslationService`, `TranslationManager`, `TranslationStrings`
-- Paths and platform detection: `GamePathsHelper`, `GamePathValidator`, `GameProvider`, `EpicDetector`, `EpicManifestReader`
+- Paths and platform detection: `GamePathsHelper`, `GamePathValidator`, `GameProvider`, `ISteamClientRootProvider`, `ISteamInstallationResolver`, `SteamInstallationResolver`, `SteamResolutionResult`, `EpicDetector`, `EpicManifestReader`
 - Launch: `GameLauncher`, `LaunchTarget`
 - EULA: `EulaService`
 - Mods: `ModService`, `ModScanner`, `ModParser`, `ModInstaller`, `ModExtractor`, `BLSEInstaller`, `ModsData`

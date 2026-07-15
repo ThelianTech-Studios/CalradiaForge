@@ -20,6 +20,7 @@ This index points to the current architecture foundation for CalradiaForge.
 - [Mod Management](Systems/ModManagement.md)
 - [Modpacks](Systems/Modpacks.md)
 - [Launcher](Systems/Launcher.md)
+- [Platform and Path Detection](Systems/PlatformAndPathDetection.md)
 - [EULA](Systems/EULA.md)
 
 ## Nexus Documentation

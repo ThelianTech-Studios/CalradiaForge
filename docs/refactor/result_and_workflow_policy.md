@@ -57,7 +57,9 @@ The Toast System remains the user-visible notification surface for operation sta
 
 ## Scanner Result And Warning Planning
 
-Mod scan/refresh results should eventually report structured warnings for Steam Workshop path resolution and scan outcomes. The known Workshop scanning issue remains unresolved by this policy; it should be staged as result/warning work for scanner and path-resolution changes.
+Steam path resolution now returns `SteamResolutionResult` with a status, resolved game and Workshop paths, selected Workshop source, and structured candidate diagnostics. It distinguishes complete Steam resolution, Steam game resolution without Workshop content, missing client roots, invalid manifests, and unresolved installs. Settings surfaces the Steam-without-Workshop state as a localized recoverable warning while local scanning remains available.
+
+The scanner itself still returns its existing module list rather than a general structured scan-result contract. Phase 6 should add scanner-level warnings without duplicating or weakening the implemented path-resolution diagnostics.
 
 Scanner results should distinguish:
 
@@ -84,7 +86,7 @@ Phase 5.A logger shutdown must not close or archive the active logger while a wo
 | 2 | Add result types for archive preflight, BLSE validation, persistence recovery, and other high-risk workflows. | Unit tests assert success, warnings, failures, and cancellation where relevant. |
 | 3 | Wrap current install event flow with an install workflow coordinator. | Navigation-away install behavior still works. |
 | 4 | Move UI status fields into shared UI state. | Busy/status/error/cancel states update predictably. |
-| 5 | Add structured scanner warnings for Workshop path detection failure, no candidates, no valid mods, and scan failure when scanner/path work is implemented. | Tests assert warning codes, user messages, and useful technical/log messages. |
+| 5 | Preserve the implemented Steam resolver diagnostics and add structured scanner warnings for no valid mods and scan failure when the broader scanner-result contract is implemented. | Tests assert warning codes, user messages, and useful technical/log messages. |
 | 6 | Add ViewModel tests for workflow state transitions. | Tests cover start, progress, success, partial failure, failure, warning, and cancel. |
 
 ## Guardrails
@@ -115,7 +117,7 @@ Accepted result/warning decisions should later be migrated into future applicati
 - Should install cancellation return a distinct status instead of failed?
 - Which result codes should be public/stable versus internal?
 - Should modpack import/save adopt shared results before MVVM extraction?
-- What warning codes and user-facing messages should be locked for Workshop path detection failures?
+- Which existing resolver diagnostic codes should be promoted into the future scanner result without exposing unnecessary filesystem detail to the UI?
 
 ## Out Of Scope
 

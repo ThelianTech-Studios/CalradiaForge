@@ -106,9 +106,9 @@ XAML page renames are high-risk because they can affect code-behind partial clas
 
 ### Known Issue - Steam Workshop Mods Not Automatically Scanned
 
-An end user reported that Bannerlord Steam Workshop mods were not automatically discovered. The report is not fully confirmed yet, but it is important enough to stage as a scanner/path-resolution risk item. The suspected area is Steam Workshop path resolution, especially setups where Bannerlord may be installed in a different Steam library from the main Steam client install.
+An end user reported that Bannerlord Steam Workshop mods were not automatically discovered when the Steam client and Bannerlord installation used different libraries. The 2026-07-15 scoped fix confirmed the root cause in Steam library/path resolution and implemented manifest-backed multi-library discovery, provider repair, Workshop precedence, diagnostics, and fake-root regression coverage.
 
-The app already uses Bannerlord AppID `261550` as part of Workshop path composition, so the staged investigation should not treat the AppID string as the primary suspected issue. Focus planning on Steam client install path versus Steam library path versus Bannerlord install path, multi-library discovery, Workshop path candidates, diagnostics, tests, structured warnings, and UI surfacing. Do not mark this issue fixed until implementation and verification are complete.
+The AppID was already correct at `261550`; the defect was the former single-root assumption. Automated Debug and Release verification covers a separate client root, Bannerlord library, 11-module scan, and Novus import without false missing-module results. Real-install Windows smoke testing remains an owner action before release documentation.
 
 ### Documentation Alignment Report Integration
 
@@ -195,7 +195,7 @@ flowchart TD
 
 - [X] Phase 1: Low-risk cleanup completed or deferred with notes; build passes. (Completed)
 - [X] Phase 2: Serilog infrastructure, retention, source context, neutral formatting, and approved package usage are implemented and documented inside the Core logging folder while the legacy logger compatibility path and all existing call sites remain in place. The original Phase 2 redaction infrastructure is retained as history only and was superseded by the 2026-07-12 owner decision. (Completed)
-- [ ] Phase 3: The implementation/reviewer pass completed the decision-safe archive and persistence slices; owner-gated BLSE, reserved-folder, named-modpack recovery, normal-upgrade policy, flat-archive target naming/blocking, and Steam scanner choices remain explicitly deferred pending manual inspection and approval.
+- [ ] Phase 3: The implementation/reviewer pass completed the decision-safe archive and persistence slices; owner-gated BLSE, reserved-folder, named-modpack recovery, normal-upgrade policy, and flat-archive target naming/blocking remain explicitly deferred. The separately scoped 2026-07-15 Steam multi-library path fix is implemented and automated-test verified.
 - [ ] Phase 4: Core tests and reusable performance benchmark infrastructure exist; correctness tests and benchmarks are separated; provisional baselines are labeled.
 - [ ] Phase 5.A: One `IServiceCollection` and one application provider are used; Core/UI registrations are separated; `MainWindow` is DI-resolved without duplicate `StartupUri` construction; singleton identity, Serilog construction, and provider disposal are verified.
 - [ ] Phase 5.B: Legacy logger call sites are migrated in verified batches and the compatibility path is retired only after verification.
@@ -206,7 +206,7 @@ flowchart TD
 - [ ] Phase 9: Only approved performance findings are implemented; tests and comparable before/after benchmarks are recorded; ineffective or harmful changes are reverted or explicitly dispositioned.
 - [ ] Phase 10: The full relevant test, benchmark, analyzer, architecture, and manual-smoke verification loop satisfies the practical stopping criteria.
 - [ ] Phase 11: Versioning, changelog, release documentation, performance report status, and documentation-alignment handoff match the final verified implementation.
-- [ ] Steam Workshop scanner/path-resolution issue is tracked across phases and is only marked fixed after implementation and verification.
+- [X] Steam Workshop scanner/path-resolution issue: manifest-backed multi-library resolution, manual provider repair, warning surfacing, and fake-root scanner/Novus verification completed on 2026-07-15; real-install manual smoke remains release-gated.
 - [ ] UI page rename review is completed only with an owner-approved rename map before any `.xaml` rename.
 - [ ] Documentation alignment report decisions are handed off without making refactor plans canonical architecture by default.
 
@@ -339,7 +339,7 @@ When logging work begins, add or plan structured diagnostics around Steam librar
 
 Investigate Steam Workshop path detection and Bannerlord Workshop mod discovery as a targeted safety/bugfix candidate. If the bug cannot be confirmed yet, keep the work documented and deferred until end-user setup details are known. Do not describe this issue as fixed unless implementation and verification happened.
 
-The Phase 3 investigation confirmed that current auto-detection checks only the Steam client library and can misclassify a valid Steam install when its Workshop directory is absent. It also found competing scanner-layout limitations and no checked-in fake-root fixtures. Implementation remains deferred: library-candidate precedence, manual-override behavior, and representative verification must be approved before changing source, and the reported end-user issue must not be described as fixed.
+The Phase 3 investigation confirmed that the former auto-detection checked only the Steam client library and could misclassify a valid Steam install when its Workshop directory was absent. A separately approved 2026-07-15 fix now resolves registered libraries and manifests, prefers a valid configured override and then the Bannerlord library, uses one deterministic alternate fallback, preserves Steam classification without Workshop content, and exercises representative fake-root verification. Broader structured scanner-result contracts remain Phase 6 work.
 
 ## Phase 4 - Initial Tests And Performance Benchmark Infrastructure Around Changed Risky Areas
 
@@ -405,7 +405,7 @@ Phase 5 is split into 5.A and 5.B. Phase 5.A establishes DI and platform adapter
 
 ### Steam Workshop Path Adapter Planning
 
-Move Steam library discovery, Bannerlord install detection, and Workshop path resolution behind explicit platform/path-resolution abstractions when this phase reaches scanner work. Manual override behavior, if present, should remain supported unless explicitly removed later.
+The 2026-07-15 scoped fix introduced `ISteamClientRootProvider` and `ISteamInstallationResolver` in Core ahead of the broader Phase 5.A composition work. `GamePathsHelper` currently owns their default implementations; registration through the future application service provider remains Phase 5.A work. Valid manual Workshop paths are preserved during normal detection, while explicit re-detection recomputes the candidate.
 
 ### Performance Planning Cross-References
 
@@ -1080,8 +1080,8 @@ Final report:
 - Owner-approved next beta version number.
 - Which UI page `.xaml` files should be considered for rename later.
 - Whether the UI page rename review should happen during Phase 1 cleanup or immediately before Phase 7 MVVM extraction.
-- Whether Workshop scanning should check all Steam libraries by default or prefer the Bannerlord install library first.
-- Whether a manual Workshop path override should be exposed or preserved in Settings.
+- Steam Workshop candidate precedence was resolved on 2026-07-15: preserve a valid configured path during normal detection, then prefer the Bannerlord install library, then choose one deterministic alternate candidate with valid `appworkshop_261550.acf` evidence preferred.
+- Manual Workshop path behavior was resolved on 2026-07-15: keep the existing Settings selector, preserve a valid value during normal detection, and recompute it during explicit re-detection.
 - Whether the documentation alignment report should be moved into `docs/reviews/` in a separate documentation-rebuild task.
 - Whether the full numbered documentation structure from the alignment report should be created before, during, or after the active refactor phases.
 - Benchmark framework, project path, target framework, package approvals, and raw-result storage path.

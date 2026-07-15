@@ -2,7 +2,7 @@
 
 ## Currently Implemented
 - `GameLauncher` starts Bannerlord or BLSE with the active load order.
-- `GamePathsHelper` auto-detects game paths and platform details.
+- `GamePathsHelper` coordinates platform detection; Steam library and Workshop resolution are described in [Platform and Path Detection](PlatformAndPathDetection.md).
 - `GamePathValidator` validates user-selected game folders and executables.
 - Steam launches are auto-started when needed.
 - Epic Games and Game Pass are currently blocked from direct launch in the implemented launcher flow.

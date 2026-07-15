@@ -3,6 +3,7 @@
 ## Currently Implemented
 - `ModService` coordinates scans and cache refreshes.
 - `ModScanner` discovers installed modules from the game and Steam Workshop directories.
+- For Steam, scanner inputs are independent resolved game and Workshop roots; split-library discovery is owned by the path-resolution system rather than `ModScanner`.
 - `ModParser` reads `SubModule.xml` metadata.
 - `ModInstaller` runs archive installs as a service-owned background task.
 - `ModExtractor` validates archive entry containment before extraction, handles extraction and mod-root detection, and only cleans app-managed GUID extraction directories.
@@ -26,6 +27,7 @@
 - `source/CalradiaForge.Core/Infra/Mods/ModExtractor.cs`
 - `source/CalradiaForge.Core/Infra/Mods/BLSEInstaller.cs`
 - `source/CalradiaForge.Core/Infra/Mods/ModsData.cs`
+- `docs/Architecture/Systems/PlatformAndPathDetection.md`
 
 ## Deferred / Future Work
 - Nexus download handling is not part of the current mod management pipeline.
@@ -33,4 +35,4 @@
 - BLSE allowlist enforcement awaits an owner-approved file/folder manifest.
 - Normal-module backup, rollback, and confirmation behavior remains owner-gated.
 - Deterministic target naming versus blocking for flat archives with root-level `SubModule.xml` remains owner-gated; the current extraction-GUID target behavior is a known limitation.
-- Steam Workshop multi-library resolution and scanner stabilization remain deferred pending owner-approved candidate precedence, manual-override semantics, and fake-root verification.
+- A general structured scanner-result contract remains deferred; path-resolution diagnostics already distinguish missing Workshop content from game-detection failure.

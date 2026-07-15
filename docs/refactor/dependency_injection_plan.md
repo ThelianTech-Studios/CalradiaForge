@@ -144,16 +144,16 @@ Phase 5.A implementation must cover one factory invocation, one logger identity,
 
 ## Steam And Bannerlord Path Adapter Planning
 
-Steam library discovery, Bannerlord install detection, and Steam Workshop path resolution should be explicit platform/path-resolution boundaries before scanner work expands. The known Workshop scanning issue remains unresolved by this plan; the likely investigation area is Steam library and path resolution, not the Bannerlord AppID `261550` string.
+The 2026-07-15 scoped fix implemented explicit `ISteamClientRootProvider` and `ISteamInstallationResolver` boundaries in Core. `GamePathsHelper` currently constructs the Windows registry provider and resolver statically to preserve startup behavior before Phase 5.A composition. The broader DI phase should register these existing boundaries instead of creating competing adapters.
 
 Adapter planning should support:
 
-- Steam client install path detection separately from Steam library root discovery.
-- Bannerlord install detection separately from the selected Workshop content root.
-- Multiple Steam library roots.
-- Workshop candidate composition under `steamapps/workshop/content/261550`.
-- Workshop content under the Bannerlord library root even when Steam is installed elsewhere.
-- Manual Workshop path override behavior if supported, unless a later owner decision removes it.
+- Steam client install path detection separately from Steam library root discovery. (Implemented.)
+- Bannerlord install detection separately from the selected Workshop content root. (Implemented.)
+- Multiple Steam library roots. (Implemented.)
+- Workshop candidate composition under `steamapps/workshop/content/261550`. (Implemented.)
+- Workshop content under the Bannerlord library root even when Steam is installed elsewhere. (Implemented.)
+- A valid manual Workshop path is preserved during normal detection; explicit re-detection recomputes it. (Implemented.)
 - Fakeable path providers and fake filesystem roots for tests.
 - Windows-specific registry and filesystem probing behind adapters.
 - Core remaining WPF-free.
@@ -215,8 +215,8 @@ Accepted composition and platform-adapter decisions should later be migrated int
 ## Open Questions
 
 - Which platform adapters should be implemented first: dialogs, explorer/URL launch, registry/game detection, or filesystem?
-- Should Workshop scanning check all Steam libraries by default or prefer the Bannerlord install library first?
-- Should a manual Workshop path override be exposed or preserved in Settings?
+- Workshop precedence is implemented: valid configured value, Bannerlord library, then one deterministic alternate fallback with valid Workshop-manifest evidence preferred.
+- The manual Workshop selector remains exposed; normal detection preserves a valid selection and explicit re-detection recomputes it.
 - Which specific UI services require preserved state rather than the transient default?
 
 ## Out Of Scope
