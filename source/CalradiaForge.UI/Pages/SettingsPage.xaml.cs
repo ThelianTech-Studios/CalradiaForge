@@ -8,7 +8,6 @@
 	using System.Windows.Controls;
 
 	using CalradiaForge.Core.Infra.Config;
-	using CalradiaForge.Core.Infra.Localization;
 	using CalradiaForge.Core.Infra.Logging;
 	using CalradiaForge.Core.Infra.Mods;
 	using CalradiaForge.Core.Infra.Paths;
@@ -79,7 +78,7 @@
 		public SettingsPage() {
 			InitializeComponent();
 			DataContext = this;
-			_config = App.AppConfig;
+			_config = App.AppSettingsInstance;
 			_modService = App.ModService;
 
 			_panels = [PanelGeneral, PanelGameConfig, PanelTools, PanelWip, PanelAbout];

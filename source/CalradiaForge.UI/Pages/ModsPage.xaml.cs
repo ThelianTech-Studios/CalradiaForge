@@ -196,7 +196,7 @@
 			AvailableModsView.Filter = ModSearchFilter;
 
 			// Restore persisted launch target from config
-			_activeLaunchTarget = App.AppConfig.DefaultLaunchTarget;
+			_activeLaunchTarget = App.AppSettingsInstance.DefaultLaunchTarget;
 			UpdateLaunchTargetCheckmarks();
 
 			// Populate from cache with toasts suppressed — the startup scan
@@ -300,7 +300,7 @@
 					Severity = severity
 				});
 
-				string modulesPath = App.AppConfig.ModulesDirectoryPath;
+				string modulesPath = App.AppSettingsInstance.ModulesDirectoryPath;
 				if (!string.IsNullOrWhiteSpace(modulesPath) && Directory.Exists(modulesPath)) {
 					UnblockResult unblockResult = await DLLUnblocker.UnblockAllAsync(modulesPath);
 					DependencyWarningText += $" | DLLs: {unblockResult.ToSummaryString()}";
@@ -443,7 +443,7 @@
 			ModPackComboBox.SelectionChanged -= ModPack_SelectionChanged;
 			ModpackList.Clear();
 
-			bool isAlwaysAsk = App.AppConfig.ModpackStartupMode == ModpackStartupMode.AlwaysAsk;
+			bool isAlwaysAsk = App.AppSettingsInstance.ModpackStartupMode == ModpackStartupMode.AlwaysAsk;
 
 			if (isAlwaysAsk) {
 				ModpackList.Add(_ghostModpack);
@@ -477,7 +477,7 @@
 				return -1;
 			}
 
-			ModpackStartupMode mode = App.AppConfig.ModpackStartupMode;
+			ModpackStartupMode mode = App.AppSettingsInstance.ModpackStartupMode;
 
 			switch (mode) {
 				case ModpackStartupMode.AlwaysDefault:
@@ -487,7 +487,7 @@
 
 				case ModpackStartupMode.LastUsed:
 					// Restore the previously selected modpack
-					string lastSelected = App.AppConfig.LastSelectedModpack;
+					string lastSelected = App.AppSettingsInstance.LastSelectedModpack;
 					if (!string.IsNullOrWhiteSpace(lastSelected)) {
 						int lastIndex = FindModpackIndexByName(lastSelected);
 						if (lastIndex >= 0) {
@@ -559,7 +559,7 @@
 			ModPackComboBox.SelectionChanged -= ModPack_SelectionChanged;
 			ModpackList.Clear();
 
-			bool isAlwaysAsk = App.AppConfig.ModpackStartupMode == ModpackStartupMode.AlwaysAsk;
+			bool isAlwaysAsk = App.AppSettingsInstance.ModpackStartupMode == ModpackStartupMode.AlwaysAsk;
 
 			// Re-inject ghost if AlwaysAsk is active and user was still on it
 			if (isAlwaysAsk && wasGhostSelected) {
@@ -998,7 +998,7 @@
 
 			// Persist which modpack was selected
 			if (_selectedModpack is not null) {
-				App.AppConfig.LastSelectedModpack = _selectedModpack.ModpackName;
+				App.AppSettingsInstance.LastSelectedModpack = _selectedModpack.ModpackName;
 			}
 
 			// Launch the game with the active target (auto-starts Steam if needed)
@@ -1055,7 +1055,7 @@
 		/// </summary>
 		private void SetActiveLaunchTarget(LaunchTarget target) {
 			_activeLaunchTarget = target;
-			App.AppConfig.DefaultLaunchTarget = target;
+			App.AppSettingsInstance.DefaultLaunchTarget = target;
 			UpdateLaunchTargetCheckmarks();
 			OnPropertyChanged(nameof(PlayButtonText));
 			UpdateCanStart();
