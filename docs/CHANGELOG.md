@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## 0.13.22 - Internal | 2026-07-14
+
+> Refactor Phase 3: atomic persistence and safer archive extraction and normal-module installation, plus the accepted UI configuration-reference repair included in this build.
+
+### Added
+
+- Added a shared same-directory atomic file writer used by configuration, mod-cache, named-modpack, and last-used JSON persistence.
+- Added structured archive-extraction and module-install preflight results so validation failures can flow through the existing install result and status pipeline.
+
+### Changed
+
+- Made configuration saves atomic and changed malformed configuration JSON to log and fall back to an empty settings set instead of failing normal load.
+- Made named-modpack and last-used load-order saves atomic without changing their persisted JSON formats or service ownership.
+- Made mod-cache writes atomic, validated cache content before backup rotation, preserved the existing backup when the current cache is invalid, and recovered an invalid current cache from a valid backup.
+- Hardened archive extraction with pre-extraction path-containment validation and cleanup restricted to app-managed GUID extraction directories.
+- Added normal-module preflight requiring exactly one `SubModule.xml`, a valid module identity, a contained destination, and matching identity for an existing target; ambiguous or unsafe targets and incomplete upgrade deletion now block installation.
+- Improved batch install summaries by surfacing the first normal archive's extraction or preflight failure reason through the existing status and toast path.
+
+### Fixed
+
+- Corrected invalid `App.AppConfig` references in the Mods and Settings pages to use the application's shared `AppSettingsInstance` configuration facade, and removed an unused Settings-page localization import.
+
+---
+
 ## 0.13.14 - Internal | 2026-07-12
 
 > Refactor Phase 2: Serilog infrastructure foundation with neutral local text formatting.

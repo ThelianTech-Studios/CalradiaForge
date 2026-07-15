@@ -4,10 +4,10 @@
 
 ```text
 <Metadata>
-Last Changelog Version: v0.13.14
-Last Git Commit ID: 1b23045a2cc2326a6b7a0bb06e6a469a51360c2b
+Last Changelog Version: v0.13.22
+Last Git Commit ID: 710881c7cd336032e48197d20b9135e142625d09
 Last Git Branch Used: dev-V0-14-CodeRefactor(HEAD)
-Last Map Compile Date: 2026-07-12
+Last Map Compile Date: 2026-07-14
 </Metadata>
 ```
 
@@ -40,8 +40,47 @@ Workflow rules for when and how to update this file are owned by `docs/refactor/
 
 | Version | Migration scope | Source comparison | Status |
 |---|---|---|---|
+| `v0.13.22` | Atomic persistence, mod-cache recovery, archive/install preflight guardrails, and UI configuration-reference repair | `1b23045...710881c` | Mapped from committed build diff |
 | `v0.13.14` | Serilog infrastructure foundation, log-retention configuration, data-helper cleanup, application configuration-property rename, and neutral formatter/redaction-removal follow-up | `37c322e...HEAD` | Mapped from committed build diff |
 | `v0.13.6` | Cleanup/nullability/path/logging-message migration rows listed in this document | `dev-release...HEAD` | Mapped from current committed branch diff |
+
+<details open>
+<summary><strong>v0.13.22</strong> - Internal build: Phase 3 persistence and archive/install safety plus the accepted UI configuration-reference repair.</summary>
+
+**Source comparison:** `1b23045...710881c`
+**Status:** Mapped from committed build diff
+**Changed source files:** 11
+**Scope rule:** Includes every committed source-code file in this build range; documentation-only files are excluded.
+
+| Area | Files | Summary |
+|---|---:|---|
+| Atomic persistence foundation | 1 | Added a shared same-directory write, flush, and replace/move helper for JSON persistence owners. |
+| Configuration and modpack persistence | 2 | Applied atomic writes to configuration, named-modpack, and last-used data and added malformed configuration fallback. |
+| Mod-cache recovery and rotation | 1 | Added validated cache loading, valid-backup recovery, atomic repair, and backup-preserving rotation. |
+| Archive containment and managed cleanup | 1 | Added lexical entry containment checks, structured extraction results, and managed GUID-directory cleanup restrictions. |
+| Module-install preflight and failure reporting | 4 | Added exact-one-module preflight, target and identity guardrails, deletion confirmation, result models, and actionable summaries. |
+| UI configuration-reference repair | 2 | Reconnected Mods and Settings page call sites to the shared application settings facade. |
+
+<details>
+<summary><strong>Detailed file map</strong></summary>
+
+| File | Change | Key Identifiers | Original vs Updated | Summary |
+|---|---|---|---|---|
+| `source/CalradiaForge.Core/Infra/Persistence/AtomicFileWriter.cs` | Added | `AtomicFileWriter`; `WriteAllText`; `fullDestinationPath`; `temporaryFilePath`; `FileStream`; `StreamWriter` | No shared atomic-write helper existed; the new internal static helper writes a GUID-named temporary file beside the destination, flushes it to disk, replaces or moves it into place, and removes any leftover temporary file. | Centralizes atomic same-directory text persistence without changing public application APIs or creating backup files. |
+| `source/CalradiaForge.Core/Infra/Config/AppConfig.cs` | Modified | `Save`; `Load`; `AtomicFileWriter`; `JsonException` | `Save` wrote directly with `File.WriteAllText`, and malformed JSON could escape normal loading; saves now use atomic replacement, while malformed JSON is logged and resets the in-memory settings dictionary to empty. | Preserves the configuration key/value contract while allowing the typed settings facade to seed defaults after malformed-JSON fallback. |
+| `source/CalradiaForge.Core/Infra/Modpacks/ModpackData.cs` | Modified | `SaveModpack`; `SaveLastUsed`; `AtomicFileWriter` | Named modpacks and `last_used_mods.data` were written directly; both save paths now use the shared atomic writer while retaining existing locks, serialization, return values, and error handling. | Reduces partial-write exposure without adding named-modpack or last-used backup recovery. |
+| `source/CalradiaForge.Core/Infra/Mods/ModsData.cs` | Modified | `SaveCurrent`; `LoadCurrent`; `SaveBackup`; `LoadBackup`; `RotateDataFiles`; `TryLoadMods`; `recoveredJson` | Current/backup writes were direct, loads could propagate handled file/JSON failures, and rotation copied unvalidated current data; writes are now atomic, loads validate non-null arrays and entries, invalid current data can recover from a valid backup, and invalid current data no longer overwrites the backup. | Keeps public signatures and the persisted list shape while adding bounded cache recovery and backup-preserving rotation. |
+| `source/CalradiaForge.Core/Infra/Mods/ModExtractor.cs` | Modified | `ExtractToTempAsync`; `ExtractToTempResultAsync`; `TryValidateEntryContainment`; `CleanupTempDirectory`; `TryResolveManagedTempDirectory`; `UnsafeArchiveEntryException` | Extraction previously began without entry-destination inspection and cleanup accepted arbitrary directory paths; entries are now lexically validated before temp creation/extraction, failures carry structured detail, and recursive cleanup is limited to direct GUID children of `AppPaths.ExtractionDirectory`. | Retains the legacy nullable-path extraction API as a compatibility wrapper while adding a safer result-based path for installation. |
+| `source/CalradiaForge.Core/Infra/Mods/ModInstaller.cs` | Modified | `ProcessSingleArchiveAsync`; `PreflightModuleInstall`; `PreflightFailure`; `IsPathAtOrBelowRoot`; `IsPathBelowRoot`; `CheckExistingVersion`; `SafeDeleteDirectory` | Installation previously selected the first discoverable module XML, derived targets without identity preflight, could overwrite unknown targets, and continued after failed deletion; normal archives now require exactly one `SubModule.xml`, contained roots/targets, a parseable module ID, matching existing identity, and confirmed target deletion before copy. | Makes valid normal-module installation intentionally stricter while preserving the public installer API, events, and zero-module BLSE fallback. |
+| `source/CalradiaForge.Core/Models/ArchiveExtractionResult.cs` | Added | `ArchiveExtractionResult`; `Success`; `TempDirectory`; `Message`; `Ok`; `Fail` | Extraction success/failure was represented only by a nullable path; the additive public result now carries success state, the managed temp path, and failure detail through controlled factory methods. | Enables actionable extraction and validation failures without removing the compatibility API. |
+| `source/CalradiaForge.Core/Models/ModuleInstallPreflightResult.cs` | Added | `ModuleInstallPreflightResult`; `ModuleRootPath`; `ModuleFolderName`; `SubModuleXmlPath`; `TargetPath`; `Module`; `ExistingModule` | Validated roots, target paths, and parsed incoming/existing identities were separate installer locals; the additive public init-only model now carries the complete pre-destination state. | Gives the private installer preflight one explicit Core-owned result contract with no WPF dependency. |
+| `source/CalradiaForge.Core/Models/ModInstallSummary.cs` | Modified | `ToSummaryString`; `firstNormalFailure`; `label` | Normal archive failures contributed only a generic count; the summary now appends the first normal failure's archive/module label and message while keeping existing BLSE summary handling. | Surfaces extraction and preflight failures through the existing status/toast output without changing the public result collection. |
+| `source/CalradiaForge.UI/Pages/ModsPage.xaml.cs` | Modified | constructor; `OnInstallCompleted`; `PopulateModpackList`; `ResolveStartupModpackIndex`; `RefreshModpackList`; `PlayButton_Click`; `SetActiveLaunchTarget`; `App.AppSettingsInstance` | Eight settings reads/writes referenced the nonexistent `App.AppConfig` member; launch-target, module-path, startup-mode, and last-selected-modpack call sites now use the shared `AppSettingsInstance` facade. | Corrects the accepted build-scope UI references without changing settings schema, XAML, or service ownership. |
+| `source/CalradiaForge.UI/Pages/SettingsPage.xaml.cs` | Modified | constructor; `_config`; `App.AppSettingsInstance`; localization namespace import | The constructor assigned `_config` from nonexistent `App.AppConfig`, and an unused localization import remained; the field now receives `AppSettingsInstance` and the unused import is removed. | Restores the page's existing `AppConfigSettings` dependency without changing page behavior or configuration ownership. |
+
+</details>
+
+</details>
 
 <details open>
 <summary><strong>v0.13.14</strong> - Internal build: Phase 2 Serilog infrastructure and all other committed source changes in the build range.</summary>
