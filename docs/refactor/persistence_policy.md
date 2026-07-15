@@ -8,11 +8,11 @@ CalradiaForge persisted data must have clear ownership, safe writes, graceful re
 
 | Area | Owner | Current behavior |
 |---|---|---|
-| Config JSON | `AppConfig` | Thread-safe key/value JSON store using direct `File.WriteAllText`. |
+| Config JSON | `AppConfig` | Thread-safe key/value JSON store using atomic same-directory replacement; invalid JSON falls back to an empty settings set so typed defaults can be seeded. |
 | Typed settings | `AppConfigSettings` | Facade over `AppConfig`; seeds defaults and raises change notifications. |
 | Runtime paths | `AppPaths` | Resolves and creates app working directories. |
-| Mod cache | `ModsData` | Reads/writes current and backup `ModuleModel` lists. |
-| Modpacks | `ModpackData` | Reads/writes `ModpackModel` JSON files and last-used data. |
+| Mod cache | `ModsData` | Atomically writes current and backup `ModuleModel` lists, validates rotation input, and recovers a corrupt current cache from a valid backup. |
+| Modpacks | `ModpackData` | Atomically writes `ModpackModel` JSON files and last-used data; invalid named modpacks are still skipped because the named-file backup strategy remains an owner decision. |
 | Modpack workflow | `ModpackService` | Coordinates modpack behavior and delegates most persistence to `ModpackData`; export currently writes directly. |
 | Future Nexus metadata | Nexus/Core model boundary | Planned separate metadata files, never stored in `ModuleModel`. |
 
@@ -33,11 +33,11 @@ CalradiaForge persisted data must have clear ownership, safe writes, graceful re
 
 | File/data area | Initial rule |
 |---|---|
-| `AppConfig` | Atomic save; credential ownership remains outside `AppConfig` by design, without generic key-name filtering. |
-| `ModsData` current cache | Atomic save plus backup recovery. |
-| `ModsData` backup cache | Atomic save; used as recovery input. |
-| `ModpackData` modpacks | Atomic save plus recovery policy for important user-created files. |
-| `ModpackData` last-used load order | Atomic save. |
+| `AppConfig` | Implemented: atomic save and graceful invalid-JSON fallback; credential ownership remains outside `AppConfig` by design, without generic key-name filtering. |
+| `ModsData` current cache | Implemented: atomic save plus recovery and repair from a valid backup when the current file is corrupt. |
+| `ModsData` backup cache | Implemented: atomic save; rotation validates the current cache before replacing the backup. |
+| `ModpackData` modpacks | Atomic save implemented; backup recovery deferred until the owner chooses per-file backups, a recovery folder, or both. |
+| `ModpackData` last-used load order | Implemented: atomic save. |
 | `ModpackService.Export` | Move write mechanics into a data helper or shared persistence helper in a later implementation phase. |
 | Future Nexus metadata | Atomic save plus schema/version rules; no credentials. |
 
@@ -45,9 +45,9 @@ CalradiaForge persisted data must have clear ownership, safe writes, graceful re
 
 | Step | Scope |
 |---|---|
-| 1 | Add shared atomic JSON write helper or equivalent owner-specific atomic write pattern. |
-| 2 | Apply atomic saves to `AppConfig`, `ModsData.SaveCurrent`, `ModsData.SaveBackup`, `ModpackData.SaveModpack`, and `ModpackData.SaveLastUsed`. |
-| 3 | Add recovery behavior for `ModsData` current/backup files and important modpack files. |
+| 1 | Completed: add a shared atomic same-directory write helper. |
+| 2 | Completed: apply atomic saves to `AppConfig`, `ModsData.SaveCurrent`, `ModsData.SaveBackup`, `ModpackData.SaveModpack`, and `ModpackData.SaveLastUsed`. |
+| 3 | Partially completed: `ModsData` recovery and validated rotation are implemented; named-modpack recovery remains owner-gated. |
 | 4 | Add validation before replacing current files where practical. |
 | 5 | Move direct domain JSON writes, such as modpack export, behind an owning helper when implementation work is requested. |
 | 6 | Add `schemaVersion` only where model evolution justifies it. |

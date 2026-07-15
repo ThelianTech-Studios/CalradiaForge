@@ -195,7 +195,7 @@ flowchart TD
 
 - [X] Phase 1: Low-risk cleanup completed or deferred with notes; build passes. (Completed)
 - [X] Phase 2: Serilog infrastructure, retention, source context, neutral formatting, and approved package usage are implemented and documented inside the Core logging folder while the legacy logger compatibility path and all existing call sites remain in place. The original Phase 2 redaction infrastructure is retained as history only and was superseded by the 2026-07-12 owner decision. (Completed)
-- [ ] Phase 3: BLSE/archive/persistence safety changes are implemented or explicitly deferred.
+- [ ] Phase 3: The implementation/reviewer pass completed the decision-safe archive and persistence slices; owner-gated BLSE, reserved-folder, named-modpack recovery, normal-upgrade policy, flat-archive target naming/blocking, and Steam scanner choices remain explicitly deferred pending manual inspection and approval.
 - [ ] Phase 4: Core tests and reusable performance benchmark infrastructure exist; correctness tests and benchmarks are separated; provisional baselines are labeled.
 - [ ] Phase 5.A: One `IServiceCollection` and one application provider are used; Core/UI registrations are separated; `MainWindow` is DI-resolved without duplicate `StartupUri` construction; singleton identity, Serilog construction, and provider disposal are verified.
 - [ ] Phase 5.B: Legacy logger call sites are migrated in verified batches and the compatibility path is retired only after verification.
@@ -338,6 +338,8 @@ When logging work begins, add or plan structured diagnostics around Steam librar
 ### Steam Workshop Scanner Safety Candidate
 
 Investigate Steam Workshop path detection and Bannerlord Workshop mod discovery as a targeted safety/bugfix candidate. If the bug cannot be confirmed yet, keep the work documented and deferred until end-user setup details are known. Do not describe this issue as fixed unless implementation and verification happened.
+
+The Phase 3 investigation confirmed that current auto-detection checks only the Steam client library and can misclassify a valid Steam install when its Workshop directory is absent. It also found competing scanner-layout limitations and no checked-in fake-root fixtures. Implementation remains deferred: library-candidate precedence, manual-override behavior, and representative verification must be approved before changing source, and the reported end-user issue must not be described as fixed.
 
 ## Phase 4 - Initial Tests And Performance Benchmark Infrastructure Around Changed Risky Areas
 

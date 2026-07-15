@@ -7,9 +7,11 @@ Improve mod archive, overwrite, and BLSE install safety without bypassing the cu
 ## Current Grounding
 
 - `ModInstaller` owns install orchestration, background task lifetime, progress, cancellation, version checks, and install summaries.
-- `ModExtractor` owns archive extraction and mod-root detection.
+- `ModExtractor` owns archive opening, pre-extraction lexical entry-containment validation, extraction, managed-temp cleanup, and mod-root detection.
 - `BLSEInstaller` owns BLSE archive detection and game-bin file placement.
 - `ModsPage.xaml.cs` decides when installs start and displays status/toasts; it must not take over install mechanics.
+- Normal module installs now require exactly one `SubModule.xml`, a parseable module id, a contained target path, and a matching parseable identity when the target folder already exists.
+- Existing target folders with unknown or mismatched identities are blocked, and an upgrade copy does not proceed when recursive deletion fails.
 
 ## Guardrails
 
@@ -25,25 +27,27 @@ Improve mod archive, overwrite, and BLSE install safety without bypassing the cu
 ## Current Risk Areas
 
 - `ModInstaller` deletes an existing module folder during upgrade with `Directory.Delete(..., recursive: true)`.
-- A folder that already exists but lacks `SubModule.xml` is treated as an installable overwrite target.
 - Reserved/official module folder protection is not yet enforced.
 - `BLSEInstaller` currently copies all files from the detected source bin folder and overwrites existing files.
-- Archive extraction does not yet have a documented containment validation phase.
-- Module identity preflight happens implicitly after extraction, not as a named validation result.
+- Normal-module backup, rollback, and user-confirmation behavior is not yet locked.
 
 ## Normal Mod Archive Policy
 
-Archives must pass preflight before install:
+Implemented normal archives pass these preflight checks before destination writes:
 
 - Archive can be opened.
 - Archive extension is accepted: `.zip`, `.rar`, `.7z`.
 - Extraction stays contained inside the app-managed extraction directory.
-- Exactly one intended module root is identified, unless future multi-module policy allows more.
+- Exactly one intended module root is identified through one `SubModule.xml`; multi-module archives are currently blocked.
 - `SubModule.xml` exists and can be parsed.
 - Module id, name, and version are captured when available.
 - Target folder resolves under `AppConfigSettings.ModulesDirectoryPath`.
-- Target folder is not an official/reserved module folder.
-- Overwrite/delete behavior is described in a result object before execution.
+- Target path is contained under `AppConfigSettings.ModulesDirectoryPath`.
+- An existing target must contain a parseable matching module id before version/delete/copy work continues.
+
+Official/reserved folder enforcement and a fully locked overwrite/backup/confirmation contract remain deferred owner decisions.
+
+Flat archives with `SubModule.xml` directly at the extraction root still inherit the generated extraction-directory name as their target folder. A deterministic target rule (for example, module id versus another archive identity) or an explicit block requires owner approval because either choice can change compatibility. This layout remains a known Phase 3 limitation and must not be described as fully stabilized.
 
 ## Overwrite And Delete Rules
 
@@ -79,18 +83,18 @@ SevenZipWrapper values are comparison evidence only when archive content, format
 
 | Step | Work | Verification |
 |---|---|---|
-| 1 | Add named archive/module preflight result types around current extraction flow. | Unit tests for valid module, invalid archive, and missing `SubModule.xml`. |
-| 2 | Add reserved/official module folder protection. | Tests prove official folders are blocked. |
-| 3 | Add overwrite safety checks before recursive delete/copy. | Tests for same module upgrade, unknown folder block, and same/newer skip. |
-| 4 | Add BLSE allowlist validation before copy. | Tests for allowed BLSE files, unexpected files, and platform bin selection. |
+| 1 | Partially implemented: named archive extraction and module preflight results, archive openability, lexical entry containment, exactly-one-module validation, and managed-temp cleanup; deterministic naming or blocking for flat-root modules remains owner-gated. | Automated coverage remains Phase 4; targeted smoke verification is required in the Phase 3 closeout. |
+| 2 | Deferred: add reserved/official module folder protection after the exact owner-approved list exists. | Tests must prove every approved official folder is blocked. |
+| 3 | Partially implemented: unknown/unparsable/mismatched targets are blocked and failed deletion aborts copy; final backup/confirmation rules remain owner-gated. | Same-module upgrade, unknown folder block, same/newer skip, and delete-failure tests remain Phase 4 work. |
+| 4 | Deferred: add BLSE allowlist validation after the exact owner-approved manifest and folder structure exist. | Tests must cover allowed BLSE files, unexpected files, and platform bin selection. |
 | 5 | Add integration-style filesystem tests. | Temp directory install simulations with no writes outside destination. |
 
-## Verification Expectations
+## Acceptance And Verification Expectations
 
 - Valid module archives still install through `ModInstaller`.
 - Invalid archives fail with a clear result and no partial destination writes.
-- Reserved/official modules are blocked.
-- BLSE only copies allowlisted files.
+- Future reserved/official module protection is verified against the owner-approved list; this is currently deferred and unverified.
+- Future BLSE allowlist enforcement proves only approved files are copied; this is currently deferred and unverified.
 - Cleanup never deletes outside app-managed temp directories.
 - Logs and toasts distinguish accepted, skipped, blocked, overwritten, and failed files.
 
@@ -99,6 +103,7 @@ SevenZipWrapper values are comparison evidence only when archive content, format
 - What exact Bannerlord official/reserved module folder list should be locked?
 - Should upgrades create a temporary backup before delete/copy?
 - How should multi-module archives be handled?
+- Should a flat archive target a validated module id-derived folder or be blocked until it provides an explicit module folder?
 - Should suspicious scripts/executables inside normal modules warn or block?
 - What user confirmation level is acceptable for overwrite cases?
 
