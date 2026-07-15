@@ -80,7 +80,7 @@ Phase 4 should establish, after framework and package approval:
 - Documented local execution commands.
 - CI execution only when stability and runtime cost justify it.
 
-Do not select a benchmark framework, analyzer package, project name, package dependency, result path, or blocking threshold until the repository layout and owner approvals support that choice. BenchmarkDotNet may be considered but is not pre-approved by this policy.
+The owner approved `source/CalradiaForge.Benchmarks`, BenchmarkDotNet `0.15.2`, and the project's existing diagnostics package for Phase 4. Local raw results use the ignored `source/CalradiaForge.Benchmarks/BenchmarkDotNet.Artifacts` path. Additional frameworks, analyzer packages, result-retention paths, or blocking thresholds remain unapproved.
 
 ## Fixture Categories
 
@@ -465,8 +465,8 @@ Closeout:
 
 ## Unresolved Decisions
 
-- Test framework remains open.
-- Benchmark framework, project path, target framework, package set, and result storage path remain open until Phase 4 inspection and approval.
+- xUnit in `source/CalradiaForge.Tests` and BenchmarkDotNet in `source/CalradiaForge.Benchmarks` are the approved Phase 4 frameworks and project paths.
+- Local raw benchmark output is stored under the ignored `source/CalradiaForge.Benchmarks/BenchmarkDotNet.Artifacts` path; promotion of reviewed evidence into a durable audit artifact remains a Phase 8 decision.
 - Additional analyzer/tool selection remains open and requires approval.
 - Existing SevenZipWrapper benchmark source, environment, and methodology must be identified before historical values are used for subtraction.
 - Baseline retention and CI blocking policy remain undefined; informational results are the default.

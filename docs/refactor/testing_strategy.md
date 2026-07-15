@@ -6,14 +6,15 @@ CalradiaForge should move from manual/runtime verification toward phased automat
 
 ## Current Grounding
 
-- There is no test project checked in today.
+- `source/CalradiaForge.Tests` is the owner-approved xUnit project. Core tests live under `Core.Tests`; the Nexus and UI project-level folders remain reserved for their owning layers.
 - `AppConfig` and `AppConfigSettings` own JSON-backed settings and typed config behavior.
 - `ModsData` owns mod cache file I/O.
 - `ModpackData` owns modpack and last-used file I/O.
 - `ModpackService` owns modpack workflow behavior, validation, import/export, and default modpack creation.
 - `ModInstaller`, `ModExtractor`, and `BLSEInstaller` own install and extraction behavior that needs coverage before Nexus downloads.
 - `Logger` currently writes session logs directly. The future Serilog formatter is presentation-only and performs no automatic secret or path filtering.
-- Test framework, benchmark framework, analyzer tools, benchmark project path, result storage, and CI blocking policy are not selected.
+- `source/CalradiaForge.Benchmarks` is the owner-approved BenchmarkDotNet project. Core benchmarks live under `Core.Benchmarks`; raw local results use the ignored `BenchmarkDotNet.Artifacts` directory.
+- Additional analyzer tools, retained baseline storage, minimum CI coverage, and CI blocking policy remain unselected.
 
 ## Test Layers
 
@@ -38,7 +39,7 @@ Do not put narrow exact-duration assertions in ordinary unit or integration test
 
 ## Benchmark Infrastructure Direction
 
-Phase 4 should establish a benchmark project or approved equivalent harness only after the framework, project placement, package set, and repository naming conventions are selected. The exact path and package choice remain open.
+Phase 4 uses the owner-approved `source/CalradiaForge.Benchmarks` project with BenchmarkDotNet `0.15.2`. The project references Core directly, uses short Release jobs with warmup and repeated iterations, and reports managed allocations through `MemoryDiagnoser`.
 
 The infrastructure should support:
 
@@ -53,7 +54,31 @@ The infrastructure should support:
 - A documented local execution command.
 - CI execution only when stability and runtime cost justify it.
 
-Do not add a test framework, benchmark framework, analyzer package, project, or package dependency merely because this strategy mentions it. Any new package, analyzer, large fixture, or blocking threshold requires owner approval.
+The current xUnit and BenchmarkDotNet package sets were selected by the owner before Phase 4 implementation. Any additional package, analyzer, large fixture, or blocking threshold still requires owner approval.
+
+### Phase 4 Project Layout And Commands
+
+- Correctness tests: `source/CalradiaForge.Tests/Core.Tests`.
+- Performance cases: `source/CalradiaForge.Benchmarks/Core.Benchmarks`.
+- Reserved future folders: `Nexus.Tests`, `UI.Tests`, `Nexus.Benchmarks`, and `UI.Benchmarks`.
+- Full correctness command: `dotnet test source/CalradiaForge.slnx`.
+- Built-in analyzer/compiler-warning command: `dotnet build source/CalradiaForge.slnx -c Release`.
+- Full benchmark command on Windows: `powershell -NoProfile -ExecutionPolicy Bypass -File source/CalradiaForge.Benchmarks/run-phase4-benchmarks.ps1`.
+- Targeted benchmark command: add `-Filter '*ModpackValidationBenchmarks*'` or another BenchmarkDotNet filter.
+- Raw local results and environment metadata: `source/CalradiaForge.Benchmarks/BenchmarkDotNet.Artifacts`.
+
+The Phase 4 Core suite covers typed configuration and corrupt JSON fallback, atomic mod-cache round trips and backup recovery, named and last-used modpack persistence, modpack workflow validation, parser behavior, manual Workshop-root scanning with fake multi-library roots, archive containment and extraction, authoritative installer preflight, BLSE detection/install behavior, formatter output, and install-summary result mapping. Benchmarks cover parser dependency scaling, load-order validation scaling, mod-cache filesystem persistence, and fake-root module scanning.
+
+The benchmark artifact directory is ignored because its output is machine- and working-tree-specific. The runner records branch, commit, working-tree state, .NET details, and explicit `Infrastructure validation / Provisional pre-refactor baseline` and non-comparability labels. Evidence intentionally promoted into Phase 8 must be reviewed and stored with that audit rather than treated as a universal checked-in baseline.
+
+### Phase 4 Boundaries Confirmed During Implementation
+
+- Existing SevenZipWrapper performance statements in repository history do not include a controlled archive fixture, source benchmark output, environment, cache state, or full methodology. They remain historical and `Not directly comparable`; Phase 4 does not subtract them from current results.
+- No legal representative archive fixture was approved for a reusable SevenZipWrapper versus full-pipeline A/B benchmark. Generated zip fixtures cover correctness only; controlled extraction comparison remains for a later approved benchmark slice.
+- Steam multi-library auto-discovery and candidate precedence remain deferred. The current scanner tests verify only configured manual Workshop-root behavior with fake roots and do not claim the reported path-resolution issue is fixed.
+- BLSE allowlist enforcement remains deferred pending the owner-approved manifest. Current tests cover marker detection, platform-bin selection, copying, and executable-path configuration without claiming allowlist behavior.
+- Phase 5.A logger ownership, exact-once close, handle release, retention decisions, and archival behavior do not exist yet. Phase 4 covers the current neutral formatter; lifecycle tests remain tied to Phase 5.A implementation.
+- No additional analyzer package, timing assertion, performance threshold, production optimization, WPF automation, Nexus integration test, or network fixture was added.
 
 ## Benchmark Fixture Categories
 
@@ -200,10 +225,8 @@ Accepted testing and benchmark decisions should later be migrated into canonical
 
 ## Open Questions
 
-- Which test framework should be standard: xUnit, NUnit, or MSTest?
-- Which benchmark framework and project path should be approved?
 - Which allocation/analyzer tools are acceptable without adding unnecessary dependencies?
-- Where should raw benchmark results be retained?
+- Which reviewed benchmark results, if any, should be promoted from ignored local artifacts into the Phase 8 audit evidence?
 - What fixture archives can be checked in legally and without unreasonable repository cost?
 - What minimum coverage should block CI once tests exist?
 - Which performance thresholds, if any, should become blocking after stability is demonstrated?
