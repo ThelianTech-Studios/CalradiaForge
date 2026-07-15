@@ -1,6 +1,10 @@
 <Solution>
   <Folder Name="/Solution Items/">
     <File Path="../AGENTS.md" />
+    <File Path="../docs/CHANGELOG.md" />
+    <File Path="../docs/CONTRIBUTIONS.md" />
+    <File Path="../docs/DOCUMENT_SITEMAP.md" />
+    <File Path="../docs/MIGRATION_MAP.md" />
     <File Path="../LICENSE.md" />
     <File Path="../README.md" />
   </Folder>
@@ -10,7 +14,4 @@
   <Project Path="CalradiaForge.UI/CalradiaForge.UI.csproj">
     <BuildDependency Project="CalradiaForge.Core/CalradiaForge.Core.csproj" />
   </Project>
-  <Properties Name="ExtensibilityGlobals" Scope="PostLoad">
-    <Property Name="FileExplorer" Value="..\docs\" />
-  </Properties>
 </Solution>
