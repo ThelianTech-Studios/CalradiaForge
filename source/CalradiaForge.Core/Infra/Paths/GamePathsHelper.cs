@@ -1,5 +1,6 @@
 ﻿namespace CalradiaForge.Core.Infra.Paths {
 	using CalradiaForge.Core.Infra.Config;
+	using CalradiaForge.Core.Infra.GamePlatform.Epic;
 	using CalradiaForge.Core.Infra.Logging;
 
 	using Microsoft.Win32;

@@ -232,6 +232,8 @@
 			Toast_RefreshFailed = GetOrDefault(translations, nameof(Toast_RefreshFailed), DefaultToast_RefreshFailed);
 			Toast_NoModsFound = GetOrDefault(translations, nameof(Toast_NoModsFound), DefaultToast_NoModsFound);
 			Toast_AutoScanFailed = GetOrDefault(translations, nameof(Toast_AutoScanFailed), DefaultToast_AutoScanFailed);
+			Toast_SteamWorkshopNotFoundTitle = GetOrDefault(translations, nameof(Toast_SteamWorkshopNotFoundTitle), DefaultToast_SteamWorkshopNotFoundTitle);
+			Toast_SteamWorkshopNotFoundMessage = GetOrDefault(translations, nameof(Toast_SteamWorkshopNotFoundMessage), DefaultToast_SteamWorkshopNotFoundMessage);
 			// Common / Shared
 			Common_AlmostDone = GetOrDefault(translations, nameof(Common_AlmostDone), DefaultCommon_AlmostDone);
 			Common_Remaining = GetOrDefault(translations, nameof(Common_Remaining), DefaultCommon_Remaining);
@@ -599,6 +601,10 @@
 		private const string DefaultToast_NoModsFound = "No Mods Found";
 		public string Toast_AutoScanFailed { get; private set; } = DefaultToast_AutoScanFailed;
 		private const string DefaultToast_AutoScanFailed = "Auto-Scan Failed";
+		public string Toast_SteamWorkshopNotFoundTitle { get; private set; } = DefaultToast_SteamWorkshopNotFoundTitle;
+		private const string DefaultToast_SteamWorkshopNotFoundTitle = "Steam Workshop Not Found";
+		public string Toast_SteamWorkshopNotFoundMessage { get; private set; } = DefaultToast_SteamWorkshopNotFoundMessage;
+		private const string DefaultToast_SteamWorkshopNotFoundMessage = "Steam Bannerlord was detected, but no Bannerlord Workshop folder was found. Local mods will still be scanned, and you can select the Workshop folder manually.";
 		#endregion
 
 		#region Common / Shared

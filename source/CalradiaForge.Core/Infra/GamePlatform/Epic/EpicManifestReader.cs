@@ -1,4 +1,4 @@
-﻿namespace CalradiaForge.Core.Infra.Paths {
+﻿namespace CalradiaForge.Core.Infra.GamePlatform.Epic {
 	using System;
 	using System.Text.RegularExpressions;
 
