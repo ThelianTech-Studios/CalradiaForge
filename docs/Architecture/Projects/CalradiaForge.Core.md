@@ -16,6 +16,7 @@ Provide the deterministic, UI-agnostic behavior that the WPF app consumes.
 - Install mods and handle archive extraction.
 - Manage BLSE installation as a special-case archive flow.
 - Store mod cache and modpack data.
+- Atomically persist configuration, mod-cache, named-modpack, and last-used JSON data; recover a corrupt current mod cache from its validated backup.
 - Launch Bannerlord and BLSE.
 - Load localization files and apply language settings.
 - Load and record EULA acceptance state.
@@ -52,6 +53,7 @@ Provide the deterministic, UI-agnostic behavior that the WPF app consumes.
 - Preserve `AppConfig` as the only JSON-backed config store.
 - Preserve `ModInstaller` and `ModExtractor` as the authority for archive install flow.
 - Preserve `ModpackData` and `ModsData` as the file I/O boundary for their domains.
+- Keep shared atomic-write mechanics internal to Core data/config owners rather than moving domain persistence into services or UI.
 
 ## Known Extension Points
 - Nexus integration should not be added directly to Core.
