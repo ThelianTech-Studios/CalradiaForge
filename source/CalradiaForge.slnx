@@ -11,7 +11,11 @@
   <Project Path="CalradiaForge.ConsoleUtils/CalradiaForge.ConsoleUtils.csproj" Id="1ee13e60-ecfe-40b4-ac5e-2c0dca7cc37e" />
   <Project Path="CalradiaForge.Core/CalradiaForge.Core.csproj" />
   <Project Path="CalradiaForge.Nexus/CalradiaForge.Nexus.csproj" Id="0a016da2-e3e5-496a-afd2-e4beb8e76578" />
+  <Project Path="CalradiaForge.Tests/CalradiaForge.Tests.csproj" Id="55e0a073-ce1d-4bc6-a32b-f4494b886271" />
   <Project Path="CalradiaForge.UI/CalradiaForge.UI.csproj">
     <BuildDependency Project="CalradiaForge.Core/CalradiaForge.Core.csproj" />
   </Project>
+  <Properties Name="ExtensibilityGlobals" Scope="PostLoad">
+    <Property Name="FileExplorer" Value="..\docs\" />
+  </Properties>
 </Solution>
