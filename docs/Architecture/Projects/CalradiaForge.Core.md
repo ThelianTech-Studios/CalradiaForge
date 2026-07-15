@@ -35,6 +35,8 @@ Provide the deterministic, UI-agnostic behavior that the WPF app consumes.
 ### Upstream Consumers
 - `CalradiaForge.UI`
 - `CalradiaForge.ConsoleUtils`
+- `CalradiaForge.Tests` exercises Core behavior through deterministic fake-root fixtures.
+- `CalradiaForge.Benchmarks` measures selected Core workflows without changing production behavior.
 - `CalradiaForge.Nexus` depends on Core when it gains implementation
 
 ## Major Systems

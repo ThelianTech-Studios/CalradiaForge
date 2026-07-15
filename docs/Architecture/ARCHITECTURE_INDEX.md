@@ -10,6 +10,8 @@ This index points to the current architecture foundation for CalradiaForge.
 - [CalradiaForge.UI](Projects/CalradiaForge.UI.md)
 - [CalradiaForge.Nexus](Projects/CalradiaForge.Nexus.md)
 - [CalradiaForge.ConsoleUtils](Projects/CalradiaForge.ConsoleUtils.md)
+- [CalradiaForge.Tests](Projects/CalradiaForge.Tests.md)
+- [CalradiaForge.Benchmarks](Projects/CalradiaForge.Benchmarks.md)
 
 ## System Documentation
 - [Configuration](Systems/Configuration.md)
