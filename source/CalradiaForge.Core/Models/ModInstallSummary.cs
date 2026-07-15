@@ -48,6 +48,17 @@
 			if (FailedCount > 0)
 				parts.Add($"{FailedCount} failed");
 
+			// Surface one concise normal-archive failure reason through the existing
+			// status/toast pipeline without moving presentation ownership into Core.
+			ModInstallResult? firstNormalFailure = Results.FirstOrDefault(r =>
+				r.Status == ModInstallStatus.Failed && !IsBLSEResult(r));
+			if (firstNormalFailure is not null && !string.IsNullOrWhiteSpace(firstNormalFailure.Message)) {
+				string label = string.IsNullOrWhiteSpace(firstNormalFailure.ModuleName)
+					? firstNormalFailure.ArchiveFileName
+					: firstNormalFailure.ModuleName;
+				parts.Add($"{label}: {firstNormalFailure.Message}");
+			}
+
 			// Append BLSE result separately
 			ModInstallResult? blse = BLSEResult;
 			if (blse is not null) {
