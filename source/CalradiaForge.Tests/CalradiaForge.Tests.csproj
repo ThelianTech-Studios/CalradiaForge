@@ -19,6 +19,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\CalradiaForge.Core\CalradiaForge.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="Core.Tests\" />
     <Folder Include="Nexus.Tests\" />
     <Folder Include="UI.Tests\" />
