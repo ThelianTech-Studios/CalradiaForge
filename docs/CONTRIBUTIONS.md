@@ -93,6 +93,23 @@ CalradiaForge follows a **layered architecture** with strong separation of conce
 4. Run any tests you create or update.
 5. Submit a pull request with a clear description and reasoning for the changes.
 
+### Build, Tests, And Benchmarks
+
+Run the solution build and correctness suite from the repository root:
+
+```powershell
+dotnet build source/CalradiaForge.slnx
+dotnet test source/CalradiaForge.slnx
+```
+
+Performance benchmarks are developer-only, informational, and must run in Release configuration. The Phase 4 runner records environment metadata and writes ignored machine-specific artifacts:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File source/CalradiaForge.Benchmarks/run-phase4-benchmarks.ps1
+```
+
+Do not use real Steam, Bannerlord, Nexus, credential, or user-configuration data in tests or benchmarks.
+
 ---
 
 ## 🔹 Philosophy
