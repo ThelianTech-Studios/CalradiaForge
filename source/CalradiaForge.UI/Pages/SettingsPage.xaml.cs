@@ -8,6 +8,9 @@
 	using System.Windows.Controls;
 
 	using CalradiaForge.Core.Infra.Config;
+	using CalradiaForge.Core.Infra.GamePlatform;
+	using CalradiaForge.Core.Infra.GamePlatform.Steam;
+	using CalradiaForge.Core.Infra.Localization;
 	using CalradiaForge.Core.Infra.Logging;
 	using CalradiaForge.Core.Infra.Mods;
 	using CalradiaForge.Core.Infra.Paths;
@@ -31,6 +34,7 @@
 		private string _gameLauncherFilePath = string.Empty;
 		private string _steamWorkshopFolderPath = string.Empty;
 		private string _blseExePath = string.Empty;
+		private static TranslationStrings T => App.Translator.Strings;
 
 		/// <summary>
 		/// Panel references indexed to match <see cref="SettingsNavBar"/> selection order.
@@ -90,6 +94,7 @@
 			LoadUnblockStatus();
 			SetVersionText();
 			PopulateLanguageComboBox();
+			ShowSteamWorkshopWarningIfNeeded();
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("SettingsPage: Initialized.", new { GameProvider = _config.GameProvider.ToString() });
 			}
@@ -374,8 +379,17 @@
 				return;
 			}
 
-			_config.GameFolderPath = selectedPath;
-			GameFolderPath = selectedPath;
+			GamePlatformDetectionResult platformResult = GamePathsHelper.ApplyManualGameFolderSelection(
+				_config,
+				selectedPath);
+			bool matchedSteam = platformResult.IsDetected && platformResult.Provider == GameProvider.Steam;
+			GameFolderPath = _config.GameFolderPath;
+			GameLauncherFilePath = _config.GameLauncherFilePath;
+			SteamWorkshopFolderPath = _config.SteamWorkshopFolderPath;
+			UpdatePathSectionVisibility();
+			if (matchedSteam) {
+				ShowSteamWorkshopWarningIfNeeded();
+			}
 			UpdateGameFolderValidation();
 			_logger.Info($"SettingsPage: Game folder set to '{selectedPath}'");
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
@@ -486,7 +500,7 @@
 		}
 
 		/// <summary>
-		/// Re-runs the game auto-detection pipeline via <see cref="GamePathsHelper"/>
+		/// Re-runs the complete game-platform detection pipeline via <see cref="GamePathsHelper"/>
 		/// and refreshes all displayed paths, visibility, and BLSE validation.
 		/// </summary>
 		private void RedetectGame_Click(object sender, RoutedEventArgs e) {
@@ -497,7 +511,8 @@
 					GameProvider = _config.GameProvider.ToString()
 				});
 			}
-			GamePathsHelper.TryAutoDetectGameFolder(_config);
+			GamePlatformDetectionResult platformResult = GamePathsHelper.RedetectGamePaths(_config);
+			SteamResolutionResult? steamResolution = platformResult.SteamResolution;
 
 			GameFolderPath = _config.GameFolderPath;
 			GameLauncherFilePath = _config.GameLauncherFilePath;
@@ -519,12 +534,29 @@
 			}
 
 			bool detected = GamePathValidator.ValidateGameFolder(_config.GameFolderPath, out _);
+			bool steamWithoutWorkshop = steamResolution?.Status == SteamResolutionStatus.SteamGameResolvedWithoutWorkshop;
 			App.Toasts.Show(new ToastRequest {
-				Title = detected ? "Game Detected" : "Detection Failed",
-				Message = detected
-					? $"Bannerlord found via {_config.GameProvider}."
-					: "Could not auto-detect Bannerlord. Please select the game folder manually.",
-				Severity = detected ? ToastSeverity.Success : ToastSeverity.Warning
+				Title = steamWithoutWorkshop
+					? T.Toast_SteamWorkshopNotFoundTitle
+					: detected ? "Game Detected" : "Detection Failed",
+				Message = steamWithoutWorkshop
+					? T.Toast_SteamWorkshopNotFoundMessage
+					: detected
+						? $"Bannerlord found via {_config.GameProvider}."
+						: "Could not auto-detect Bannerlord. Please select the game folder manually.",
+				Severity = steamWithoutWorkshop || !detected ? ToastSeverity.Warning : ToastSeverity.Success
+			});
+		}
+
+		private void ShowSteamWorkshopWarningIfNeeded() {
+			if (_config.GameProvider != GameProvider.Steam
+				|| GamePathValidator.ValidateWorkshopFolder(_config.SteamWorkshopFolderPath, out _)) {
+				return;
+			}
+			App.Toasts.Show(new ToastRequest {
+				Title = T.Toast_SteamWorkshopNotFoundTitle,
+				Message = T.Toast_SteamWorkshopNotFoundMessage,
+				Severity = ToastSeverity.Warning
 			});
 		}
 
