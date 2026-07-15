@@ -1,13 +1,12 @@
-﻿// -----------------------------------------------------------------------
-// Copyright (c) Microsoft Corporation.  All rights reserved.
-// -----------------------------------------------------------------------
-
 namespace CalradiaForge.Benchmarks;
 
+using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Running;
 
-internal class Program {
-	static void Main(string[] args) {
-		var _ = BenchmarkRunner.Run(typeof(Program).Assembly);
+internal static class Program {
+	private static void Main(string[] args) {
+		BenchmarkSwitcher
+			.FromAssembly(typeof(Program).Assembly)
+			.Run(args, DefaultConfig.Instance);
 	}
 }
