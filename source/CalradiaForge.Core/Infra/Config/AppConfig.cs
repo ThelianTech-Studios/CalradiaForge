@@ -2,6 +2,7 @@
 	using System.Collections.Generic;
 
 	using CalradiaForge.Core.Infra.Logging;
+	using CalradiaForge.Core.Infra.Persistence;
 
 	using Newtonsoft.Json;
 
@@ -60,7 +61,7 @@
 					_logger.Debug("AppConfig: Saving config.", new { FilePath = _configFilePath, Count = _configValues.Count });
 				}
 				var json = JsonConvert.SerializeObject(_configValues, Formatting.Indented);
-				File.WriteAllText(_configFilePath, json);
+				AtomicFileWriter.WriteAllText(_configFilePath, json);
 				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 					_logger.Debug("AppConfig: Save complete.", new { FilePath = _configFilePath });
 				}
@@ -106,8 +107,13 @@
 					Save();
 					return;
 				}
-				var json = File.ReadAllText(_configFilePath);
-				_configValues = JsonConvert.DeserializeObject<Dictionary<string, string>>(json) ?? new Dictionary<string, string>();
+				try {
+					var json = File.ReadAllText(_configFilePath);
+					_configValues = JsonConvert.DeserializeObject<Dictionary<string, string>>(json) ?? new Dictionary<string, string>();
+				} catch (JsonException ex) {
+					_logger.Error(ex, "AppConfig: Config file contains invalid JSON. Falling back to defaults.");
+					_configValues = new Dictionary<string, string>();
+				}
 				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 					_logger.Debug("AppConfig: Config loaded.", new { FilePath = _configFilePath, Count = _configValues.Count });
 				}
