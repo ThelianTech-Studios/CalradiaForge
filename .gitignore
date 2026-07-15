@@ -6,6 +6,8 @@
 # Build output
 bin/
 obj/
+TestResults/
+BenchmarkDotNet.Artifacts/
 
 # User-specific files
 *.user
