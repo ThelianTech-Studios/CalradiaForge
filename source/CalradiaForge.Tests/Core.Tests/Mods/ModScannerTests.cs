@@ -8,6 +8,39 @@ using CalradiaForge.Tests.Core.Support;
 
 public sealed class ModScannerTests {
 	[Fact]
+	public async Task ScanForModsAsync_WhenSteamAndBannerlordUseDifferentSimulatedDrives_FindsAllElevenModules() {
+		using TestDirectory temp = new();
+		SplitDriveFixture fixture = CreateSplitDriveFixture(temp);
+		AppConfigSettings settings = CreateScannerSettings(temp, fixture.GameRoot, fixture.WorkshopRoot, GameProvider.Steam);
+
+		List<ModuleModel> modules = await ModScanner.ScanForModsAsync(settings);
+
+		Assert.Equal(11, modules.Count);
+		Assert.Equal(
+			fixture.LocalModuleIds.Concat(fixture.WorkshopModuleIds).Order(),
+			modules.Select(module => module.ModuleId).Order());
+		Assert.Equal(8, modules.Count(module => module.InstallPath?.StartsWith(fixture.ModulesRoot, StringComparison.OrdinalIgnoreCase) == true));
+		Assert.Equal(3, modules.Count(module => module.InstallPath?.StartsWith(fixture.WorkshopRoot, StringComparison.OrdinalIgnoreCase) == true));
+		Assert.StartsWith(Path.Combine("C", "programs", "steam"), Path.GetRelativePath(temp.RootPath, fixture.SteamRoot));
+		Assert.StartsWith(Path.Combine("D", "games", "Bannerlord"), Path.GetRelativePath(temp.RootPath, fixture.GameRoot));
+	}
+
+	[Fact]
+	public async Task ScanForModsAsync_WhenSplitDriveSteamInstallIsMisclassifiedAsStandalone_ReturnsEightInsteadOfDesiredEleven() {
+		using TestDirectory temp = new();
+		SplitDriveFixture fixture = CreateSplitDriveFixture(temp);
+		AppConfigSettings settings = CreateScannerSettings(temp, fixture.GameRoot, fixture.WorkshopRoot, GameProvider.StandAlone);
+
+		List<ModuleModel> modules = await ModScanner.ScanForModsAsync(settings);
+
+		Assert.True(Directory.Exists(fixture.WorkshopRoot));
+		Assert.Equal(8, modules.Count);
+		Assert.NotEqual(11, modules.Count);
+		Assert.Equal(fixture.LocalModuleIds.Order(), modules.Select(module => module.ModuleId).Order());
+		Assert.DoesNotContain(modules, module => fixture.WorkshopModuleIds.Contains(module.ModuleId));
+	}
+
+	[Fact]
 	public async Task ScanForModsAsync_UsesConfiguredWorkshopRootAcrossFakeSteamLibraries() {
 		using TestDirectory temp = new();
 		string steamClientRoot = temp.CreateDirectory("SteamClient");
@@ -18,7 +51,7 @@ public sealed class ModScannerTests {
 		temp.WriteModule(modulesPath, "LocalMod", "Local.Mod");
 		temp.WriteModule(unusedWorkshopRoot, "UnusedMod", "Unused.Mod");
 		temp.WriteModule(selectedWorkshopRoot, "WorkshopMod", "Workshop.Mod");
-		AppConfigSettings settings = CreateSettings(temp, bannerlordLibraryRoot, selectedWorkshopRoot, GameProvider.Steam);
+		AppConfigSettings settings = CreateScannerSettings(temp, bannerlordLibraryRoot, selectedWorkshopRoot, GameProvider.Steam);
 
 		List<ModuleModel> modules = await ModScanner.ScanForModsAsync(settings);
 
@@ -37,7 +70,7 @@ public sealed class ModScannerTests {
 		temp.WriteModule(workshopRoot, "Valid", "Valid.Workshop");
 		temp.WriteModule(workshopRoot, "Multiplayer", "Mp.Workshop", isSinglePlayer: false);
 		temp.CreateDirectory("Workshop", "Invalid");
-		AppConfigSettings settings = CreateSettings(temp, gameRoot, workshopRoot, GameProvider.Steam);
+		AppConfigSettings settings = CreateScannerSettings(temp, gameRoot, workshopRoot, GameProvider.Steam);
 
 		List<ModuleModel> modules = await ModScanner.ScanForModsAsync(settings);
 
@@ -50,7 +83,7 @@ public sealed class ModScannerTests {
 		string gameRoot = temp.CreateDirectory("Game");
 		string modulesPath = temp.CreateDirectory("Game", "Modules");
 		temp.WriteModule(modulesPath, "Local", "Local.Only");
-		AppConfigSettings settings = CreateSettings(
+		AppConfigSettings settings = CreateScannerSettings(
 			temp,
 			gameRoot,
 			temp.GetPath("MissingWorkshop"),
@@ -61,7 +94,46 @@ public sealed class ModScannerTests {
 		Assert.Equal("Local.Only", Assert.Single(modules).ModuleId);
 	}
 
-	private static AppConfigSettings CreateSettings(
+	private static SplitDriveFixture CreateSplitDriveFixture(TestDirectory temp) {
+		// These directories model C:/programs/steam and D:/games/Bannerlord without touching real drives.
+		string steamRoot = temp.CreateDirectory("C", "programs", "steam");
+		string workshopRoot = temp.CreateDirectory(
+			"C",
+			"programs",
+			"steam",
+			"steamapps",
+			"workshop",
+			"content",
+			"261550");
+		string gameRoot = temp.CreateDirectory("D", "games", "Bannerlord");
+		string modulesRoot = temp.CreateDirectory("D", "games", "Bannerlord", "Modules");
+		string[] localModuleIds = Enumerable.Range(1, 8)
+			.Select(index => $"Local.Mod.{index}")
+			.ToArray();
+		string[] workshopModuleIds = Enumerable.Range(1, 3)
+			.Select(index => $"Workshop.Mod.{index}")
+			.ToArray();
+
+		foreach (string moduleId in localModuleIds) {
+			temp.WriteModule(modulesRoot, moduleId, moduleId);
+		}
+		for (int index = 0; index < workshopModuleIds.Length; index++) {
+			string workshopItemRoot = Directory.CreateDirectory(
+				Path.Combine(workshopRoot, (100001 + index).ToString())).FullName;
+			string moduleId = workshopModuleIds[index];
+			temp.WriteModule(workshopItemRoot, moduleId, moduleId);
+		}
+
+		return new SplitDriveFixture(
+			steamRoot,
+			workshopRoot,
+			gameRoot,
+			modulesRoot,
+			localModuleIds,
+			workshopModuleIds);
+	}
+
+	private static AppConfigSettings CreateScannerSettings(
 		TestDirectory temp,
 		string gameRoot,
 		string workshopRoot,
@@ -74,4 +146,12 @@ public sealed class ModScannerTests {
 		};
 		return settings;
 	}
+
+	private sealed record SplitDriveFixture(
+		string SteamRoot,
+		string WorkshopRoot,
+		string GameRoot,
+		string ModulesRoot,
+		string[] LocalModuleIds,
+		string[] WorkshopModuleIds);
 }
