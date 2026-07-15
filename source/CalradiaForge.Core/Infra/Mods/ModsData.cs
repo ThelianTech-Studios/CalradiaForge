@@ -4,6 +4,7 @@
 	using System.IO;
 
 	using CalradiaForge.Core.Infra.Logging;
+	using CalradiaForge.Core.Infra.Persistence;
 	using CalradiaForge.Core.Models;
 
 	using Newtonsoft.Json;
@@ -42,7 +43,7 @@
 					_logger.Debug("ModsData: Saving current mods.", new { FilePath = _currentFilePath, Count = mods.Count });
 				}
 				var json = JsonConvert.SerializeObject(mods, Formatting.Indented);
-				File.WriteAllText(_currentFilePath, json);
+				AtomicFileWriter.WriteAllText(_currentFilePath, json);
 			}
 		}
 		/// <summary>
@@ -56,8 +57,19 @@
 					}
 					return new List<ModuleModel>();
 				}
-				var json = File.ReadAllText(_currentFilePath);
-				var mods = JsonConvert.DeserializeObject<List<ModuleModel>>(json) ?? new List<ModuleModel>();
+				if (!TryLoadMods(_currentFilePath, "current", out List<ModuleModel> mods)) {
+					if (!File.Exists(_backupFilePath) || !TryLoadMods(_backupFilePath, "backup recovery", out mods)) {
+						return new List<ModuleModel>();
+					}
+
+					try {
+						string recoveredJson = JsonConvert.SerializeObject(mods, Formatting.Indented);
+						AtomicFileWriter.WriteAllText(_currentFilePath, recoveredJson);
+						_logger.Warning("ModsData: Recovered current mods from the backup file.");
+					} catch (Exception ex) {
+						_logger.Error(ex, "ModsData: Loaded backup recovery data but failed to repair the current mods file.");
+					}
+				}
 				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 					_logger.Debug("ModsData: Loaded current mods.", new { FilePath = _currentFilePath, Count = mods.Count });
 				}
@@ -75,7 +87,7 @@
 					_logger.Debug("ModsData: Saving backup mods.", new { FilePath = _backupFilePath, Count = mods.Count });
 				}
 				var json = JsonConvert.SerializeObject(mods, Formatting.Indented);
-				File.WriteAllText(_backupFilePath, json);
+				AtomicFileWriter.WriteAllText(_backupFilePath, json);
 			}
 		}
 		/// <summary>
@@ -89,8 +101,9 @@
 					}
 					return new List<ModuleModel>();
 				}
-				var json = File.ReadAllText(_backupFilePath);
-				var mods = JsonConvert.DeserializeObject<List<ModuleModel>>(json) ?? new List<ModuleModel>();
+				if (!TryLoadMods(_backupFilePath, "backup", out List<ModuleModel> mods)) {
+					return new List<ModuleModel>();
+				}
 				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 					_logger.Debug("ModsData: Loaded backup mods.", new { FilePath = _backupFilePath, Count = mods.Count });
 				}
@@ -105,7 +118,13 @@
 		public void RotateDataFiles() {
 			lock (_lock) {
 				if (File.Exists(_currentFilePath)) {
-					File.Copy(_currentFilePath, _backupFilePath, overwrite: true);
+					if (!TryLoadMods(_currentFilePath, "current rotation source", out List<ModuleModel> currentMods)) {
+						_logger.Warning("ModsData: Skipped cache rotation because the current mods file is invalid. Existing backup was preserved.");
+						return;
+					}
+
+					string json = JsonConvert.SerializeObject(currentMods, Formatting.Indented);
+					AtomicFileWriter.WriteAllText(_backupFilePath, json);
 					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 						_logger.Debug("ModsData: Rotated mods data files.", new { CurrentFile = _currentFilePath, BackupFile = _backupFilePath });
 					}
@@ -137,6 +156,30 @@
 					_logger.Error(ex, "ModsData: Failed to clear cache.");
 					return false;
 				}
+			}
+		}
+
+		#endregion
+
+		#region Helpers
+
+		private bool TryLoadMods(string filePath, string fileDescription, out List<ModuleModel> mods) {
+			try {
+				string json = File.ReadAllText(filePath);
+				List<ModuleModel?>? loadedMods = JsonConvert.DeserializeObject<List<ModuleModel?>>(json);
+				if (loadedMods is null || loadedMods.Exists(static mod => mod is null)) {
+					throw new JsonSerializationException("The mods cache must be a JSON array containing only module objects.");
+				}
+
+				mods = new List<ModuleModel>(loadedMods.Count);
+				foreach (ModuleModel? mod in loadedMods) {
+					mods.Add(mod!);
+				}
+				return true;
+			} catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException) {
+				_logger.Error(ex, $"ModsData: Failed to load {fileDescription} mods file '{filePath}'.");
+				mods = new List<ModuleModel>();
+				return false;
 			}
 		}
 
