@@ -424,7 +424,7 @@
 		public string Settings_DetectGameButton { get; private set; } = DefaultSettings_DetectGameButton;
 		private const string DefaultSettings_DetectGameButton = "\U0001f504  Detect Game";
 		public string Settings_DetectGameHint { get; private set; } = DefaultSettings_DetectGameHint;
-		private const string DefaultSettings_DetectGameHint = "Re-runs auto-detection for Steam, Epic, and StandAlone installations. Also detects BLSE if installed. Overwrites current paths.";
+		private const string DefaultSettings_DetectGameHint = "Re-runs supported automatic game detection and detects BLSE when installed. Overwrites current paths; select the game folder manually if detection fails.";
 		#endregion
 
 		#region Settings — Tools
