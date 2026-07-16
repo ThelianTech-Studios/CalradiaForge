@@ -68,7 +68,7 @@
   "Settings_BLSEHint": "The Bannerlord Software Extender enables advanced script mods. If installed, CalradiaForge auto-detects it in the game's bin folder. You can also select it manually.",
   "Settings_DetectionHeader": "Detection",
   "Settings_DetectGameButton": "🔄  Detect Game",
-  "Settings_DetectGameHint": "Re-runs auto-detection for Steam, Epic, and StandAlone installations. Also detects BLSE if installed. Overwrites current paths.",
+  "Settings_DetectGameHint": "Re-runs supported automatic game detection and detects BLSE when installed. Overwrites current paths; select the game folder manually if detection fails.",
   "Settings_ModMaintenanceHeader": "Mod Maintenance",
   "Settings_UnblockDllsButton": "🔓  Unblock DLLs",
   "Settings_UnblockDllsHint": "Removes the Zone.Identifier alternate data stream from all DLL files in the Modules folder. Required for mods downloaded from the internet.",
