@@ -36,10 +36,6 @@
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("DllUnblocker: Starting unblock scan.", new { DirectoryPath = directoryPath });
 			}
-			if (string.IsNullOrWhiteSpace(directoryPath) || !Directory.Exists(directoryPath)) {
-				_logger.Warning($"DllUnblocker: Directory does not exist: '{directoryPath}'");
-				return new UnblockResult();
-			}
 			return await Task.Run(() => UnblockDirectory(directoryPath, token), token);
 		}
 
