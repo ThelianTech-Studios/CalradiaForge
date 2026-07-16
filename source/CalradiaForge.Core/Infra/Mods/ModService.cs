@@ -8,6 +8,7 @@
 
 	using CalradiaForge.Core.Infra.Config;
 	using CalradiaForge.Core.Infra.Logging;
+	using CalradiaForge.Core.Infra.Paths;
 	using CalradiaForge.Core.Models;
 
 	/// <summary>
@@ -95,6 +96,16 @@
 			}
 			Stopwatch stopwatch = Stopwatch.StartNew();
 			try {
+				bool validGameFolder = GamePathValidator.ValidateGameFolder(_appConfig.GameFolderPath);
+				if (_appConfig.GameProvider is GameProvider.NotInitialized or GameProvider.ManualConfiguration
+					|| !validGameFolder) {
+					stopwatch.Stop();
+					_logger.Warning(
+						$"ModService: Refresh skipped because game configuration is invalid. " +
+						$"Provider={_appConfig.GameProvider}");
+					return false;
+				}
+
 				IsRefreshing = true;
 
 				// Rotate current → backup before scanning
