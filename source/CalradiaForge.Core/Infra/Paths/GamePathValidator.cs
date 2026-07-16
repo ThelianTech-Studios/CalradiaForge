@@ -17,18 +17,19 @@
 		/// <param name="gameFolderPath">The user-selected game folder path.</param>
 		/// <param name="errorMessage">User-friendly message describing the validation failure.</param>
 		/// <returns><c>true</c> if the folder contains a valid Bannerlord installation.</returns>
-		public static bool ValidateGameFolder(string gameFolderPath, out string errorMessage) {
+		public static bool ValidateGameFolder(string gameFolderPath) {
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("GamePathValidator: Validating game folder.", new { GameFolderPath = gameFolderPath });
 			}
 			if (string.IsNullOrWhiteSpace(gameFolderPath)) {
-				errorMessage = "No folder was selected. Please try again.";
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("GamePathValidator: Game folder path is empty or whitespace.", new { GameFolderPath = gameFolderPath });
+				}
 				return false;
 			}
 			if (!Directory.Exists(gameFolderPath)) {
-				errorMessage = "The selected folder does not exist. Please try again.";
 				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("GamePathValidator: Game folder missing.", new { GameFolderPath = gameFolderPath });
+					_logger.Debug("GamePathValidator: Game folder does not exist.", new { GameFolderPath = gameFolderPath });
 				}
 				return false;
 			}
@@ -40,7 +41,9 @@
 				_logger.Debug("GamePathValidator: Modules marker check.", new { ModulesPath = modulesPath, Exists = modulesExists });
 			}
 			if (!modulesExists) {
-				errorMessage = "That folder doesn't appear to be a valid Bannerlord installation — no Modules folder was found. Please try again.";
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("GamePathValidator: Game folder doesn't appear to be a valid Bannerlord installation — no Modules folder was found.", new { GameFolderPath = gameFolderPath });
+				}
 				return false;
 			}
 
@@ -51,7 +54,9 @@
 				_logger.Debug("GamePathValidator: Native marker check.", new { NativeXml = nativeXml, Exists = nativeExists });
 			}
 			if (!nativeExists) {
-				errorMessage = "That folder doesn't appear to be a valid Bannerlord installation — the Native module was not found. Please try again.";
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("GamePathValidator: Game folder doesn't appear to be a valid Bannerlord installation — the Native module was not found.", new { GameFolderPath = gameFolderPath });
+				}
 				return false;
 			}
 
@@ -62,11 +67,11 @@
 				_logger.Debug("GamePathValidator: Bin marker check.", new { BinPath = binPath, Exists = binExists });
 			}
 			if (!binExists) {
-				errorMessage = "That folder doesn't appear to be a valid Bannerlord installation — no bin folder was found. Please try again.";
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("GamePathValidator: Game folder doesn't appear to be a valid Bannerlord installation — no bin folder was found.", new { GameFolderPath = gameFolderPath });
+				}
 				return false;
 			}
-
-			errorMessage = string.Empty;
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("GamePathValidator: Game folder validated.", new { GameFolderPath = gameFolderPath });
 			}
@@ -80,30 +85,28 @@
 		/// <param name="exePath">The user-selected executable path.</param>
 		/// <param name="errorMessage">User-friendly message describing the validation failure.</param>
 		/// <returns><c>true</c> if the file is a valid executable.</returns>
-		public static bool ValidateGameExecutable(string exePath, out string errorMessage) {
+		public static bool ValidateGameExecutable(string exePath) {
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("GamePathValidator: Validating game executable.", new { ExePath = exePath });
 			}
 			if (string.IsNullOrWhiteSpace(exePath)) {
-				errorMessage = "No file was selected. Please try again.";
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("GamePathValidator: Executable path is empty or whitespace.", new { ExePath = exePath });
+				}
 				return false;
 			}
 			if (!File.Exists(exePath)) {
-				errorMessage = "The selected file does not exist. Please try again.";
 				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 					_logger.Debug("GamePathValidator: Executable missing.", new { ExePath = exePath });
 				}
 				return false;
 			}
 			if (!exePath.EndsWith(".exe", System.StringComparison.OrdinalIgnoreCase)) {
-				errorMessage = "The selected file is not an executable (.exe). Please try again.";
 				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 					_logger.Debug("GamePathValidator: Executable extension invalid.", new { ExePath = exePath });
 				}
 				return false;
 			}
-
-			errorMessage = string.Empty;
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("GamePathValidator: Executable validated.", new { ExePath = exePath });
 			}
@@ -117,23 +120,22 @@
 		/// <param name="workshopFolderPath">The user-selected workshop folder path.</param>
 		/// <param name="errorMessage">User-friendly message describing the validation failure.</param>
 		/// <returns><c>true</c> if the folder exists and appears to be a valid workshop directory.</returns>
-		public static bool ValidateWorkshopFolder(string workshopFolderPath, out string errorMessage) {
+		public static bool ValidateWorkshopFolder(string workshopFolderPath) {
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("GamePathValidator: Validating workshop folder.", new { WorkshopFolderPath = workshopFolderPath });
 			}
 			if (string.IsNullOrWhiteSpace(workshopFolderPath)) {
-				errorMessage = "No folder was selected. Please try again.";
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("GamePathValidator: Workshop folder path is empty or whitespace.", new { WorkshopFolderPath = workshopFolderPath });
+				}
 				return false;
 			}
 			if (!Directory.Exists(workshopFolderPath)) {
-				errorMessage = "The selected folder does not exist. Please try again.";
 				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 					_logger.Debug("GamePathValidator: Workshop folder missing.", new { WorkshopFolderPath = workshopFolderPath });
 				}
 				return false;
 			}
-
-			errorMessage = string.Empty;
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("GamePathValidator: Workshop folder validated.", new { WorkshopFolderPath = workshopFolderPath });
 			}
