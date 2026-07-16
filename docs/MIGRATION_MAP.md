@@ -4,10 +4,10 @@
 
 ```text
 <Metadata>
-Last Changelog Version: v0.13.23
-Last Git Commit ID: 1f037b11912fc30ec4454546dd0d45318c82c9e6
+Last Changelog Version: v0.13.35
+Last Git Commit ID: 1889e47861d269b8664752706031c64d9f47dbf7
 Last Git Branch Used: dev-V0-14-CodeRefactor(HEAD)
-Last Map Compile Date: 2026-07-15
+Last Map Compile Date: 2026-07-16
 </Metadata>
 ```
 
@@ -40,10 +40,68 @@ Workflow rules for when and how to update this file are owned by `docs/refactor/
 
 | Version | Migration scope | Source comparison | Status |
 |---|---|---|---|
+| `v0.13.35` | Phase 5 game-platform detection/path workflow, startup notifications, scanner/cache safety, and accepted ancillary source refinements | `1f037b1...1889e47` | Mapped from committed accepted source diff |
 | `v0.13.23` | Phase 4 Core tests and provisional benchmarks plus partially reverted Steam multi-library resolver, UI, and regression work | `710881c...1f037b1` | Mapped from committed broken internal build; 13 compile errors acknowledged |
 | `v0.13.22` | Atomic persistence, mod-cache recovery, archive/install preflight guardrails, and UI configuration-reference repair | `1b23045...710881c` | Mapped from committed build diff |
 | `v0.13.14` | Serilog infrastructure foundation, log-retention configuration, data-helper cleanup, application configuration-property rename, and neutral formatter/redaction-removal follow-up | `37c322e...HEAD` | Mapped from committed build diff |
 | `v0.13.6` | Cleanup/nullability/path/logging-message migration rows listed in this document | `dev-release...HEAD` | Mapped from current committed branch diff |
+
+<details open>
+<summary><strong>v0.13.35</strong> - Internal build: Phase 5 game-platform detection/path workflow and the full accepted source range.</summary>
+
+**Source comparison:** `1f037b1...1889e47`
+
+**Status:** Mapped from committed accepted source diff; Debug and Release solution builds passed, and all 76 tests passed in both configurations
+
+**Changed implementation/test/language files:** 27
+
+**Scope rule:** Includes every committed Core, UI, test, and language-resource file in this build range. All `docs/` changes are excluded as documentation-only. No project, solution, package-reference, configuration-format, or generated-source file changed in the range.
+
+| Area | Files | Summary |
+|---|---:|---|
+| Detection, configuration, and legacy-helper migration | 5 | Added Core-owned startup/manual detection, integrated coherent provider/path commits, added the Workshop default, refined provider states, and removed the legacy helper. |
+| Steam resolver boundary and validator adaptation | 2 | Preserved the registry boundary and adapted Steam game validation to the boolean-only validator contract. |
+| Startup notification handoff | 4 | Added WPF-neutral notification contracts and queue semantics, then adapted them to WPF toast delivery after window readiness. |
+| Validation, Settings, and English localization | 5 | Simplified validators, routed Settings actions through Core, exposed the Workshop control name, and aligned fallback/English detection guidance. |
+| Mod refresh/cache and DLL maintenance | 2 | Prevented invalid-configuration scans from replacing cache state and removed a redundant DLL-unblock precheck. |
+| Detection, resolver, scanner, cache, and Novus tests | 9 | Replaced helper-coupled coverage with service/resolver suites and added queue, scanner, cache-preservation, and split-library regressions. |
+
+<details>
+<summary><strong>Detailed file map</strong></summary>
+
+| File | Change | Key Identifiers | Original vs Updated | Summary |
+|---|---|---|---|---|
+| `source/CalradiaForge.Core/Infra/Config/AppConfigSettings.cs` | Modified | `InitDefaults`; `SteamWorkshopFolderPath` | The typed facade exposed the Workshop property but did not seed its key; missing configuration now receives an empty-string default. | Stabilizes optional Workshop-path reads without changing the persisted configuration shape. |
+| `source/CalradiaForge.Core/Infra/GamePlatform/GameDetectionService.cs` | Added | `GameDetectionService`; `InitializeForStartup`; `RedetectGame`; `ApplyManualGameFolder`; `ApplyManualSteamWorkshopFolder` | Startup, re-detection, and manual path changes were helper/UI coordinated; the service now validates and commits complete state, queues one result when startup detection runs, and keeps startup initialization `void` while re-detection returns the provider. | Establishes the Core-owned workflow boundary; invalid manual selections preserve prior settings. |
+| `source/CalradiaForge.Core/Infra/GamePlatform/GamePlatformDetectionResolver.cs` | Modified | constructor injection; `DetectGame`; `TryDetectSteam`; `ApplyManualConfigurationFallback`; path helpers | An empty placeholder became the production resolver using injected Steam-root and installation boundaries; it validates and commits game, launcher, optional Workshop and BLSE paths, with gated Epic detection still disabled. | Integrates the existing multi-library resolver, treats missing Workshop as nonfatal, and replaces failed automatic state with `ManualConfiguration`. |
+| `source/CalradiaForge.Core/Infra/GamePlatform/GameProvider.cs` | Modified | `GameProvider`; `NotInitialized`; `GOG`; `ManualConfiguration`; `StandAlone` | Implicit values conflated initial/fallback semantics; explicit values now distinguish uninitialized, recognized manual storefronts, manual-required failure, and valid unrecognized standalone installs. | Named configuration values remain readable, but consumers relying on old numeric values for `NotInitialized` or `StandAlone` require review. |
+| `source/CalradiaForge.Core/Infra/Paths/GamePathsHelper.cs` | Deleted | `GamePathsHelper`; legacy Steam/Epic/BLSE detection and configured-path accessors | The static single-Steam-root helper and automatic standalone fallback were removed after callers migrated to services and `AppConfigSettings`. | Breaking helper removal eliminates the main-root and missing-Workshop assumptions; use the detection service/resolver and configured path properties. |
+| `source/CalradiaForge.Core/Infra/GamePlatform/Steam/ISteamClientRootProvider.cs` | Modified | `WindowsSteamClientRootProvider.GetSteamClientRoot` | Executable behavior and contracts are unchanged; a comment records that another desktop OS would require its own provider. | Comment-only platform-boundary clarification with no runtime migration effect. |
+| `source/CalradiaForge.Core/Infra/GamePlatform/Steam/SteamInstallationResolver.cs` | Modified | `TryResolveGameFolder`; `GamePathValidator.ValidateGameFolder` | The resolver passed an `out` validation message; it now calls the boolean-only validator and emits a general invalid-folder diagnostic. | Required call-site adaptation for the validator API change; Steam discovery behavior otherwise remains the existing resolver implementation. |
+| `source/CalradiaForge.Core/Infra/GamePlatform/StartupNotificationQueue.cs` | Added | `StartupNotificationQueue`; `Enqueue`; `SignalReady`; `DrainWhenReadyAsync`; `Count`; `IsReady` | No Core-to-UI startup-result handoff existed; the queue waits for readiness, serializes FIFO drains, and removes an item only after successful delivery. | Provides a WPF-free notification boundary with cancellation and failed-delivery retry semantics. |
+| `source/CalradiaForge.Core/Models/StartupNotification.cs` | Added | `StartupNotificationSeverity`; `StartupNotification` | Startup results had no framework-neutral payload; the new record carries title, message, and Info/Success/Warning/Error severity. | Defines the shared Core/UI contract without introducing WPF references into Core. |
+| `source/CalradiaForge.UI/App.xaml.cs` | Modified | `StartupNotifications`; `GameDetectionService`; `InitializeGameDetectionService`; `OnStartup` | Startup called `GamePathsHelper` during configuration initialization; it now constructs the injected Core resolver/service after EULA acceptance and before mod services, then runs the `void` startup initializer. | Keeps UI composition/timing ownership while moving detection behavior to Core; an expanded future `ModManagerService` comment has no executable effect. |
+| `source/CalradiaForge.UI/Views/MainWindow.xaml.cs` | Modified | `ObserveStartupNotificationsAsync`; `DeliverStartupNotificationAsync`; `MapStartupSeverity`; `MainWindow_Loaded`; `MainWindow_Closed` | The window did not consume startup results; it now waits until Loaded, maps Core severity to toast severity, logs delivery failures, and cancels on close. | Adapts the Core queue to WPF without leaking WPF types into Core; future disposal comments do not represent implemented behavior. |
+| `source/CalradiaForge.Core/Infra/Paths/GamePathValidator.cs` | Modified | `ValidateGameFolder`; `ValidateGameExecutable`; `ValidateWorkshopFolder` | Each validator returned a Boolean plus an `out string` message; all now return only a Boolean and place detailed failures in conditional debug logging. | Breaking source-signature change requires callers to remove the `out` argument and supply any user-facing message independently. |
+| `source/CalradiaForge.UI/Pages/SettingsPage.xaml` | Modified | `SelectWorkshopFolderButton` | The existing Workshop selection button was unnamed; it now has an `x:Name` while retaining the same content, style, and handler. | Exposes the generated control field without changing current user behavior. |
+| `source/CalradiaForge.UI/Pages/SettingsPage.xaml.cs` | Modified | `_gameDetectionService`; manual selection handlers; `RedetectGame_Click`; validation and toast paths | The page directly coordinated helper/resolver state; game and Workshop selection and re-detection now delegate to Core and refresh committed game, launcher, Workshop, and BLSE state. Validator call sites use boolean contracts; ancillary logging/messages were simplified. | Preserves UI ownership of dialogs and feedback while Core owns validation, provider inference, and state commits; actual WPF behavior remains a manual check. |
+| `source/CalradiaForge.Core/Infra/Localization/TranslationStrings.cs` | Modified | `DefaultSettings_DetectGameHint`; `Settings_DetectGameHint` | The fallback text claimed automatic Steam, Epic, and standalone detection; it now describes supported detection, BLSE discovery, overwrite behavior, and manual fallback. | Aligns fallback copy with the gated platform workflow without changing the localization API. |
+| `source/Languages/en-US.json` | Modified | `Settings_DetectGameHint` | The English resource made the same unsupported multi-provider claim; it now matches the supported-detection/manual-fallback wording. | Updates only English in this range; other locale files are unchanged. |
+| `source/CalradiaForge.Core/Infra/Mods/ModService.cs` | Modified | `RefreshAsync`; `GameProvider.ManualConfiguration`; `GamePathValidator.ValidateGameFolder` | Refresh could rotate or replace cache state before rejecting invalid configuration; it now exits before refresh state, rotation, backup loading, scanning, or saving when provider/path state is invalid. | Protects in-memory and on-disk cache while setup is unresolved; the existing `false` return remains the skip/failure signal. |
+| `source/CalradiaForge.Core/Infra/Mods/DLLUnblocker.cs` | Modified | `UnblockAllAsync`; `UnblockDirectory` | The async caller performed a null/blank/existence precheck; it now delegates directly to the guarded enumeration boundary. | Public API is unchanged; invalid paths still produce an empty result, now through error-logged enumeration handling rather than the former warning path. |
+| `source/CalradiaForge.Tests/Core.Tests/GamePlatform/GameDetectionWorkflowTests.cs` | Added | `GameDetectionWorkflowTests`; startup, re-detection, manual game and Workshop cases | No service-level workflow suite existed; nine tests verify valid-state reuse, queued startup results, explicit replacement, provider inference, and atomic invalid-selection behavior. | Locks the `void InitializeForStartup` state/queue contract and keeps provider-return assertions on `RedetectGame`. |
+| `source/CalradiaForge.Tests/Core.Tests/GamePlatform/GamePlatformDetectionResolverTests.cs` | Added | `GamePlatformDetectionResolverTests`; `DetectGame` cases | No dedicated application resolver suite existed; six tests cover alternate libraries, missing Workshop, BLSE commit/clear, stale Workshop rejection, and complete failure replacement. | Verifies the provider-returning subordinate boundary and coherent configuration commits. |
+| `source/CalradiaForge.Tests/Core.Tests/GamePlatform/GamePlatformTestFixture.cs` | Added | `GamePlatformTestFixture`; fake/throwing providers; Steam and manual-install builders | Detection fixtures were duplicated or coupled to the deleted helper suite; shared builders now create deterministic installs, metadata, Workshop roots, BLSE, and resolver results. | Test-only infrastructure centralizes the new service/resolver contract. |
+| `source/CalradiaForge.Tests/Core.Tests/GamePlatform/StartupNotificationQueueTests.cs` | Added | `StartupNotificationQueueTests`; readiness, FIFO, cancellation, retry cases | No queue coverage existed; five tests verify wait-before-ready, ordered removal, idempotent readiness, cancellation preservation, and failed-delivery retry. | Validates Core queue semantics without claiming WPF toast rendering. |
+| `source/CalradiaForge.Tests/Core.Tests/GamePlatform/SteamInstallationResolverTests.cs` | Added | `SteamInstallationResolverTests`; 14 metadata/path cases | Resolver cases were mixed into the helper suite; the dedicated suite covers main/alternate libraries, Workshop precedence, malformed or missing metadata, duplicates, deterministic fallback, unregistered roots, and unsafe paths. | Separates Steam mechanics from application workflow and supplies fake-root safety coverage, not real-client runtime proof. |
+| `source/CalradiaForge.Tests/Core.Tests/Modpacks/SteamMultiLibraryNovusRegressionTests.cs` | Modified | `ImportedNovusPreset_AfterAlternateSteamLibraryScan_HasNoMissingWorkshopModules` | The regression called a removed helper API; it now enters through `GameDetectionService.RedetectGame`, asserts committed provider/path state, and supplies the required launcher marker. | Verifies the authoritative pipeline discovers eight local plus three Workshop modules with no missing Novus entries. |
+| `source/CalradiaForge.Tests/Core.Tests/Mods/ModScannerTests.cs` | Modified | split-library scan; provider-gated Workshop scan; empty-Workshop scan | Prior coverage characterized non-Steam misclassification and lacked empty-path safety; it now asserts unique module IDs, non-Steam Workshop exclusion, and safe local-only Steam scans without a Workshop path. | Locks provider/path gating and guards against duplicates or broad scans from empty Workshop configuration. |
+| `source/CalradiaForge.Tests/Core.Tests/Mods/ModServiceTests.cs` | Added | `RefreshAsync_WhenGameConfigurationIsInvalid_PreservesMemoryAndDiskCache`; `RefreshAsync_WhenProviderRequiresManualConfiguration_PreservesValidLookingCache` | Cache preservation during invalid/manual-required configuration was untested; two tests verify no mutation of memory, deltas, current cache, or backup cache. | Directly covers the new non-destructive refresh guard. |
+| `source/CalradiaForge.Tests/Core.Tests/Paths/GamePathsHelperTests.cs` | Deleted | `GamePathsHelperTests`; helper integration and Steam metadata cases | The monolithic suite targeted the deleted helper; its coverage moved to workflow, platform-resolver, Steam-resolver, scanner, cache, and Novus suites. | Intentional test migration adds queue/manual/failure-state coverage while removing obsolete helper API dependencies. |
+
+</details>
+
+</details>
 
 <details open>
 <summary><strong>v0.13.23</strong> - Internal build: Phase 4 test and provisional benchmark infrastructure plus a partially reverted Steam multi-library implementation.</summary>

@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## 0.13.35 - Internal | 2026-07-16
+
+> Refactor Phase 5: completed the game-platform detection and path workflow, integrated the existing Steam multi-library resolver into application startup and Settings, and restored a compiling, regression-tested internal source state.
+
+### Added
+
+- Added the Core-owned `GameDetectionService` for startup initialization, explicit re-detection, manual game-folder selection, and Steam Workshop-folder selection, with validation and coherent configuration commits kept outside the WPF layer.
+- Added a WPF-neutral startup notification model and readiness-gated FIFO queue; the main window now delivers queued detection results through the existing toast system after the window is loaded and cancels outstanding delivery work when it closes.
+- Added focused fake-root tests for game-detection state transitions, Steam resolver integration, startup notification delivery, invalid-configuration cache preservation, and alternate-library Novus imports.
+
+### Changed
+
+- Integrated the existing Steam library and manifest resolver into production detection so the game installation and Workshop content may resolve from different registered Steam libraries. A valid Steam game remains usable when Workshop content is absent, and automatic failure now clears derived paths and records `ManualConfiguration` instead of misclassifying the install as standalone.
+- Refined `GameProvider` states with explicit uninitialized, GOG, manual-configuration, and standalone meanings; added the missing default for `SteamWorkshopFolderPath`; and kept unsupported automatic platform branches disabled.
+- Routed application startup and Settings re-detection/manual selection through the new Core workflow, refreshed committed game, launcher, Workshop, and BLSE paths together, and corrected the English detection hint to describe supported detection and manual fallback accurately.
+- Simplified game, executable, and Workshop validators to boolean results with debug diagnostics, updated their resolver and UI call sites, and removed the redundant caller-side directory precheck from DLL unblocking while retaining guarded enumeration failure handling.
+- Prevented mod refresh and cache replacement when the game configuration is invalid, uninitialized, or requires manual configuration. Scanner regressions now cover provider-gated Workshop scanning, empty Workshop paths, duplicate prevention, and the expected eight local plus three Workshop modules in the split-library Novus scenario.
+
+### Fixed
+
+- Fixed the accepted `0.13.23` compilation break by replacing stale `GamePathsHelper` and missing integration-API references with the completed detection service, resolver, and configuration-owned path workflow.
+- Fixed the Steam split-library path workflow and the missing-Workshop failure mode in the committed implementation, with automated fake-root coverage for alternate libraries, deterministic Workshop selection, malformed or unsafe metadata, missing Workshop content, BLSE state, and non-destructive failure behavior.
+
+### Removed
+
+- Removed the legacy single-root `GamePathsHelper` and its monolithic test suite after migrating callers and redistributing coverage across service, platform-resolver, Steam-resolver, scanner, cache, and Novus regression tests.
+
+### Verification
+
+- Restored the solution, built Core and UI in Debug, and built the full solution in Debug and Release with zero compilation errors; no project, package-reference, application-version, or Core-to-WPF dependency changes were introduced in this build range.
+- Passed all 44 focused Phase 5 tests and the complete 76-test suite in both Debug and Release. These automated results cover Core workflow, resolver, queue, scanner, and cache behavior; they do not represent real-Steam or WPF runtime smoke testing.
+
+---
+
 ## 0.13.23 - Internal | 2026-07-15
 
 > Refactor Phase 4: Core correctness-test and provisional benchmark infrastructure, plus a partially reverted Steam multi-library implementation that leaves this accepted internal build in a known non-compiling state.
