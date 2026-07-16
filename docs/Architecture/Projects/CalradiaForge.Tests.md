@@ -7,6 +7,7 @@
 ## Currently Implemented
 
 - `Core.Tests` contains deterministic Core unit, regression, result, and integration-style filesystem tests.
+- Phase 5 coverage exercises Steam metadata resolution, automatic and manual detection workflows, the startup notification queue, invalid-configuration cache preservation, split-root scanning, and Novus preset validation.
 - Fixtures use isolated operating-system temporary directories and generated XML/zip/JSON data.
 - Archive and installer tests continue through `ModExtractor`, `ModInstaller`, `ModsData`, and `ModpackData` rather than replacing authoritative owners.
 - `Nexus.Tests` and `UI.Tests` are reserved for later work and do not imply current Nexus or WPF automation coverage.
@@ -21,4 +22,5 @@
 - Do not reference WPF from Core tests.
 - Do not use real Steam libraries, Bannerlord installations, app configuration, Nexus credentials, or network access.
 - Do not add timing assertions to correctness tests.
+- Treat real Windows/Steam split-library behavior and WPF toast interaction as owner smoke-test gates rather than automated-test claims.
 - Keep each test inside the folder for its owning application project.

@@ -33,12 +33,12 @@ If this plan conflicts with source code or locked architecture docs, stop and do
 | Archive safety | Add module identity preflight and grow toward fuller archive validation in phases. |
 | BLSE safety | Use strict BLSE filename/folder allowlist validation; approved BLSE files may be overwritten directly. |
 | Persistence | Use atomic writes, backup recovery for important JSON, and graceful corrupt-file handling. |
-| Logging | Move to Serilog with structured templates, source context, a neutral presentation formatter, and one application-owned logger lifecycle. The logger performs no automatic secret or path filtering; callers must not intentionally supply credentials or authentication material. Current infrastructure uses an active `CalradiaForge_Latest.log` with `RollingInterval.Infinite` and custom cleanup; Phase 5.A owns construction, startup cleanup, quiescent shutdown, close, and archive sequencing; Phase 5.B owns legacy caller migration. |
+| Logging | Move to Serilog with structured templates, source context, a neutral presentation formatter, and one application-owned logger lifecycle. The logger performs no automatic secret or path filtering; callers must not intentionally supply credentials or authentication material. Current infrastructure uses an active `CalradiaForge_Latest.log` with `RollingInterval.Infinite` and custom cleanup; Phase 6.A owns construction, startup cleanup, quiescent shutdown, close, and archive sequencing; Phase 6.B owns legacy caller migration. |
 | Testing | Add a tiered test strategy, starting with Core unit tests and file-system-heavy integration tests, then establish benchmark infrastructure and evidence rules before the final audit. |
 | Platform APIs | Keep the app Windows-first, but isolate Windows-specific APIs behind explicit adapters where practical. |
 | DI | Use `Microsoft.Extensions.DependencyInjection`; defer Host Builder unless later justified. |
-| DI composition | Phase 5.A uses one `IServiceCollection`, one application-level `ServiceProvider`, separate Core/UI registration modules on the same collection, DI-resolved `MainWindow`, and provider disposal on shutdown. |
-| Performance | Phase 4 establishes benchmark infrastructure and provisional baselines; Phase 8 audits without production edits; Phase 9 implements approved findings; Phase 10 performs bounded final verification; Phase 11 closes documentation/versioning. |
+| DI composition | Phase 6.A uses one `IServiceCollection`, one application-level `ServiceProvider`, separate Core/UI registration modules on the same collection, DI-resolved `MainWindow`, and provider disposal on shutdown. |
+| Performance | Phase 4 establishes benchmark infrastructure and provisional baselines; Phase 9 audits without production edits; Phase 10 implements approved findings; Phase 11 performs bounded final verification; Phase 12 closes documentation/versioning. |
 | Results | Start with workflow-specific result types; consider shared `Result<T>` only if repetition justifies it. |
 | Workflow coordination | Use an install/workflow coordinator for progress, cancellation, completion, failure, cleanup, and UI-facing state. |
 | UI state | Use shared `IsBusy`, `StatusMessage`, `ErrorMessage`, `CanCancel`, `CurrentOperation`, and result state patterns. |
@@ -80,7 +80,7 @@ These details are repeated here so the master plan can stand alone as the execut
 - Logging callers must supply appropriate diagnostic data and must not intentionally pass credentials, authentication material, or secret-bearing URLs to the logger.
 - Full relevant local filesystem paths may appear in local logs. Any future log export, telemetry, or shared-diagnostic feature requires a separate approved data-handling policy.
 - `AppConfig` is not a credential manager. Nexus credentials remain in a purpose-built Nexus credential component using DPAPI CurrentUser storage and operation-scoped decryption.
-- The current factory exposes `Create()`, does not retain the created logger, uses the active `CalradiaForge_Latest.log` path, and performs custom cleanup. These are current observations, not the final Phase 5.A lifecycle contract.
+- The current factory exposes `Create()`, does not retain the created logger, uses the active `CalradiaForge_Latest.log` path, and performs custom cleanup. These are current observations, not the final Phase 6.A lifecycle contract.
 - The current `RetainedFileCount` setting is named as a file count while `LogRetentionPolicy.Cleanup(...)` interprets it as an age in days. Count-versus-age semantics remain unresolved.
 - `retainedFileCountLimit: default` currently passes a null Serilog file-count limit, and the active sink has no explicit file-size limit. Neither behavior is a locked retention decision.
 - Approved Phase 2 Serilog packages are `Serilog`, `Serilog.Sinks.File`, `Serilog.Sinks.Async`, `Serilog.Exceptions`, and `Serilog.Enrichers.Thread`, with `Serilog.Sinks.Debug` referenced only in Debug builds using a conditional `PackageReference` and `#if DEBUG` sink configuration.
@@ -106,9 +106,9 @@ XAML page renames are high-risk because they can affect code-behind partial clas
 
 ### Known Issue - Steam Workshop Mods Not Automatically Scanned
 
-An end user reported that Bannerlord Steam Workshop mods were not automatically discovered when the Steam client and Bannerlord installation used different libraries. The 2026-07-15 scoped fix confirmed the root cause in Steam library/path resolution and implemented manifest-backed multi-library discovery, provider repair, Workshop precedence, diagnostics, and fake-root regression coverage.
+An end user reported that Bannerlord Steam Workshop mods were not automatically discovered when the Steam client and Bannerlord installation used different libraries. Current source confirms the root cause is the legacy single-root detection flow and its coupling of Steam success to Workshop availability; it is not a completed fix.
 
-The AppID was already correct at `261550`; the defect was the former single-root assumption. Automated Debug and Release verification covers a separate client root, Bannerlord library, 11-module scan, and Novus import without false missing-module results. Real-install Windows smoke testing remains an owner action before release documentation.
+Bannerlord AppID `261550` is already correct. Phase 5 plans the multi-library detection, provider/path workflow, and regression coverage. See [the detailed Phase 5 plan](game_platform_detection_and_path_workflow_plan.md); do not describe this issue as fixed until a later implementation task completes its required evidence gates.
 
 ### Documentation Alignment Report Integration
 
@@ -120,7 +120,7 @@ As refactor phases produce accepted decisions, migrate only stable decisions int
 
 The current follow-up review records that `SerilogLoggerFactory` is an instance service whose current public method is `Create()`. It receives `AppConfigSettings`, uses `AppPaths.LogsFilePath` (`CalradiaForge_Latest.log`), performs custom cleanup, configures an infinite active file sink, and returns a logger without retaining it. The current source does not yet prove one application-owned logger instance or safe shutdown ownership.
 
-Phase 5.A must establish one factory singleton and one shared logger instance, perform cleanup once before opening the active sink, and define startup/shutdown ownership. Shutdown must quiesce logging-producing work, await or confirm completion, close exactly once, release the active file handle, attempt collision-safe archive without overwriting, and preserve the active file when archive fails. Phase 5.B separately owns legacy call-site migration and caller review. The file-count-versus-age mismatch, active-file size-limit behavior, and global `Serilog.Log.Logger` versus direct DI ownership remain owner decisions. The named source-folder workflow guide is not present in the current package and is not treated as current guidance.
+Phase 6.A must establish one factory singleton and one shared logger instance, perform cleanup once before opening the active sink, and define startup/shutdown ownership. Shutdown must quiesce logging-producing work, await or confirm completion, close exactly once, release the active file handle, attempt collision-safe archive without overwriting, and preserve the active file when archive fails. Phase 6.B separately owns legacy caller migration and caller review. The file-count-versus-age mismatch, active-file size-limit behavior, and global `Serilog.Log.Logger` versus direct DI ownership remain owner decisions. The named source-folder workflow guide is not present in the current package and is not treated as current guidance.
 
 ## Phase Order
 
@@ -130,14 +130,15 @@ Phase 5.A must establish one factory singleton and one shared logger instance, p
 | 2 | Serilog Infrastructure Foundation | Establish structured logging and neutral formatting while keeping the legacy logger compatibility path in place; no application lifecycle ownership is claimed. The former redaction infrastructure is historical and superseded. |
 | 3 | Small Safety Refactors | Harden compact high-risk areas: BLSE, archive preflight, persistence. |
 | 4 | Initial Tests And Performance Benchmark Infrastructure Around Changed Risky Areas | Add behavioral protection plus reusable benchmark and measurement infrastructure. |
-| 5.A | DI And Platform Adapter Foundation | Introduce service composition and isolate Windows-specific behavior; establish one logger owner, startup cleanup, quiescent shutdown, exact-once close, and collision-safe archive. |
-| 5.B | Legacy Logger Call-Site Migration | Stage legacy logger callers onto the Serilog path after the foundation is verified, including caller review so credential-owning components do not intentionally pass credentials or authentication material to logs. |
-| 6 | Result Types And Workflow Coordinator | Standardize operation outcomes and long-running workflow state. |
-| 7 | Staged MVVM Shell/ViewModel Rewrite | Move WPF presentation toward consistent MVVM. |
-| 8 | Performance Audit And Report Generation | Produce an evidence-backed post-refactor performance report without production-code edits. |
-| 9 | Approved Performance Optimization Implementation | Implement only explicitly approved `PERF-NNN` findings and compare before/after evidence. |
-| 10 | Final Post-Refactor Deep Audit And Iterative Verification | Complete bounded build/test/benchmark/analyzer/architecture/manual-smoke verification and justified corrections. |
-| 11 | Final Documentation And Versioning Cleanup For Next Beta | Align release documentation with the final verified implementation. |
+| 5 | Game Platform Detection And Path Workflow Rewrite | Replace legacy game detection with the planned Core-owned workflow and multi-library Steam resolution. |
+| 6.A | DI And Platform Adapter Foundation | Introduce service composition and consume the finalized Phase 5 platform dependencies; establish logger lifecycle ownership. |
+| 6.B | Legacy Logger Call-Site Migration | Stage legacy logger callers onto the Serilog path after the foundation is verified. |
+| 7 | Result Types And Workflow Coordinator | Standardize selected operation outcomes and long-running workflow state. |
+| 8 | Staged MVVM Shell/ViewModel Rewrite | Move WPF presentation toward consistent MVVM. |
+| 9 | Performance Audit And Report Generation | Produce an evidence-backed post-refactor performance report without production-code edits. |
+| 10 | Approved Performance Optimization Implementation | Implement only explicitly approved `PERF-NNN` findings and compare before/after evidence. |
+| 11 | Final Post-Refactor Deep Audit And Iterative Verification | Complete bounded verification and justified corrections. |
+| 12 | Final Documentation And Versioning Cleanup For Next Beta | Align release documentation with the final verified implementation. |
 
 ## Phase Overview Matrix
 
@@ -147,14 +148,15 @@ Phase 5.A must establish one factory singleton and one shared logger instance, p
 | 2 | Phase 1 preferred | Serilog infrastructure, active-file configuration, custom cleanup, neutral formatting, source context, scanner diagnostics planning | Logging foundation implemented; no application lifecycle ownership claimed; legacy logger compatibility preserved; former redaction infrastructure superseded | Build; log creation; formatter output checks |
 | 3 | Phase 1 preferred; Phase 2 helpful | BLSE allowlist, archive preflight, atomic JSON writes, scanner/path-resolution investigation | Safer install/persistence behavior; scanner issue confirmed, deferred, or fixed only by explicit scoped work | Build; BLSE/archive/persistence smoke checks |
 | 4 | Phase 3 initial changes | Core tests, persistence tests, archive/BLSE tests, modpack workflow tests, fake Steam library scanner tests, benchmark fixtures/harness, measurement and analyzer readiness | Test project, benchmark infrastructure, isolated fixtures, and provisional baseline labels | Build; `dotnet test`; approved Release benchmark command |
-| 5.A | Phases 1 and 3; Phase 4 preferred | DI setup, service lifetimes, platform adapters, path-resolution abstractions, logger ownership and lifecycle | Clear composition root; one logger owner; startup cleanup; quiescent close and archive contract | Build; startup/shutdown smoke tests; singleton identity; archive and disposal checks |
-| 5.B | Phases 2 and 5.A | Legacy logger call-site batches, compatibility cleanup, staged Serilog caller migration, caller review for intentional credential logging | Legacy logger usage migrated in verified batches; compatibility path retired after verification | Build; staged logging smoke tests; formatter/minimum-level checks |
-| 6 | Phases 2, 3, and 5.B | Workflow result types, install coordinator, progress/cancel/failure state, scanner warnings | Consistent workflow outcomes and UI state path | Build; workflow smoke tests; targeted tests |
-| 7 | Phases 5.A, 5.B, and 6; Phase 4 preferred | MVVM conventions, shell/navigation, page ViewModels, command/state patterns, scanner status surfacing | Major UI workflows extracted to ViewModels | Build; ViewModel tests; UI smoke test |
-| 8 | Phases 4-7 settled | Release benchmarks, allocations, analyzers, architecture/performance inspection, logger lifecycle evidence, SevenZipWrapper comparability, classified findings, dated audit report | Authoritative post-Phase-7 baseline and pending developer decisions | Build; tests; Release benchmarks; logger lifecycle checks; analyzers; report review |
-| 9 | Phase 8 developer decisions | Approved finding IDs, small optimization batches, regression tests, comparable before/after benchmarks, logger performance changes only when approved, report updates | Approved changes and finding dispositions | Build; tests; benchmarks; allocation comparison; logger checks; reviewer pass; manual inspection |
-| 10 | Phase 9 settled | Full verification loop, logger ownership/shutdown/archive inspection, architecture inspection, manual WPF smoke checks, narrowly scoped corrective changes | Final verification, limitations, and updated audit report | Build; tests; benchmarks; analyzers; logger lifecycle checks; architecture review; smoke tests |
-| 11 | Phase 10 settled | Version source, changelog, release docs, final alignment, accepted performance handoff | Release-ready docs and version consistency | Build; UI version check; docs review |
+| 5 | Phases 3 and 4 preferred | Resolver/workflow integration, Steam split-library resolution, manual configuration, startup queue, minimum scan safety | Production design, test evidence, and owner smoke record | Builds; focused/full tests; owner smoke |
+| 6.A | Phase 5; Phases 1 and 3; Phase 4 preferred | DI setup, service lifetimes, current platform dependencies, logger ownership and lifecycle | Clear composition root; one logger owner; startup cleanup; quiescent close and archive contract | Build; startup/shutdown smoke tests; singleton identity; archive and disposal checks |
+| 6.B | Phases 2 and 6.A | Legacy logger call-site batches, compatibility cleanup, staged Serilog caller migration | Legacy logger usage migrated in verified batches | Build; staged logging smoke tests; formatter/minimum-level checks |
+| 7 | Phases 2, 3, and 6.B | Workflow result types, install coordinator, progress/cancel/failure state, scanner warnings | Consistent workflow outcomes and UI state path | Build; workflow smoke tests; targeted tests |
+| 8 | Phases 6.A, 6.B, and 7; Phase 4 preferred | MVVM conventions, shell/navigation, page ViewModels, command/state patterns | Major UI workflows extracted to ViewModels | Build; ViewModel tests; UI smoke test |
+| 9 | Phases 4-8 settled | Release benchmarks, allocations, analyzers, architecture/performance inspection, classified findings, dated audit report | Authoritative post-Phase-8 baseline and pending developer decisions | Build; tests; Release benchmarks; analyzers; report review |
+| 10 | Phase 9 developer decisions | Approved finding IDs, small optimization batches, regression tests, comparable before/after benchmarks, report updates | Approved changes and finding dispositions | Build; tests; benchmarks; reviewer pass; manual inspection |
+| 11 | Phase 10 settled | Full verification loop, architecture inspection, manual WPF smoke checks, narrowly scoped corrective changes | Final verification, limitations, and updated audit report | Build; tests; benchmarks; analyzers; architecture review; smoke tests |
+| 12 | Phase 11 settled | Version source, changelog, release docs, final alignment, accepted performance handoff | Release-ready docs and version consistency | Build; UI version check; docs review |
 
 ## Phase Dependency Map
 
@@ -164,49 +166,52 @@ flowchart TD
     P2["Phase 2: Serilog Foundation"]
     P3["Phase 3: Safety Refactors"]
     P4["Phase 4: Tests + Benchmark Infrastructure"]
-    P5A["Phase 5.A: DI + Platform Adapters"]
-    P5B["Phase 5.B: Legacy Logger Migration"]
-    P6["Phase 6: Results + Workflow Coordinator"]
-    P7["Phase 7: MVVM Rewrite"]
-    P8["Phase 8: Performance Audit + Report"]
-    G8["Developer Review Gate"]
-    P9["Phase 9: Approved Optimizations"]
-    P10["Phase 10: Final Deep Audit + Iterative Verification"]
-    P11["Phase 11: Docs + Versioning"]
+    P5["Phase 5: Game Detection + Path Workflow"]
+    P6A["Phase 6.A: DI + Platform Adapters"]
+    P6B["Phase 6.B: Legacy Logger Migration"]
+    P7["Phase 7: Results + Workflow Coordinator"]
+    P8["Phase 8: MVVM Rewrite"]
+    P9["Phase 9: Performance Audit + Report"]
+    G9["Developer Review Gate"]
+    P10["Phase 10: Approved Optimizations"]
+    P11["Phase 11: Final Deep Audit + Iterative Verification"]
+    P12["Phase 12: Docs + Versioning"]
 
     P1 --> P2
     P1 --> P3
     P3 --> P4
-    P3 --> P5A
-    P2 --> P5B
-    P5A --> P5B
-    P5B --> P6
-    P4 --> P7
-    P6 --> P7
+    P3 --> P5
+    P4 --> P5
+    P5 --> P6A
+    P2 --> P6B
+    P6A --> P6B
+    P6B --> P7
     P4 --> P8
     P7 --> P8
-    P8 --> G8
-    G8 --> P9
-    P9 --> P10
+    P8 --> P9
+    P9 --> G9
+    G9 --> P10
     P10 --> P11
+    P11 --> P12
 ```
 
 ## Phase Deliverables Checklist
 
 - [X] Phase 1: Low-risk cleanup completed or deferred with notes; build passes. (Completed)
 - [X] Phase 2: Serilog infrastructure, retention, source context, neutral formatting, and approved package usage are implemented and documented inside the Core logging folder while the legacy logger compatibility path and all existing call sites remain in place. The original Phase 2 redaction infrastructure is retained as history only and was superseded by the 2026-07-12 owner decision. (Completed)
-- [ ] Phase 3: The implementation/reviewer pass completed the decision-safe archive and persistence slices; owner-gated BLSE, reserved-folder, named-modpack recovery, normal-upgrade policy, and flat-archive target naming/blocking remain explicitly deferred. The separately scoped 2026-07-15 Steam multi-library path fix is implemented and automated-test verified.
+- [ ] Phase 3: The implementation/reviewer pass completed the decision-safe archive and persistence slices; owner-gated BLSE, reserved-folder, named-modpack recovery, normal-upgrade policy, and flat-archive target naming/blocking remain explicitly deferred.
 - [ ] Phase 4: Core tests and reusable performance benchmark infrastructure exist; correctness tests and benchmarks are separated; provisional baselines are labeled.
-- [ ] Phase 5.A: One `IServiceCollection` and one application provider are used; Core/UI registrations are separated; `MainWindow` is DI-resolved without duplicate `StartupUri` construction; singleton identity, Serilog construction, and provider disposal are verified.
-- [ ] Phase 5.B: Legacy logger call sites are migrated in verified batches and the compatibility path is retired only after verification.
-- [ ] Phase 6: Workflow result contracts and coordinator state are implemented for selected high-risk workflows.
-- [ ] Phase 7: Shell/navigation and major page workflows use consistent ViewModel patterns.
-- [ ] Phase 8: A post-refactor performance audit report exists with authoritative baselines, classified findings, SevenZipWrapper comparability, and pending developer decisions; no production optimization was performed.
-- [ ] Phase 8 developer gate: Every proposed optimization is approved, modified, rejected, deferred, marked needs-more-evidence, or out of scope before Phase 9 begins.
-- [ ] Phase 9: Only approved performance findings are implemented; tests and comparable before/after benchmarks are recorded; ineffective or harmful changes are reverted or explicitly dispositioned.
-- [ ] Phase 10: The full relevant test, benchmark, analyzer, architecture, and manual-smoke verification loop satisfies the practical stopping criteria.
-- [ ] Phase 11: Versioning, changelog, release documentation, performance report status, and documentation-alignment handoff match the final verified implementation.
-- [X] Steam Workshop scanner/path-resolution issue: manifest-backed multi-library resolution, manual provider repair, warning surfacing, and fake-root scanner/Novus verification completed on 2026-07-15; real-install manual smoke remains release-gated.
+- [ ] Phase 5: The planned resolver/workflow integration, Steam split-library behavior, manual configuration, startup queue, scanner safety, test migration, and owner smoke verification are complete.
+- [ ] Phase 6.A: One `IServiceCollection` and one application provider consume Phase 5 dependencies; Core/UI registrations are separated and lifecycle ownership is verified.
+- [ ] Phase 6.B: Legacy logger call sites are migrated in verified batches and the compatibility path is retired only after verification.
+- [ ] Phase 7: Workflow result contracts and coordinator state are implemented for selected high-risk workflows.
+- [ ] Phase 8: Shell/navigation and major page workflows use consistent ViewModel patterns.
+- [ ] Phase 9: A post-refactor performance audit report exists with authoritative baselines, classified findings, and pending developer decisions; no production optimization was performed.
+- [ ] Phase 9 developer gate: Every proposed optimization is approved, modified, rejected, deferred, marked needs-more-evidence, or out of scope before Phase 10 begins.
+- [ ] Phase 10: Only approved performance findings are implemented; tests and comparable before/after benchmarks are recorded; ineffective or harmful changes are reverted or explicitly dispositioned.
+- [ ] Phase 11: The full relevant test, benchmark, analyzer, architecture, and manual-smoke verification loop satisfies the practical stopping criteria.
+- [ ] Phase 12: Versioning, changelog, release documentation, performance report status, and documentation-alignment handoff match the final verified implementation.
+- [ ] Steam Workshop scanner/path-resolution issue: Phase 5 owns the planned multi-library detection and path workflow; it is not yet implemented or verified.
 - [ ] UI page rename review is completed only with an owner-approved rename map before any `.xaml` rename.
 - [ ] Documentation alignment report decisions are handed off without making refactor plans canonical architecture by default.
 
@@ -224,7 +229,7 @@ flowchart TD
 - Do not rename UI page `.xaml` files unless the owner has provided an explicit approved rename map.
 - Do not change major/minor versions without owner approval.
 - Update relevant docs whenever architecture behavior changes.
-- Do not migrate legacy logger call sites before Phase 5.B.
+- Do not migrate legacy logger call sites before Phase 6.B.
 - Do not add unapproved Serilog packages or dev-only sinks to Release/Public Release artifacts.
 - Do not create separate Core and UI service providers; preserve one collection and one application provider.
 - Do not use the root provider as a hidden service locator or register WPF types from Core.
@@ -235,13 +240,13 @@ flowchart TD
 - Do not change retention semantics, active-file size behavior, or archive naming without explicit owner review.
  - Do not introduce automatic secret/path filtering or generic key-name blocking as part of a later phase.
 - Do not rely on `Log.CloseAndFlush()` unless the shared logger is intentionally assigned to `Serilog.Log.Logger` and ownership has one global close path; do not assume the Serilog default file-count limit is 31 or that the current active file is size-unlimited.
-- Do not perform production-code optimization during the Phase 8 performance audit/report phase.
+- Do not perform production-code optimization during the Phase 9 performance audit/report phase.
 - Do not implement a performance finding without explicit developer approval.
 - Do not claim a performance improvement without comparable before/after evidence when measurement is practical.
  - Do not weaken correctness, validation, archive safety, persistence safety, logging, cancellation, cleanup, or architecture boundaries to improve a benchmark.
 - Do not treat one stopwatch result, Debug execution, or an incomparable third-party baseline as proof.
 - Do not add benchmark/analyzer packages, blocking thresholds, or large fixtures without explicit approval.
-- Do not pursue theoretical micro-optimizations indefinitely; use Phase 10 practical stopping criteria.
+- Do not pursue theoretical micro-optimizations indefinitely; use Phase 11 practical stopping criteria.
 
 ## Phase 1 - Cleanup And Low-Risk Consistency Fixes
 
@@ -277,11 +282,11 @@ Record the end-user Steam Workshop scanning report as a deferred-risk item. The 
 | Included work | New Serilog infrastructure files under `source/CalradiaForge.Core/Infra/Logging/`; setup/factory/configuration methods needed for later migration; rolling file sink using `Serilog.Sinks.File`; async sink using `Serilog.Sinks.Async`; thread enrichment using `Serilog.Enrichers.Thread`; exception enrichment using `Serilog.Exceptions`; Debug-build-only debug sink using conditional `Serilog.Sinks.Debug`; retention/archive helpers or planning; neutral text formatting; a short legacy/deprecated compatibility summary in the old `Logger` file. |
 | Excluded work | Rewriting existing logger call sites; removing the old `Logger` file; routing existing Core/UI callers to the new Serilog caller methods; initializing the new logger service through WPF singleton startup before DI composition exists; injecting Serilog into every service; moving to `Microsoft.Extensions.Logging.ILogger<T>`; adding extra logging/configuration package dependencies; adding `Serilog.Sinks.Console`; replacing the existing custom app config JSON manager; full dependency injection conversion; Host Builder adoption; logging raw secrets; Nexus auth implementation; telemetry or remote logging. |
 | Affected areas | New Serilog logging infrastructure in `source/CalradiaForge.Core/Infra/Logging/`, the existing legacy `Logger` file summary/comment only, future logging plumbing, approved package usage, and debug-mode settings. |
-| Implementation notes | Keep the current custom `Logger` API working and leave all current `Logger.Instance` call sites in Core and UI untouched. Build the new Serilog foundation first so later call-site migration can happen in Phase 5.B. Do not initialize the new Serilog service through the WPF app service startup path until Phase 5.A establishes dependency-injection composition. Runtime DebugMode must still be able to write Debug-level events to production-approved file logs in Release/Public Release builds; `Serilog.Sinks.Debug` is only for Visual Studio/debugger output in Debug builds. Normal debug logs should call `logger.Debug(...)` after migration. Guard only expensive diagnostic construction. The formatter renders applicable event values and does not inspect, mask, redact, or sanitize them. The current factory uses an infinite active `CalradiaForge_Latest.log` and custom cleanup; Phase 2 records that fact but does not claim final retention or logger lifecycle ownership. Plan structured diagnostic events for Steam/Bannerlord path resolution: detected platform, detected Steam client path if available, discovered Steam library roots, Bannerlord install path, resolved Workshop path candidates, selected Workshop path, scanner result counts, and skipped/missing candidate reasons. |
-| Dependency ordering | Should precede Nexus auth implementation and broader result/workflow logging. Must be complete before Phase 5.B call-site migration. |
+| Implementation notes | Keep the current custom `Logger` API working and leave all current `Logger.Instance` call sites in Core and UI untouched. Build the new Serilog foundation first so later call-site migration can happen in Phase 6.B. Do not initialize the new Serilog service through the WPF app service startup path until Phase 6.A establishes dependency-injection composition. Runtime DebugMode must still be able to write Debug-level events to production-approved file logs in Release/Public Release builds; `Serilog.Sinks.Debug` is only for Visual Studio/debugger output in Debug builds. Normal debug logs should call `logger.Debug(...)` after migration. Guard only expensive diagnostic construction. The formatter renders applicable event values and does not inspect, mask, redact, or sanitize them. The current factory uses an infinite active `CalradiaForge_Latest.log` and custom cleanup; Phase 2 records that fact but does not claim final retention or logger lifecycle ownership. Plan structured diagnostic events for Steam/Bannerlord path resolution: detected platform, detected Steam client path if available, discovered Steam library roots, Bannerlord install path, resolved Workshop path candidates, selected Workshop path, scanner result counts, and skipped/missing candidate reasons. |
+| Dependency ordering | Should precede Nexus auth implementation and broader result/workflow logging. Must be complete before Phase 6.B call-site migration. |
 | Do before | Confirm the approved package set already added to `CalradiaForge.Core`. Identify current logger behavior that must be preserved. Identify the existing Core logging folder as the only location for new Serilog infrastructure files. |
-| Do after | Keep the legacy logger compatibility path and all current call sites in place until Phase 5.B verification confirms equivalent Serilog behavior, then remove obsolete custom logger paths only as part of the staged call-site migration. |
-| Exit criteria | Serilog infrastructure exists in the Core logging folder, approved package usage is respected, Release/Public Release builds exclude the Debug sink package/configuration, and the current custom logger plus all existing call sites still function as the compatibility path. No Phase 5.A startup, ownership, close, or archive behavior is implied. |
+| Do after | Keep the legacy logger compatibility path and all current call sites in place until Phase 6.B verification confirms equivalent Serilog behavior, then remove obsolete custom logger paths only as part of the staged call-site migration. |
+| Exit criteria | Serilog infrastructure exists in the Core logging folder, approved package usage is respected, Release/Public Release builds exclude the Debug sink package/configuration, and the current custom logger plus all existing call sites still function as the compatibility path. No Phase 6.A startup, ownership, close, or archive behavior is implied. |
 | Risk notes | Broad call-site changes can obscure failures. Caller-supplied credentials or authentication material could still be written if a caller intentionally supplies them, so credential-owning components must keep those values out of ordinary logging. |
 | Verification | Build succeeds; Release/Public Release build does not reference/configure `Serilog.Sinks.Debug`; Debug build conditionally compiles the Debug sink; any isolated Serilog factory/configuration smoke checks pass where practical; formatter output is inspected without requiring WPF UI navigation. |
 | Codex guardrails | Do not add Nexus credentials or auth flow. Do not store logging secrets in `AppConfig`. Do not add unapproved logging packages. Do not add `Serilog.Sinks.Console`. Do not migrate existing logger call sites in Phase 2. Do not remove the legacy `Logger` file. |
@@ -311,7 +316,7 @@ Do not add `Serilog.Sinks.Console`, `Serilog.Settings.Configuration`, `Microsoft
 
 ### Phase 2 Legacy Logger Preservation Rule
 
-Phase 2 must preserve the old logger implementation as a compatibility path. Codex may add a short legacy/deprecated compatibility summary to the existing `Logger` file, but must not remove that file and must not alter existing logger call sites across Core or UI. Those call sites are intentionally preserved so Phase 5.B can inventory and migrate them after dependency injection is established.
+Phase 2 must preserve the old logger implementation as a compatibility path. Codex may add a short legacy/deprecated compatibility summary to the existing `Logger` file, but must not remove that file and must not alter existing logger call sites across Core or UI. Those call sites are intentionally preserved so Phase 6.B can inventory and migrate them after dependency injection is established.
 
 ### Steam Workshop Scanner Diagnostics Planning
 
@@ -339,7 +344,7 @@ When logging work begins, add or plan structured diagnostics around Steam librar
 
 Investigate Steam Workshop path detection and Bannerlord Workshop mod discovery as a targeted safety/bugfix candidate. If the bug cannot be confirmed yet, keep the work documented and deferred until end-user setup details are known. Do not describe this issue as fixed unless implementation and verification happened.
 
-The Phase 3 investigation confirmed that the former auto-detection checked only the Steam client library and could misclassify a valid Steam install when its Workshop directory was absent. A separately approved 2026-07-15 fix now resolves registered libraries and manifests, prefers a valid configured override and then the Bannerlord library, uses one deterministic alternate fallback, preserves Steam classification without Workshop content, and exercises representative fake-root verification. Broader structured scanner-result contracts remain Phase 6 work.
+The Phase 3 investigation confirmed that current auto-detection checks only the Steam client library and can misclassify a valid Steam install when its Workshop directory is absent. The complete repair remains planned as Phase 5; see [the detailed Phase 5 plan](game_platform_detection_and_path_workflow_plan.md). Broader scanner-result contracts remain Phase 7 work.
 
 ## Phase 4 - Initial Tests And Performance Benchmark Infrastructure Around Changed Risky Areas
 
@@ -349,7 +354,7 @@ The Phase 3 investigation confirmed that the former auto-detection checked only 
 | Included work | Core unit/regression tests; persistence, parser, archive, BLSE, modpack, logging, scanner/path, result, and integration-style filesystem tests; approved benchmark project or harness; representative datasets; Release benchmark commands; allocation and environment reporting; provisional baseline capture; SevenZipWrapper source/methodology review. |
 | Excluded work | Final performance conclusions against code that later phases will change; speculative production optimization; fragile exact-duration unit tests; broad WPF UI automation; unapproved analyzer/benchmark packages; real Steam or Bannerlord dependencies. |
 | Affected areas | Test and benchmark projects, solution/build documentation, fixture data, test helpers, result conventions, and performance-sensitive Core workflows. |
-| Implementation notes | Separate correctness tests from benchmarks. Use Release builds, warmup, repeated iterations, isolated temporary directories, controlled fixtures, environment metadata, and explicit provisional-baseline labels. The authoritative post-refactor baseline is captured in Phase 8 after Phase 7 settles. |
+| Implementation notes | Separate correctness tests from benchmarks. Use Release builds, warmup, repeated iterations, isolated temporary directories, controlled fixtures, environment metadata, and explicit provisional-baseline labels. The authoritative post-refactor baseline is captured in Phase 9 after Phase 8 settles. |
 | Dependency ordering | Follows initial Phase 3 changes. Creates infrastructure before DI, logger migration, workflow coordination, and MVVM work; it does not perform the decisive final audit. |
 | Do before | Select test and benchmark frameworks only with approval; inspect solution/project naming; identify legal fixtures; locate existing SevenZipWrapper benchmark evidence and metadata. |
 | Do after | Expand tests and benchmarks as Phases 5-7 change workflows while preserving comparability and methodology records. |
@@ -363,29 +368,41 @@ The Phase 3 investigation confirmed that the former auto-detection checked only 
 
 Use fake temp directories to cover Steam client installed on one root while Bannerlord is under another Steam library root, multiple Steam library roots, Workshop content under the Bannerlord library root, missing Workshop content, Workshop content with no valid modules, and manual override behavior if supported.
 
-## Phase 5 - Dependency Injection And Logger Migration
+## Phase 5 - Game Platform Detection And Path Workflow Rewrite
 
-Phase 5 is split into 5.A and 5.B. Phase 5.A establishes DI and platform adapters. Phase 5.B migrates legacy logger call sites after the Serilog foundation from Phase 2 is in place and verified.
+| Work-order field | Detail |
+|---|---|
+| Purpose | Replace the legacy helper-owned game detection with the planned Core-owned platform detection and path workflow. |
+| Included work | Reuse the orphaned Steam resolver; correct multi-library Steam detection; separate Steam game success from Workshop availability; direct settings commits; startup/re-detection/manual paths; separate manual Workshop configuration; optional BLSE enrichment; startup notification queue; caller migration; helper removal; minimum scanner/cache safety; test migration and verification. |
+| Dependencies | Current source-state audit; Phase 3/4 evidence preferred. Phase 6.A consumes the finalized platform dependencies rather than redesigning them. |
+| High-level order | Audit current contracts; update provider/resolver/workflow; migrate callers; remove the helper; apply minimum safety; build; migrate/add tests; run focused/full tests; obtain owner split-library smoke evidence; align documentation. |
+| Exit criteria | Steam split-library and no-Workshop cases are correct, manual configuration is bounded, queue behavior is proven, production builds and tests pass, and owner smoke evidence is recorded or an exception is documented. |
+| Exclusions | Full DI/logger migration, broad adapter or MVVM redesign, generic detection results, scanner/cache redesign, Nexus, installer/extractor changes, secret redaction/sanitization, and real-world gated-platform support claims. |
+| Detailed authority | [Game Platform Detection and Path Workflow Plan](game_platform_detection_and_path_workflow_plan.md) |
 
-### Phase 5.A - DI And Platform Adapter Foundation
+## Phase 6 - Dependency Injection And Logger Migration
+
+Phase 6 is split into 6.A and 6.B. Phase 6.A establishes DI and consumes the finalized Phase 5 dependencies. Phase 6.B migrates legacy logger call sites after the Serilog foundation from Phase 2 is in place and verified.
+
+### Phase 6.A - DI And Platform Adapter Foundation
 
 | Work-order field | Detail |
 |---|---|
 | Purpose | Establish one explicit application composition root, one shared `ServiceProvider`, separate Core/UI registration modules, constructor injection, test-replaceable platform boundaries, and stable service lifetimes without changing externally observable behavior. |
 | Included work | Add the approved DI package; create Core and UI registration modules; create one `IServiceCollection` in `App.xaml.cs`; register configuration, one Serilog factory and one shared logger, Core services, app-wide UI services, windows, pages, and ViewModels with explicit lifetimes; build one provider; resolve `MainWindow`; replace `StartupUri` when DI startup becomes active; establish cleanup-before-open and shutdown quiescence, exact-once logger close, active-handle release, collision-safe archive, provider disposal, and archive-failure preservation; introduce approved platform/path adapters. |
-| Excluded work | Separate Core/UI providers; Host Builder adoption; broad service rewrites solely for DI style; full MVVM conversion; Phase 5.B logger call-site migration; new Nexus runtime/network/auth implementation; behavior-changing lifetime redesign without approval. |
+| Excluded work | Separate Core/UI providers; Host Builder adoption; broad service rewrites solely for DI style; full MVVM conversion; Phase 6.B logger call-site migration; new Nexus runtime/network/auth implementation; behavior-changing lifetime redesign without approval. |
 | Affected areas | `App.xaml`, `App.xaml.cs`, Core and UI registration modules, startup/bootstrap code, service constructors, selected windows/pages/ViewModels, logging construction, platform adapters, and tests. |
-| Implementation notes | `App.xaml.cs` remains the composition root. `AddCoreServices(...)` and `AddUiServices(...)` extend the same collection. Core registration remains WPF-free. The current source exposes non-retaining `Create()`, not `Build()`; the final factory-owned versus DI-owned logger decision remains open, but Phase 5.A must produce exactly one shared instance and prohibit double disposal. Cleanup must occur once at startup before opening the active file. Shutdown must stop new logging-producing work, cancel and await or confirm active work, close the logger exactly once, release the file handle, attempt a no-overwrite collision-safe archive, and then dispose remaining resources according to the selected ownership order. Windows/pages/ViewModels default to transient unless state preservation justifies a documented exception. Constructor injection replaces static `App.*` access as consumers migrate. |
-| Dependency ordering | Follows Phases 1 and 3; Phase 4 is preferred so singleton identity, adapter substitution, and startup behavior can be protected. Precedes Phase 5.B, Phase 6, and Phase 7. |
+| Implementation notes | `App.xaml.cs` remains the composition root. `AddCoreServices(...)` and `AddUiServices(...)` extend the same collection. Core registration remains WPF-free. The current source exposes non-retaining `Create()`, not `Build()`; the final factory-owned versus DI-owned logger decision remains open, but Phase 6.A must produce exactly one shared instance and prohibit double disposal. Cleanup must occur once at startup before opening the active file. Shutdown must stop new logging-producing work, cancel and await or confirm active work, close the logger exactly once, release the file handle, attempt a no-overwrite collision-safe archive, and then dispose remaining resources according to the selected ownership order. Windows/pages/ViewModels default to transient unless state preservation justifies a documented exception. Constructor injection replaces static `App.*` access as consumers migrate. |
+| Dependency ordering | Follows finalized Phase 5 plus Phases 1 and 3; Phase 4 is preferred. Precedes Phase 6.B, Phase 7, and Phase 8. |
 | Do before | Inventory static `App.*` access, startup construction order, `StartupUri`, disposable services, state ownership, and UI/Core boundaries. Confirm the exact registration filenames during implementation without inventing package or project choices here. |
-| Do after | Verify one provider and one instance of every intended singleton; verify DI-resolved `MainWindow`; verify cleanup once before open; verify shutdown quiescence, logger close exactly once, active-handle release, archive collision/failure behavior, and provider disposal; migrate logger callers only in Phase 5.B; use the DI graph for later workflow and ViewModel construction. |
+| Do after | Verify one provider and one instance of every intended singleton; verify DI-resolved `MainWindow`; verify cleanup once before open; verify shutdown quiescence, logger close exactly once, active-handle release, archive collision/failure behavior, and provider disposal; migrate logger callers only in Phase 6.B; use the DI graph for later workflow and ViewModel construction. |
 | Exit criteria | One collection and one provider are used; Core/UI registrations are separated; Core remains WPF-free; `MainWindow` is DI-resolved without duplicate `StartupUri` construction; singleton identity and startup behavior match expectations; logger ownership and disposal are unambiguous; cleanup occurs once; shutdown cannot close while logging work remains; archive does not overwrite and preserves the active file on failure; provider disposal is verified; key services/adapters can be replaced in tests. DI is still planned until these implementation criteria are actually met. |
 | Risk notes | Multiple providers or repeated factory creation duplicate singletons; incorrect lifetimes lose or retain state; premature disposal breaks workflows; static access can survive as a hidden service locator; retained `StartupUri` can create duplicate windows; closing while work logs can lose events; renaming while a non-shared file handle is held can fail; archive collisions can overwrite evidence unless rejected or renamed safely. |
 | Verification | Build; targeted registration tests; singleton identity; factory invocation count; cleanup-once and cleanup-before-open checks; constructor resolution; startup smoke test; duplicate-window check; shutdown quiescence and exact-once close/disposal check; handle-release-before-archive check; no-overwrite collision tests; archive failure preservation; Core reference-boundary check; adapter-substitution tests. |
-| Codex guardrails | Do not create separate providers. Do not resolve services from the provider inside arbitrary pages/controls. Do not register WPF types in Core. Do not add Host Builder without approval. Do not move Nexus runtime concerns into Core. Do not perform Phase 5.B logger migration here. |
+| Codex guardrails | Do not create separate providers. Do not resolve services from the provider inside arbitrary pages/controls. Do not register WPF types in Core. Do not add Host Builder without approval. Do not move Nexus runtime concerns into Core. Do not perform Phase 6.B logger migration here. |
 | Documentation updates | Update `dependency_injection_plan.md`; update canonical architecture docs only for accepted implemented composition decisions; record lifetime exceptions, unresolved static access, or deferred adapters explicitly. |
 
-### Phase 5.B - Legacy Logger Call-Site Migration
+### Phase 6.B - Legacy Logger Call-Site Migration
 
 | Work-order field | Detail |
 |---|---|
@@ -394,8 +411,8 @@ Phase 5 is split into 5.A and 5.B. Phase 5.A establishes DI and platform adapter
 | Excluded work | One uncontrolled pass over all call sites; new logging packages or Host Builder adoption; changing app configuration architecture; adding `ILogger<T>` as the target for this phase. |
 | Affected areas | Existing logger call sites, shared logging call patterns, and compatibility cleanup after verification. |
 | Implementation notes | Keep the migration staged so failures stay reviewable. Preserve existing behavior while moving callers onto the new Serilog foundation. Remove the old logger compatibility path only after verification shows the Serilog path is equivalent for the migrated call sites. |
-| Dependency ordering | Follows Phase 5.A and Phase 2. Completes before later workflow/UI phases depend on the updated logging shape. |
-| Do before | Verify the Phase 2 Serilog foundation is stable and Phase 5.A dependency-injection composition is usable. Inventory the legacy logger call sites preserved from Phase 2 and group them into manageable batches. |
+| Dependency ordering | Follows Phase 6.A and Phase 2. Completes before later workflow/UI phases depend on the updated logging shape. |
+| Do before | Verify the Phase 2 Serilog foundation is stable and Phase 6.A dependency-injection composition is usable. Inventory the legacy logger call sites preserved from Phase 2 and group them into manageable batches. |
 | Do after | Remove obsolete custom logger paths only after equivalent Serilog behavior is verified. |
 | Exit criteria | Legacy logger call sites are migrated in verified batches; the compatibility path is no longer needed; minimum-level and formatter behavior remain intact. |
 | Risk notes | Batch migration can expose hidden logger assumptions. Removing the compatibility path too early can break behavior. Caller review must still keep credentials out of ordinary logs. |
@@ -405,17 +422,17 @@ Phase 5 is split into 5.A and 5.B. Phase 5.A establishes DI and platform adapter
 
 ### Steam Workshop Path Adapter Planning
 
-The 2026-07-15 scoped fix introduced `ISteamClientRootProvider` and `ISteamInstallationResolver` in Core ahead of the broader Phase 5.A composition work. `GamePathsHelper` currently owns their default implementations; registration through the future application service provider remains Phase 5.A work. Valid manual Workshop paths are preserved during normal detection, while explicit re-detection recomputes the candidate.
+Phase 5 owns the planned integration of the existing Steam boundaries into the production detection workflow. After that work is finalized, Phase 6.A registers the resolver, workflow, notification queue, and current platform dependencies without redesigning their Phase 5 behavior.
 
 ### Performance Planning Cross-References
 
 - Phase 2: Later audit logging allocations, disabled-level work, neutral formatting, enrichment, and sink behavior without weakening required diagnostics.
 - Phase 3: Preserve stable archive, persistence, configuration, and scanner boundaries and fixtures for Phase 4 measurement; do not add instrumentation that changes safety behavior.
-- Phase 5.B: Later audit disabled-level work, message templates, enrichment, async sink behavior, caller-supplied property construction, and expensive diagnostic construction.
-- Phase 6: Preserve progress, cancellation, result construction, cleanup, and coordinator semantics while allowing workflow overhead to be measured.
-- Phase 7: Include UI-thread responsiveness and startup/manual smoke observations in later audit scope; do not create fragile wall-clock UI unit tests.
+- Phase 6.B: Later audit disabled-level work, message templates, enrichment, async sink behavior, caller-supplied property construction, and expensive diagnostic construction.
+- Phase 7: Preserve progress, cancellation, result construction, cleanup, and coordinator semantics while allowing workflow overhead to be measured.
+- Phase 8: Include UI-thread responsiveness and startup/manual smoke observations in later audit scope; do not create fragile wall-clock UI unit tests.
 
-## Phase 6 - Result Types And Workflow Coordinator
+## Phase 7 - Result Types And Workflow Coordinator
 
 | Work-order field | Detail |
 |---|---|
@@ -424,9 +441,9 @@ The 2026-07-15 scoped fix introduced `ISteamClientRootProvider` and `ISteamInsta
 | Excluded work | App-wide generic `Result<T>` unless repetition justifies it; WPF dependencies in Core; duplicate installer logic; Nexus download implementation. |
 | Affected areas | Install workflow, archive validation, BLSE validation/install, persistence save/load/recovery, mod scan/refresh, Steam Workshop path detection, modpack import/export, future Nexus auth/download workflows, and toast/status state. |
 | Implementation notes | Result objects should support success/failure, code, user-facing message, technical/log message, warnings, and affected path/mod where useful. Coordinator may initially wrap current installer/event flow. Mod scan/refresh should distinguish "no Workshop mods installed," "Workshop path could not be resolved," and "Workshop path exists but scan failed." |
-| Dependency ordering | Follows logging and safety foundations. Works best after Phase 5.B. Should precede or coordinate with MVVM extraction. |
+| Dependency ordering | Follows logging and safety foundations. Works best after Phase 6.B. Should precede or coordinate with MVVM extraction. |
 | Do before | Identify current mixed result styles. Decide first workflows to standardize. |
-| Do after | Use coordinator state in ViewModels during Phase 7. Add or update tests for result-producing workflows. |
+| Do after | Use coordinator state in ViewModels during Phase 8. Add or update tests for result-producing workflows. |
 | Exit criteria | High-risk workflows have clearer result contracts; install completion/failure/cancellation paths are observable; scanner/path warnings have a structured result path when scanner work is implemented; UI can show busy/status/error/result state consistently. |
 | Risk notes | Over-standardizing too early can add ceremony. Coordinator may duplicate service responsibilities if boundaries are unclear. |
 | Verification | Build succeeds; tests cover result mapping where practical; manual install success/failure/cancel/cleanup paths; logs and toasts match outcomes. |
@@ -437,7 +454,7 @@ The 2026-07-15 scoped fix introduced `ISteamClientRootProvider` and `ISteamInsta
 
 Mod scan/refresh should report structured warnings when Workshop path detection fails, when no Workshop path candidates exist, or when Workshop mods are not found. User-facing messages should be concise; technical details should go to logs.
 
-## Phase 7 - Staged MVVM Shell/ViewModel Rewrite
+## Phase 8 - Staged MVVM Shell/ViewModel Rewrite
 
 | Work-order field | Detail |
 |---|---|
@@ -446,7 +463,7 @@ Mod scan/refresh should report structured warnings when Workshop path detection 
 | Excluded work | One-pass full UI rewrite; unrelated visual redesign; unrelated new features; business logic in ViewModels that belongs in Core; Nexus networking in UI. |
 | Affected areas | `MainWindow`, `ModsPage`, `ModpacksPage`, `SettingsPage`, `FaqPage`, dialogs/windows, Toast/status state, and ViewModel registrations. |
 | Implementation notes | Start with conventions before extraction. Extract highest-risk workflows first. Keep code-behind for view-only behavior where appropriate. Before page ViewModel extraction, revisit the UI page rename review checklist and obtain an owner-approved rename map if any `.xaml` page rename is desired. |
-| Dependency ordering | Follows Phase 5.B and Phase 6. Uses result/coordinator patterns from Phase 6 where available. |
+| Dependency ordering | Follows Phase 6.B and Phase 7. Uses result/coordinator patterns from Phase 7 where available. |
 | Do before | Freeze expected behavior for target pages. Ensure high-risk Core workflows have tests where practical. Define command and state conventions. Complete the deferred UI page rename review checkpoint before broad page extraction or future Nexus UI work. |
 | Do after | Remove obsolete code-behind only after equivalent ViewModel behavior is verified. Add ViewModel tests for extracted workflows. |
 | Exit criteria | Shell/navigation and major pages use consistent ViewModel patterns; high-risk workflow logic is not buried in code-behind; operation state is visible and testable; scanner status can explain whether local modules were scanned, Workshop modules were scanned, or Workshop scanning was skipped due to path detection when scanner work is implemented. |
@@ -463,29 +480,29 @@ Immediately before broad page ViewModel extraction, review `docs/refactor/ui_pag
 
 Surface Steam Workshop scan warnings in the relevant page/ViewModel without burying them in logs only. The user should be able to understand whether local modules were scanned, Workshop modules were scanned, or Workshop scanning was skipped due to path detection.
 
-## Phase 8 - Performance Audit And Report Generation
+## Phase 9 - Performance Audit And Report Generation
 
 | Work-order field | Detail |
 |---|---|
 | Purpose | Audit the completed substantive refactor for measurable and plausible performance inefficiencies and produce a prioritized evidence-backed report before production optimization. |
 | Included work | Release benchmarks; allocation measurements; approved analyzers; startup and one-provider DI composition review; singleton identity/lifetime/disposal checks; logger factory count, active-sink startup, cleanup scaling, neutral formatter cost, async sink behavior, flush/close, archive rename, shutdown-race, file-size, retention, and allocation review; filesystem, scanning, parsing, modpack, extraction, persistence, logging, async/concurrency, collection, and memory review; controlled SevenZipWrapper comparison; finding classification; dated report generation; focused test/benchmark additions needed to gather evidence. |
-| Excluded work | Production-code optimization; behavior changes; validation removal; speculative refactors presented as performance fixes; automatic transition into Phase 9. |
+| Excluded work | Production-code optimization; behavior changes; validation removal; speculative refactors presented as performance fixes; automatic transition into Phase 10. |
 | Affected areas | Completed Core and UI-sensitive workflows, test/benchmark projects, analyzer configuration, and `docs/audits/calradiaforge_performance_audit_YYYY-MM-DD.md`. |
 | Implementation notes | Run correctness verification before profiling conclusions. Record environment, build, commit, branch, fixture identity, cache conditions, warmup, iterations, variance, and allocations where supported. Treat named implementation examples as hypotheses, not presumed defects. |
-| Dependency ordering | Follows Phase 7 and depends on Phase 4 infrastructure. The audited code must be settled or explicitly deferred. Precedes Phase 9. |
+| Dependency ordering | Follows Phase 8 and depends on Phase 4 infrastructure. The audited code must be settled or explicitly deferred. Precedes Phase 10. |
 | Do before | Confirm Phase 2-7 status; run applicable correctness tests; select the exact dated report path; record environment; validate SevenZipWrapper comparability. |
 | Do after | Stop for developer review. Record approval, rejection, deferral, modification, out-of-scope, or evidence requests for every proposed production optimization. |
-| Exit criteria | The report and authoritative post-Phase-7 baselines are complete; findings are classified and prioritized; no production code was changed; every proposed production change remains pending an explicit developer decision. |
+| Exit criteria | The report and authoritative post-Phase-8 baselines are complete; findings are classified and prioritized; no production code was changed; every proposed production change remains pending an explicit developer decision. |
 | Risk notes | Filesystem and startup results are noisy; correlation can be mistaken for causation; third-party benchmark values can be incomparable; audit scope can expand into endless micro-optimization without stopping criteria. |
 | Verification | Build; applicable tests; approved Release benchmarks; analyzer execution; report cross-check against raw results and source inspection. |
 | Codex guardrails | Do not edit production code. Do not claim speedups without evidence. Do not subtract unrelated SevenZipWrapper values. Do not weaken safety or logging. Stop for developer review after the report. |
 | Documentation updates | Create or update the exact dated audit report and methodology documentation only as needed; do not update the migration map for documentation-only audit work. |
 
-### Phase 8 Developer Decision Gate
+### Phase 9 Developer Decision Gate
 
-Every proposed finding must receive an explicit owner status before Phase 9 begins: `Approved`, `Approved With Modification`, `Rejected`, `Deferred`, `Needs More Evidence`, or `Out Of Scope`. Findings remain `Pending Developer Review` until decided. Phase 8 must not silently transition into production-code changes.
+Every proposed finding must receive an explicit owner status before Phase 10 begins: `Approved`, `Approved With Modification`, `Rejected`, `Deferred`, `Needs More Evidence`, or `Out Of Scope`. Findings remain `Pending Developer Review` until decided. Phase 9 must not silently transition into production-code changes.
 
-## Phase 9 - Approved Performance Optimization Implementation
+## Phase 10 - Approved Performance Optimization Implementation
 
 | Work-order field | Detail |
 |---|---|
@@ -493,8 +510,8 @@ Every proposed finding must receive an explicit owner status before Phase 9 begi
 | Included work | Approved `PERF-NNN` findings; small production-change batches; affected regression tests and benchmarks; before/after comparisons; allocation results; audit-report status updates; reversion or disposition of ineffective, harmful, inconclusive, blocked, rejected, or deferred work; reviewer/fix passes. Logger lifecycle or sink changes require finding-specific approval. |
 | Excluded work | Unapproved findings; speculative cleanup; unrelated architecture changes; validation removal; safety weakening; benchmark-only changes presented as user-visible gains; changelog or migration-map work before owner inspection. |
 | Affected areas | Only source, test, benchmark, fixture, and documentation files required by approved finding IDs. |
-| Implementation notes | Create an explicit approved-finding scope before editing. Preserve behavior unless a separate change is approved. Compare against the Phase 8 baseline under comparable archive, dataset, machine, runtime, build, warmup, iteration, cache, and destination conditions. |
-| Dependency ordering | Follows the Phase 8 developer decision gate. Precedes Phase 10. |
+| Implementation notes | Create an explicit approved-finding scope before editing. Preserve behavior unless a separate change is approved. Compare against the Phase 9 baseline under comparable archive, dataset, machine, runtime, build, warmup, iteration, cache, and destination conditions. |
+| Dependency ordering | Follows the Phase 9 developer decision gate. Precedes Phase 11. |
 | Do before | Read the approved report and feedback; validate baselines and verification methods; assign small non-overlapping batches. |
 | Do after | Update finding outcomes; run reviewer/fix passes; stop for manual owner inspection before changelog and migration-map workflows. |
 | Exit criteria | Only approved findings were implemented; affected tests pass; benchmarks were rerun; outcomes and limitations are documented; harmful changes are reverted or escalated; owner inspection gate is reached. |
@@ -503,31 +520,31 @@ Every proposed finding must receive an explicit owner status before Phase 9 begi
 | Codex guardrails | Do not implement unapproved findings. Do not change behavior, safety, validation, logging, or ownership boundaries without approval. Do not keep complexity without evidence. Stop before changelog and migration-map work. |
 | Documentation updates | Update the same audit report with implementation status, measured outcomes, reverts, unresolved findings, and limitations. Follow the shared closeout workflow after owner approval. |
 
-## Phase 10 - Final Post-Refactor Deep Audit And Iterative Verification
+## Phase 11 - Final Post-Refactor Deep Audit And Iterative Verification
 
 | Work-order field | Detail |
 |---|---|
 | Purpose | Verify the complete refactor and approved optimization implementation through the relevant build, test, benchmark, analyzer, architecture, and manual-smoke workflow, then correct only justified failures or regressions. |
 | Included work | Full relevant solution builds and tests; Release benchmarks; allocation/scaling review; approved analyzers; logger ownership, shutdown, close, handle-release, and archive inspection; architecture and ownership inspection; manual WPF smoke checks; root-cause investigation; narrowly scoped corrective changes; repeated verification; final report completion. |
-| Excluded work | Endless theoretical optimization; unrelated feature work; unapproved architecture redesign; broad cleanup not required by a verified issue; silently expanding Phase 9 scope. |
+| Excluded work | Endless theoretical optimization; unrelated feature work; unapproved architecture redesign; broad cleanup not required by a verified issue; silently expanding Phase 10 scope. |
 | Affected areas | Finalized solution, tests, benchmarks, analyzers, architecture documentation, and the same performance audit report. |
 | Implementation notes | Use the loop: run, record, investigate, correct, rerun, compare, repeat. Completion is practical and evidence-based, not mathematical perfection. New opportunities outside approved scope become deferred findings. |
-| Dependency ordering | Follows Phase 9 and precedes Phase 11. |
+| Dependency ordering | Follows Phase 10 and precedes Phase 12. |
 | Do before | Confirm report statuses, baseline references, commands, environment, and approved scope. |
-| Do after | Finalize report outcomes and limitations; hand the verified implementation state to Phase 11. |
+| Do after | Finalize report outcomes and limitations; hand the verified implementation state to Phase 12. |
 | Exit criteria | Required tests pass or accepted exceptions are documented; no approved finding remains unresolved without disposition; benchmark regressions are explained; architecture boundaries remain intact; practical stopping criteria are satisfied. |
 | Risk notes | Final audit scope can expand indefinitely; environment noise can create false regressions; corrective changes can create new interactions unless narrow and rerun. |
 | Verification | Complete relevant build/test suite; approved full Release benchmark suite; analyzers; architecture review; manual UI-sensitive smoke tests. |
 | Codex guardrails | Do not chase theoretical micro-optimizations indefinitely. Do not add unrelated work. Do not weaken behavior or safety. Require evidence and scope justification for each correction. |
-| Documentation updates | Complete final verification, limitations, rejected/deferred findings, and benchmark outcome sections in the same audit report; prepare accepted decisions for Phase 11. |
+| Documentation updates | Complete final verification, limitations, rejected/deferred findings, and benchmark outcome sections in the same audit report; prepare accepted decisions for Phase 12. |
 
-### Phase 10 Practical Stopping Criteria
+### Phase 11 Practical Stopping Criteria
 
-Phase 10 is complete when required tests pass or approved exceptions are documented, externally observable behavior is preserved unless approved otherwise, no approved finding remains unresolved without disposition, no benchmark regression remains unexplained, approved analyzer findings are resolved or documented, architecture boundaries remain intact, and remaining theoretical micro-optimizations do not justify additional complexity, risk, or audit time.
+Phase 11 is complete when required tests pass or approved exceptions are documented, externally observable behavior is preserved unless approved otherwise, no approved finding remains unresolved without disposition, no benchmark regression remains unexplained, approved analyzer findings are resolved or documented, architecture boundaries remain intact, and remaining theoretical micro-optimizations do not justify additional complexity, risk, or audit time.
 
 “Complete” does not mean mathematically optimal code or zero possible micro-optimizations.
 
-## Phase 11 - Final Documentation And Versioning Cleanup For Next Beta
+## Phase 12 - Final Documentation And Versioning Cleanup For Next Beta
 
 | Work-order field | Detail |
 |---|---|
@@ -536,8 +553,8 @@ Phase 10 is complete when required tests pass or approved exceptions are documen
 | Excluded work | v1.0 release polish; new Nexus implementation; major/minor version bump without owner approval; rewriting old changelog history unless approved. |
 | Affected areas | `Directory.Build.props`, `.csproj` files, UI version display code, `docs/CHANGELOG.md`, release notes drafts, GitHub/Nexus release title conventions, and refactor docs. |
 | Implementation notes | Public app version is authoritative. Assembly versions should inherit the app version by default. Docs/internal-only changes usually do not require app version bumps. Treat refactor docs as planning artifacts; migrate only accepted stable decisions into canonical docs, ADRs, changelog entries, or release notes. If the Steam Workshop scanner bug is fixed before the next beta, mention it in changelog/release notes; if it remains deferred, keep it listed as a known issue or tracked follow-up. |
-| Dependency ordering | Runs after Phase 10 technical verification. May be drafted earlier, but final alignment belongs after the final verified state. |
-| Do before | Confirm Phase 10 completion, final audit outcomes, approved target version, and current version values across docs, project files, UI, and release notes. |
+| Dependency ordering | Runs after Phase 11 technical verification. May be drafted earlier, but final alignment belongs after the final verified state. |
+| Do before | Confirm Phase 11 completion, final audit outcomes, approved target version, and current version values across docs, project files, UI, and release notes. |
 | Do after | Verify displayed version and release artifacts use the same value. Mark deferred topics clearly. Complete documentation handoff for accepted decisions only. |
 | Exit criteria | Version source of truth is documented and consistent; changelog and release documentation describe only implemented and verified changes; rejected/deferred/inconclusive/reverted findings remain accurately classified; accepted decisions have canonical handoff targets. |
 | Risk notes | Accidental public version bump; changelog/project metadata drift; describing planned work as shipped; letting planning or audit text become canonical architecture without owner acceptance. |
@@ -578,7 +595,7 @@ Do not describe the Steam Workshop scanner/path-resolution issue as fixed unless
 | `docs/refactor/dependency_injection_plan.md` | DI registration, lifetimes, adapters, test replacement. |
 | `docs/refactor/performance_audit_and_optimization_policy.md` | Performance evidence rules, benchmark methodology, SevenZipWrapper comparison, finding lifecycle, optimization guardrails, report structure, and reusable audit/implementation prompts. |
 | `docs/refactor/task_execution_optimization_policy.md` | Reusable task execution guidance for capability selection, reasoning effort, parallelization, task scope, and runtime compatibility. |
-| `docs/audits/calradiaforge_performance_audit_YYYY-MM-DD.md` | Dated Phase 8 audit report, developer decisions, Phase 9 outcomes, and Phase 10 final verification results. |
+| `docs/audits/calradiaforge_performance_audit_YYYY-MM-DD.md` | Dated Phase 9 audit report, developer decisions, Phase 10 outcomes, and Phase 11 final verification results. |
 | `docs/refactor/result_and_workflow_policy.md` | Workflow-specific result types and coordinator model. |
 | `docs/refactor/mvvm_refactor_plan.md` | Shell/ViewModel extraction sequence and UI state conventions. |
 | `docs/refactor/ui_page_rename_review_checklist.md` | Owner-review template for possible future UI page `.xaml` renames. |
@@ -1079,9 +1096,8 @@ Final report:
 - Whether Host Builder becomes worthwhile after initial DI.
 - Owner-approved next beta version number.
 - Which UI page `.xaml` files should be considered for rename later.
-- Whether the UI page rename review should happen during Phase 1 cleanup or immediately before Phase 7 MVVM extraction.
-- Steam Workshop candidate precedence was resolved on 2026-07-15: preserve a valid configured path during normal detection, then prefer the Bannerlord install library, then choose one deterministic alternate candidate with valid `appworkshop_261550.acf` evidence preferred.
-- Manual Workshop path behavior was resolved on 2026-07-15: keep the existing Settings selector, preserve a valid value during normal detection, and recompute it during explicit re-detection.
+- Whether the UI page rename review should happen during Phase 1 cleanup or immediately before Phase 8 MVVM extraction.
+- Phase 5 must implement the locked Workshop precedence and manual Workshop rules in [the detailed plan](game_platform_detection_and_path_workflow_plan.md).
 - Whether the documentation alignment report should be moved into `docs/reviews/` in a separate documentation-rebuild task.
 - Whether the full numbered documentation structure from the alignment report should be created before, during, or after the active refactor phases.
 - Benchmark framework, project path, target framework, package approvals, and raw-result storage path.
@@ -1089,7 +1105,7 @@ Final report:
 - Which performance thresholds, if any, should become blocking after stability is demonstrated.
 - Which fixtures can be checked in legally and without unreasonable repository cost.
 - Original SevenZipWrapper benchmark source, environment, and methodology.
-- Exact dated performance audit report path selected when Phase 8 begins.
+- Exact dated performance audit report path selected when Phase 9 begins.
 - Manual WPF startup and responsiveness measurement method.
 - Whether logger lifetime is owned by `SerilogLoggerFactory` or the DI provider, and whether global `Serilog.Log.Logger` is used.
 - The exact logger/provider disposal order after workflow quiescence and the exact archive collision-safe naming contract.

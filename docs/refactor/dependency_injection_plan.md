@@ -4,7 +4,7 @@
 
 Replace static application service construction and access over time with explicit composition using `Microsoft.Extensions.DependencyInjection`, while preserving the UI/Core/Nexus boundaries and staging legacy logger call-site migration after the DI foundation is verified.
 
-This document defines the locked Phase 5.A composition model. It is a planned architecture and does not claim that DI is implemented in the current source tree.
+This document defines the locked Phase 6.A composition model. It is a planned architecture and does not claim that DI is implemented in the current source tree.
 
 ## Current Source Observations
 
@@ -90,7 +90,7 @@ When DI-resolved startup becomes active, remove or replace `StartupUri` in `App.
 
 ## Serilog Relationship
 
-`SerilogLoggerFactory` is planned as an application singleton. The current source exposes non-retaining `Create()`; `Build()` is only a possible future naming/contract target. Phase 5.A must explicitly decide whether the factory owns and disposes the retained logger or whether DI owns disposal of the logger returned by the factory. Either model must yield one shared logger and exactly one disposal path.
+`SerilogLoggerFactory` is planned as an application singleton. The current source exposes non-retaining `Create()`; `Build()` is only a possible future naming/contract target. Phase 6.A must explicitly decide whether the factory owns and disposes the retained logger or whether DI owns disposal of the logger returned by the factory. Either model must yield one shared logger and exactly one disposal path.
 
 ```text
 App.xaml.cs
@@ -109,8 +109,8 @@ Required behavior:
 - Perform retention cleanup once during startup before opening the active file. The current per-factory cleanup is an observation to replace, not a lifecycle guarantee.
 - On shutdown, stop new logging-producing work, request cancellation, await or confirm active workflow completion, dispose/stop log-producing services, close the logger exactly once, confirm the active handle is released, attempt archive, and then dispose remaining provider-owned resources according to the selected ownership model.
 - The archive helper contract must return false for no active file, an unresolvable collision, or move/access failure; it must never overwrite an existing archive, must use collision-safe deterministic naming, and must preserve the active file when archiving fails.
-- Phase 5.A establishes construction and lifetime.
-- Phase 5.B migrates legacy logger call sites in controlled batches after the Serilog foundation and DI composition are verified.
+- Phase 6.A establishes construction and lifetime.
+- Phase 6.B migrates legacy logger call sites in controlled batches after the Serilog foundation and DI composition are verified.
 
 ## Initial Lifetime Direction
 
@@ -140,20 +140,20 @@ No unresolved option is an implemented architecture decision.
 
 ## Logger Lifecycle Verification Cases
 
-Phase 5.A implementation must cover one factory invocation, one logger identity, cleanup once and before sink open, no duplicate providers, DI/global ownership consistency, shutdown quiescence, exactly-once close/disposal, active-handle release before rename, no-overwrite archive collisions, no-file behavior, access/move failure preservation, and provider disposal without a second logger close. Phase 5.B should review migrated callers and structured properties so credential-owning components do not intentionally pass credentials or authentication material to logs.
+Phase 6.A implementation must cover one factory invocation, one logger identity, cleanup once and before sink open, no duplicate providers, DI/global ownership consistency, shutdown quiescence, exactly-once close/disposal, active-handle release before rename, no-overwrite archive collisions, no-file behavior, access/move failure preservation, and provider disposal without a second logger close. Phase 6.B should review migrated callers and structured properties so credential-owning components do not intentionally pass credentials or authentication material to logs.
 
 ## Steam And Bannerlord Path Adapter Planning
 
-The 2026-07-15 scoped fix implemented explicit `ISteamClientRootProvider` and `ISteamInstallationResolver` boundaries in Core. `GamePathsHelper` currently constructs the Windows registry provider and resolver statically to preserve startup behavior before Phase 5.A composition. The broader DI phase should register these existing boundaries instead of creating competing adapters.
+Phase 5 production detection integrates `ISteamClientRootProvider`, `ISteamInstallationResolver`, `SteamInstallationResolver`, and the related Steam metadata types through `GamePlatformDetectionResolver` and `GameDetectionService`. Phase 6.A later registers these finalized dependencies and the existing notification queue rather than redesigning them or creating competing adapters.
 
 Adapter planning should support:
 
-- Steam client install path detection separately from Steam library root discovery. (Implemented.)
-- Bannerlord install detection separately from the selected Workshop content root. (Implemented.)
-- Multiple Steam library roots. (Implemented.)
-- Workshop candidate composition under `steamapps/workshop/content/261550`. (Implemented.)
-- Workshop content under the Bannerlord library root even when Steam is installed elsewhere. (Implemented.)
-- A valid manual Workshop path is preserved during normal detection; explicit re-detection recomputes it. (Implemented.)
+- Steam client install path detection separately from Steam library root discovery.
+- Bannerlord install detection separately from the selected Workshop content root.
+- Multiple Steam library roots.
+- Workshop candidate composition under `steamapps/workshop/content/261550`.
+- Workshop content under the Bannerlord library root even when Steam is installed elsewhere.
+- The Phase 5 manual Workshop rule: valid startup reuse leaves an existing setting untouched, automatic detection replaces or clears it, and manual game selection clears it without auto-resolution.
 - Fakeable path providers and fake filesystem roots for tests.
 - Windows-specific registry and filesystem probing behind adapters.
 - Core remaining WPF-free.
@@ -162,8 +162,8 @@ Adapter planning should support:
 
 | Phase | Work | Verification |
 |---|---|---|
-| 5.A | Add the approved DI package; create Core and UI registration modules; compose one collection and one provider; resolve `MainWindow`; transition away from `StartupUri`; establish lifetimes, logger ownership, startup cleanup, shutdown quiescence, exact-once close, archive, disposal, platform adapters, and test replacements. | Build; startup/shutdown smoke test; singleton identity; factory count; cleanup timing; handle release; archive collision/failure; constructor resolution; duplicate-window check; provider disposal; Core boundary; adapter substitution. |
-| 5.B | Migrate legacy logger call sites in staged batches after the Phase 2 Serilog foundation and Phase 5.A composition are verified, including caller and structured-property review. | Build; logging smoke tests; formatter/minimum-level checks; equivalent-behavior review; caller credential-boundary review. |
+| 6.A | Add the approved DI package; create Core and UI registration modules; compose one collection and one provider; resolve `MainWindow`; transition away from `StartupUri`; establish lifetimes, logger ownership, startup cleanup, shutdown quiescence, exact-once close, archive, disposal, and test replacements. Consume Phase 5 platform dependencies without redesigning them. | Build; startup/shutdown smoke test; singleton identity; factory count; cleanup timing; handle release; archive collision/failure; constructor resolution; duplicate-window check; provider disposal; Core boundary; dependency substitution. |
+| 6.B | Migrate legacy logger call sites in staged batches after the Phase 2 Serilog foundation and Phase 6.A composition are verified, including caller and structured-property review. | Build; logging smoke tests; formatter/minimum-level checks; equivalent-behavior review; caller credential-boundary review. |
 
 ## Performance Verification Relationship
 
@@ -215,8 +215,8 @@ Accepted composition and platform-adapter decisions should later be migrated int
 ## Open Questions
 
 - Which platform adapters should be implemented first: dialogs, explorer/URL launch, registry/game detection, or filesystem?
-- Workshop precedence is implemented: valid configured value, Bannerlord library, then one deterministic alternate fallback with valid Workshop-manifest evidence preferred.
-- The manual Workshop selector remains exposed; normal detection preserves a valid selection and explicit re-detection recomputes it.
+- Phase 5 owns Workshop precedence: Bannerlord library first, then one deterministic alternate fallback with valid Workshop-manifest evidence preferred, otherwise no Workshop path.
+- Phase 5 owns manual Workshop behavior: valid startup reuse preserves the existing value, automatic detection replaces or clears it, and manual game selection clears it without auto-resolution.
 - Which specific UI services require preserved state rather than the transient default?
 
 ## Out Of Scope

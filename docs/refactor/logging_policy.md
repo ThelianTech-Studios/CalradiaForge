@@ -27,7 +27,7 @@ Logging should provide useful local diagnostics, keep output compact, and avoid 
 
 ## Steam And Bannerlord Path Diagnostics
 
-Structured diagnostics should be added when Steam/Bannerlord path-resolution work begins. The known Workshop scanning issue should be logged as a path-resolution investigation area without resolved-status language.
+Phase 5 added structured Steam/Bannerlord path-resolution diagnostics and automated split-library, Workshop-selection, scanner, and Novus regressions. These automated checks verify the implemented path-resolution behavior; owner verification against a real Windows Steam split-library installation and WPF session remains pending before release acceptance.
 
 Useful structured events include:
 
@@ -64,7 +64,7 @@ Path logging should stay inside the app's trust boundary:
 | Async sink | Use `Serilog.Sinks.Async` where the logging pipeline benefits from buffered writes. |
 | Debug sink | Use `Serilog.Sinks.Debug` only in Debug builds via a conditional `PackageReference` with `PrivateAssets="all"` and `#if DEBUG` sink configuration; exclude it from Release/Public Release artifacts. |
 | Console sink | Do not add `Serilog.Sinks.Console`; CalradiaForge is a WPF app and CLI execution must not be treated as interactive runtime verification. |
-| File behavior | Current: one infinite-rolling active `CalradiaForge_Latest.log`, custom cleanup, and no time-based Serilog rolling. Planned Phase 5.A: explicit startup cleanup, close-before-archive, and collision-safe archive. |
+| File behavior | Current: one infinite-rolling active `CalradiaForge_Latest.log`, custom cleanup, and no time-based Serilog rolling. Planned Phase 6.A: explicit startup cleanup, close-before-archive, and collision-safe archive. |
 | Structure | Message templates and structured properties. |
 | Context | `SourceContext` or class context where practical. |
 | Thread enrichment | Include thread enrichment where it helps session diagnostics. |
@@ -76,13 +76,13 @@ Path logging should stay inside the app's trust boundary:
 
 ## Retention And File-Size Policy
 
-The current cleanup helper uses the configured integer as an age in days and falls back to seven days for non-positive values. The setting is named `RetainedFileCount` and defaults to 14, so the current code does not establish whether the intended policy is "14 files" or "14 days." Phase 5.A must resolve the meaning, document active-file exclusion, define cleanup timing, and verify cleanup occurs once at startup before the active sink opens. Cleanup must not be inferred from Serilog's nullable `retainedFileCountLimit`, which is currently null.
+The current cleanup helper uses the configured integer as an age in days and falls back to seven days for non-positive values. The setting is named `RetainedFileCount` and defaults to 14, so the current code does not establish whether the intended policy is "14 files" or "14 days." Phase 6.A must resolve the meaning, document active-file exclusion, define cleanup timing, and verify cleanup occurs once at startup before the active sink opens. Cleanup must not be inferred from Serilog's nullable `retainedFileCountLimit`, which is currently null.
 
 The active sink has no explicit file-size setting. Before implementation, the owner must choose whether to preserve the library default approximate size limit, set an explicit limit and roll policy, or use another deliberate strategy. Tests must cover the selected behavior; docs must not call the current active file unlimited merely because time-based rolling is infinite.
 
 ## Logger Lifecycle
 
-Phase 5.A owns the planned application lifecycle. Startup performs retention cleanup once, before opening `CalradiaForge_Latest.log`, then constructs the one shared logger through the one factory singleton. Runtime callers use that shared instance after DI composition is active. Shutdown must stop new logging-producing work, request cancellation, await or confirm active workflows and asynchronous log production are quiescent, close the logger exactly once, confirm the non-shared file handle is released, attempt a collision-safe archive, and preserve the active file if archiving fails. Provider disposal must not create or close a second logger.
+Phase 6.A owns the planned application lifecycle. Startup performs retention cleanup once, before opening `CalradiaForge_Latest.log`, then constructs the one shared logger through the one factory singleton. Runtime callers use that shared instance after DI composition is active. Shutdown must stop new logging-producing work, request cancellation, await or confirm active workflows and asynchronous log production are quiescent, close the logger exactly once, confirm the non-shared file handle is released, attempt a collision-safe archive, and preserve the active file if archiving fails. Provider disposal must not create or close a second logger.
 
 The final implementation must choose factory-owned or DI-owned logger disposal and must separately decide whether the instance is assigned to `Serilog.Log.Logger`. `Log.CloseAndFlush()` is not a substitute for direct ownership unless the global assignment is intentional and there is exactly one global close path.
 
@@ -126,8 +126,9 @@ Phase 2 creates the Serilog infrastructure only. It must not convert app-wide le
 - Add only a short legacy/deprecated compatibility summary to the current `Logger` file.
 - Keep every existing `Logger.Instance` call site in Core and UI intact during Phase 2.
 - Do not initialize the new Serilog service through the WPF app service startup path until the dependency-injection refactor establishes the service composition path.
-- Migrate legacy logger call sites only in Phase 5.B, after Phase 5.A dependency injection work and the Phase 2 Serilog foundation are verified.
-- Retire the legacy logger compatibility path only after the Phase 5.B migration verifies equivalent Serilog behavior.
+- Phase 5 Core platform branches log technical detection details; the workflow logs validation and fallback details; the UI maps outcomes to toasts. Paths are not subject to newly invented redaction or sanitization rules.
+- Migrate legacy logger call sites only in Phase 6.B, after Phase 6.A dependency injection work and the Phase 2 Serilog foundation are verified.
+- Retire the legacy logger compatibility path only after the Phase 6.B migration verifies equivalent Serilog behavior.
 
 ## Phased Implementation
 

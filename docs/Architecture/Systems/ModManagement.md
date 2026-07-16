@@ -15,6 +15,8 @@
 - `ModInstaller` and `ModExtractor` remain the authority for install flow.
 - Installation work stays owned by the service, not the page.
 - Mod scans populate cached data that the UI can consume.
+- A refresh with missing or invalid base game configuration stops before scan, cache rotation, or persistence, preserving the active in-memory and disk snapshots.
+- Steam without a valid Workshop path scans local Modules and logs the Workshop skip; non-Steam providers do not scan Workshop.
 - BLSE is treated separately from normal mod counts and install rules.
 - Unknown, unparsable, or identity-mismatched existing module folders are not overwritten automatically.
 - Upgrade copying stops when the previous target cannot be removed completely.

@@ -57,9 +57,9 @@ The Toast System remains the user-visible notification surface for operation sta
 
 ## Scanner Result And Warning Planning
 
-Steam path resolution now returns `SteamResolutionResult` with a status, resolved game and Workshop paths, selected Workshop source, and structured candidate diagnostics. It distinguishes complete Steam resolution, Steam game resolution without Workshop content, missing client roots, invalid manifests, and unresolved installs. Settings surfaces the Steam-without-Workshop state as a localized recoverable warning while local scanning remains available.
+`SteamResolutionResult` describes resolver outcomes, and the Phase 5 production coordinator applies accepted results directly to `AppConfigSettings`. `GameDetectionService.InitializeForStartup(...)` is intentionally `void`, explicit re-detection returns `GameProvider`, and manual operations return `bool` rather than introducing a general game-detection result. A compact queued startup notification is a transient UI handoff, not a domain-result hierarchy.
 
-The scanner itself still returns its existing module list rather than a general structured scan-result contract. Phase 6 should add scanner-level warnings without duplicating or weakening the implemented path-resolution diagnostics.
+The scanner still returns its existing module list rather than a general structured scan-result contract. Phase 7 may add scanner-level warnings later without duplicating the Phase 5 detection workflow.
 
 Scanner results should distinguish:
 
@@ -76,7 +76,7 @@ User-facing messages should be concise and actionable. Technical details, candid
 
 Later performance work may measure result allocation, progress-update frequency, cancellation checks, event dispatch, cleanup, and coordinator overhead where stable boundaries exist. These measurements must preserve progress, cancellation, failure mapping, cleanup, and user-facing diagnostics.
 
-Phase 5.A logger shutdown must not close or archive the active logger while a workflow can still emit progress, cancellation, failure, cleanup, or completion events. Quiescence and completion must be confirmed before logger close; this lifecycle rule does not authorize a Phase 6 result-model redesign.
+Phase 6.A logger shutdown must not close or archive the active logger while a workflow can still emit progress, cancellation, failure, cleanup, or completion events. Quiescence and completion must be confirmed before logger close; this lifecycle rule does not authorize a Phase 7 result-model redesign.
 
 ## Local Implementation Steps
 
@@ -86,8 +86,9 @@ Phase 5.A logger shutdown must not close or archive the active logger while a wo
 | 2 | Add result types for archive preflight, BLSE validation, persistence recovery, and other high-risk workflows. | Unit tests assert success, warnings, failures, and cancellation where relevant. |
 | 3 | Wrap current install event flow with an install workflow coordinator. | Navigation-away install behavior still works. |
 | 4 | Move UI status fields into shared UI state. | Busy/status/error/cancel states update predictably. |
-| 5 | Preserve the implemented Steam resolver diagnostics and add structured scanner warnings for no valid mods and scan failure when the broader scanner-result contract is implemented. | Tests assert warning codes, user messages, and useful technical/log messages. |
-| 6 | Add ViewModel tests for workflow state transitions. | Tests cover start, progress, success, partial failure, failure, warning, and cancel. |
+| 5 | Maintain the implemented detection workflow without adding a general detection-result hierarchy: startup initialization is `void`, explicit re-detection returns `GameProvider`, manual operations return `bool`, and startup feedback uses a compact queue. | Tests cover provider/manual outcomes, queued feedback, and technical logs. |
+| 7 | Add structured scanner warnings for no valid mods and scan failure when the broader scanner-result contract is implemented. | Tests assert warning codes, user messages, and useful technical/log messages. |
+| 8 | Add ViewModel tests for workflow state transitions. | Tests cover start, progress, success, partial failure, failure, warning, and cancel. |
 
 ## Guardrails
 
@@ -117,7 +118,7 @@ Accepted result/warning decisions should later be migrated into future applicati
 - Should install cancellation return a distinct status instead of failed?
 - Which result codes should be public/stable versus internal?
 - Should modpack import/save adopt shared results before MVVM extraction?
-- Which existing resolver diagnostic codes should be promoted into the future scanner result without exposing unnecessary filesystem detail to the UI?
+- Which Phase 7 scanner diagnostic codes should be promoted into the future scanner result without exposing unnecessary filesystem detail to the UI?
 
 ## Out Of Scope
 

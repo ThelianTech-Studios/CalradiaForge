@@ -74,8 +74,8 @@ Deferred investigation focus:
 |---|---|
 | Broad README encoding cleanup | Larger documentation encoding pass outside Phase 1 source cleanup. |
 | `TODO_v1.md` Nexus roadmap wording | Requires owner decision on roadmap wording and timing. |
-| Version source-of-truth implementation | Deferred to master Phase 11; owner approval is needed before major/minor changes. |
-| Platform analyzer warnings | Phase 5 adapter/platform-targeting work. |
+| Version source-of-truth implementation | Deferred to master Phase 12; owner approval is needed before major/minor changes. |
+| Platform analyzer warnings | Phase 6.A adapter/platform-targeting work. |
 | Archive, BLSE, persistence, logger lifecycle, DI, MVVM, and result/workflow changes | Explicitly excluded from Phase 1. |
 | Steam Workshop scanner fix | Requires scoped implementation and verification in a later phase. |
 | UI page `.xaml` renames | Requires owner-approved rename map. |

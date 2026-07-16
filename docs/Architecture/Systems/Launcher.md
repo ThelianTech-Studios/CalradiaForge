@@ -2,7 +2,7 @@
 
 ## Currently Implemented
 - `GameLauncher` starts Bannerlord or BLSE with the active load order.
-- `GamePathsHelper` coordinates platform detection; Steam library and Workshop resolution are described in [Platform and Path Detection](PlatformAndPathDetection.md).
+- `GameDetectionService` coordinates startup, re-detection, and manual configuration through `GamePlatformDetectionResolver`; Steam library and Workshop resolution are described in [Platform and Path Detection](PlatformAndPathDetection.md).
 - `GamePathValidator` validates user-selected game folders and executables.
 - Steam launches are auto-started when needed.
 - Epic Games and Game Pass are currently blocked from direct launch in the implemented launcher flow.
@@ -16,9 +16,10 @@
 ## Key Files
 - `source/CalradiaForge.Core/Infra/Launch/GameLauncher.cs`
 - `source/CalradiaForge.Core/Infra/Launch/LaunchTarget.cs`
-- `source/CalradiaForge.Core/Infra/Paths/GamePathsHelper.cs`
+- `source/CalradiaForge.Core/Infra/GamePlatform/GameDetectionService.cs`
+- `source/CalradiaForge.Core/Infra/GamePlatform/GamePlatformDetectionResolver.cs`
 - `source/CalradiaForge.Core/Infra/Paths/GamePathValidator.cs`
-- `source/CalradiaForge.Core/Infra/Paths/GameProvider.cs`
+- `source/CalradiaForge.Core/Infra/GamePlatform/GameProvider.cs`
 
 ## Deferred / Future Work
 - Epic/Game Pass launch backend and config-write support remain deferred.

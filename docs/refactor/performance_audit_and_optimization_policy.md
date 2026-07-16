@@ -59,11 +59,11 @@ Benchmarks should report results and variance. They should not become blocking c
 | Phase | Performance responsibility |
 |---|---|
 | Phase 4 | Establish reusable fixtures, benchmark/measurement infrastructure, and provisional baselines. |
-| Phase 8 | Capture authoritative post-Phase-7 baselines and produce the report without production-code edits. |
-| Phase 9 | Compare explicitly approved finding changes against the Phase 8 baseline. |
-| Phase 10 | Run the final full verification loop and update the same audit report. |
+| Phase 9 | Capture authoritative post-Phase-8 baselines and produce the report without production-code edits. |
+| Phase 10 | Compare explicitly approved finding changes against the Phase 9 baseline. |
+| Phase 11 | Run the final full verification loop and update the same audit report. |
 
-Phase 4 measurements must be labeled `Infrastructure validation`, `Provisional pre-refactor baseline`, `Fixture calibration`, or `Not comparable to final post-refactor baseline` as appropriate. The authoritative baseline for optimization decisions is captured in Phase 8 against the settled Phase 7 implementation.
+Phase 4 measurements must be labeled `Infrastructure validation`, `Provisional pre-refactor baseline`, `Fixture calibration`, or `Not comparable to final post-refactor baseline` as appropriate. The authoritative baseline for optimization decisions is captured in Phase 9 against the settled Phase 8 implementation.
 
 ## Benchmark Infrastructure Requirements
 
@@ -188,7 +188,7 @@ Each proposed production change must have one of:
 - `Needs More Evidence`.
 - `Out Of Scope`.
 
-Phase 9 cannot implement findings that remain pending, rejected, deferred, out of scope, needs-more-evidence, or theoretical-only unless the developer separately approves them.
+Phase 10 cannot implement findings that remain pending, rejected, deferred, out of scope, needs-more-evidence, or theoretical-only unless the developer separately approves them.
 
 ### Implementation Status
 
@@ -226,15 +226,15 @@ Use the dated path pattern:
 docs/audits/calradiaforge_performance_audit_YYYY-MM-DD.md
 ```
 
-Phase 8 selects and records the exact path. Phase 9 and Phase 10 update that same report rather than creating competing reports. Do not create the dated report during documentation planning unless the owner separately requests a blank checked-in template.
+Phase 9 selects and records the exact path. Phase 10 and Phase 11 update that same report rather than creating competing reports. Do not create the dated report during documentation planning unless the owner separately requests a blank checked-in template.
 
 ### Report Lifecycle
 
-- Phase 8 creates the report and authoritative baseline.
+- Phase 9 creates the report and authoritative baseline.
 - Developer review records decisions in the same report.
-- Phase 9 updates implementation status and before/after outcomes.
-- Phase 10 completes final verification and remaining limitations.
-- Phase 11 uses the report as a release/documentation source but does not rewrite its evidence.
+- Phase 10 updates implementation status and before/after outcomes.
+- Phase 11 completes final verification and remaining limitations.
+- Phase 12 uses the report as a release/documentation source but does not rewrite its evidence.
 
 ### Required Report Structure
 
@@ -322,17 +322,17 @@ Report owner:
 ### Practical Stopping-Criteria Assessment
 ```
 
-## Phase 8 Audit Boundary
+## Phase 9 Audit Boundary
 
-Phase 8 is report-only. It may run tests, benchmarks, analyzers, source inspection, and narrowly scoped test/benchmark changes required to collect evidence when explicitly in scope. It must not edit production code, silently approve a finding, weaken safety, or transition into Phase 9. Every proposed production change remains `Pending Developer Review` until the owner decides.
+Phase 9 is report-only. It may run tests, benchmarks, analyzers, source inspection, and narrowly scoped test/benchmark changes required to collect evidence when explicitly in scope. It must not edit production code, silently approve a finding, weaken safety, or transition into Phase 10. Every proposed production change remains `Pending Developer Review` until the owner decides.
 
-## Phase 9 Optimization Boundary
+## Phase 10 Optimization Boundary
 
-Phase 9 implements approved finding IDs only, in small batches. It preserves observable behavior unless a separate behavior change is approved, updates affected tests and benchmarks, compares under comparable conditions, and records improvements, no material change, regressions, inconclusive outcomes, reverts, blocked work, and deferred or rejected findings honestly. It stops for manual developer inspection before changelog or migration-map work.
+Phase 10 implements approved finding IDs only, in small batches. It preserves observable behavior unless a separate behavior change is approved, updates affected tests and benchmarks, compares under comparable conditions, and records improvements, no material change, regressions, inconclusive outcomes, reverts, blocked work, and deferred or rejected findings honestly. It stops for manual developer inspection before changelog or migration-map work.
 
-## Phase 10 Verification Boundary
+## Phase 11 Verification Boundary
 
-Phase 10 uses a bounded loop:
+Phase 11 uses a bounded loop:
 
 ```text
 run build/tests/benchmarks/analyzers/smoke checks
@@ -340,7 +340,7 @@ run build/tests/benchmarks/analyzers/smoke checks
   -> investigate root causes
   -> make only narrowly scoped justified corrections
   -> rerun affected verification
-  -> compare against Phase 8 and Phase 9 evidence
+  -> compare against Phase 9 and Phase 10 evidence
   -> repeat until practical stopping criteria are satisfied
 ```
 
@@ -365,15 +365,15 @@ Documentation-only planning or audit work is excluded from the code-only migrati
 ## Prompt Template 1: Performance Audit And Report Generation
 
 ```text
-Perform Phase 8, Performance Audit And Report Generation, from `docs/refactor/refactor_master_plan.md` for CalradiaForge.
+Perform Phase 9, Performance Audit And Report Generation, from `docs/refactor/refactor_master_plan.md` for CalradiaForge.
 
 This is an audit-and-report task. Do not modify production code and do not transition into optimization implementation.
 
 Before editing:
-- Read the Phase 8 section in `docs/refactor/refactor_master_plan.md`.
+- Read the Phase 9 section in `docs/refactor/refactor_master_plan.md`.
 - Read `docs/refactor/performance_audit_and_optimization_policy.md` and `docs/refactor/testing_strategy.md`.
 - Read `docs/refactor/dependency_injection_plan.md` and verify the one-collection, one-provider, Core/UI registration, DI-resolved startup, lifetime, Serilog, and disposal rules.
-- For logger-related findings, inspect the current source under `source/CalradiaForge.Core/Infra/Logging/`; distinguish current `Create()`/non-retaining behavior from planned Phase 5.A ownership.
+- For logger-related findings, inspect the current source under `source/CalradiaForge.Core/Infra/Logging/`; distinguish current `Create()`/non-retaining behavior from planned Phase 6.A ownership.
 - Read every relevant supporting document in `docs/refactor` and `docs/Architecture`.
 - Read the completed test and benchmark infrastructure and the finalized source files in scope.
 - Locate the exact dated report path selected for this phase.
@@ -403,7 +403,7 @@ Production boundary:
 - Do not edit production source code.
 - Do not weaken validation, archive safety, persistence safety, logging, cancellation, cleanup, or architecture boundaries.
 - Add or adjust benchmark/test code only when explicitly needed to gather audit evidence.
-- Do not silently transition into Phase 9.
+- Do not silently transition into Phase 10.
 
 Completion:
 - Complete the exact report, raw-result cross-check, reviewer pass, and verification summary.
@@ -415,12 +415,12 @@ Completion:
 ## Prompt Template 2: Performance Optimization Implementation
 
 ```text
-Implement Phase 9, Approved Performance Optimization Implementation, from `docs/refactor/refactor_master_plan.md` for CalradiaForge.
+Implement Phase 10, Approved Performance Optimization Implementation, from `docs/refactor/refactor_master_plan.md` for CalradiaForge.
 
 Implement only performance findings explicitly approved by the developer.
 
 Before editing:
-- Read the Phase 9 section in `docs/refactor/refactor_master_plan.md`.
+- Read the Phase 10 section in `docs/refactor/refactor_master_plan.md`.
 - Read this policy, `docs/refactor/testing_strategy.md`, and `docs/refactor/dependency_injection_plan.md`.
 - For logger-related findings, inspect the current logger source under `source/CalradiaForge.Core/Infra/Logging/`; formatter behavior is a presentation concern and credential ownership remains with callers and Nexus components.
 - Read the exact approved dated performance audit report and the developer's finding-specific decisions.
@@ -450,7 +450,7 @@ Implementation rules:
 Verification:
 - Add or update regression tests for affected behavior.
 - Run affected tests and Release benchmarks after each batch where practical.
-- Compare against Phase 8 under comparable archive, dataset, machine, runtime, build, warmup, iteration, cache, and destination conditions.
+- Compare against Phase 9 under comparable archive, dataset, machine, runtime, build, warmup, iteration, cache, and destination conditions.
 - Capture allocations and variance where relevant.
 - Record `Verified Improved`, `Verified No Material Change`, `Regressed`, `Inconclusive`, `Reverted`, or `Blocked` honestly.
 - Revert or recommend reverting changes that worsen performance, regress behavior, weaken safety, or add unjustified maintenance complexity.
@@ -466,7 +466,7 @@ Closeout:
 ## Unresolved Decisions
 
 - xUnit in `source/CalradiaForge.Tests` and BenchmarkDotNet in `source/CalradiaForge.Benchmarks` are the approved Phase 4 frameworks and project paths.
-- Local raw benchmark output is stored under the ignored `source/CalradiaForge.Benchmarks/BenchmarkDotNet.Artifacts` path; promotion of reviewed evidence into a durable audit artifact remains a Phase 8 decision.
+- Local raw benchmark output is stored under the ignored `source/CalradiaForge.Benchmarks/BenchmarkDotNet.Artifacts` path; promotion of reviewed evidence into a durable audit artifact remains a Phase 9 decision.
 - Additional analyzer/tool selection remains open and requires approval.
 - Existing SevenZipWrapper benchmark source, environment, and methodology must be identified before historical values are used for subtraction.
 - Baseline retention and CI blocking policy remain undefined; informational results are the default.

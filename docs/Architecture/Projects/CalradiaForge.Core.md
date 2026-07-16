@@ -11,6 +11,7 @@ Provide the deterministic, UI-agnostic behavior that the WPF app consumes.
 ### Currently Implemented
 - Resolve application paths and create required folders.
 - Resolve Steam client, library, Bannerlord, and Workshop paths through testable Core boundaries.
+- Coordinate startup reuse, automatic re-detection, manual game selection, manual Steam Workshop selection, and pre-UI startup notifications without WPF dependencies.
 - Persist and read configuration data.
 - Provide strongly typed configuration access.
 - Parse and scan Bannerlord modules.
@@ -44,7 +45,7 @@ Provide the deterministic, UI-agnostic behavior that the WPF app consumes.
 - Configuration: `AppConfig`, `AppConfigSettings`, `AppPaths`
 - Logging: `Logger`
 - Localization: `TranslationService`, `TranslationManager`, `TranslationStrings`
-- Paths and platform detection: `GamePathsHelper`, `GamePathValidator`, `GameProvider`, `ISteamClientRootProvider`, `ISteamInstallationResolver`, `SteamInstallationResolver`, `SteamResolutionResult`, `EpicDetector`, `EpicManifestReader`
+- Paths and platform detection: `GamePlatformDetectionResolver`, `GameDetectionService`, `StartupNotificationQueue`, `GamePathValidator`, `GameProvider`, `ISteamClientRootProvider`, `ISteamInstallationResolver`, `SteamInstallationResolver`, `SteamResolutionResult`, `EpicDetector`, `EpicManifestReader`
 - Launch: `GameLauncher`, `LaunchTarget`
 - EULA: `EulaService`
 - Mods: `ModService`, `ModScanner`, `ModParser`, `ModInstaller`, `ModExtractor`, `BLSEInstaller`, `ModsData`

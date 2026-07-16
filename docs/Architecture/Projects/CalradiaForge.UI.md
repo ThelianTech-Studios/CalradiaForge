@@ -13,6 +13,8 @@ Render the user interface and translate user intent into calls to Core services.
 - Present mods, modpacks, settings, FAQ, EULA, and language selection views.
 - Surface toast notifications.
 - Coordinate startup sequence and service initialization.
+- Signal MainWindow readiness and map queued Core startup notifications into the existing toast surface.
+- Invoke the Core game-detection workflow for Settings re-detection and bounded manual path configuration.
 - Bind translated strings into the UI.
 - Persist user-driven settings through Core services.
 

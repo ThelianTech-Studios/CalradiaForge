@@ -99,7 +99,7 @@ Accepted MVVM decisions should later be migrated into future UI/UX, navigation/p
 - Should file dialogs be abstracted immediately or during each page extraction?
 - Should navigation be refactored before or after the install workflow ViewModel?
 - Which UI page `.xaml` files should be considered for owner-approved rename review later?
-- Should the rename review happen during Phase 1 cleanup or immediately before Phase 7 MVVM extraction?
+- Should the rename review happen during Phase 1 cleanup or immediately before Phase 8 MVVM extraction?
 
 ## Out Of Scope
 

@@ -114,7 +114,7 @@ Acceptable example progression:
 
 ## Performance Work And Versioning
 
-Documentation-only Phase 8 audit/report work usually does not require an application version bump. Implemented performance changes follow the existing before-v1.0 patch/milestone rules and require owner approval.
+Documentation-only Phase 9 audit/report work usually does not require an application version bump. Implemented performance changes follow the existing before-v1.0 patch/milestone rules and require owner approval.
 
 Changelog and release documentation must distinguish measured, implemented, and verified performance improvements from audit recommendations. Rejected, deferred, inconclusive, reverted, theoretical, and unverified findings are not shipped changes.
 

@@ -24,7 +24,7 @@ CalradiaForge should move from manual/runtime verification toward phased automat
 | Regression tests | With each changed risk area | Preserve observed behavior for cleanup, safety, logging, DI, workflow, and MVVM changes. |
 | Integration-style filesystem tests | Early | Atomic writes, backup recovery, archive preflight, extraction containment, install destination checks, and realistic file ownership. |
 | Benchmark fixtures | Phase 4 | Reusable controlled datasets and setup/cleanup helpers for later measurement. |
-| Benchmark execution | Phase 4 infrastructure, Phase 8 authoritative audit, Phase 9 comparison, Phase 10 final verification | Relative speed, throughput, allocations, scaling, and user-visible workflow components. |
+| Benchmark execution | Phase 4 infrastructure, Phase 9 authoritative audit, Phase 10 comparison, Phase 11 final verification | Relative speed, throughput, allocations, scaling, and user-visible workflow components. |
 | ViewModel tests | After MVVM extraction begins | Commands, state transitions, busy/error/status state, operation results. |
 | Manual WPF smoke checks | When UI behavior is in scope | Startup, navigation, responsiveness, dialogs, toasts, and UI-thread-sensitive workflows that CLI tests cannot prove. |
 | CI validation | After test projects exist and stability is demonstrated | Build, tests, and later approved analyzer or benchmark checks. |
@@ -69,21 +69,21 @@ The current xUnit and BenchmarkDotNet package sets were selected by the owner be
 
 The Phase 4 Core suite covers typed configuration and corrupt JSON fallback, atomic mod-cache round trips and backup recovery, named and last-used modpack persistence, modpack workflow validation, parser behavior, manual Workshop-root scanning with fake multi-library roots, archive containment and extraction, authoritative installer preflight, BLSE detection/install behavior, formatter output, and install-summary result mapping. Benchmarks cover parser dependency scaling, load-order validation scaling, mod-cache filesystem persistence, and fake-root module scanning.
 
-The split-root scanner diagnostic models `C:/programs/steam/steamapps/workshop/content/261550` independently from `D:/games/Bannerlord/Modules`, with three Workshop modules and eight game modules. When both paths are explicitly configured and the provider is Steam, the current `ModScanner` pipeline returns all 11 modules. A companion known-bug characterization uses the `StandAlone` provider state associated with failed Steam auto-detection; the same existing Workshop directory is then skipped and only the eight local modules are returned. This proves that enumeration and merging accept independent roots while provider/path discovery gates out the Workshop scan. These executable scanner tests do not call Steam multi-library auto-discovery.
+The split-root scanner regression models a Steam client root independently from the Bannerlord library, with three Workshop modules and eight game modules. The Phase 5 production resolver selects the alternate registered library, the scanner returns all 11 unique modules, and the Novus regression confirms those Workshop modules are not reported missing. A neutral non-Steam regression still confirms that Workshop scanning is provider-gated.
 
-The active `GamePathsHelperTests` suite exercises an injectable Steam client-root boundary and the production resolver against fake main and alternate libraries. Representative `libraryfolders.vdf`, `appmanifest_261550.acf`, Workshop manifests, game markers, launcher paths, duplicate roots, malformed metadata, missing libraries, traversal attempts, configured overrides, explicit re-detection, missing Workshop content, and manual provider repair are covered without reading the real registry. The metadata fixtures are representative test inputs, not claims that Valve publishes their schemas as stable APIs.
+The Steam resolver and workflow suites cover fake main/alternate libraries, representative `libraryfolders.vdf` and `appmanifest_261550.acf` inputs, Workshop manifests, game markers, launcher paths, duplicate roots, malformed metadata, missing libraries, traversal attempts, direct settings commits, startup reuse, re-detection, manual selection, queued feedback, and cache safety. The metadata fixtures are representative test inputs, not claims that Valve publishes their schemas as stable APIs.
 
-The end-to-end fake-root regression resolves a main Steam client and separate Bannerlord library, runs the actual scanner pipeline, returns exactly eight game modules plus three Workshop modules, imports a Novus preset through the production modpack workflow, and verifies no false missing-module result. Steam-without-Workshop remains a successful game resolution: local modules scan, provider classification stays `Steam`, and structured diagnostics report the unavailable candidate.
+Phase 5 automated evidence now covers resolver/workflow integration, split-root and no-Workshop behavior, scanner safety, startup queue behavior, and the Novus regression. This evidence does not replace owner smoke testing against a real Steam registry and WPF session.
 
-The benchmark artifact directory is ignored because its output is machine- and working-tree-specific. The runner records branch, commit, working-tree state, .NET details, and explicit `Infrastructure validation / Provisional pre-refactor baseline` and non-comparability labels. Evidence intentionally promoted into Phase 8 must be reviewed and stored with that audit rather than treated as a universal checked-in baseline.
+The benchmark artifact directory is ignored because its output is machine- and working-tree-specific. The runner records branch, commit, working-tree state, .NET details, and explicit `Infrastructure validation / Provisional pre-refactor baseline` and non-comparability labels. Evidence intentionally promoted into Phase 9 must be reviewed and stored with that audit rather than treated as a universal checked-in baseline.
 
 ### Phase 4 Boundaries Confirmed During Implementation
 
 - Existing SevenZipWrapper performance statements in repository history do not include a controlled archive fixture, source benchmark output, environment, cache state, or full methodology. They remain historical and `Not directly comparable`; Phase 4 does not subtract them from current results.
 - No legal representative archive fixture was approved for a reusable SevenZipWrapper versus full-pipeline A/B benchmark. Generated zip fixtures cover correctness only; controlled extraction comparison remains for a later approved benchmark slice.
-- Steam multi-library auto-discovery and candidate precedence are implemented and covered by fake-root resolver, scanner, and Novus regressions. Real Steam/Bannerlord installations remain excluded from automated tests and require owner smoke testing.
+- Steam multi-library auto-discovery and candidate precedence are implemented with temporary-directory metadata fixtures. Owner Steam split-library smoke testing remains a separate evidence gate.
 - BLSE allowlist enforcement remains deferred pending the owner-approved manifest. Current tests cover marker detection, platform-bin selection, copying, and executable-path configuration without claiming allowlist behavior.
-- Phase 5.A logger ownership, exact-once close, handle release, retention decisions, and archival behavior do not exist yet. Phase 4 covers the current neutral formatter; lifecycle tests remain tied to Phase 5.A implementation.
+- Phase 6.A logger ownership, exact-once close, handle release, retention decisions, and archival behavior do not exist yet. Phase 4 covers the current neutral formatter; lifecycle tests remain tied to Phase 6.A implementation.
 - No additional analyzer package, timing assertion, performance threshold, production optimization, WPF automation, Nexus integration test, or network fixture was added.
 
 ## Benchmark Fixture Categories
@@ -118,9 +118,9 @@ Fixtures must use fake roots or isolated temporary directories. They must not re
 | Phase | Baseline meaning |
 |---|---|
 | Phase 4 | Infrastructure validation, fixture calibration, or provisional pre-refactor baseline. Not authoritative for final post-refactor claims. |
-| Phase 8 | Authoritative post-Phase-7 baseline captured against the settled substantive refactor. |
-| Phase 9 | Finding-specific before/after comparison against the Phase 8 baseline. |
-| Phase 10 | Final full-suite comparison and verification after approved changes. |
+| Phase 9 | Authoritative post-Phase-8 baseline captured against the settled substantive refactor. |
+| Phase 10 | Finding-specific before/after comparison against the Phase 9 baseline. |
+| Phase 11 | Final full-suite comparison and verification after approved changes. |
 
 Phase 4 measurements must be labeled explicitly as `Infrastructure validation`, `Provisional pre-refactor baseline`, `Fixture calibration`, or `Not comparable to final post-refactor baseline` where applicable.
 
@@ -176,7 +176,7 @@ Tests should distinguish local module results from Workshop results and should p
 
 ## Logger Lifecycle Test And Measurement Coverage
 
-Conventional tests must cover the planned Phase 5.A logger lifecycle without depending on wall-clock timing:
+Conventional tests must cover the planned Phase 6.A logger lifecycle without depending on wall-clock timing:
 
 - one DI factory registration and one shared logger identity;
 - factory creation exactly once, cleanup exactly once, and cleanup before the active sink opens;
@@ -195,11 +195,11 @@ Logger benchmarks may measure construction, disabled-level calls, neutral format
 |---|---|---|
 | 1-3 | Establish initial Core correctness coverage around changed behavior. | Preserve completed Phase 1 history and add tests as safety work is implemented. |
 | 4 | Add Core unit/regression tests, integration-style filesystem tests, reusable benchmark fixtures, benchmark harness infrastructure, analyzer/measurement readiness, and provisional baselines. | Separate correctness tests from benchmarks. Do not claim final post-refactor performance results. |
-| 5.A-7 | Expand tests and benchmark cases as DI, logging, workflow, and MVVM changes alter stable boundaries. | Verify one-provider/singleton rules and use manual UI checks where required. |
-| 8 | Run the report-only performance audit and capture authoritative post-Phase-7 baselines. | Do not edit production code. Stop for developer decisions. |
-| 9 | Test and benchmark explicitly approved `PERF-NNN` findings. | Compare before/after under comparable conditions and record ineffective or harmful changes. |
-| 10 | Run the full bounded build/test/benchmark/analyzer/architecture/manual-smoke loop. | Update the same audit report and stop when practical criteria are met. |
-| 11 | Use final verified results for release and documentation closeout. | Do not describe recommendations as shipped changes. |
+| 5-8 | Expand tests and benchmark cases as detection, DI, logging, workflow, and MVVM changes alter stable boundaries. Production Phase 5 changes precede migration of obsolete tests. | Verify split-library behavior, one-provider/singleton rules, and use manual UI checks where required. |
+| 9 | Run the report-only performance audit and capture authoritative post-Phase-8 baselines. | Do not edit production code. Stop for developer decisions. |
+| 10 | Test and benchmark explicitly approved `PERF-NNN` findings. | Compare before/after under comparable conditions and record ineffective or harmful changes. |
+| 11 | Run the full bounded build/test/benchmark/analyzer/architecture/manual-smoke loop. | Update the same audit report and stop when practical criteria are met. |
+| 12 | Use final verified results for release and documentation closeout. | Do not describe recommendations as shipped changes. |
 
 ## Verification Expectations
 
@@ -222,7 +222,7 @@ Logger benchmarks may measure construction, disabled-level calls, neutral format
 - Do not add timing assertions to ordinary unit tests.
 - Do not add packages, analyzers, large fixtures, or blocking thresholds without approval.
 - Do not perform speculative production optimization in Phase 4.
-- Do not treat provisional Phase 4 measurements as authoritative Phase 8 baselines.
+- Do not treat provisional Phase 4 measurements as authoritative Phase 9 baselines.
 - Do not weaken archive containment, module identity, persistence atomicity, recovery, or logging to improve benchmark results.
 
 ## Future Documentation Cross-References
@@ -232,7 +232,7 @@ Accepted testing and benchmark decisions should later be migrated into canonical
 ## Open Questions
 
 - Which allocation/analyzer tools are acceptable without adding unnecessary dependencies?
-- Which reviewed benchmark results, if any, should be promoted from ignored local artifacts into the Phase 8 audit evidence?
+- Which reviewed benchmark results, if any, should be promoted from ignored local artifacts into the Phase 9 audit evidence?
 - What fixture archives can be checked in legally and without unreasonable repository cost?
 - What minimum coverage should block CI once tests exist?
 - Which performance thresholds, if any, should become blocking after stability is demonstrated?
