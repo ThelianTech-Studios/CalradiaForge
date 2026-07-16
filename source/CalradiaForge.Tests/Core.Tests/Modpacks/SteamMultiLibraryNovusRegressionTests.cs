@@ -1,6 +1,7 @@
 namespace CalradiaForge.Tests.Core.Modpacks;
 
 using CalradiaForge.Core.Infra.Config;
+using CalradiaForge.Core.Infra.GamePlatform;
 using CalradiaForge.Core.Infra.GamePlatform.Steam;
 using CalradiaForge.Core.Infra.Modpacks;
 using CalradiaForge.Core.Infra.Mods;
@@ -15,16 +16,15 @@ public sealed class SteamMultiLibraryNovusRegressionTests {
 		NovusSteamFixture fixture = CreateNovusSteamFixture(temp);
 		AppConfigSettings settings = new(new AppConfig(temp.GetPath("config.json")));
 
-		SteamResolutionResult? resolution = GamePathsHelper.ResolveAndApplySteamGamePathsWithProvider(
-			settings,
-			new TestSteamClientRootProvider(fixture.SteamClientRoot),
-			preserveExistingWorkshopPath: false);
+		GameDetectionService workflow = new(
+			new GamePlatformDetectionResolver(
+				new TestSteamClientRootProvider(fixture.SteamClientRoot),
+				new SteamInstallationResolver()),
+			new StartupNotificationQueue());
 
-		Assert.NotNull(resolution);
-		Assert.True(resolution.IsGameResolved);
-		Assert.Equal(SteamResolutionStatus.SteamGameResolved, resolution.Status);
-		Assert.Equal(WorkshopPathSource.BannerlordLibrary, resolution.WorkshopPathSource);
-		Assert.DoesNotContain(resolution.Diagnostics, diagnostic => diagnostic.Code == "WorkshopPathUnavailable");
+		GameProvider provider = workflow.RedetectGame(settings);
+
+		Assert.Equal(GameProvider.Steam, provider);
 		Assert.Equal(GameProvider.Steam, settings.GameProvider);
 		Assert.Equal(fixture.GameRoot, settings.GameFolderPath);
 		Assert.Equal(fixture.WorkshopRoot, settings.SteamWorkshopFolderPath);
@@ -92,13 +92,15 @@ public sealed class SteamMultiLibraryNovusRegressionTests {
 			"common",
 			"Mount & Blade II Bannerlord",
 			"Modules");
-		temp.CreateDirectory(
+		string launcherRoot = temp.CreateDirectory(
 			"D",
 			"SteamLibrary",
 			"steamapps",
 			"common",
 			"Mount & Blade II Bannerlord",
-			"bin");
+			"bin",
+			"Win64_Shipping_Client");
+		File.WriteAllText(Path.Combine(launcherRoot, "Bannerlord.exe"), string.Empty);
 		string workshopRoot = temp.CreateDirectory(
 			"D",
 			"SteamLibrary",

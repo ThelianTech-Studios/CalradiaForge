@@ -16,6 +16,7 @@ public sealed class ModScannerTests {
 		List<ModuleModel> modules = await ModScanner.ScanForModsAsync(settings);
 
 		Assert.Equal(11, modules.Count);
+		Assert.Equal(11, modules.Select(module => module.ModuleId).Distinct(StringComparer.OrdinalIgnoreCase).Count());
 		Assert.Equal(
 			fixture.LocalModuleIds.Concat(fixture.WorkshopModuleIds).Order(),
 			modules.Select(module => module.ModuleId).Order());
@@ -26,7 +27,7 @@ public sealed class ModScannerTests {
 	}
 
 	[Fact]
-	public async Task ScanForModsAsync_WhenSplitDriveSteamInstallIsMisclassifiedAsStandalone_ReturnsEightInsteadOfDesiredEleven() {
+	public async Task ScanForModsAsync_WhenProviderIsNotSteam_SkipsConfiguredWorkshopRoot() {
 		using TestDirectory temp = new();
 		SplitDriveFixture fixture = CreateSplitDriveFixture(temp);
 		AppConfigSettings settings = CreateScannerSettings(temp, fixture.GameRoot, fixture.WorkshopRoot, GameProvider.StandAlone);
@@ -35,7 +36,6 @@ public sealed class ModScannerTests {
 
 		Assert.True(Directory.Exists(fixture.WorkshopRoot));
 		Assert.Equal(8, modules.Count);
-		Assert.NotEqual(11, modules.Count);
 		Assert.Equal(fixture.LocalModuleIds.Order(), modules.Select(module => module.ModuleId).Order());
 		Assert.DoesNotContain(modules, module => fixture.WorkshopModuleIds.Contains(module.ModuleId));
 	}
@@ -88,6 +88,19 @@ public sealed class ModScannerTests {
 			gameRoot,
 			temp.GetPath("MissingWorkshop"),
 			GameProvider.Steam);
+
+		List<ModuleModel> modules = await ModScanner.ScanForModsAsync(settings);
+
+		Assert.Equal("Local.Only", Assert.Single(modules).ModuleId);
+	}
+
+	[Fact]
+	public async Task ScanForModsAsync_WhenSteamWorkshopPathIsEmpty_ReturnsLocalModulesOnly() {
+		using TestDirectory temp = new();
+		string gameRoot = temp.CreateDirectory("Game");
+		string modulesPath = temp.CreateDirectory("Game", "Modules");
+		temp.WriteModule(modulesPath, "Local", "Local.Only");
+		AppConfigSettings settings = CreateScannerSettings(temp, gameRoot, string.Empty, GameProvider.Steam);
 
 		List<ModuleModel> modules = await ModScanner.ScanForModsAsync(settings);
 
