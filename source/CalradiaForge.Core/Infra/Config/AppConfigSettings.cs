@@ -59,6 +59,7 @@
 			AddIfMissing("Language", "en-US");
 			AddIfMissing("GameFolderPath");
 			AddIfMissing("GameLauncherFilePath");
+			AddIfMissing("SteamWorkshopFolderPath");
 			AddIfMissing("GamePlatform", GameProvider.NotInitialized.ToString());
 			AddIfMissing("LastSelectedModpack", "Last Used");
 			AddIfMissing("ModpackStartupMode", ModpackStartupMode.AlwaysAsk.ToString());
