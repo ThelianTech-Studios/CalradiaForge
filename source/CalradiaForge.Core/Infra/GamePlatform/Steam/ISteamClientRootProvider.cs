@@ -21,6 +21,6 @@ public sealed class WindowsSteamClientRootProvider : ISteamClientRootProvider {
 
 	/// <inheritdoc />
 	public string? GetSteamClientRoot() {
-		return Registry.GetValue(_steamRegistryKey, _steamPathValue, null) as string;
+		return Registry.GetValue(_steamRegistryKey, _steamPathValue, null) as string;//If we ever decide to support Multi-Platform Desktop Application for CalradiaForge, this will need to be called from an OS-Specific Interface implementation. 
 	}
 }
