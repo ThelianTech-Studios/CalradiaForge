@@ -9,7 +9,6 @@
 
 	using CalradiaForge.Core.Infra.Config;
 	using CalradiaForge.Core.Infra.GamePlatform;
-	using CalradiaForge.Core.Infra.GamePlatform.Steam;
 	using CalradiaForge.Core.Infra.Localization;
 	using CalradiaForge.Core.Infra.Logging;
 	using CalradiaForge.Core.Infra.Mods;
@@ -29,6 +28,7 @@
 		#region Fields
 		private readonly AppConfigSettings _config;
 		private readonly ModService _modService;
+		private readonly GameDetectionService _gameDetectionService;
 		private readonly Logger _logger = Logger.Instance;
 		private string _gameFolderPath = string.Empty;
 		private string _gameLauncherFilePath = string.Empty;
@@ -84,6 +84,7 @@
 			DataContext = this;
 			_config = App.AppSettingsInstance;
 			_modService = App.ModService;
+			_gameDetectionService = App.GameDetectionService;
 
 			_panels = [PanelGeneral, PanelGameConfig, PanelTools, PanelWip, PanelAbout];
 
@@ -94,7 +95,6 @@
 			LoadUnblockStatus();
 			SetVersionText();
 			PopulateLanguageComboBox();
-			ShowSteamWorkshopWarningIfNeeded();
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("SettingsPage: Initialized.", new { GameProvider = _config.GameProvider.ToString() });
 			}
@@ -222,17 +222,17 @@
 		/// Delegates validation logic to <see cref="GamePathValidator"/>.
 		/// </summary>
 		private void UpdateGameFolderValidation() {
-			if (GamePathValidator.ValidateGameFolder(_config.GameFolderPath, out string error)) {
-				GameFolderValidation.Text = "✓ Valid Bannerlord installation detected.";
+			if (GamePathValidator.ValidateGameFolder(_config.GameFolderPath)) {
+				GameFolderValidation.Text = "✓ Valid Bannerlord installation detected.";//this needs a translation string property
 				GameFolderValidation.Style = (Style)FindResource("SettingsValidationOk");
 				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 					_logger.Debug("SettingsPage: Game folder valid.", new { GameFolderPath = _config.GameFolderPath });
 				}
 			} else {
-				GameFolderValidation.Text = $"✗ {error}";
+				GameFolderValidation.Text = "✗ Invalid Bannerlord installation.";//this needs a translation string property
 				GameFolderValidation.Style = (Style)FindResource("SettingsValidationError");
 				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("SettingsPage: Game folder invalid.", new { GameFolderPath = _config.GameFolderPath, Error = error });
+					_logger.Debug("SettingsPage: Game folder invalid.", new { GameFolderPath = _config.GameFolderPath });
 				}
 			}
 		}
@@ -244,20 +244,20 @@
 		/// </summary>
 		private void UpdateBLSEValidation() {
 			if (!string.IsNullOrWhiteSpace(_config.BLSEExePath)
-				&& GamePathValidator.ValidateGameExecutable(_config.BLSEExePath, out _)) {
-				BLSEValidation.Text = "✓ BLSE executable found.";
+				&& GamePathValidator.ValidateGameExecutable(_config.BLSEExePath)) {
+				BLSEValidation.Text = "✓ BLSE executable found.";//this needs a translation string property
 				BLSEValidation.Style = (Style)FindResource("SettingsValidationOk");
 				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 					_logger.Debug("SettingsPage: BLSE path valid.", new { BLSEExePath = _config.BLSEExePath });
 				}
 			} else if (string.IsNullOrWhiteSpace(_config.BLSEExePath)) {
-				BLSEValidation.Text = "Not configured — optional. Select if you use BLSE mods.";
+				BLSEValidation.Text = "Not configured — optional. Select if you use BLSE mods.";//this needs a translation string property
 				BLSEValidation.Style = (Style)FindResource("SettingsValidationOk");
 				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 					_logger.Debug("SettingsPage: BLSE path not configured.");
 				}
 			} else {
-				BLSEValidation.Text = "✗ The selected BLSE executable was not found.";
+				BLSEValidation.Text = "✗ The selected BLSE executable was not found.";//this needs a translation string property
 				BLSEValidation.Style = (Style)FindResource("SettingsValidationError");
 				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 					_logger.Debug("SettingsPage: BLSE path invalid.", new { BLSEExePath = _config.BLSEExePath });
@@ -306,7 +306,6 @@
 			}
 			if (LanguageComboBox.SelectedItem is LanguageOption selected) {
 				App.Translator.SetLanguage(selected.Code);
-				_logger.Info($"SettingsPage: Language changed to '{selected.Code}' ({selected.DisplayName}).");
 				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 					_logger.Debug("SettingsPage: Language selection changed.", new { Code = selected.Code, DisplayName = selected.DisplayName });
 				}
@@ -358,40 +357,36 @@
 
 		/// <summary>
 		/// Opens a folder browser dialog for the game folder.
-		/// Validates the selection using <see cref="GamePathValidator"/> before saving.
+		/// Delegates validation, platform inference, and path commits to the Core workflow.
 		/// </summary>
 		private void SelectGameFolder_Click(object sender, RoutedEventArgs e) {
-			string? selectedPath;
 			OpenFolderDialog dialogWindow = new() { Title = "Select Bannerlord Game Folder" };
 			if (dialogWindow.ShowDialog() != true) {
 				return;
 			}
-			selectedPath = dialogWindow.FolderName;
+			string selectedPath = dialogWindow.FolderName;
 
-			if (!GamePathValidator.ValidateGameFolder(selectedPath, out string error)) {
-				_logger.Warning($"SettingsPage: Game folder validation failed: {error}");
+			if (!_gameDetectionService.ApplyManualGameFolder(_config, selectedPath)) {
+				_logger.Warning("SettingsPage: Game folder selection was rejected by the detection workflow.");
 				App.Toasts.Show(new ToastRequest {
 					Title = "Invalid Game Folder",
-					Message = error,
+					Message = "Select a valid Bannerlord installation containing the standard launcher executable.",
 					Severity = ToastSeverity.Error
 				});
 				UpdateGameFolderValidation();
 				return;
 			}
 
-			GamePlatformDetectionResult platformResult = GamePathsHelper.ApplyManualGameFolderSelection(
-				_config,
-				selectedPath);
-			bool matchedSteam = platformResult.IsDetected && platformResult.Provider == GameProvider.Steam;
 			GameFolderPath = _config.GameFolderPath;
 			GameLauncherFilePath = _config.GameLauncherFilePath;
 			SteamWorkshopFolderPath = _config.SteamWorkshopFolderPath;
+			BLSEExePath = _config.BLSEExePath;
 			UpdatePathSectionVisibility();
-			if (matchedSteam) {
+			if (_config.GameProvider == GameProvider.Steam) {
 				ShowSteamWorkshopWarningIfNeeded();
 			}
 			UpdateGameFolderValidation();
-			_logger.Info($"SettingsPage: Game folder set to '{selectedPath}'");
+			UpdateBLSEValidation();
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("SettingsPage: Game folder selected.", new { GameFolderPath = selectedPath });
 			}
@@ -413,11 +408,11 @@
 			}
 			selectedPath = dialogWindow.FileName;
 
-			if (!GamePathValidator.ValidateGameExecutable(selectedPath, out string error)) {
-				_logger.Warning($"SettingsPage: Executable validation failed: {error}");
+			if (!GamePathValidator.ValidateGameExecutable(selectedPath)) {
+				_logger.Warning($"SettingsPage: Executable validation failed.");
 				App.Toasts.Show(new ToastRequest {
 					Title = "Invalid Executable",
-					Message = error,
+					Message = "Please select a valid Bannerlord executable.",
 					Severity = ToastSeverity.Error
 				});
 				return;
@@ -425,7 +420,6 @@
 
 			_config.GameLauncherFilePath = selectedPath;
 			GameLauncherFilePath = selectedPath;
-			_logger.Info($"SettingsPage: Game executable set to '{selectedPath}'");
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("SettingsPage: Game executable selected.", new { GameLauncherFilePath = selectedPath });
 			}
@@ -433,31 +427,28 @@
 
 		/// <summary>
 		/// Opens a folder browser dialog for the Steam Workshop folder.
-		/// Validates the selection using <see cref="GamePathValidator"/> before saving.
+		/// Delegates provider and path validation to the Core workflow.
 		/// </summary>
 		private void SelectWorkshopFolder_Click(object sender, RoutedEventArgs e) {
-			string? selectedPath;
 			OpenFolderDialog dialogWindow = new() {
 				Title = "Select Steam Workshop Folder"
 			};
 			if (dialogWindow.ShowDialog() != true) {
 				return;
 			}
-			selectedPath = dialogWindow.FolderName;
+			string selectedPath = dialogWindow.FolderName;
 
-			if (!GamePathValidator.ValidateWorkshopFolder(selectedPath, out string error)) {
-				_logger.Warning($"SettingsPage: Workshop folder validation failed: {error}");
+			if (!_gameDetectionService.ApplyManualSteamWorkshopFolder(_config, selectedPath)) {
+				_logger.Warning("SettingsPage: Workshop folder selection was rejected by the detection workflow.");
 				App.Toasts.Show(new ToastRequest {
 					Title = "Invalid Workshop Folder",
-					Message = error,
+					Message = "Select a valid Bannerlord Workshop folder for the current Steam installation.",
 					Severity = ToastSeverity.Error
 				});
 				return;
 			}
 
-			_config.SteamWorkshopFolderPath = selectedPath;
-			SteamWorkshopFolderPath = selectedPath;
-			_logger.Info($"SettingsPage: Workshop folder set to '{selectedPath}'");
+			SteamWorkshopFolderPath = _config.SteamWorkshopFolderPath;
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("SettingsPage: Workshop folder selected.", new { SteamWorkshopFolderPath = selectedPath });
 			}
@@ -479,11 +470,11 @@
 			}
 			string selectedPath = dialogWindow.FileName;
 
-			if (!GamePathValidator.ValidateGameExecutable(selectedPath, out string error)) {
-				_logger.Warning($"SettingsPage: BLSE executable validation failed: {error}");
+			if (!GamePathValidator.ValidateGameExecutable(selectedPath)) {
+				_logger.Warning($"SettingsPage: BLSE executable validation failed.");
 				App.Toasts.Show(new ToastRequest {
 					Title = "Invalid BLSE Executable",
-					Message = error,
+					Message = "Please select a valid BLSE standalone executable.",
 					Severity = ToastSeverity.Error
 				});
 				UpdateBLSEValidation();
@@ -500,7 +491,7 @@
 		}
 
 		/// <summary>
-		/// Re-runs the complete game-platform detection pipeline via <see cref="GamePathsHelper"/>
+		/// Re-runs the complete game-platform detection pipeline through the Core workflow
 		/// and refreshes all displayed paths, visibility, and BLSE validation.
 		/// </summary>
 		private void RedetectGame_Click(object sender, RoutedEventArgs e) {
@@ -511,8 +502,7 @@
 					GameProvider = _config.GameProvider.ToString()
 				});
 			}
-			GamePlatformDetectionResult platformResult = GamePathsHelper.RedetectGamePaths(_config);
-			SteamResolutionResult? steamResolution = platformResult.SteamResolution;
+			GameProvider provider = _gameDetectionService.RedetectGame(_config);
 
 			GameFolderPath = _config.GameFolderPath;
 			GameLauncherFilePath = _config.GameLauncherFilePath;
@@ -522,7 +512,7 @@
 			UpdatePathSectionVisibility();
 			UpdateGameFolderValidation();
 			UpdateBLSEValidation();
-			_logger.Info($"SettingsPage: Re-detect complete. Platform: {_config.GameProvider}");
+			_logger.Info($"SettingsPage: Manual detection complete. Platform: {_config.GameProvider}");
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("SettingsPage: Detection results.", new {
 					GameFolderPath = _config.GameFolderPath,
@@ -533,24 +523,25 @@
 				});
 			}
 
-			bool detected = GamePathValidator.ValidateGameFolder(_config.GameFolderPath, out _);
-			bool steamWithoutWorkshop = steamResolution?.Status == SteamResolutionStatus.SteamGameResolvedWithoutWorkshop;
+			bool detected = provider != GameProvider.ManualConfiguration
+				&& GamePathValidator.ValidateGameFolder(_config.GameFolderPath);
+			bool steamWithoutWorkshop = provider == GameProvider.Steam
+				&& string.IsNullOrWhiteSpace(_config.SteamWorkshopFolderPath);
 			App.Toasts.Show(new ToastRequest {
 				Title = steamWithoutWorkshop
 					? T.Toast_SteamWorkshopNotFoundTitle
-					: detected ? "Game Detected" : "Detection Failed",
+					: detected ? "Game Detected" : "Detection Failed", //this needs a translation string property
 				Message = steamWithoutWorkshop
 					? T.Toast_SteamWorkshopNotFoundMessage
 					: detected
-						? $"Bannerlord found via {_config.GameProvider}."
-						: "Could not auto-detect Bannerlord. Please select the game folder manually.",
+						? $"Bannerlord found via {_config.GameProvider}." : "Could not auto-detect Bannerlord. Please select the game folder manually.", //this needs a translation string property
 				Severity = steamWithoutWorkshop || !detected ? ToastSeverity.Warning : ToastSeverity.Success
 			});
 		}
 
 		private void ShowSteamWorkshopWarningIfNeeded() {
 			if (_config.GameProvider != GameProvider.Steam
-				|| GamePathValidator.ValidateWorkshopFolder(_config.SteamWorkshopFolderPath, out _)) {
+				|| GamePathValidator.ValidateWorkshopFolder(_config.SteamWorkshopFolderPath)) {
 				return;
 			}
 			App.Toasts.Show(new ToastRequest {
@@ -569,19 +560,19 @@
 		/// Persists the run timestamp and result to config for display and debugging.
 		/// </summary>
 		private async void UnblockDlls_Click(object sender, RoutedEventArgs e) {
-			if (!GamePathValidator.ValidateGameFolder(_config.GameFolderPath, out string folderError)) {
-				_logger.Warning($"SettingsPage: Cannot unblock — {folderError}");
+			if (!GamePathValidator.ValidateGameFolder(_config.GameFolderPath)) {
+				_logger.Warning($"SettingsPage: Cannot unblock DLLs - Invalid game folder.");
 				App.Toasts.Show(new ToastRequest {
 					Title = "Cannot Unblock DLLs",
-					Message = folderError,
+					Message = "Invalid game folder.",
 					Severity = ToastSeverity.Warning
 				});
 				return;
 			}
 
 			try {
-				UnblockLastRunText.Text = "Last run:  Running...";
-				UnblockResultText.Text = "Result:  —";
+				UnblockLastRunText.Text = "Last run:  Running...";//this needs a translation string property
+				UnblockResultText.Text = "Result:  —";//this needs a translation string property
 
 				UnblockResult result = await DLLUnblocker.UnblockAllAsync(_config.ModulesDirectoryPath);
 
@@ -591,10 +582,9 @@
 				_config.LastUnblockRunDate = timestamp;
 				_config.LastUnblockRunResult = summary;
 
-				UnblockLastRunText.Text = $"Last run:  {timestamp}";
-				UnblockResultText.Text = $"Result:  {summary}";
+				UnblockLastRunText.Text = $"Last run:  {timestamp}";//this needs a translation string property combined with result
+				UnblockResultText.Text = $"Result:  {summary}";//this needs a translation string property combined with result
 
-				_logger.Info($"SettingsPage: Unblock complete. {summary}");
 				App.Toasts.Show(new ToastRequest {
 					Title = "DLL Unblock Complete",
 					Message = summary,
@@ -605,7 +595,10 @@
 				}
 			} catch (Exception ex) {
 				_logger.Error(ex, "SettingsPage: Unblock operation failed.");
-				UnblockResultText.Text = $"Result:  Error — {ex.Message}";
+				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+					_logger.Debug("SettingsPage: Unblock failed.", ex);
+				}
+				UnblockResultText.Text = $"Result:  Error - {ex.Message}"; //this needs a translation string property combined with result
 				App.Toasts.Show(new ToastRequest {
 					Title = "Unblock Failed",
 					Message = ex.Message,

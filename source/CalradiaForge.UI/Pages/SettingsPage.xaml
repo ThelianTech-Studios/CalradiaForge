@@ -214,7 +214,7 @@
 															 Style="{StaticResource SettingsPathDisplay}"
 															 Text="{Binding SteamWorkshopFolderPath}" />
 									</Border>
-									<Button Grid.Column="1"
+									<Button x:Name="SelectWorkshopFolderButton" Grid.Column="1"
 													Content="{Binding Strings.Settings_SelectFolderButton, Source={x:Static local:App.Translator}}"
 													Style="{StaticResource SettingsActionButton}"
 													Margin="8,0,0,0"
