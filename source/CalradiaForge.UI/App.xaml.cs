@@ -4,6 +4,8 @@
 
 	using CalradiaForge.Core.Infra.Config;
 	using CalradiaForge.Core.Infra.Eula;
+	using CalradiaForge.Core.Infra.GamePlatform;
+	using CalradiaForge.Core.Infra.GamePlatform.Steam;
 	using CalradiaForge.Core.Infra.Launch;
 	using CalradiaForge.Core.Infra.Localization;
 	using CalradiaForge.Core.Infra.Logging;
@@ -21,10 +23,12 @@
 		private static Logger _logger = Logger.Instance;
 		public static AppConfigSettings AppSettingsInstance { get; private set; } = null!;
 		public static ModService ModService { get; private set; } = null!;
-		public static object? ModManagerService { get; private set; }//ModManagerService Instance for managing the future Mod pipeline needs to change from obj to ModManagerService class once this has been developed.
+		public static object? ModManagerService { get; private set; }//ModManagerService Instance for managing the future Mod pipeline needs to change from obj to ModManagerService class once this has been developed. This Manager Service will act as the Manager that handles ModExtractor, ModInstaller, ModService, ModScanner and any other present/future Mod related services that will be needed for the future Mod pipeline and NexusMods API intergration. However NexusModsAPI will have its own service class that will be used to handle all NexusMods API related needs. And Pass the resolved Downloaded Mod filepath to ModManager to delegate the Mod Pipeline, ModManager will also handle the Manual Install Mods Pipeline currently present in the application.
 		public static ModInstaller ModInstaller { get; private set; } = null!;
 		public static ModpackService ModpackService { get; private set; } = null!;
 		public static GameLauncher GameLauncher { get; private set; } = null!;
+		public static StartupNotificationQueue StartupNotifications { get; private set; } = null!;
+		public static GameDetectionService GameDetectionService { get; private set; } = null!;
 		public static ToastService Toasts { get; private set; } = null!;
 		public static TranslationService Translator { get; private set; } = null!;
 		/// <summary>
@@ -33,7 +37,6 @@
 		public App() {
 			InitializeComponent();
 		}
-
 		/// <summary>
 		/// Handles application startup and initializes services.
 		/// </summary>
@@ -48,6 +51,7 @@
 				Shutdown();
 				return;
 			}
+			InitializeGameDetectionService();
 			InitializeModServices();
 			InitializeModpackServices();
 			InitializeLauncherService();
@@ -96,13 +100,6 @@
 			if (AppSettingsInstance.DebugMode) {
 				_logger.Debug("App: Initializing configuration.", new { AppPaths.ConfigFilePath });
 			}
-			if ((AppSettingsInstance.GameProvider == GameProvider.NotInitialized) || string.IsNullOrWhiteSpace(AppSettingsInstance.GameFolderPath)) {
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("App: Game paths not initialized. Running auto-detection.");
-				}
-				GamePathsHelper.TryAutoDetectGameFolder(AppSettingsInstance);
-			}
-
 			if (AppSettingsInstance.DebugMode) {
 				_logger.Debug("App: Configuration initialized.", new {
 					AppSettingsInstance.DebugMode,
@@ -177,7 +174,17 @@
 			_logger.Info("App: EULA accepted.");
 			return true;
 		}
-
+		/// <summary>
+		/// Initializes the game-detection service and its startup notification queue.
+		/// </summary>
+		private void InitializeGameDetectionService() {
+			StartupNotifications = new StartupNotificationQueue();// This should be abstracted out into its own Service class if we want to reuse it in other startup scenarios like ModServices we queue up notifications for results of the Mods loaded from cache, etc.
+			GamePlatformDetectionResolver resolver = new(
+				new WindowsSteamClientRootProvider(),
+				new SteamInstallationResolver());
+			GameDetectionService = new GameDetectionService(resolver, StartupNotifications);
+			GameDetectionService.InitializeForStartup(AppSettingsInstance);
+		}
 		/// <summary>
 		/// Initializes mod services and loads cached data.
 		/// </summary>
@@ -193,7 +200,6 @@
 			}
 			ModInstaller = new ModInstaller(AppSettingsInstance);
 		}
-
 		/// <summary>
 		/// Initializes the modpack service and loads modpack data.
 		/// </summary>
@@ -244,7 +250,6 @@
 				});
 			}
 		}
-
 		/// <summary>
 		/// Wires global exception handlers for application-level errors.
 		/// </summary>
