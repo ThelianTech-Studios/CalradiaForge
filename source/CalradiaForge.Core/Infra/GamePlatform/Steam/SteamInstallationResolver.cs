@@ -306,11 +306,11 @@ public sealed class SteamInstallationResolver : ISteamInstallationResolver {
 			return false;
 		}
 
-		if (!GamePathValidator.ValidateGameFolder(candidate, out string validationError)) {
+		if (!GamePathValidator.ValidateGameFolder(candidate)) {
 			state.GamePathInvalid = true;
 			diagnostics.Add(new SteamPathDiagnostic(
 				"BannerlordGamePathInvalid",
-				$"The manifest-backed Bannerlord path failed validation: {validationError}",
+				$"The manifest-backed Bannerlord path failed validation",
 				candidate,
 				IsWarning: true));
 			return false;
