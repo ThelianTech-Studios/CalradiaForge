@@ -7,35 +7,41 @@
 	/// </summary>
 	public enum GameProvider {
 		/// <summary>
-		/// Standalone or GOG installation. Supports direct EXE launch.
+		/// Platform not yet configured by the user.
 		/// </summary>
-		StandAlone,
-
+		NotInitialized = 0,
 		/// <summary>
 		/// Steam installation. Supports direct EXE launch with <c>SteamAppId</c> env var.
 		/// CalradiaForge auto-starts Steam if not running.
 		/// </summary>
-		Steam,
-
+		Steam = 1,
 		/// <summary>
 		/// Epic Games Store installation. Direct EXE launch is NOT supported
 		/// due to TaleWorlds' authentication changes requiring token exchange
 		/// through the Epic Games client. Load order must be written to the
 		/// vanilla launcher config and the game launched through Epic.
 		/// </summary>
-		EpicGames,
-
+		EpicGames = 2,
 		/// <summary>
 		/// Xbox / PC Game Pass installation. Direct EXE launch is NOT supported
 		/// due to Microsoft account login requirements. The "game" executable
 		/// is actually the vanilla launcher, which must be started through
 		/// the Xbox app. Load order can be pre-arranged in the launcher config.
 		/// </summary>
-		GamePass,
-
+		GamePass = 3,
 		/// <summary>
-		/// Platform not yet configured by the user.
+		/// GOG installation positively inferred from a manually selected path.
 		/// </summary>
-		NotInitialized
+		GOG = 4,
+		/// <summary>
+		/// Automatic detection completed without finding a supported installation.
+		/// Manual configuration is required.
+		/// </summary>
+		ManualConfiguration = 5,
+		/// <summary>
+		/// Standalone installation with no recognized storefront signature.
+		/// Supports direct EXE launch.
+		/// </summary>
+		StandAlone = 6
 	}
 }
