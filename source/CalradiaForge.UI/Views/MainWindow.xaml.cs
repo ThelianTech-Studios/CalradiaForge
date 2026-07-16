@@ -1,13 +1,17 @@
 ﻿namespace CalradiaForge.UI.Views {
 	using System;
+	using System.Threading;
+	using System.Threading.Tasks;
 	using System.Windows;
 	using System.Windows.Controls;
 	using System.Windows.Input;
 
 	using CalradiaForge.Core.Infra.Localization;
 	using CalradiaForge.Core.Infra.Logging;
+	using CalradiaForge.Core.Models;
 
 	using CalradiaForge.UI.Pages;
+	using CalradiaForge.UI.Toasts;
 
 	using MahApps.Metro.Controls;
 
@@ -18,11 +22,15 @@
 		private readonly Logger _logger = Logger.Instance;
 		private readonly Page[] _pages;
 		private readonly SettingsPage _settingsPage;
+		private readonly CancellationTokenSource _startupNotificationCancellation = new();
 		/// <summary>
 		/// Initializes the main window and navigation pages.
 		/// </summary>
 		public MainWindow() {
 			InitializeComponent();
+			Loaded += MainWindow_Loaded;
+			Closed += MainWindow_Closed;
+			_ = ObserveStartupNotificationsAsync();
 			_pages = [
 				new ModsPage(),
 				new ModpacksPage(),
@@ -43,6 +51,47 @@
 			// Apply translated nav labels and re-apply when language changes
 			ApplyNavTranslations();
 			App.Translator.Strings.PropertyChanged += (_, _) => Dispatcher.BeginInvoke(ApplyNavTranslations);
+		}
+
+		private async Task ObserveStartupNotificationsAsync() {
+			try {
+				await App.StartupNotifications.DrainWhenReadyAsync(
+					DeliverStartupNotificationAsync,
+					_startupNotificationCancellation.Token);
+			} catch (OperationCanceledException) when (_startupNotificationCancellation.IsCancellationRequested) {
+				// Window shutdown cancels an outstanding readiness wait or drain.
+			} catch (Exception ex) {
+				_logger.Error(ex, "MainWindow: Failed to drain startup notifications.");
+			}
+		}
+
+		private static Task DeliverStartupNotificationAsync(
+			StartupNotification notification,
+			CancellationToken cancellationToken) {
+			cancellationToken.ThrowIfCancellationRequested();
+			App.Toasts.Show(new ToastRequest {
+				Title = notification.Title,
+				Message = notification.Message,
+				Severity = MapStartupSeverity(notification.Severity)
+			});
+			return Task.CompletedTask;
+		}
+
+		private static ToastSeverity MapStartupSeverity(StartupNotificationSeverity severity) {
+			return severity switch {
+				StartupNotificationSeverity.Success => ToastSeverity.Success,
+				StartupNotificationSeverity.Warning => ToastSeverity.Warning,
+				StartupNotificationSeverity.Error => ToastSeverity.Error,
+				_ => ToastSeverity.Info
+			};
+		}
+
+		private void MainWindow_Loaded(object sender, RoutedEventArgs e) {
+			App.StartupNotifications.SignalReady();//once this is called we and any start up notifications delivered via Toast, we should look to implement telling app to dispose of startup service once all notifications have been delivered. This will allow us to free up memory and resources used by the startup service.
+		}
+
+		private void MainWindow_Closed(object? sender, EventArgs e) {
+			_startupNotificationCancellation.Cancel();// this will be unnecessary once we implement the dispose of startup service after all notifications have been delivered. This will allow us to free up memory and resources used by the startup service, since ToastService should handle real-time notifications after startup.
 		}
 
 		/// <summary>
