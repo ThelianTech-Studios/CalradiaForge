@@ -8,10 +8,6 @@
 	using CalradiaForge.Core.Infra.Paths;
 	using CalradiaForge.Core.Models;
 
-	// DEPRECATED: SharpCompress implementation (replaced by SevenZipWrapper)
-	// using SharpCompress.Archives;
-	// using SharpCompress.Common;
-
 	using SevenZipWrapper;
 
 	/// <summary>
@@ -33,19 +29,18 @@
 		/// Falls back to a size-based heuristic if the archive cannot be read.
 		/// </summary>
 		/// <param name="archivePath">Full path to the archive file.</param>
-		/// <returns>Exact file count from the archive, minimum 10.</returns>
+		/// <returns>Exact file count from the archive, minimum 1.</returns>
 		public static int EstimateFileCount(string archivePath) {
 			try {
 				using ArchiveFile archive = new(archivePath);
 				return Math.Max(1, archive.Entries.Count);
 			} catch {
-				// Fallback to heuristic if archive cannot be opened (corrupt, locked, etc.)
 				try {
 					long bytes = new FileInfo(archivePath).Length;
 					double megabytes = bytes / (1024.0 * 1024.0);
-					return Math.Max(10, (int)(megabytes * FilesPerMBEstimate));
+					return Math.Max(1, (int)(megabytes * FilesPerMBEstimate));
 				} catch {
-					return 100; // Safe fallback
+					return 1; // Safe fallback
 				}
 			}
 		}
