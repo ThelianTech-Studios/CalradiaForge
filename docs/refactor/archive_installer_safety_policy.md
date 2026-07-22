@@ -10,12 +10,14 @@ Improve mod archive, overwrite, and BLSE install safety without bypassing the cu
 - `ModExtractor` owns archive opening, pre-extraction lexical entry-containment validation, extraction, managed-temp cleanup, and mod-root detection.
 - `BLSEInstaller` owns BLSE archive detection and game-bin file placement.
 - `ModsPage.xaml.cs` decides when installs start and displays status/toasts; it must not take over install mechanics.
+- Current `ModInstaller` background work does not yet expose the awaitable application-quiescence contract required by Phase 6.A.
 - Normal module installs now require exactly one `SubModule.xml`, a parseable module id, a contained target path, and a matching parseable identity when the target folder already exists.
 - Existing target folders with unknown or mismatched identities are blocked, and an upgrade copy does not proceed when recursive deletion fails.
 
 ## Guardrails
 
 - Do not bypass `ModInstaller`, `ModExtractor`, or `BLSEInstaller`.
+- Phase 6.A may coordinate admission, cancellation, completion observation, and quiescence around those owners, but it must not duplicate or replace their install, extraction, rollback, overwrite, or BLSE mechanics.
 - Keep Core free of WPF references.
 - Keep install work service-owned; UI observes progress and completion.
 - Preserve Bannerlord-specific mod loading compatibility until overwrite rules are reviewed.

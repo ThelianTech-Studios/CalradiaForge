@@ -64,29 +64,58 @@ Path logging should stay inside the app's trust boundary:
 | Async sink | Use `Serilog.Sinks.Async` where the logging pipeline benefits from buffered writes. |
 | Debug sink | Use `Serilog.Sinks.Debug` only in Debug builds via a conditional `PackageReference` with `PrivateAssets="all"` and `#if DEBUG` sink configuration; exclude it from Release/Public Release artifacts. |
 | Console sink | Do not add `Serilog.Sinks.Console`; CalradiaForge is a WPF app and CLI execution must not be treated as interactive runtime verification. |
-| File behavior | Current: one infinite-rolling active `CalradiaForge_Latest.log`, custom cleanup, and no time-based Serilog rolling. Planned Phase 6.A: explicit startup cleanup, close-before-archive, and collision-safe archive. |
+| File behavior | Current: one infinite-rolling active `CalradiaForge_Latest.log`, custom cleanup, and no time-based Serilog rolling. Planned Phase 6.B: archive the previous `Latest` only at next startup, use no collision suffix, apply fixed seven-day archive retention, and leave `Latest` available after shutdown. |
 | Structure | Message templates and structured properties. |
 | Context | `SourceContext` or class context where practical. |
 | Thread enrichment | Include thread enrichment where it helps session diagnostics. |
 | Exception enrichment | Use structured exception enrichment for richer failure context. |
-| Minimum level | Preserve current minimum-level behavior tied to `AppConfigSettings.DebugMode`; Release/Public Release builds may still write Debug-level events to file logs when runtime DebugMode is enabled. |
+| Minimum level | Current behavior uses `AppConfigSettings.DebugMode`. Planned Phase 6.B loads `LoggingSettings.DebugMode` before logger construction; the selected Debug or Information level remains fixed for the process lifetime. |
 | Debug level | Controlled by Serilog configuration/debug setting rather than repeated manual guards. |
 | Expensive diagnostics | Guard with level checks only when constructing the diagnostic payload is costly. |
 | Formatting | `SerilogTextFormatter` is a neutral presentation template connected to the file and Debug sinks. It renders timestamp, level, message, applicable source context, thread information, properties, and exception information without rewriting event values. |
 
 ## Retention And File-Size Policy
 
-The current cleanup helper uses the configured integer as an age in days and falls back to seven days for non-positive values. The setting is named `RetainedFileCount` and defaults to 14, so the current code does not establish whether the intended policy is "14 files" or "14 days." Phase 6.A must resolve the meaning, document active-file exclusion, define cleanup timing, and verify cleanup occurs once at startup before the active sink opens. Cleanup must not be inferred from Serilog's nullable `retainedFileCountLimit`, which is currently null.
+Current source still has a configuration/cleanup naming mismatch. Phase 6.B resolves the future policy: remove the configurable retention setting and delete archived CalradiaForge logs older than seven days during startup, after previous-`Latest` archival handling and before opening the new active logger. Never include `CalradiaForge_Latest.log`; ignore missing files and individual deletion failures.
 
-The active sink has no explicit file-size setting. Before implementation, the owner must choose whether to preserve the library default approximate size limit, set an explicit limit and roll policy, or use another deliberate strategy. Tests must cover the selected behavior; docs must not call the current active file unlimited merely because time-based rolling is infinite.
+The active sink still has no locked explicit file-size strategy. That file-size/rolling choice remains genuinely unresolved and must not be confused with the resolved archive-retention policy.
 
-## Logger Lifecycle
+## Phase 6.B Logger Construction And Ownership
 
-Phase 6.A owns the planned application lifecycle. Startup performs retention cleanup once, before opening `CalradiaForge_Latest.log`, then constructs the one shared logger through the one factory singleton. Runtime callers use that shared instance after DI composition is active. Shutdown must stop new logging-producing work, request cancellation, await or confirm active workflows and asynchronous log production are quiescent, close the logger exactly once, confirm the non-shared file handle is released, attempt a collision-safe archive, and preserve the active file if archiving fails. Provider disposal must not create or close a second logger.
+The bootstrap dependency is:
 
-The final implementation must choose factory-owned or DI-owned logger disposal and must separately decide whether the instance is assigned to `Serilog.Log.Logger`. `Log.CloseAndFlush()` is not a substitute for direct ownership unless the global assignment is intentional and there is exactly one global close path.
+```text
+ConfigFileManager loads LoggingSettings
+→ LoggingSettings.DebugMode is available
+→ startup log-file lifecycle runs
+→ one Serilog logger is constructed
+→ the same logger is assigned to Serilog.Log.Logger
+→ ApplicationStartupCoordinator may execute Log.* calls
+```
 
-Archive behavior must never overwrite an existing file. It must distinguish no active file, collision without a safe alternate name, access/move failure, and success, and must retain the active file when the move fails. Timestamp-only names are not sufficient if they can collide; a deterministic sequence or equivalent collision-safe strategy is required.
+`ApplicationStartupCoordinator` depends explicitly on `Serilog.ILogger`, forcing activation before `StartAsync()`. `App` does not separately resolve or sequence the logger, and bootstrap settings code cannot depend on the final logger during construction.
+
+Exactly one DI singleton creates the shared logger and assigns that same instance globally. Global `Log.*` is the normal post-bootstrap API and the explicit exception to the no-global-services rule. `App` owns the root provider; DI owns the factory-created logger; provider disposal is the sole normal flush/dispose path. Prohibit a second pipeline, consumer `Dispose()`, a separate `Log.CloseAndFlush()` path, and logging after provider disposal begins.
+
+## Debug-Mode Process Behavior
+
+At startup, `LoggingSettings.DebugMode` selects Debug or Information and the logger keeps that level for the process lifetime. A changed value is persisted immediately and prompts for restart in both directions. Accepting uses the app-owned restart pipeline; declining retains the persisted value while leaving the current logger unchanged until next start. Do not add runtime switching, rollback on decline, a pending flag, `LoggingSessionState`, or `DebugModeAtStartup`.
+
+## Startup-Only Archival And Shutdown Behavior
+
+On shutdown, quiesce the app, dispose the provider/logger, and leave `CalradiaForge_Latest.log` in place. Do not rename, move, archive, truncate, or delete it.
+
+At the next startup before opening the new logger:
+
+1. If `CalradiaForge_Latest.log` is missing, continue.
+2. Read its last-write timestamp, using creation time only when last-write cannot be obtained.
+3. Rename it to `CalradiaForge_yyyy-MM-dd_HH-mm.log`; precision stops at minutes.
+4. Do not add a numeric suffix and do not overwrite an existing archive.
+5. Treat collision or rename failure as nonfatal, leave the existing archive untouched, and emit only best-effort pre-Serilog diagnostics.
+6. Attempt to truncate/overwrite `Latest` for the new session; if that fails, allow the sink to attempt append-compatible opening.
+7. If the final logger cannot initialize, use the bootstrap-failure path.
+
+Do not invent recovery archive names.
 
 ## Formatter Decision
 
@@ -127,16 +156,26 @@ Phase 2 creates the Serilog infrastructure only. It must not convert app-wide le
 - Keep every existing `Logger.Instance` call site in Core and UI intact during Phase 2.
 - Do not initialize the new Serilog service through the WPF app service startup path until the dependency-injection refactor establishes the service composition path.
 - Phase 5 Core platform branches log technical detection details; the workflow logs validation and fallback details; the UI maps outcomes to toasts. Paths are not subject to newly invented redaction or sanitization rules.
-- Migrate legacy logger call sites only in Phase 6.B, after Phase 6.A dependency injection work and the Phase 2 Serilog foundation are verified.
-- Retire the legacy logger compatibility path only after the Phase 6.B migration verifies equivalent Serilog behavior.
+- Phase 6.B establishes the final provider-owned lifecycle but keeps normal legacy callers temporarily.
+- Phase 6.C inventories and migrates legacy call sites in narrow batches, removes ordinary manual debug guards except for expensive/side-effecting payloads, and uses structured templates/exception overloads.
+- Retire the general-purpose legacy logger only after zero normal callers remain and verification proves equivalent behavior. Do not retain a compatibility facade.
+- Phase 6.C adds the error-only, pre-Serilog `EmergencyStartupLogWriter`; it is not a normal injected logger and creates no file during successful startup.
+
+## Phase 6.C Emergency Startup Fallback
+
+`EmergencyStartupLogWriter` exists only for provider-build failure before Serilog, settings/logging bootstrap failure, final logger/file-sink initialization failure, useful pre-Serilog archive/truncate diagnostics, and comparable unrecoverable startup failures.
+
+Its primary path is `<AppPaths.LogsDirectory>/CalradiaForge_StartupFailure.log`. It lazily performs synchronous best-effort append only on error paths, owns no persistent stream, background task, async sink, structured framework, or normal Info/Debug/Warning API, and is not exposed through ordinary service injection. After Serilog activation, callers use `Log.*` and never use the emergency writer.
+
+If the primary path cannot be written, use only a narrow safe fallback path chain. Swallow secondary failures after debugger/best-effort output; emergency-log failure must never block fatal shutdown or add another disposal/close path.
 
 ## Phased Implementation
 
 | Phase | Scope |
 |---|---|
 | 2 | Create the Serilog infrastructure files, neutral formatting, rolling file configuration, retention/archive helpers, source context support, thread enrichment, exception enrichment, and Debug-build-only debug sink configuration under `source/CalradiaForge.Core/Infra/Logging/`. Keep the legacy `Logger` file and all current call sites intact. |
-| 5.A | Establish dependency-injection composition and service initialization patterns. Do not use this phase to migrate all legacy logger callers. |
-| 5.B | Migrate legacy `Logger.Instance` call sites in controlled batches after the Serilog foundation and DI work exist. Remove repeated manual debug guards except around expensive diagnostic construction as call sites are migrated. |
+| 6.B | Establish one validated provider, `LoggingSettings` bootstrap, one DI-created/global logger, provider-only disposal, startup-only archival, fixed retention, shutdown/restart, and exception ownership. Keep normal legacy callers temporarily. |
+| 6.C | Migrate `Logger.Instance` callers in controlled batches, remove redundant guards, retire the general legacy logger after zero callers, and add `EmergencyStartupLogWriter`. |
 | Later verification | Add or expand tests for formatter output, minimum-level behavior, Release artifact exclusion of Debug-only sinks, and legacy compatibility retirement when migration is complete. |
 
 ## Verification Expectations
@@ -145,14 +184,15 @@ Phase 2 creates the Serilog infrastructure only. It must not convert app-wide le
 - Minimum level suppresses lower-priority messages.
 - Session logs retain expected lifecycle behavior or have an intentional Serilog replacement.
 - Formatter output includes the applicable timestamp, level, message, source context, thread information, properties, and exception details without value rewriting.
-- Log cleanup preserves recent files and removes old session logs according to retention rules.
+- Startup removes archives older than seven days while excluding `Latest`; shutdown leaves `Latest` available.
 - Logging callers do not intentionally pass credentials or authentication material to the logger.
 - Relevant local Steam/Bannerlord path-resolution diagnostics remain available without automatic path masking.
 - Any future performance, profiler, export, or telemetry output policy is defined separately when that feature is designed.
 - One factory invocation produces one shared logger instance; repeated factory creation and duplicate providers are detected.
-- Cleanup runs once before the active sink opens; the active file is preserved on archive failure; archive collisions never overwrite; access/move failures are recoverable and visible.
-- Shutdown waits for logging-producing work, closes exactly once, releases the active handle before archive, and does not rely on an unassigned global close.
-- The selected retention semantics, file-size behavior, minimum level, Debug-only sink exclusion, formatter output, and caller credential-boundary behavior are verified in relevant Debug/Release paths.
+- Previous `Latest` archives only at startup using last-write time with creation fallback, minute precision, no suffix, and no overwrite; rename failure follows the locked truncate/overwrite then append-compatible attempt.
+- Shutdown waits for logging-producing work, provider disposal closes exactly once, no logging occurs afterward, and no shutdown archive occurs.
+- Missing/empty/malformed settings bootstrap without circular logging; provider/logger construction failure uses the best-effort emergency writer; successful startup creates no emergency file.
+- Phase 6.C verification proves zero normal legacy callers/construction/duplicated level state, structured output and exceptions, Debug behavior after restart, one UI/Core sink, and one provider-owned close path.
 
 ## Guardrails
 
@@ -178,9 +218,6 @@ Accepted logging and credential-boundary decisions should later be migrated into
 
 ## Open Questions
 
-- Should `RetainedFileCount` mean file count or file age, and what exact retention/active-file/archive policy should replace or preserve the current cleanup?
 - Should the active file preserve the Serilog default approximate size limit, use explicit size rolling, or use another policy?
-- Should logger ownership belong to `SerilogLoggerFactory` or the DI provider?
-- Should the shared logger be assigned to `Serilog.Log.Logger`, or be directly disposed through DI?
-- What is the exact provider/logger disposal order after workflow quiescence?
-- What collision-safe archive naming and failure-reporting contract should be used?
+
+Full implementation contracts: [Phase 6.B](phase_6b_di_and_lifecycle_locked_decisions_2026-07-21.md) and [Phase 6.C](phase_6c_legacy_logger_migration_locked_decisions_2026-07-21.md).

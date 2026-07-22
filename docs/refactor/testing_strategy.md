@@ -83,7 +83,7 @@ The benchmark artifact directory is ignored because its output is machine- and w
 - No legal representative archive fixture was approved for a reusable SevenZipWrapper versus full-pipeline A/B benchmark. Generated zip fixtures cover correctness only; controlled extraction comparison remains for a later approved benchmark slice.
 - Steam multi-library auto-discovery and candidate precedence are implemented with temporary-directory metadata fixtures. Owner Steam split-library smoke testing remains a separate evidence gate.
 - BLSE allowlist enforcement remains deferred pending the owner-approved manifest. Current tests cover marker detection, platform-bin selection, copying, and executable-path configuration without claiming allowlist behavior.
-- Phase 6.A logger ownership, exact-once close, handle release, retention decisions, and archival behavior do not exist yet. Phase 4 covers the current neutral formatter; lifecycle tests remain tied to Phase 6.A implementation.
+- Phase 6.B provider/logger ownership, startup-only archival, fixed seven-day retention, shutdown/restart, and UI lifecycle behavior do not exist yet. Phase 4 covers the current neutral formatter; Phase 6.C later owns caller migration.
 - No additional analyzer package, timing assertion, performance threshold, production optimization, WPF automation, Nexus integration test, or network fixture was added.
 
 ## Benchmark Fixture Categories
@@ -174,20 +174,93 @@ Scanner/path tests must use fake temporary directories only. Required categories
 
 Tests should distinguish local module results from Workshop results and should produce structured warnings for missing or invalid Workshop paths.
 
-## Logger Lifecycle Test And Measurement Coverage
+## Phase 6.A Mod-Pipeline Tests
 
-Conventional tests must cover the planned Phase 6.A logger lifecycle without depending on wall-clock timing:
+### Complete scans
 
-- one DI factory registration and one shared logger identity;
-- factory creation exactly once, cleanup exactly once, and cleanup before the active sink opens;
-- preservation of the active file when no file exists, a destination collision occurs, an archive name cannot be resolved, or access/move fails;
-- collision-safe archive naming with no overwrite;
-- the selected retention semantics after the count-versus-age decision is approved;
-- minimum-level behavior, Debug sink exclusion from Release, and expected formatter output;
-- formatter output with message, source context, thread information, properties, and exception details;
-- exactly-once logger close/disposal, shutdown waiting for logging-producing work, and active-handle release before rename.
+- A valid local-only provider commits local modules.
+- A valid Steam local plus Workshop scan commits one combined unique snapshot.
+- A valid Workshop root containing zero modules is complete.
+- Module ordering and identity behavior are deterministic where current contracts require it.
 
-Logger benchmarks may measure construction, disabled-level calls, neutral formatter rendering, structured-property rendering, async sink throughput and backpressure, cleanup scaling, flush/close, archive move, startup contribution, and allocations. These are measurements, not permission to remove validation, diagnostics, or lifecycle waits. Use representative fixtures and report environment-sensitive filesystem results without fragile exact-time unit assertions or single-machine blocking thresholds.
+### Incomplete and failing scans
+
+- Invalid game configuration does not scan or replace the active cache.
+- An inaccessible local root does not commit.
+- An inaccessible configured Workshop root does not masquerade as zero modules.
+- Parse warnings surface without corrupting accepted state.
+- Cancellation and unexpected failure do not commit.
+- Duplicate identifiers are handled deterministically and reported.
+
+### Cache and accepted snapshot
+
+- The previous accepted snapshot remains after a rejected result.
+- Cache rotation occurs only after an approved complete result.
+- A partial scan does not emit false removals.
+- Modpack missing-module validation uses the accepted snapshot.
+- The split-root Steam fixture does not report existing Workshop modules missing.
+- Startup and explicit refresh route through the same coordinator contract and report whether commit occurred.
+
+### Lifecycle and regression
+
+- Only one active operation follows the documented admission policy.
+- Stop-admission is idempotent, cancellation reaches active work, and quiescence completes after operation completion.
+- Shutdown during active work does not call disposed UI, logging, or provider dependencies.
+- Existing Phase 5 resolver/detection tests remain valid, the solution builds, the full suite passes, and Core remains WPF-free.
+
+## Phase 6.B Composition, UI, Logging, And Lifecycle Tests
+
+### Composition and UI startup
+
+- Exactly one validated provider is built; Core/UI modules extend the same collection; no temporary provider exists; intended singleton identities and registered roots resolve.
+- `StartupUri` cannot create a second window. `MainWindow` and each retained primary page resolve exactly once.
+- EULA rejection does not resolve/show the shell. Language/EULA dialogs create fresh windows.
+- Startup notifications wait and drain FIFO only after `MainWindow.Loaded` readiness.
+
+### Settings and logging bootstrap
+
+- Missing, empty, and malformed settings regenerate defaults through the locked object flow.
+- `LoggingSettings.DebugMode` is available before one logger is constructed and assigned globally.
+- Provider disposal is the only normal close path.
+- Debug mode selects the new-process minimum level, and changing it persists immediately and prompts for restart in both directions.
+
+### Log files
+
+- Previous `Latest` archives at startup using last-write time and minute precision; missing `Latest` is a no-op; creation-time fallback works.
+- A destination collision or rename failure does not overwrite an archive and proceeds to the locked overwrite/append attempt for the new session.
+- Fixed seven-day cleanup excludes active `Latest`, ignores missing files and individual deletion failures, and shutdown leaves `Latest` available.
+
+### Shutdown, restart, and exceptions
+
+- Duplicate shutdown requests are guarded; normal close confirms before commitment; Cancel prevents shutdown.
+- A 15-second timeout offers bounded continue-waiting or controlled best-effort exit-anyway without process kill.
+- Active mod work is cancelled/quiesced through the Phase 6.A contract, and the provider disposes exactly once.
+- Restart launches the current executable only after disposal; launch failure still exits safely.
+- Dispatcher exceptions route to fatal shutdown, unobserved task exceptions are logged/observed, provider/startup failure does not show the shell, and AppDomain termination remains best effort.
+
+Manual WPF smoke coverage includes valid/first-run startup, language, EULA accept/decline, Steam with/without Workshop, manual fallback, startup mod initialization, queued toasts, retained page state, debug toggles and restart choices, normal/active-work close, both timeout choices, controlled restart, fatal dispatcher handling, `Latest` after shutdown, and prior-`Latest` archival at next startup.
+
+## Phase 6.C Logger Migration Tests
+
+### Inventory and output
+
+- Zero normal `Logger.Instance` references, zero general-purpose legacy construction, zero duplicated minimum-level state, and no normal `Log.CloseAndFlush()` remain.
+- Information mode excludes ordinary Debug events; Debug mode after restart includes them.
+- Structured properties and exception details render correctly, and UI/Core events reach the same shared file and approved sinks.
+
+### Bootstrap and lifecycle
+
+- Missing/malformed settings regenerate before Serilog without circular logging.
+- Provider-build and logger-construction failures use the best-effort emergency writer.
+- Successful startup creates no emergency file, and emergency-writer failure does not block fatal shutdown.
+- Exactly one shared logger closes once through provider disposal; no logging occurs after disposal.
+- Normal shutdown leaves `Latest`, next startup archives it correctly, and restart applies persisted `DebugMode`.
+
+### Regression
+
+- The solution builds, all tests and targeted logging smoke tests pass, Phase 5/6.A behavior remains unchanged, and no WPF reference enters Core.
+
+Logger benchmarks may measure construction, disabled-level calls, neutral formatter rendering, structured properties, async sink behavior, startup archive/cleanup scaling, provider-owned flush/close, startup contribution, and allocations. These measurements do not authorize lifecycle or file-policy changes.
 
 ## Phased Implementation
 
@@ -195,7 +268,11 @@ Logger benchmarks may measure construction, disabled-level calls, neutral format
 |---|---|---|
 | 1-3 | Establish initial Core correctness coverage around changed behavior. | Preserve completed Phase 1 history and add tests as safety work is implemented. |
 | 4 | Add Core unit/regression tests, integration-style filesystem tests, reusable benchmark fixtures, benchmark harness infrastructure, analyzer/measurement readiness, and provisional baselines. | Separate correctness tests from benchmarks. Do not claim final post-refactor performance results. |
-| 5-8 | Expand tests and benchmark cases as detection, DI, logging, workflow, and MVVM changes alter stable boundaries. Production Phase 5 changes precede migration of obsolete tests. | Verify split-library behavior, one-provider/singleton rules, and use manual UI checks where required. |
+| 5 | Preserve and expand implemented detection/path/scanner regressions. | Keep split-library, no-Workshop, queue, and Novus coverage. |
+| 6.A | Add coordinator completeness, commit, accepted-snapshot, startup/refresh, and quiescence tests. | Preserve Phase 5 and Core WPF-free behavior. |
+| 6.B | Add one-provider, retained UI, settings/bootstrap, startup-archive, shutdown/restart/exception, and manual WPF coverage. | Prove one provider-owned logger close path and retained `Latest`. |
+| 6.C | Add caller-inventory, structured output, emergency writer, and one-close-path regression tests. | Remove the general legacy logger only after zero normal callers. |
+| 7-8 | Expand generalized workflow and MVVM tests beyond the 6.A foundation. | Preserve coordinator ownership and use manual UI checks where required. |
 | 9 | Run the report-only performance audit and capture authoritative post-Phase-8 baselines. | Do not edit production code. Stop for developer decisions. |
 | 10 | Test and benchmark explicitly approved `PERF-NNN` findings. | Compare before/after under comparable conditions and record ineffective or harmful changes. |
 | 11 | Run the full bounded build/test/benchmark/analyzer/architecture/manual-smoke loop. | Update the same audit report and stop when practical criteria are met. |

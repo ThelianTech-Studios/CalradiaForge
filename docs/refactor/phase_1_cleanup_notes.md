@@ -37,11 +37,11 @@ Record the low-risk cleanup performed for Phase 1 and the items intentionally de
 - Populated the UI page rename review checklist with current page inventory only.
 - Updated the documentation handoff checklist with Phase 1 planning-artifact status.
 
-## Steam Workshop Scanner Known Issue
+## Historical Phase 1 Steam Workshop Scanner Known Issue
 
-The Steam Workshop scanner/path-resolution report remains unresolved.
+The Steam Workshop scanner/path-resolution report was unresolved when Phase 1 completed. Phase 5 later implemented and automatically verified the detection/path repair; owner real-Steam/WPF smoke verification remains a release-acceptance gate. Phase 6.A does not reopen Steam discovery. It adds the separate mod-pipeline completeness, commit, accepted-snapshot, and quiescence foundation.
 
-Current ownership:
+Phase 1-era ownership:
 
 - `AppConfigSettings.IsGameFromSteam`
 - `AppConfigSettings.SteamWorkshopFolderPath`
@@ -52,7 +52,7 @@ Current ownership:
 - `ModService.RefreshAsync`
 - `ModScanner.ScanForModsAsync`
 
-Current source observation:
+Phase 1-era source observation:
 
 - Bannerlord AppID `261550` is already present in `GamePathsHelper`.
 - Steam auto-detection composes the Workshop path under the Steam client registry path.
@@ -75,10 +75,12 @@ Deferred investigation focus:
 | Broad README encoding cleanup | Larger documentation encoding pass outside Phase 1 source cleanup. |
 | `TODO_v1.md` Nexus roadmap wording | Requires owner decision on roadmap wording and timing. |
 | Version source-of-truth implementation | Deferred to master Phase 12; owner approval is needed before major/minor changes. |
-| Platform analyzer warnings | Phase 6.A adapter/platform-targeting work. |
+| Platform analyzer warnings | Later analyzer/performance work; not Phase 6.A. |
 | Archive, BLSE, persistence, logger lifecycle, DI, MVVM, and result/workflow changes | Explicitly excluded from Phase 1. |
-| Steam Workshop scanner fix | Requires scoped implementation and verification in a later phase. |
+| Steam Workshop detection/path fix | Deferred by Phase 1 and later implemented with automated verification in Phase 5; owner real-Steam/WPF smoke remains pending. |
 | UI page `.xaml` renames | Requires owner-approved rename map. |
+
+Historical handoff: Phase 5 owns the implemented platform/path workflow. Phase 6.A is limited to the mod-pipeline coordinator, Phase 6.B owns DI/application lifecycle and final logger ownership, and Phase 6.C owns broad legacy logger migration.
 
 ## Verification Expectation
 

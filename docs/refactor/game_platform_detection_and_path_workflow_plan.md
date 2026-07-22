@@ -2,13 +2,15 @@
 
 ## 1. Purpose and status
 
-**Status: planned.** Phase 5 repairs the game-platform detection and path workflow so a valid Bannerlord installation can be recognized independently of Workshop availability. It is pending production implementation, production integration, test migration, build verification, and owner Steam split-library smoke verification. This document is the sole detailed Phase 5 authority; it does not authorize implementation by itself.
+**Status: automated implementation verification complete; owner real-Steam/WPF smoke verification and release approval remain pending.** Phase 5 repaired the game-platform detection and path workflow so a valid Bannerlord installation can be recognized independently of Workshop availability. The detailed contract and rationale remain here as the Phase 5 implementation record; current source and the July 16 completion audit prove the implemented state.
 
 ## 2. Authority and source-of-truth rules
 
-Current source and the current source-state audit determine what exists. The locked decisions in this document determine the future Phase 5 architecture. Historical prompts, audits, and prior refactor text are evidence only and must not upgrade planned work into implemented behavior. Preserve the UI-decides-when/Core-decides-how boundary and keep Core WPF-free.
+Current source and the newest source-state/completion audits determine what exists. The locked decisions in this document record the implemented Phase 5 contract and continue to govern regression expectations. Historical prompts and older audits are evidence only. Preserve the UI-decides-when/Core-decides-how boundary and keep Core WPF-free.
 
-## 3. Audited current source state
+## 3. Historical pre-implementation source state
+
+The following bullets record the source state that Phase 5 was designed to replace. They are retained as root-cause evidence, not as current implementation claims.
 
 - `GamePathsHelper` remains the active detection owner. Its legacy automatic flow tries Steam, conditionally tries an unsupported-platform branch, and then classifies failure as `StandAlone`.
 - The legacy Steam branch reads the main client root from the registry and assumes both the game and Workshop content are below that root.
@@ -125,13 +127,13 @@ Production comes first: provider semantics, resolver rewrite, Steam integration,
 
 Use temporary-directory metadata fixtures for same-library and alternate-library installs, primary and fallback Workshop cases, no Workshop, malformed VDF/ACF, wrong App ID, missing `installdir`, duplicate/inaccessible libraries, deterministic fallback, no drive-wide search, and no false `StandAlone`. Cover direct commits/no partial commits, BLSE clearing, total failure, toggle ordering, manual provider inference, manual Workshop validation, startup reuse/re-detection, queue lifecycle, scan/cache safety, and the 8-local plus 3-Workshop equals 11 unique-module fixture. After contracts exist, confirm a Novus preset containing existing Workshop modules is not reported missing. Owner split-library smoke testing remains a separate evidence gate.
 
-## 25. Documentation alignment after implementation
+## 25. Documentation alignment and remaining owner gate
 
-After production and tests reflect finalized behavior, align the affected architecture/refactor docs and write a completion audit covering the original defect, changed files, final architecture, builds, focused/full tests, unsupported-platform limitations, deviations, and remaining work. Historical audits remain unchanged. This planning task does not claim those future actions are complete.
+Production integration, test migration, automated build/test verification, and the Phase 5 completion audit are complete. Canonical release acceptance still requires owner real-Steam/WPF smoke verification. Historical audits remain unchanged, and Phase 6 work must not recast this implemented prerequisite as planned or reopen its detection architecture.
 
 ## 26. Explicit exclusions
 
-Phase 5 excludes full DI migration, broad adapters, MVVM rewrite, generic result contracts, general scanner-result/cache-transaction/load-order redesign, Nexus work, installer/extractor changes, logger-format redesign, secret redaction/sanitization, broad performance work, real-world Epic/GamePass/GOG support claims, and broad source reorganization. Phase 6.A consumes the finalized Phase 5 design; Phase 6.B retains broad logger migration.
+Phase 5 excludes full DI migration, broad adapters, MVVM rewrite, generic result contracts, general scanner-result/cache-transaction/load-order redesign, Nexus work, installer/extractor changes, logger-format redesign, secret redaction/sanitization, broad performance work, real-world Epic/GamePass/GOG support claims, and broad source reorganization. Phase 6.A consumes the finalized Phase 5 design; Phase 6.B owns DI/application lifecycle and final logger construction; Phase 6.C owns broad legacy logger migration.
 
 ## 27. Stop conditions
 
@@ -162,9 +164,9 @@ Stop and report a bounded finding if current Steam resolver contracts materially
 | Novus preset with existing Workshop modules | No false missing-module result. |
 | Window not loaded / loaded | Notification remains queued / drains FIFO after readiness. |
 
-## 29. Completion and changelog rules
+## 29. Historical implementation and closeout sequence
 
-Future implementation follows this exact order:
+The following completed sequence is retained as implementation-history and regression context. Do not rerun Phase 5 as part of Phase 6. Owner real-Steam/WPF smoke verification in step 27 remains the outstanding release-acceptance action.
 
 1. Re-read the source-state audit and this detailed plan.
 2. Inspect current source and working-tree changes.
@@ -197,4 +199,4 @@ Future implementation follows this exact order:
 29. Write the Phase 5 completion audit.
 30. Update the changelog only after verification.
 
-This documentation-only repair does not change the changelog.
+This documentation-only reconciliation does not change the changelog. Phase 6.A consumes finalized configured platform/path outcomes without redesigning detection, Phase 6.B later registers lifecycle-managed services in the one provider, and Phase 6.C does not own detection.

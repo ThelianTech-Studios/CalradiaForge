@@ -118,6 +118,10 @@ Documentation-only Phase 9 audit/report work usually does not require an applica
 
 Changelog and release documentation must distinguish measured, implemented, and verified performance improvements from audit recommendations. Rejected, deferred, inconclusive, reverted, theoretical, and unverified findings are not shipped changes.
 
+## Phase 6 Release Boundary
+
+This documentation-only reconciliation does not require an application version bump or changelog entry. Do not issue a `Public Release` between incomplete Phase 6.B and 6.C states when the final provider-owned Serilog lifecycle coexists with unmigrated general-purpose legacy callers. Release documentation must not claim logging migration complete until Phase 6.C proves zero normal legacy callers, the emergency startup fallback, and provider disposal as the sole normal close path. Internal development builds continue to use the existing `Internal` classification rules.
+
 ## Local Implementation Steps
 
 | Step | Work | Verification |

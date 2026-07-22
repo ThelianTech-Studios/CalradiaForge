@@ -4,7 +4,7 @@
 
 Replace static application service construction and access over time with explicit composition using `Microsoft.Extensions.DependencyInjection`, while preserving the UI/Core/Nexus boundaries and staging legacy logger call-site migration after the DI foundation is verified.
 
-This document defines the locked Phase 6.A composition model. It is a planned architecture and does not claim that DI is implemented in the current source tree.
+This document defines the locked Phase 6.B composition and application-lifecycle model. Phase 6.A supplies the coordinator prerequisite, and Phase 6.C later migrates normal legacy logger callers. This is planned architecture and does not claim DI is implemented in current source.
 
 ## Current Source Observations
 
@@ -17,134 +17,173 @@ This document defines the locked Phase 6.A composition model. It is a planned ar
 - Current `App.OnExit` requests installer cancellation but does not await fire-and-forget install work before shutdown. This plan must not describe current shutdown as quiescent.
 - `CalradiaForge.Nexus` is a reserved boundary and should gain registrations only when Nexus services exist.
 
-## Locked Composition Model
+## Phase 6.B Composition Model
 
-The application will use one `IServiceCollection` and one application-level `ServiceProvider` for the process lifetime.
+Phase 6.A first establishes `ModPipelineCoordinator`; Phase 6.B then builds one application graph around that finalized boundary. The architectural rule is:
+
+```text
+DI owns object construction and dependency delivery.
+ApplicationStartupCoordinator owns ordered startup behavior.
+ApplicationShutdownCoordinator owns ordered quiescence and persistence behavior.
+App owns the root provider and final WPF/process lifecycle.
+```
+
+`App.OnStartup` is the sole WPF startup entry. Remove `StartupUri` when this model activates. `App.xaml.cs` does not manually construct or load normal services, pages, or `MainWindow`.
 
 ```mermaid
 flowchart TD
-    A[App.xaml.cs startup] --> B[Create IServiceCollection]
-    B --> C[AddCoreServices]
-    B --> D[AddUiServices]
-    C --> E[Build one ServiceProvider]
-    D --> E
-    E --> F[Resolve MainWindow]
-    F --> G[Run application]
-    G --> H[Dispose ServiceProvider on exit]
+    A[App.OnStartup] --> B[Create one IServiceCollection]
+    B --> C[Register App as IApplicationLifetime]
+    B --> D[AddCalradiaForgeCore]
+    B --> E[AddCalradiaForgeUi]
+    D --> F[Build one validated root provider]
+    E --> F
+    F --> G[Resolve ApplicationStartupCoordinator]
+    G --> H[Run ordered startup gates]
+    H --> I[Deferred MainWindow resolution and display]
 ```
 
-Required rules:
+Only `App` calls `BuildServiceProvider()`, exactly once, with validation in all builds:
 
-- `App.xaml.cs` is the application composition root.
-- Configuration bootstrap occurs before registrations that require loaded settings.
-- Startup creates one `IServiceCollection`.
-- `AddCoreServices(...)` and `AddUiServices(...)` contribute registrations to that same collection.
-- Startup builds exactly one application-level `ServiceProvider`.
-- The provider resolves `MainWindow` and its constructor dependencies.
-- Provider disposal occurs during application shutdown.
-- Separate Core and UI providers are prohibited because they can duplicate singleton instances and split application state.
-- The root provider must not become a hidden service locator used by arbitrary pages, controls, or Core services.
+```csharp
+new ServiceProviderOptions
+{
+    ValidateOnBuild = true,
+    ValidateScopes = true
+}
+```
+
+Core and UI never build or return another provider. Registration modules never resolve during registration. No temporary provider, global `App.Services`, service locator, or custom WPF scope is permitted. Core may reference DI abstractions, but remains WPF-free.
 
 ## Registration Ownership
 
-Core and UI registration modules are separate, but they operate on the same collection.
-
 ### Core Registration Ownership
 
-Core registration may own:
-
-- Configuration and typed settings.
-- Serilog infrastructure and the shared logger.
-- Core application services and stateful data helpers.
-- Core infrastructure and platform-abstraction implementations that belong in Core.
-
-Core registration must remain WPF-free. It must not register windows, pages, ViewModels, dialogs, toast services, or other WPF-specific types.
+Core registration contributes only Core services and infrastructure to the shared collection, including configuration/settings, Phase 5 services, `ModPipelineCoordinator`, persistence/data helpers, and the shared Serilog factory/instance. It must not register WPF windows, pages, dialogs, navigation, toast controls, or UI coordinators.
 
 ### UI Registration Ownership
 
-UI registration owns:
-
-- `MainWindow` and other windows.
-- Pages and ViewModels.
-- Dialog and file-picker services.
-- Toast, navigation, and other UI-only services.
-- WPF-specific platform implementations.
+UI registration contributes WPF windows/pages, dialog services, toast/navigation/shell services, `ApplicationStartupCoordinator`, `ApplicationShutdownCoordinator`, `StartupNotificationDrainCoordinator`, and the deferred typed `MainWindow` factory/provider.
 
 ### Nexus Registration Ownership
 
-`CalradiaForge.Nexus` remains a separate boundary. Future Nexus services may contribute a Nexus-owned registration module when implementation exists. Nexus authentication, networking, API calls, downloader mechanics, and transport must not move into Core.
+`CalradiaForge.Nexus` remains a separate boundary. Future Nexus auth, networking, API, downloader, and transport registrations remain Nexus-owned and do not move into Core.
 
-## App.xaml.cs Responsibility
+## Lifetime Policy
 
-`App.xaml.cs` remains responsible for orchestration rather than individual service construction:
+Use singleton by default for application-wide state and infrastructure. Strong singleton defaults include `ConfigFileManager`, `AppSettings`, `LoggingSettings`, `ModPipelineCoordinator`, retained mod state, Phase 5 detection services, the startup notification queue, translation services, toast/navigation/shell services, `ApplicationStartupCoordinator`, `ApplicationShutdownCoordinator`, `StartupNotificationDrainCoordinator`, `MainWindow`, each retained primary page, and the shared Serilog logger.
 
-1. Load and bootstrap configuration.
-2. Create the one `IServiceCollection`.
-3. Call Core and UI registration methods.
-4. Build the one `ServiceProvider`.
-5. Resolve and show `MainWindow`.
-6. Preserve startup exception handling and diagnostics.
-7. Dispose the provider during shutdown.
+Use transients only for genuinely short-lived operation-local objects with no shared mutable state, event ownership, workflow ownership, or shutdown responsibility. Dialog-service contracts are singleton, but each invocation creates a fresh WPF dialog window. Do not add custom scopes.
 
-When DI-resolved startup becomes active, remove or replace `StartupUri` in `App.xaml`. WPF must not construct a second unmanaged `MainWindow` instance. Migrated windows, pages, controls, and ViewModels should receive dependencies through constructors instead of reading static `App.*` service properties.
+## Preserve Current Page Lifetime
 
-## Serilog Relationship
+Resolve one singleton `MainWindow`, construct each primary page once through DI, and retain/reuse those page instances. Constructor injection replaces static `App.*` service access while preserving current code-behind, page-owned state, `DataContext`, bindings, navigation refresh, and `Loaded`/`Unloaded` behavior. Do not add transient navigation pages, navigation scopes, a page catalog, or broad ViewModel extraction; those belong to Phase 8.
 
-`SerilogLoggerFactory` is planned as an application singleton. The current source exposes non-retaining `Create()`; `Build()` is only a possible future naming/contract target. Phase 6.A must explicitly decide whether the factory owns and disposes the retained logger or whether DI owns disposal of the logger returned by the factory. Either model must yield one shared logger and exactly one disposal path.
+Legitimate WPF framework statics remain allowed: `Application.Current.Dispatcher`, `Application.Current.Shutdown()`, `Application.Current.Resources`, and `Application.Current.MainWindow`. Do not add static compatibility service properties. The general `Logger.Instance` remains temporarily through Phase 6.B and is removed in 6.C.
+
+## Settings Bootstrap And Naming
+
+Planned names and responsibilities are:
+
+| Current source | Phase 6.B target | Responsibility |
+|---|---|---|
+| `AppConfig` | `ConfigFileManager` | Low-level custom JSON path/load/save manager. |
+| `AppConfigSettings` | `AppSettings` | Application-facing typed non-secret settings object. |
+| `AppConfigSettings.DebugMode` | `LoggingSettings.DebugMode` | Separate persisted early logging preference. |
+| Configurable retention setting | No replacement | Archived-log retention is fixed at seven days. |
+
+For each settings object: provide its path and applicable instance/type through `ConfigFileManager`; load a valid existing object; otherwise create an empty object for missing, empty, or malformed content; let that object populate its property defaults; save it through the same manager; persist later property changes through the manager. Malformed JSON regenerates defaults without backup. Unsupported filesystem/device/access failures may enter fatal startup handling.
+
+Do not add a central defaults initializer, generic `InitializeDefaults()` DI factories, a second current-settings copy, `LoggingSessionState`, `DebugModeAtStartup`, a pending-restart flag, alternate storage/in-memory mode, or a generic Host/configuration stack.
+
+## Logger Bootstrap And Ownership
 
 ```text
-App.xaml.cs
-  -> AddCoreServices()
-      -> SerilogLoggerFactory singleton
-           -> planned Build()/current Create()
-               -> shared Serilog.ILogger singleton
+ConfigFileManager loads LoggingSettings
+→ LoggingSettings.DebugMode is available
+→ startup log-file lifecycle runs
+→ one Serilog logger is constructed
+→ the same logger is assigned to Serilog.Log.Logger
+→ ApplicationStartupCoordinator may execute Log.* calls
 ```
 
-Required behavior:
+`ApplicationStartupCoordinator` depends explicitly on `Serilog.ILogger` so resolving it forces activation. `App` does not separately resolve the logger. Bootstrap configuration cannot depend on the final logger.
 
-- Register `SerilogLoggerFactory` once as a singleton.
-- Register the shared `Serilog.ILogger` once as a singleton resolved through the factory's single retained result after the final contract is chosen.
-- Do not call `Create()`/`Build()` repeatedly, create loggers from multiple registration factories, build logger instances through separate providers, or hide logger construction outside the composition root.
-- Choose and document one disposal owner: factory-owned disposal or DI/provider-owned disposal. Prohibit both, and do not rely on `Serilog.Log.CloseAndFlush()` unless the shared instance is intentionally assigned to `Serilog.Log.Logger` and no direct disposal path remains.
-- Perform retention cleanup once during startup before opening the active file. The current per-factory cleanup is an observation to replace, not a lifecycle guarantee.
-- On shutdown, stop new logging-producing work, request cancellation, await or confirm active workflow completion, dispose/stop log-producing services, close the logger exactly once, confirm the active handle is released, attempt archive, and then dispose remaining provider-owned resources according to the selected ownership model.
-- The archive helper contract must return false for no active file, an unresolvable collision, or move/access failure; it must never overwrite an existing archive, must use collision-safe deterministic naming, and must preserve the active file when archiving fails.
-- Phase 6.A establishes construction and lifetime.
-- Phase 6.B migrates legacy logger call sites in controlled batches after the Serilog foundation and DI composition are verified.
+One DI singleton factory creates the shared logger and assigns the same instance globally. Global `Log.*` is the normal post-bootstrap API and explicit exception to the no-global-services rule. `App` owns the provider; DI owns the logger; provider disposal is the sole normal close. No second pipeline, consumer disposal, separate `Log.CloseAndFlush()`, or post-disposal logging is allowed.
 
-## Initial Lifetime Direction
+At startup, `LoggingSettings.DebugMode` selects Debug or Information for the entire process. Changes persist immediately and prompt for restart in both directions. Accept uses the app-owned restart pipeline; decline keeps the persisted value and current logger unchanged until next start. No runtime switching or rollback is permitted.
 
-| Service category | Initial lifetime |
-|---|---|
-| `AppConfig`, `AppConfigSettings`, `SerilogLoggerFactory`, shared `Serilog.ILogger` | Singleton |
-| Stateful Core application services and app-scoped data helpers | Singleton |
-| Platform adapters without per-operation state | Singleton |
-| Toast and other app-wide UI services | Singleton |
-| Windows, pages, and ViewModels | Transient unless preserved state requires a documented exception |
-| Operation-specific state or future scoped workflows | Explicitly designed later; do not introduce scopes without a demonstrated lifecycle need |
+## Startup-Only Log File Lifecycle
 
-Any lifetime exception must document state ownership, state-retention behavior, thread-safety, disposal ownership, navigation implications, and why the default lifetime is unsuitable. Lifetime changes must not be made solely to improve synthetic benchmark output.
+Shutdown quiesces the app, disposes the provider/logger, and leaves `CalradiaForge_Latest.log` available. It does not archive, rename, move, truncate, or delete `Latest`.
 
-## Logger Lifecycle Decision Register
+At next startup, before opening the new logger: no-op if `Latest` is absent; otherwise use last-write time with creation-time fallback and rename to `CalradiaForge_yyyy-MM-dd_HH-mm.log`; use minute precision, no suffix, and no overwrite. Collision/rename failure is nonfatal, leaves existing archives untouched, and records only best-effort pre-Serilog diagnostics. Attempt to truncate/overwrite `Latest`; if that fails, allow append-compatible sink opening. Final logger initialization failure enters bootstrap-failure handling. Do not invent recovery filenames.
 
-The following decisions remain intentionally unresolved until implementation review:
+After archive handling and before opening the sink, delete archived CalradiaForge logs older than seven days. Exclude `Latest`; ignore missing files and individual deletion failures.
 
-- Whether the factory retains and disposes the logger or DI retains and disposes the logger returned by the factory.
-- Whether the shared logger is assigned to global `Serilog.Log.Logger` or remains directly DI-owned and disposed.
-- The exact provider/logger disposal order after logging-producing workflows are quiescent.
-- The archive filename timestamp/sequence format and collision strategy.
-- Whether the retention setting means file count or file age, and how existing active/archived files are excluded.
-- Whether the active file retains the Serilog default approximate size limit, uses explicit size rolling, or adopts another owner-approved policy.
+## Startup Coordinator And Deferred Shell
 
-No unresolved option is an implemented architecture decision.
+Use one DI-resolved `ApplicationStartupCoordinator` and a narrow typed deferred `MainWindow` factory/provider. Do not constructor-inject `MainWindow` into the coordinator.
 
-## Logger Lifecycle Verification Cases
+The locked order is:
 
-Phase 6.A implementation must cover one factory invocation, one logger identity, cleanup once and before sink open, no duplicate providers, DI/global ownership consistency, shutdown quiescence, exactly-once close/disposal, active-handle release before rename, no-overwrite archive collisions, no-file behavior, access/move failure preservation, and provider disposal without a second logger close. Phase 6.B should review migrated callers and structured properties so credential-owning components do not intentionally pass credentials or authentication material to logs.
+1. `App` creates the collection, registers its `IApplicationLifetime`, calls Core/UI registration, and builds the validated provider.
+2. Resolve `ApplicationStartupCoordinator`; settings and logging dependencies activate first.
+3. Log startup and initialize translation infrastructure.
+4. Run first-launch language selection.
+5. Run the EULA gate.
+6. Run Phase 5 game detection/configuration validation.
+7. Run Phase 6.A mod-pipeline initialization.
+8. Load/validate modpack state against the accepted snapshot.
+9. Start the notification drain waiting for UI readiness.
+10. Resolve `MainWindow` and retained pages for the first time.
+11. Assign `Application.Current.MainWindow` and show it.
+12. `MainWindow.Loaded` signals toast-host readiness.
+13. Drain queued startup notifications FIFO.
+
+EULA rejection or fatal startup must not resolve/show the shell. Constructors capture dependencies; explicit methods perform behavior except for the locked settings object load/default/save flow.
+
+## Startup Notifications And Dialogs
+
+Keep one Core-safe `StartupNotificationQueue` singleton and add one UI `StartupNotificationDrainCoordinator` singleton. The drain coordinator owns its one-time task, readiness wait, cancellation, Core-to-UI mapping, errors, and completion. `MainWindow` only signals readiness. Use FIFO with no polling, arbitrary delay, or dedicated thread; release waiters/subscriptions when complete.
+
+Use singleton application-level dialog services for language selection, EULA, shutdown confirmation, restart confirmation, delayed-shutdown `Continue Waiting / Exit Anyway`, and similar modal workflows. Each call creates a fresh dialog window. Coordinators depend on narrow contracts, not concrete windows or the root provider.
+
+## App-Owned Lifecycle And Explicit Async Shutdown
+
+The existing WPF `App` implements and registers a narrow lifecycle interface:
+
+```csharp
+public interface IApplicationLifetime
+{
+    Task RequestShutdownAsync(ShutdownReason reason);
+    Task RequestRestartAsync(RestartReason reason);
+}
+
+services.AddSingleton<IApplicationLifetime>(this);
+```
+
+DI does not construct or dispose `App`. The interface exposes no provider, windows, settings, logger internals, or general service access.
+
+Use `ShutdownMode = OnExplicitShutdown`. `MainWindow` close is intercepted and never disposes the provider. Normal close confirms before commitment; Cancel cancels the close, while OK enters one guarded irreversible shutdown path.
+
+The ordered path stops new workflow admission, requests cancellation, awaits Phase 6.A quiescence, stops notification draining, persists authorized state, returns to `App`, asynchronously disposes the provider/logger once, leaves `Latest`, and calls WPF shutdown. `OnExit` is fallback-only. Known lifecycle owners are explicit constructor dependencies; no generic participant registry, exit-event cleanup architecture, or disposal-as-quiescence shortcut is allowed.
+
+Interactive shutdown has a 15-second cooperative budget. If work remains, offer another bounded 15-second `Continue Waiting` interval or controlled best-effort `Exit Anyway`. Do not wait indefinitely without renewed choice and do not use `Environment.Exit`, process kill, or fire-and-forget shutdown. Fatal/noninteractive paths use bounded best effort without the prompt. Collect failures so one stage does not skip unrelated safe work.
+
+Restart uses the same confirmation/quiescence/persistence/disposal path and starts the current executable only after provider disposal and file release. Launch failure after disposal still exits the old app.
+
+## Global Exception Policy
+
+`App.xaml.cs` owns global subscriptions and the top-level startup boundary. Before provider/logger availability, use transitional best-effort diagnostics; when the provider exists, route fatal startup failure through controlled shutdown and never show the shell. Dispatcher exceptions are fatal and may be marked handled only long enough to log/present and shut down without resuming. Unobserved task exceptions are logged, observed, and continue by default, while app-owned tasks remain explicitly awaited. AppDomain termination uses best-effort logging/cleanup only when safe and does not assume interactive timeout prompts.
+
+## Phase 6.B Transitional Logger Boundary
+
+Do not broadly migrate `Logger.Instance` callers or create the final emergency writer in Phase 6.B. Phase 6.C migrates normal callers, removes the general-purpose legacy logger, and introduces `EmergencyStartupLogWriter`. No public release occurs between inconsistent transitional subphases.
 
 ## Steam And Bannerlord Path Adapter Planning
 
-Phase 5 production detection integrates `ISteamClientRootProvider`, `ISteamInstallationResolver`, `SteamInstallationResolver`, and the related Steam metadata types through `GamePlatformDetectionResolver` and `GameDetectionService`. Phase 6.A later registers these finalized dependencies and the existing notification queue rather than redesigning them or creating competing adapters.
+Phase 5 production detection integrates `ISteamClientRootProvider`, `ISteamInstallationResolver`, `SteamInstallationResolver`, and related Steam metadata through `GamePlatformDetectionResolver` and `GameDetectionService`. Phase 6.A consumes that finalized behavior through `ModPipelineCoordinator`; Phase 6.B registers the finalized services and notification queue. Neither phase redesigns detection or creates competing adapters.
 
 Adapter planning should support:
 
@@ -162,8 +201,9 @@ Adapter planning should support:
 
 | Phase | Work | Verification |
 |---|---|---|
-| 6.A | Add the approved DI package; create Core and UI registration modules; compose one collection and one provider; resolve `MainWindow`; transition away from `StartupUri`; establish lifetimes, logger ownership, startup cleanup, shutdown quiescence, exact-once close, archive, disposal, and test replacements. Consume Phase 5 platform dependencies without redesigning them. | Build; startup/shutdown smoke test; singleton identity; factory count; cleanup timing; handle release; archive collision/failure; constructor resolution; duplicate-window check; provider disposal; Core boundary; dependency substitution. |
-| 6.B | Migrate legacy logger call sites in staged batches after the Phase 2 Serilog foundation and Phase 6.A composition are verified, including caller and structured-property review. | Build; logging smoke tests; formatter/minimum-level checks; equivalent-behavior review; caller credential-boundary review. |
+| 6.A | Implement the Core `ModPipelineCoordinator`, accepted snapshot, commit gating, and awaitable quiescence contract. | Focused Core pipeline/snapshot/quiescence tests; Phase 5 regression. |
+| 6.B | Add the DI package; create Core/UI registration modules; build one validated provider; implement settings bootstrap, startup coordinator/deferred shell, retained lifetimes, one Serilog pipeline, startup-only archive, fixed retention, notifications/dialogs, shutdown/restart, and global exception handling. | Composition, UI startup, settings/logging, file lifecycle, shutdown/restart, exception, full-suite, Core-boundary, and manual WPF verification. |
+| 6.C | Migrate normal legacy logger callers, retire the general logger after zero callers, and add `EmergencyStartupLogWriter`. | Batch builds/tests, caller inventory, output/bootstrap/lifecycle tests, full regression. |
 
 ## Performance Verification Relationship
 
@@ -175,10 +215,10 @@ Later performance phases should measure this architecture rather than redesign i
 - Repeated logger construction.
 - Startup work that can safely be deferred.
 - Disposal and lifetime leaks.
-- Transient UI construction churn where navigation creates measurable repeated work.
+- Retained shell/page construction cost and later Phase 8 navigation lifetime alternatives where separately approved.
 - Static `App` access or ad hoc provider resolution that bypasses the intended graph.
 
-Correctness checks for one provider, singleton identity, DI-resolved `MainWindow`, and provider disposal are not substitutes for timing benchmarks.
+Correctness checks for one provider, singleton identity, startup-coordinator/deferred `MainWindow` resolution, and provider disposal are not substitutes for timing benchmarks.
 
 ## Guardrails
 
@@ -187,6 +227,8 @@ Correctness checks for one provider, singleton identity, DI-resolved `MainWindow
 - Do not use the provider as a hidden service locator.
 - Do not register WPF types from Core.
 - Do not retain `StartupUri` when `MainWindow` is resolved and shown through DI.
+- Do not let `App` resolve/show `MainWindow` directly; resolve `ApplicationStartupCoordinator` and preserve its gates and deferred shell construction.
+- Do not add custom scopes or make retained windows/pages transient in Phase 6.B.
 - Do not register multiple independently built `Serilog.ILogger` instances, repeat factory creation, or introduce multiple close/disposal paths.
 - Do not change a service lifetime without documenting the required rationale.
 - Do not move Nexus networking, authentication, downloader mechanics, or transport into Core.
@@ -197,13 +239,16 @@ Correctness checks for one provider, singleton identity, DI-resolved `MainWindow
 ## Verification Expectations
 
 - `dotnet build source/CalradiaForge.slnx` succeeds.
-- Startup uses one `IServiceCollection` and one application-level `ServiceProvider`.
-- `AddCoreServices(...)` and `AddUiServices(...)` contribute to the same collection.
-- `MainWindow` is resolved exactly once through DI when DI startup is active.
+- `App.OnStartup` uses one `IServiceCollection` and one validated application-level `ServiceProvider`.
+- `AddCalradiaForgeCore(...)` and `AddCalradiaForgeUi(...)` contribute to the same collection.
+- `ApplicationStartupCoordinator` is the initial resolved root; `MainWindow` and retained pages resolve exactly once after language/EULA, Phase 5, Phase 6.A, modpack, and notification-drain gates.
 - WPF does not also construct `MainWindow` through `StartupUri`.
 - Intended singleton services resolve to the same instance for all consumers.
 - The planned factory contract supplies one retained shared `Serilog.ILogger` instance; current source exposes non-retaining `Create()` and must not be documented as already migrated.
-- Cleanup occurs once before active-file open; shutdown quiesces log-producing work, closes exactly once, releases the active handle before archive, never overwrites on collision, preserves the active file on archive failure, and disposes the provider without a second logger close.
+- Previous `Latest` archives only at startup using last-write/creation fallback, minute precision, no suffix, and no overwrite; seven-day cleanup excludes `Latest`; shutdown quiesces work, provider disposal closes once, and leaves `Latest` available.
+- Missing/empty/malformed settings follow the object-based default/save flow; `LoggingSettings.DebugMode` precedes logger creation; debug changes persist and prompt restart in both directions.
+- Dialog services create fresh windows; startup notifications wait and drain FIFO after readiness.
+- Guarded confirmation, bounded timeout choices, controlled restart, and classified global exceptions follow the locked Phase 6.B contract.
 - Migrated consumers use constructor injection rather than static `App.*` access.
 - Tests can replace key services and adapters.
 - Core remains WPF-free.
@@ -215,9 +260,6 @@ Accepted composition and platform-adapter decisions should later be migrated int
 ## Open Questions
 
 - Which platform adapters should be implemented first: dialogs, explorer/URL launch, registry/game detection, or filesystem?
-- Phase 5 owns Workshop precedence: Bannerlord library first, then one deterministic alternate fallback with valid Workshop-manifest evidence preferred, otherwise no Workshop path.
-- Phase 5 owns manual Workshop behavior: valid startup reuse preserves the existing value, automatic detection replaces or clears it, and manual game selection clears it without auto-resolution.
-- Which specific UI services require preserved state rather than the transient default?
 
 ## Out Of Scope
 
@@ -226,3 +268,5 @@ Accepted composition and platform-adapter decisions should later be migrated int
 - Rewriting services only to satisfy DI style.
 - Moving WPF references into Core.
 - Moving networking, authentication, downloader mechanics, or Nexus transport into Core.
+
+The complete implementation contract is [Phase 6.B locked decisions](phase_6b_di_and_lifecycle_locked_decisions_2026-07-21.md).

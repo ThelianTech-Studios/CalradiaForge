@@ -12,7 +12,7 @@ Move the WPF UI from page-heavy code-behind toward staged MVVM without breaking 
 - `ModpacksPage.xaml.cs` uses `ModpackService.CurrentLoadOrderEntries` and keeps editable working-copy state in code-behind.
 - `SettingsPage.xaml.cs` follows "UI decides when, Core decides how" for path selection, validation, redetect, and unblock actions, but still owns page state directly.
 
-## Target Direction
+## Deferred Phase 8 Target Direction
 
 - Pages become thin views.
 - ViewModels own state, commands, validation messages, and workflow status.
@@ -60,8 +60,10 @@ During page and ViewModel extraction, scan/refresh state should be able to surfa
 
 ## Dependency Rules
 
-- DI and platform adapter foundations should exist before broad ViewModel construction changes.
-- Result/workflow coordination should be introduced before moving install completion logic deeply into ViewModels.
+- Phase 6.B preserves one singleton `MainWindow` and one retained instance of each primary page. Constructor injection replaces static `App.*` service access while existing code-behind, page-owned state, `DataContext`, bindings, navigation refresh, and `Loaded`/`Unloaded` behavior remain intact.
+- Phase 6.B does not add transient navigation pages, navigation scopes, a page catalog, or broad ViewModel extraction. Singleton dialog-service contracts create a fresh WPF window per invocation. The Core-safe startup queue remains separate from the UI `StartupNotificationDrainCoordinator`, and `MainWindow.Loaded` only signals readiness.
+- Phase 8 follows Phase 6.A coordinator completion, Phase 6.B DI/lifecycle, Phase 6.C logger migration, and the retained Phase 7 generalized workflow work.
+- Result/workflow coordination should be introduced before moving install completion logic deeply into ViewModels. ViewModels consume Core outcomes and do not recreate Phase 6.A completeness, commit, accepted-snapshot, or quiescence decisions.
 - Core workflow tests should exist where practical before high-risk page extractions.
 - ViewModel tests should grow with each stable ViewModel.
 

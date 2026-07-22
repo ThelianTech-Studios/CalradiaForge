@@ -18,16 +18,38 @@ CalradiaForge persisted data must have clear ownership, safe writes, graceful re
 
 ## Policy
 
-- `AppConfig` remains the only owner of config JSON persistence.
-- `AppConfigSettings` remains the typed facade and must not perform direct file I/O.
+- Current source uses `AppConfig` as the config JSON persistence owner and `AppConfigSettings` as its typed facade. Phase 6.B replaces those planned responsibilities with `ConfigFileManager`, `AppSettings`, and separate `LoggingSettings`.
+- `ConfigFileManager` owns low-level custom JSON file-path, load, and save mechanics.
+- `AppSettings` is the application-facing non-secret settings object. `LoggingSettings` separately owns persisted `DebugMode` so logging can initialize before full application settings.
 - `ModsData` owns mod cache persistence.
 - `ModpackData` owns modpack and last-used persistence.
 - `ModpackService` may orchestrate saves but should not directly write domain JSON files.
 - Important JSON writes should use atomic write-and-replace behavior.
 - Important persisted files should support backup recovery.
-- Corrupt files should be handled gracefully and should not crash normal startup.
+- Missing, empty, or malformed settings JSON regenerates the affected settings object from its defaults. Unsupported filesystem, device, or access failures may enter fatal-startup handling rather than silently changing storage location or using a nonpersistent fallback.
 - Future persisted model-breaking changes should document migration behavior before implementation.
 - Future Nexus metadata must follow this policy and must not store credentials.
+
+## Phase 6.B Object-Based Settings Lifecycle
+
+For each settings object:
+
+1. Supply the settings file path and applicable settings instance/type through `ConfigFileManager`.
+2. Load the existing settings object when the file exists and is valid.
+3. When the file is missing, empty, or malformed, return or create a new empty instance of that settings object.
+4. Because the instance is empty, the settings object populates its default property values.
+5. Save the resulting settings object through `ConfigFileManager`.
+6. Persist later property changes through the same manager.
+
+Malformed JSON is discarded and regenerated from defaults; no backup/recovery copy is required for this settings flow. Do not add a central defaults-initializer service, generic `InitializeDefaults()` DI factories, a second current-settings copy, `LoggingSessionState`, `DebugModeAtStartup`, alternate storage paths, in-memory nonpersistent mode, or a generic Host/configuration stack.
+
+## Phase 6.A Mod Snapshot Commit Boundary
+
+`ModPipelineCoordinator` decides when scan output is eligible for cache rotation and `SaveCurrent`; the existing persistence helper decides how those files are written. Only an approved complete result commits and publishes one atomic accepted module snapshot/version. Invalid configuration, partial or indeterminate scans, cancellation, and unexpected failure preserve the prior accepted snapshot and cache. The coordinator must not duplicate cache serialization or introduce a broad transaction framework.
+
+## Phase 6.B Shutdown Persistence Boundary
+
+Shutdown first quiesces workflows, then persists only authorized state, returns control to `App`, and finally disposes the root provider. Provider disposal is not a substitute for quiescence or persistence.
 
 ## Initial Targets
 
@@ -67,6 +89,8 @@ Measurements should distinguish app-owned serialization and I/O work from filesy
 - Corrupt files are reported and recovered or skipped without app crash.
 - Services continue to delegate persistence to their owning data helpers.
 - Future Nexus metadata tests verify credentials are not written to metadata files or `AppConfig`.
+- Settings tests cover valid load; missing, empty, and malformed regeneration; object-owned defaults; save through the same manager; and fatal propagation of unsupported storage failures.
+- Pipeline tests prove cache rotation/current save occurs only after an approved complete result and rejected work preserves the accepted snapshot.
 
 ## Guardrails
 
@@ -75,6 +99,7 @@ Measurements should distinguish app-owned serialization and I/O work from filesy
 - Do not duplicate `ModsData` or `ModpackData` behavior in services.
 - Do not introduce WPF dependencies into Core persistence helpers.
 - Do not introduce a migration framework before a real persisted model change needs it.
+- Do not introduce a second settings copy, defaults-initializer service, session logging state, alternate storage mode, or persistence-through-provider-disposal shortcut.
 - Do not weaken atomicity, backup recovery, corruption handling, or safe defaults to improve throughput.
 
 ## Out Of Scope
