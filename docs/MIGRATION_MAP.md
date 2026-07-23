@@ -4,10 +4,10 @@
 
 ```text
 <Metadata>
-Last Changelog Version: v0.13.35
-Last Git Commit ID: 1889e47861d269b8664752706031c64d9f47dbf7
+Last Changelog Version: v0.13.46
+Last Git Commit ID: caf1b128adf489f08cad13ad0771a671f8fbd99f
 Last Git Branch Used: dev-V0-14-CodeRefactor(HEAD)
-Last Map Compile Date: 2026-07-16
+Last Map Compile Date: 2026-07-22
 </Metadata>
 ```
 
@@ -40,11 +40,60 @@ Workflow rules for when and how to update this file are owned by `docs/refactor/
 
 | Version | Migration scope | Source comparison | Status |
 |---|---|---|---|
+| `v0.13.46` | Phase 6.A mod-pipeline manager, structured scan/commit/snapshot lifecycle, awaitable installation, UI integration, regression coverage, and archive-progress estimate cleanup | `1889e47...caf1b12` | Mapped from committed accepted source diff |
 | `v0.13.35` | Phase 5 game-platform detection/path workflow, startup notifications, scanner/cache safety, and accepted ancillary source refinements | `1f037b1...1889e47` | Mapped from committed accepted source diff |
 | `v0.13.23` | Phase 4 Core tests and provisional benchmarks plus partially reverted Steam multi-library resolver, UI, and regression work | `710881c...1f037b1` | Mapped from committed broken internal build; 13 compile errors acknowledged |
 | `v0.13.22` | Atomic persistence, mod-cache recovery, archive/install preflight guardrails, and UI configuration-reference repair | `1b23045...710881c` | Mapped from committed build diff |
 | `v0.13.14` | Serilog infrastructure foundation, log-retention configuration, data-helper cleanup, application configuration-property rename, and neutral formatter/redaction-removal follow-up | `37c322e...HEAD` | Mapped from committed build diff |
 | `v0.13.6` | Cleanup/nullability/path/logging-message migration rows listed in this document | `dev-release...HEAD` | Mapped from current committed branch diff |
+
+<details open>
+<summary><strong>v0.13.46</strong> - Internal build: Phase 6.A mod-pipeline manager foundation and the full accepted source range.</summary>
+
+**Source comparison:** `1889e47...caf1b12`
+
+**Status:** Mapped from committed accepted source diff; Debug and Release solution builds passed, all 32 focused manager/scanner/installer/Novus cases passed, and all 92 tests passed in both configurations
+
+**Changed implementation/test files:** 19 (`+1328/-539`)
+
+**Scope rule:** Includes every committed Core, UI, and test file in this build range, including the accepted `ModExtractor` cleanup. All 31 `docs/` changes are excluded as documentation-only. No project, solution, package-reference, application-version, configuration-format, language-resource, or generated-source file changed in the range.
+
+| Area | Files | Summary |
+|---|---:|---|
+| Pipeline ownership, result contracts, and legacy-service removal | 5 | Added the manager, scanner seam, structured pipeline/snapshot models, and removed the mutable `ModService` workflow owner. |
+| Scanner, installer, and extraction mechanics | 3 | Added structured deterministic discovery, made installation awaitable with isolated progress callbacks, and reduced archive-count fallbacks to one. |
+| Modpack accepted-snapshot adaptation | 2 | Allowed read-only snapshot validation and replaced stale `ModService` documentation references without changing template behavior. |
+| WPF composition and call-site integration | 4 | Routed startup cache loading, scan/refresh, installation, modpack template creation, Settings cache clearing, and shutdown cancellation requests through the manager. |
+| Manager, scanner, installer, and Novus regression coverage | 5 | Replaced the former service tests and added completeness, commit, concurrency, cancellation, quiescence, callback, and split-library coverage. |
+
+<details>
+<summary><strong>Detailed file map</strong></summary>
+
+| File | Change | Key Identifiers | Original vs Updated | Summary |
+|---|---|---|---|---|
+| `source/CalradiaForge.Core/Infra/Modpacks/ModpackService.cs` | Modified (`+2/-2`) | `CalradiaForge.Core.Infra.Modpacks`; `ModpackService.ValidateLoadOrder` | The installed-mods parameter changed from `List<ModuleModel>` to `IReadOnlyList<ModuleModel>`, and its documentation now identifies one accepted pipeline snapshot. | Allows validation directly against `AcceptedModSnapshot.Modules`; existing list callers remain source-compatible, but the compiled method signature changed. |
+| `source/CalradiaForge.Core/Infra/Modpacks/VanillaModules.cs` | Modified (`+2/-2`) | `VanillaModules.GetDefaultLoadOrder`; `GetButterLibLoadOrder` | XML documentation referenced `ModService.CurrentMods`; it now describes modules captured from one accepted pipeline snapshot. | Documentation-only source change removes references to the deleted owner; overloads and template behavior remain unchanged. |
+| `source/CalradiaForge.Core/Infra/Mods/IModScanner.cs` | Added (`+11/-0`) | `CalradiaForge.Core.Infra.Mods`; `IModScanner`; `ScanAsync` | No injectable scanner contract existed; the new interface returns `Task<ModScanResult>` from settings plus optional cancellation. | Supplies the narrow discovery seam used by `ModPipelineManager` and deterministic tests without moving persistence or commit authority into the scanner. |
+| `source/CalradiaForge.Core/Infra/Mods/ModExtractor.cs` | Modified (`+3/-8`) | `ModExtractor.EstimateFileCount` | Size-based fallback minimums changed from 10 to 1 and the final unavailable-metadata fallback from 100 to 1; obsolete SharpCompress comments were removed. | Corrects cumulative progress estimates while leaving SevenZipWrapper extraction, containment, cancellation, and cleanup behavior unchanged. |
+| `source/CalradiaForge.Core/Infra/Mods/ModInstaller.cs` | Modified (`+80/-48`) | `ModInstaller.InstallAsync`; `CancelInstall`; `IsInstalling`; `InstallProgressChanged`; `ExtractionProgressChanged`; removed `StartInstallAsync` and `InstallCompleted` | Fire-and-forget Boolean admission and completion events became an awaitable `Task<ModInstallSummary?>` contract with linked cancellation, synchronized state, completion-race handling, and guarded progress dispatch. | Breaking caller migration: await `InstallAsync`, treat `null` as non-admission, and handle completion after the await; progress events remain while subscriber exceptions are logged and isolated. |
+| `source/CalradiaForge.Core/Infra/Mods/ModPipelineManager.cs` | Added (`+361/-0`) | `ModPipelineManager`; `AcceptedSnapshot`; `LoadAcceptedCache`; `InitializeForStartupAsync`; `RefreshAsync`; `InstallAsync`; `ClearCache`; `StopAcceptingNewWork`; `RequestCancellation`; `WaitForQuiescenceAsync` | Scan/cache state and installer lifetime were independently owned; one manager now performs precondition checks, single-operation admission, completeness-gated rotation/save, atomic snapshot publication, cancellation/commit linearization, stop admission, and quiescence. | New primary Core workflow boundary. It delegates discovery, persistence, installation, and extraction mechanics to their existing owners; two internal log messages still retain the historical `ModPipelineCoordinator` label. |
+| `source/CalradiaForge.Core/Infra/Mods/ModScanner.cs` | Modified (`+155/-104`) | `ModScanner : IModScanner`; `ScanAsync`; retained `ScanForModsAsync`; `ScanRoot`; `FindModuleXml`; `RootScan` | An unqualified combined list became a structured local/Workshop result with deterministic paths/order, explicit root states, parse diagnostics, cancellation, and case-insensitive duplicate handling with local-first precedence. | Manager callers can authorize commits from completeness evidence. The legacy list-returning API remains as a compatibility adapter and intentionally discards structured diagnostics. |
+| `source/CalradiaForge.Core/Infra/Mods/ModService.cs` | Deleted (`+0/-217`) | removed `ModService`; `CurrentMods`; `PreviousMods`; `AddedMods`; `RemovedMods`; `LoadFromCache`; `RefreshAsync`; `ClearCache` | Mutable list state, Boolean refresh results, cache sequencing, and service-local change detection were removed after their responsibilities moved to `ModPipelineManager` and `AcceptedModSnapshot`. | Hard type/API removal: callers must use structured manager results and capture one accepted snapshot instead of reading mutable service lists. |
+| `source/CalradiaForge.Core/Models/ModPipelineResult.cs` | Added (`+73/-0`) | `ModPipelineOperation`; `ModPipelineStatus`; `AcceptedModSnapshot`; `ModPipelineResult` | No workflow-specific operation/status model or atomically published module snapshot existed. | Adds operation/status, completeness/commit/change flags, root/count/diagnostic data, and a monotonically versioned read-only collection contract for accepted, added, and removed modules. |
+| `source/CalradiaForge.Core/Models/ModScanResult.cs` | Added (`+46/-0`) | `ModScanRootStatus`; `ModScanRootResult`; `ModScanResult` | Scanner output did not distinguish root completeness or carry warnings, duplicates, diagnostics, cancellation, and per-root counts. | Separates low-level discovery evidence from the manager's workflow commit decision without introducing a universal result hierarchy. |
+| `source/CalradiaForge.Tests/Core.Tests/Modpacks/SteamMultiLibraryNovusRegressionTests.cs` | Modified (`+6/-4`) | `ImportedNovusPreset_AfterAlternateSteamLibraryScan_HasNoMissingWorkshopModules` | The regression refreshed and read `ModService`; it now loads/refreshes through `ModPipelineManager`, asserts the structured result, and validates against `AcceptedSnapshot.Modules`. | Preserves the exact split-library 11-module and no-missing-Novus regression through the new accepted-state boundary. |
+| `source/CalradiaForge.Tests/Core.Tests/Mods/ModInstallerTests.cs` | Modified (`+26/-7`) | renamed `InstallAsync_*` cases; `InstallAsync_ProgressSubscriberFailureDoesNotAbortInstallation` | Tests waited for `InstallCompleted` after `StartInstallAsync`; they now await `InstallAsync` directly and include faulting progress subscribers. | Verifies authoritative install behavior under the new lifetime contract and proves observer failures do not abort installation or strand state. |
+| `source/CalradiaForge.Tests/Core.Tests/Mods/ModPipelineManagerTests.cs` | Added (`+322/-0`) | `ModPipelineManagerTests`; ten facts; fake `IModScanner` | No manager suite existed; new cases cover complete/incomplete/invalid/failed scans, common startup/refresh commits, monotonic cache reload, cancellation linearization, busy admission, active installation, stop admission, and quiescence. | Principal Phase 6.A evidence for accepted-state preservation, cache gating, operation serialization, cancellation, and lifecycle behavior. |
+| `source/CalradiaForge.Tests/Core.Tests/Mods/ModScannerTests.cs` | Modified (`+114/-0`) | seven new `ScanAsync_*` facts; six retained `ScanForModsAsync_*` facts | Existing list-returning regressions gained structured cases for unconfigured, missing, inaccessible, empty, partial, and duplicate root outcomes. | Verifies the new completeness seam while retaining compatibility and split-root scanner coverage. |
+| `source/CalradiaForge.Tests/Core.Tests/Mods/ModServiceTests.cs` | Deleted (`+0/-58`) | removed `ModServiceTests`; invalid/manual-configuration preservation cases | Two tests for the removed service were deleted after equivalent cache/snapshot preservation behavior moved into the broader manager suite. | Intentional test-owner migration; the accepted-state regression coverage is expanded rather than lost. |
+| `source/CalradiaForge.UI/App.xaml.cs` | Modified (`+10/-11`) | `App.ModPipelineManager`; removed `App.ModService` and placeholder `ModManagerService`; `InitializeModServices`; `OnExit` | Manual composition now creates `ModInstaller` plus `ModPipelineManager`, loads one accepted cache snapshot, and requests manager stop/cancellation on exit. | Changes the UI's static service surface while intentionally retaining manual `App.*` composition until Phase 6.B; full WPF shutdown quiescence remains later lifecycle work. |
+| `source/CalradiaForge.UI/Pages/ModpacksPage.xaml.cs` | Modified (`+11/-6`) | `ModPipelineManager`; `ModPipelineResult`; `AcceptedModSnapshot`; `ModpacksPage_IsVisibleChanged`; template creation | Visibility refresh and template inputs moved from `ModService` to structured manager results and a captured accepted snapshot. | Prevents modpack operations from observing mixed scan versions; the snapshot is materialized to a list for the unchanged template API. |
+| `source/CalradiaForge.UI/Pages/ModsPage.xaml.cs` | Modified (`+102/-68`) | `_modPipeline`; `HandleInstallCompletedAsync`; `ShowPipelineWarning`; startup/manual/navigation/post-install refresh and install handlers | Completion-event handling, mutable service lists, Boolean refresh results, and direct installer admission were replaced by awaited manager installation, structured scan results, warnings, and captured accepted snapshots. | Largest caller migration: progress observation stays event-based, while workflow completion/admission and module state are manager-owned. One XML comment still uses the historical `ModPipelineCoordinator` name. |
+| `source/CalradiaForge.UI/Pages/SettingsPage.xaml.cs` | Modified (`+4/-4`) | `_modPipeline`; `ClearModCache_Click` | Cache clearing moved from `ModService.ClearCache` to `ModPipelineManager.ClearCache`. | Removes the final Settings dependency on the deleted service and keeps persisted and accepted cache state under one owner. |
+
+</details>
+
+</details>
 
 <details open>
 <summary><strong>v0.13.35</strong> - Internal build: Phase 5 game-platform detection/path workflow and the full accepted source range.</summary>

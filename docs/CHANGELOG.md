@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## 0.13.36 - Internal | 2026-07-22
+## 0.13.46 - Internal | 2026-07-22
 
 > Refactor Phase 6.A: introduced the Core-owned `ModPipelineManager` for complete-scan commit decisions, coherent accepted module snapshots, shared scan/install admission, and awaitable operation quiescence, including the accepted archive-progress estimate cleanup in this build range.
 
