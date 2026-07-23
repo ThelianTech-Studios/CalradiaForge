@@ -8,6 +8,120 @@ using CalradiaForge.Tests.Core.Support;
 
 public sealed class ModScannerTests {
 	[Fact]
+	public async Task ScanAsync_WhenSteamWorkshopIsNotConfigured_ReportsCompleteLocalOnlyState() {
+		using TestDirectory temp = new();
+		string gameRoot = temp.CreateDirectory("Game");
+		string modulesPath = temp.CreateDirectory("Game", "Modules");
+		temp.WriteModule(modulesPath, "Local", "Local.Only");
+		AppConfigSettings settings = CreateScannerSettings(temp, gameRoot, string.Empty, GameProvider.Steam);
+
+		ModScanResult result = await new ModScanner().ScanAsync(settings);
+
+		Assert.True(result.IsComplete);
+		Assert.Equal(ModScanRootStatus.Succeeded, result.LocalRoot.Status);
+		Assert.Equal(ModScanRootStatus.NotConfigured, result.WorkshopRoot.Status);
+		Assert.Equal("Local.Only", Assert.Single(result.Modules).ModuleId);
+	}
+
+	[Fact]
+	public async Task ScanAsync_WhenConfiguredWorkshopIsMissing_ReportsIncompleteInsteadOfZero() {
+		using TestDirectory temp = new();
+		string gameRoot = temp.CreateDirectory("Game");
+		string modulesPath = temp.CreateDirectory("Game", "Modules");
+		temp.WriteModule(modulesPath, "Local", "Local.Only");
+		AppConfigSettings settings = CreateScannerSettings(
+			temp, gameRoot, temp.GetPath("MissingWorkshop"), GameProvider.Steam);
+
+		ModScanResult result = await new ModScanner().ScanAsync(settings);
+
+		Assert.False(result.IsComplete);
+		Assert.Equal(ModScanRootStatus.Missing, result.WorkshopRoot.Status);
+		Assert.Equal("Local.Only", Assert.Single(result.Modules).ModuleId);
+	}
+
+	[Fact]
+	public async Task ScanAsync_WhenLocalRootCannotBeEnumerated_ReportsInaccessible() {
+		using TestDirectory temp = new();
+		string gameRoot = temp.CreateDirectory("Game");
+		File.WriteAllText(temp.GetPath("Game", "Modules"), "not a directory");
+		AppConfigSettings settings = CreateScannerSettings(temp, gameRoot, string.Empty, GameProvider.StandAlone);
+
+		ModScanResult result = await new ModScanner().ScanAsync(settings);
+
+		Assert.False(result.IsComplete);
+		Assert.Equal(ModScanRootStatus.Inaccessible, result.LocalRoot.Status);
+	}
+
+	[Fact]
+	public async Task ScanAsync_WhenConfiguredWorkshopCannotBeEnumerated_ReportsInaccessible() {
+		using TestDirectory temp = new();
+		string gameRoot = temp.CreateDirectory("Game");
+		string modulesPath = temp.CreateDirectory("Game", "Modules");
+		temp.WriteModule(modulesPath, "Local", "Local.Only");
+		string workshopPath = temp.GetPath("WorkshopFile");
+		File.WriteAllText(workshopPath, "not a directory");
+		AppConfigSettings settings = CreateScannerSettings(temp, gameRoot, workshopPath, GameProvider.Steam);
+
+		ModScanResult result = await new ModScanner().ScanAsync(settings);
+
+		Assert.False(result.IsComplete);
+		Assert.Equal(ModScanRootStatus.Inaccessible, result.WorkshopRoot.Status);
+		Assert.Equal("Local.Only", Assert.Single(result.Modules).ModuleId);
+	}
+
+	[Fact]
+	public async Task ScanAsync_WhenConfiguredWorkshopIsEmpty_ReportsCompleteZeroResult() {
+		using TestDirectory temp = new();
+		string gameRoot = temp.CreateDirectory("Game");
+		string modulesPath = temp.CreateDirectory("Game", "Modules");
+		temp.WriteModule(modulesPath, "Local", "Local.Only");
+		string workshopRoot = temp.CreateDirectory("Workshop");
+		AppConfigSettings settings = CreateScannerSettings(temp, gameRoot, workshopRoot, GameProvider.Steam);
+
+		ModScanResult result = await new ModScanner().ScanAsync(settings);
+
+		Assert.True(result.IsComplete);
+		Assert.Equal(ModScanRootStatus.Succeeded, result.WorkshopRoot.Status);
+		Assert.Equal(0, result.WorkshopModuleCount);
+		Assert.Equal("Local.Only", Assert.Single(result.Modules).ModuleId);
+	}
+
+	[Fact]
+	public async Task ScanAsync_MalformedModuleMakesRootPartial() {
+		using TestDirectory temp = new();
+		string gameRoot = temp.CreateDirectory("Game");
+		string modulesPath = temp.CreateDirectory("Game", "Modules");
+		string broken = temp.CreateDirectory("Game", "Modules", "Broken");
+		File.WriteAllText(Path.Combine(broken, "SubModule.xml"), "<not-module />");
+		AppConfigSettings settings = CreateScannerSettings(temp, gameRoot, string.Empty, GameProvider.StandAlone);
+
+		ModScanResult result = await new ModScanner().ScanAsync(settings);
+
+		Assert.False(result.IsComplete);
+		Assert.Equal(ModScanRootStatus.Partial, result.LocalRoot.Status);
+		Assert.Contains(result.Warnings, warning => warning.Contains("Failed to parse", StringComparison.OrdinalIgnoreCase));
+	}
+
+	[Fact]
+	public async Task ScanAsync_DuplicateIdsPreferStableLocalEntryAndReportDiagnostic() {
+		using TestDirectory temp = new();
+		string gameRoot = temp.CreateDirectory("Game");
+		string modulesPath = temp.CreateDirectory("Game", "Modules");
+		string localPath = temp.WriteModule(modulesPath, "A-Local", "Duplicate.Id", version: "v1.0.0");
+		string workshopRoot = temp.CreateDirectory("Workshop");
+		temp.WriteModule(workshopRoot, "Z-Workshop", "duplicate.id", version: "v9.0.0");
+		AppConfigSettings settings = CreateScannerSettings(temp, gameRoot, workshopRoot, GameProvider.Steam);
+
+		ModScanResult result = await new ModScanner().ScanAsync(settings);
+
+		ModuleModel accepted = Assert.Single(result.Modules);
+		Assert.True(result.IsComplete);
+		Assert.Equal(localPath, accepted.InstallPath);
+		Assert.Equal("v1.0.0", accepted.ModuleVersion);
+		Assert.Equal("Duplicate.Id", Assert.Single(result.DuplicateModuleIds));
+	}
+
+	[Fact]
 	public async Task ScanForModsAsync_WhenSteamAndBannerlordUseDifferentSimulatedDrives_FindsAllElevenModules() {
 		using TestDirectory temp = new();
 		SplitDriveFixture fixture = CreateSplitDriveFixture(temp);

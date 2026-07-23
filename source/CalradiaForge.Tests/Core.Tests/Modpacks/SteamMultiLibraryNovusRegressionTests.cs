@@ -30,11 +30,13 @@ public sealed class SteamMultiLibraryNovusRegressionTests {
 		Assert.Equal(fixture.WorkshopRoot, settings.SteamWorkshopFolderPath);
 
 		ModsData modsData = new(temp.GetPath("mods_current.data"), temp.GetPath("mods_backup.data"));
-		ModService modService = new(settings, modsData);
+		ModPipelineCoordinator pipeline = new(settings, modsData, new ModInstaller(settings));
+		pipeline.LoadAcceptedCache();
 
-		await modService.RefreshAsync();
+		ModPipelineResult scanResult = await pipeline.RefreshAsync();
+		Assert.True(scanResult.Success, scanResult.TechnicalDiagnostic);
 
-		string[] scannedIds = modService.CurrentMods
+		string[] scannedIds = scanResult.AcceptedSnapshot.Modules
 			.Select(module => module.ModuleId)
 			.Where(moduleId => !string.IsNullOrWhiteSpace(moduleId))
 			.Cast<string>()
@@ -63,7 +65,7 @@ public sealed class SteamMultiLibraryNovusRegressionTests {
 		Assert.Equal(fixture.ExpectedModuleIds, selected.LoadOrder.Select(entry => entry.ModuleId));
 
 		(List<ModpackEntryModel> validEntries, List<string> missingModNames) =
-			ModpackService.ValidateLoadOrder(selected, modService.CurrentMods);
+			ModpackService.ValidateLoadOrder(selected, scanResult.AcceptedSnapshot.Modules);
 
 		Assert.Equal(11, validEntries.Count);
 		Assert.Empty(missingModNames);

@@ -16,7 +16,7 @@ public sealed class ModInstallerTests {
 	}
 
 	[Fact]
-	public async Task StartInstallAsync_ValidModuleArchiveInstallsThroughAuthoritativePipeline() {
+	public async Task InstallAsync_ValidModuleArchiveInstallsThroughAuthoritativePipeline() {
 		using TestDirectory temp = new();
 		string gameRoot = temp.CreateDirectory("Game");
 		string modulesRoot = temp.CreateDirectory("Game", "Modules");
@@ -35,7 +35,7 @@ public sealed class ModInstallerTests {
 	}
 
 	[Fact]
-	public async Task StartInstallAsync_MultipleModulesAreBlockedBeforeDestinationWrites() {
+	public async Task InstallAsync_MultipleModulesAreBlockedBeforeDestinationWrites() {
 		using TestDirectory temp = new();
 		string gameRoot = temp.CreateDirectory("Game");
 		string modulesRoot = temp.CreateDirectory("Game", "Modules");
@@ -54,7 +54,7 @@ public sealed class ModInstallerTests {
 	}
 
 	[Fact]
-	public async Task StartInstallAsync_IdentityMismatchPreservesExistingTarget() {
+	public async Task InstallAsync_IdentityMismatchPreservesExistingTarget() {
 		using TestDirectory temp = new();
 		string gameRoot = temp.CreateDirectory("Game");
 		string modulesRoot = temp.CreateDirectory("Game", "Modules");
@@ -76,6 +76,26 @@ public sealed class ModInstallerTests {
 		Assert.False(File.Exists(Path.Combine(existingTarget, "replacement.txt")));
 	}
 
+	[Fact]
+	public async Task InstallAsync_ProgressSubscriberFailureDoesNotAbortInstallation() {
+		using TestDirectory temp = new();
+		string gameRoot = temp.CreateDirectory("Game");
+		string modulesRoot = temp.CreateDirectory("Game", "Modules");
+		string archivePath = temp.CreateZip(
+			"subscriber.zip",
+			("SubscriberMod/SubModule.xml", TestDirectory.ModuleXml("Subscriber.Mod", "Subscriber Mod")),
+			("SubscriberMod/payload.txt", "payload"));
+		ModInstaller installer = CreateInstaller(temp, gameRoot);
+		installer.ExtractionProgressChanged += _ => throw new InvalidOperationException("Injected extraction subscriber failure.");
+		installer.InstallProgressChanged += _ => throw new InvalidOperationException("Injected install subscriber failure.");
+
+		ModInstallSummary summary = await RunInstallAsync(installer, archivePath);
+
+		Assert.Equal(ModInstallStatus.Installed, Assert.Single(summary.Results).Status);
+		Assert.True(File.Exists(Path.Combine(modulesRoot, "SubscriberMod", "payload.txt")));
+		Assert.False(installer.IsInstalling);
+	}
+
 	private static ModInstaller CreateInstaller(TestDirectory temp, string gameRoot) {
 		AppConfigSettings settings = new(new AppConfig(temp.GetPath($"config-{Guid.NewGuid():N}.json"))) {
 			GameFolderPath = gameRoot
@@ -84,9 +104,8 @@ public sealed class ModInstallerTests {
 	}
 
 	private static async Task<ModInstallSummary> RunInstallAsync(ModInstaller installer, string archivePath) {
-		TaskCompletionSource<ModInstallSummary> completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
-		installer.InstallCompleted += summary => completion.TrySetResult(summary);
-		Assert.True(installer.StartInstallAsync([archivePath]));
-		return await completion.Task.WaitAsync(TimeSpan.FromSeconds(30));
+		ModInstallSummary? summary = await installer.InstallAsync([archivePath])
+			.WaitAsync(TimeSpan.FromSeconds(30));
+		return Assert.IsType<ModInstallSummary>(summary);
 	}
 }
