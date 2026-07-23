@@ -6,7 +6,7 @@ using CalradiaForge.Core.Infra.Paths;
 using CalradiaForge.Core.Models;
 using CalradiaForge.Tests.Core.Support;
 
-public sealed class ModPipelineCoordinatorTests {
+public sealed class ModPipelineManagerTests {
 	[Fact]
 	public async Task CompleteScan_CommitsCacheAndPublishesOneVersionedSnapshot() {
 		using TestDirectory temp = new();
@@ -15,7 +15,7 @@ public sealed class ModPipelineCoordinatorTests {
 		data.SaveCurrent([TestDirectory.Module("Old")]);
 		FakeScanner scanner = new(_ => Task.FromResult(CompleteResult(
 			[TestDirectory.Module("Native"), TestDirectory.Module("New")])));
-		ModPipelineCoordinator coordinator = CreateCoordinator(settings, data, scanner);
+		ModPipelineManager coordinator = CreateManager(settings, data, scanner);
 		AcceptedModSnapshot cached = coordinator.LoadAcceptedCache();
 
 		ModPipelineResult result = await coordinator.RefreshAsync();
@@ -46,7 +46,7 @@ public sealed class ModPipelineCoordinatorTests {
 			WorkshopRoot = Root(ModScanRootStatus.Missing),
 			Warnings = ["Configured Workshop root is missing."]
 		}));
-		ModPipelineCoordinator coordinator = CreateCoordinator(settings, data, scanner);
+		ModPipelineManager coordinator = CreateManager(settings, data, scanner);
 		AcceptedModSnapshot before = coordinator.LoadAcceptedCache();
 		IReadOnlyList<ModuleModel> beforeRemoved = before.RemovedModules;
 
@@ -70,7 +70,7 @@ public sealed class ModPipelineCoordinatorTests {
 		ModsData data = CreateData(temp);
 		data.SaveCurrent([TestDirectory.Module("Cached")]);
 		FakeScanner scanner = new(_ => throw new InvalidOperationException("Scanner must not run."));
-		ModPipelineCoordinator coordinator = CreateCoordinator(settings, data, scanner);
+		ModPipelineManager coordinator = CreateManager(settings, data, scanner);
 		AcceptedModSnapshot before = coordinator.LoadAcceptedCache();
 
 		ModPipelineResult result = await coordinator.InitializeForStartupAsync();
@@ -89,7 +89,7 @@ public sealed class ModPipelineCoordinatorTests {
 		ModsData data = CreateData(temp);
 		data.SaveCurrent([TestDirectory.Module("Cached")]);
 		FakeScanner scanner = new(_ => throw new IOException("Injected scanner failure."));
-		ModPipelineCoordinator coordinator = CreateCoordinator(settings, data, scanner);
+		ModPipelineManager coordinator = CreateManager(settings, data, scanner);
 		AcceptedModSnapshot before = coordinator.LoadAcceptedCache();
 
 		ModPipelineResult result = await coordinator.RefreshAsync();
@@ -106,7 +106,7 @@ public sealed class ModPipelineCoordinatorTests {
 		AppConfigSettings settings = CreateValidSettings(temp, GameProvider.StandAlone);
 		ModsData data = CreateData(temp);
 		FakeScanner scanner = new(_ => Task.FromResult(CompleteResult([TestDirectory.Module("Native")])));
-		ModPipelineCoordinator coordinator = CreateCoordinator(settings, data, scanner);
+		ModPipelineManager coordinator = CreateManager(settings, data, scanner);
 		coordinator.LoadAcceptedCache();
 
 		ModPipelineResult startup = await coordinator.InitializeForStartupAsync();
@@ -126,7 +126,7 @@ public sealed class ModPipelineCoordinatorTests {
 		AppConfigSettings settings = CreateValidSettings(temp, GameProvider.StandAlone);
 		ModsData data = CreateData(temp);
 		FakeScanner scanner = new(_ => Task.FromResult(CompleteResult([TestDirectory.Module("Native")])));
-		ModPipelineCoordinator coordinator = CreateCoordinator(settings, data, scanner);
+		ModPipelineManager coordinator = CreateManager(settings, data, scanner);
 		AcceptedModSnapshot initial = coordinator.LoadAcceptedCache();
 		AcceptedModSnapshot committed = (await coordinator.RefreshAsync()).AcceptedSnapshot;
 
@@ -146,7 +146,7 @@ public sealed class ModPipelineCoordinatorTests {
 		TaskCompletionSource<bool> commitBarrierEntered = new(TaskCreationOptions.RunContinuationsAsynchronously);
 		TaskCompletionSource<bool> releaseCommitBarrier = new(TaskCreationOptions.RunContinuationsAsynchronously);
 		FakeScanner scanner = new(_ => Task.FromResult(CompleteResult([TestDirectory.Module("Replacement")])));
-		ModPipelineCoordinator coordinator = new(
+		ModPipelineManager coordinator = new(
 			settings,
 			data,
 			new ModInstaller(settings),
@@ -182,7 +182,7 @@ public sealed class ModPipelineCoordinatorTests {
 			await release.Task.WaitAsync(token);
 			return CompleteResult([TestDirectory.Module("Native")]);
 		});
-		ModPipelineCoordinator coordinator = CreateCoordinator(settings, data, scanner);
+		ModPipelineManager coordinator = CreateManager(settings, data, scanner);
 		coordinator.LoadAcceptedCache();
 
 		Task<ModPipelineResult> first = coordinator.RefreshAsync();
@@ -215,7 +215,7 @@ public sealed class ModPipelineCoordinatorTests {
 			callbackEntered.TrySetResult(true);
 			releaseCallback.Task.GetAwaiter().GetResult();
 		};
-		ModPipelineCoordinator coordinator = new(
+		ModPipelineManager coordinator = new(
 			settings,
 			data,
 			installer,
@@ -262,7 +262,7 @@ public sealed class ModPipelineCoordinatorTests {
 			await Task.Delay(Timeout.InfiniteTimeSpan, token);
 			return CompleteResult([]);
 		});
-		ModPipelineCoordinator coordinator = CreateCoordinator(settings, data, scanner);
+		ModPipelineManager coordinator = CreateManager(settings, data, scanner);
 		AcceptedModSnapshot before = coordinator.LoadAcceptedCache();
 		Task<ModPipelineResult> active = coordinator.RefreshAsync();
 		await entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
@@ -295,7 +295,7 @@ public sealed class ModPipelineCoordinatorTests {
 	private static ModsData CreateData(TestDirectory temp) =>
 		new(temp.GetPath("mods_current.data"), temp.GetPath("mods_backup.data"));
 
-	private static ModPipelineCoordinator CreateCoordinator(
+	private static ModPipelineManager CreateManager(
 		AppConfigSettings settings,
 		ModsData data,
 		IModScanner scanner) => new(settings, data, new ModInstaller(settings), scanner);

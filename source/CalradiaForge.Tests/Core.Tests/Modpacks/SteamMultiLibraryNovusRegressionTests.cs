@@ -30,7 +30,7 @@ public sealed class SteamMultiLibraryNovusRegressionTests {
 		Assert.Equal(fixture.WorkshopRoot, settings.SteamWorkshopFolderPath);
 
 		ModsData modsData = new(temp.GetPath("mods_current.data"), temp.GetPath("mods_backup.data"));
-		ModPipelineCoordinator pipeline = new(settings, modsData, new ModInstaller(settings));
+		ModPipelineManager pipeline = new(settings, modsData, new ModInstaller(settings));
 		pipeline.LoadAcceptedCache();
 
 		ModPipelineResult scanResult = await pipeline.RefreshAsync();
