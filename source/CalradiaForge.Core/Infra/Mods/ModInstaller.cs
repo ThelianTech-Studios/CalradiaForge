@@ -17,15 +17,17 @@
 	/// BLSE detection and installs it to the game's bin directory if matched.
 	///
 	/// The install task is owned by this service, not the calling page.
-	/// The UI layer starts the install via <see cref="StartInstallAsync"/> and
-	/// observes progress via <see cref="InstallProgressChanged"/>.
+	/// The pipeline awaits <see cref="InstallAsync"/> and the UI observes progress
+	/// via <see cref="InstallProgressChanged"/>.
 	/// Navigation away from the page does not cancel or orphan the task.
 	/// </summary>
 	public sealed class ModInstaller {
 		private readonly AppConfigSettings _appConfig;
 		private readonly Logger _logger = Logger.Instance;
 		private readonly SemaphoreSlim _installLock = new(1, 1);
+		private readonly object _stateLock = new();
 		private CancellationTokenSource? _cts;
+		private bool _isInstalling;
 
 		/// <summary>
 		/// Accepted archive file extensions for mod installation (case-insensitive).
@@ -51,11 +53,11 @@
 		/// Indicates whether an installation batch is currently running.
 		/// The UI layer can bind to this to disable buttons or show spinners.
 		/// </summary>
-		public bool IsInstalling { get; private set; }
+		public bool IsInstalling { get { lock (_stateLock) { return _isInstalling; } } }
 
 		/// <summary>
 		/// The summary of the most recently completed install batch.
-		/// Available after <see cref="InstallCompleted"/> fires.
+		/// Available after <see cref="InstallAsync"/> completes.
 		/// <c>null</c> if no install has completed yet.
 		/// </summary>
 		public ModInstallSummary? LastSummary { get; private set; }
@@ -66,13 +68,6 @@
 		/// Payload: the cumulative <see cref="ModInstallSummary"/> so far.
 		/// </summary>
 		public event Action<ModInstallSummary>? InstallProgressChanged;
-
-		/// <summary>
-		/// Raised on the thread pool when the entire batch completes (success or failure).
-		/// The UI layer must dispatch to the UI thread before updating controls.
-		/// Payload: the final <see cref="ModInstallSummary"/>.
-		/// </summary>
-		public event Action<ModInstallSummary>? InstallCompleted;
 
 		/// <summary>
 		/// Raised on the extraction thread during archive extraction.
@@ -124,59 +119,74 @@
 		}
 
 		/// <summary>
-		/// Starts a batch mod installation on a background thread.
-		/// Returns immediately — progress is reported via <see cref="InstallProgressChanged"/>
-		/// and completion via <see cref="InstallCompleted"/>.
+		/// Starts and awaits a batch mod installation.
+		/// Progress is reported via <see cref="InstallProgressChanged"/>.
 		/// Guarded by a semaphore — only one batch can run at a time.
-		/// The task is owned by this service and survives page navigation.
+		/// The returned task is the deterministic operation-lifetime boundary.
 		/// </summary>
 		/// <param name="archivePaths">Array of full paths to archive files selected by the user.</param>
-		/// <returns>
-		/// <c>true</c> if the install was started.
-		/// <c>false</c> if an install is already in progress.
-		/// </returns>
-		public bool StartInstallAsync(string[] archivePaths) {
-			if (!_installLock.Wait(0)) {
+		/// <returns>The completed summary, or <c>null</c> when another install is active.</returns>
+		public async Task<ModInstallSummary?> InstallAsync(
+			string[] archivePaths,
+			CancellationToken cancellationToken = default) {
+			ArgumentNullException.ThrowIfNull(archivePaths);
+			if (!await _installLock.WaitAsync(0, cancellationToken)) {
 				_logger.Warning("ModInstaller: Install already in progress. Ignoring duplicate request.");
-				return false;
+				return null;
 			}
 
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("ModInstaller: Starting install batch.", new { ArchiveCount = archivePaths.Length });
 			}
-			IsInstalling = true;
-			_cts = new CancellationTokenSource();
-			CancellationToken token = _cts.Token;
+			CancellationTokenSource operationCancellation =
+				CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+			lock (_stateLock) {
+				_isInstalling = true;
+				_cts = operationCancellation;
+			}
+			CancellationToken token = operationCancellation.Token;
 
-			// Fire-and-forget on the thread pool — the service owns this task's lifetime
-			_ = Task.Run(async () => {
-				ModInstallSummary summary = new();
-				try {
-					summary = await InstallModsAsync(archivePaths, token);
-				} catch (OperationCanceledException) {
-					_logger.Info("ModInstaller: Install batch was cancelled.");
-				} catch (Exception ex) {
-					_logger.Error(ex, "ModInstaller: Unhandled exception in install batch.");
-				} finally {
-					LastSummary = summary;
-					IsInstalling = false;
-					_cts?.Dispose();
-					_cts = null;
-					_installLock.Release();
-					InstallCompleted?.Invoke(summary);
+			ModInstallSummary summary = new();
+			try {
+				// Keep archive enumeration, extraction orchestration, and filesystem
+				// continuations off the WPF caller context while retaining an awaitable
+				// service-owned operation lifetime.
+				summary = await Task.Run(() => InstallModsAsync(archivePaths, token), token)
+					.ConfigureAwait(false);
+			} catch (OperationCanceledException) when (token.IsCancellationRequested) {
+				_logger.Info("ModInstaller: Install batch was cancelled.");
+			} catch (Exception ex) {
+				_logger.Error(ex, "ModInstaller: Unhandled exception in install batch.");
+			} finally {
+				LastSummary = summary;
+				lock (_stateLock) {
+					_isInstalling = false;
+					if (ReferenceEquals(_cts, operationCancellation)) {
+						_cts = null;
+					}
 				}
-			});
+				operationCancellation.Dispose();
+				_installLock.Release();
+			}
 
-			return true;
+			return summary;
 		}
 
 		/// <summary>
 		/// Cancels the currently running install batch, if any.
 		/// </summary>
 		public void CancelInstall() {
-			if (_cts is { IsCancellationRequested: false } cts) {
+			CancellationTokenSource? cts;
+			lock (_stateLock) {
+				cts = _cts;
+			}
+			if (cts is { IsCancellationRequested: false }) {
 				_logger.Info("ModInstaller: Cancellation requested.");
-				cts.Cancel();
+				try {
+					cts.Cancel();
+				} catch (ObjectDisposedException) {
+					// Completion won the race; the operation is already quiescent.
+				}
 			}
 		}
 		#region InstallModsAsync
@@ -243,7 +253,7 @@
 					};
 					_logger.Warning($"ModInstaller: Rejected '{archiveFileName}' — unsupported format '{ext}'.");
 					summary.Results.Add(skipped);
-					InstallProgressChanged?.Invoke(summary);
+					RaiseInstallProgressChanged(summary);
 					archiveIndex++;
 					continue;
 				}
@@ -252,7 +262,7 @@
 				void OnFileExtracted(int localCount) {
 					archiveFilesExtracted = localCount;
 					int currentBatchTotal = batchFilesExtracted + localCount;
-					ExtractionProgressChanged?.Invoke(new ExtractionProgress {
+					RaiseExtractionProgressChanged(new ExtractionProgress {
 						CurrentEntry = localCount,
 						ArchiveFileName = archiveFileName,
 						ArchiveIndex = currentArchiveIndex + 1,
@@ -275,7 +285,7 @@
 				batchFilesExtracted += actualCount;
 
 				summary.Results.Add(result);
-				InstallProgressChanged?.Invoke(summary);
+				RaiseInstallProgressChanged(summary);
 				archiveIndex++;
 			}
 
@@ -284,6 +294,28 @@
 				_logger.Debug("ModInstaller: Batch complete.", new { Results = summary.Results.Count });
 			}
 			return summary;
+		}
+
+		private void RaiseInstallProgressChanged(ModInstallSummary summary) {
+			foreach (Action<ModInstallSummary> handler in
+				InstallProgressChanged?.GetInvocationList().Cast<Action<ModInstallSummary>>() ?? []) {
+				try {
+					handler(summary);
+				} catch (Exception ex) {
+					_logger.Error(ex, "ModInstaller: Install progress subscriber failed.");
+				}
+			}
+		}
+
+		private void RaiseExtractionProgressChanged(ExtractionProgress progress) {
+			foreach (Action<ExtractionProgress> handler in
+				ExtractionProgressChanged?.GetInvocationList().Cast<Action<ExtractionProgress>>() ?? []) {
+				try {
+					handler(progress);
+				} catch (Exception ex) {
+					_logger.Error(ex, "ModInstaller: Extraction progress subscriber failed.");
+				}
+			}
 		}
 		#endregion
 
