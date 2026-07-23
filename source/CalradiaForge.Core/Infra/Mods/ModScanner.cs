@@ -1,124 +1,175 @@
-﻿namespace CalradiaForge.Core.Infra.Mods {
-	using System.Collections.Generic;
-	using System.IO;
-	using System.Threading;
-	using System.Threading.Tasks;
+namespace CalradiaForge.Core.Infra.Mods;
 
-	using CalradiaForge.Core.Infra.Config;
-	using CalradiaForge.Core.Infra.Logging;
-	using CalradiaForge.Core.Models;
+using CalradiaForge.Core.Infra.Config;
+using CalradiaForge.Core.Infra.Logging;
+using CalradiaForge.Core.Models;
+
+/// <summary>
+/// Low-level scanner that discovers modules and reports per-root completeness.
+/// It does not authorize persistence or publish application state.
+/// </summary>
+public sealed class ModScanner : IModScanner {
+	private static readonly Logger _logger = Logger.Instance;
+
+	public async Task<ModScanResult> ScanAsync(AppConfigSettings config, CancellationToken token = default) {
+		ArgumentNullException.ThrowIfNull(config);
+		string localRoot = config.ModulesDirectoryPath;
+		bool scanWorkshop = config.IsGameFromSteam;
+		string workshopRoot = config.SteamWorkshopFolderPath;
+		try {
+			RootScan local = await ScanRootAsync(localRoot, "local Modules", token);
+			RootScan workshop;
+			if (!scanWorkshop) {
+				workshop = RootScan.NotApplicable();
+			} else if (string.IsNullOrWhiteSpace(workshopRoot)) {
+				workshop = RootScan.NotConfigured();
+			} else {
+				workshop = await ScanRootAsync(workshopRoot, "Steam Workshop", token);
+			}
+
+			List<string> warnings = [.. local.Diagnostics, .. workshop.Diagnostics];
+			List<string> duplicateIds = [];
+			Dictionary<string, ModuleModel> accepted = new(StringComparer.OrdinalIgnoreCase);
+			foreach (ModuleModel module in local.Modules.Concat(workshop.Modules)) {
+				string? moduleId = module.ModuleId?.Trim();
+				if (string.IsNullOrWhiteSpace(moduleId)) {
+					warnings.Add($"Module at '{module.InstallPath}' has no identifier and was not accepted.");
+					continue;
+				}
+				if (!accepted.TryAdd(moduleId, module)) {
+					duplicateIds.Add(accepted.Keys.First(
+						acceptedId => string.Equals(acceptedId, moduleId, StringComparison.OrdinalIgnoreCase)));
+				}
+			}
+
+			IReadOnlyList<ModuleModel> modules = accepted.Values
+				.OrderBy(module => module.ModuleId, StringComparer.OrdinalIgnoreCase)
+				.ThenBy(module => module.InstallPath, StringComparer.OrdinalIgnoreCase)
+				.ToArray();
+			IReadOnlyList<string> distinctDuplicates = duplicateIds
+				.Distinct(StringComparer.OrdinalIgnoreCase)
+				.OrderBy(id => id, StringComparer.OrdinalIgnoreCase)
+				.ToArray();
+			if (distinctDuplicates.Count > 0) {
+				warnings.Add($"Duplicate module identifiers were resolved deterministically: {string.Join(", ", distinctDuplicates)}.");
+			}
+
+			return new ModScanResult {
+				Modules = modules,
+				LocalRoot = local.ToResult(),
+				WorkshopRoot = workshop.ToResult(),
+				Warnings = warnings,
+				DuplicateModuleIds = distinctDuplicates,
+				TechnicalDiagnostics = [
+					$"Local={local.Status} ({local.Modules.Count})",
+					$"Workshop={workshop.Status} ({workshop.Modules.Count})",
+					$"Accepted={modules.Count}"
+				]
+			};
+		} catch (OperationCanceledException) when (token.IsCancellationRequested) {
+			return new ModScanResult {
+				IsCancelled = true,
+				LocalRoot = new ModScanRootResult { Status = ModScanRootStatus.Cancelled },
+				WorkshopRoot = new ModScanRootResult { Status = ModScanRootStatus.Cancelled },
+				Warnings = ["Module scan was cancelled."]
+			};
+		}
+	}
 
 	/// <summary>
-	/// Scans game and workshop directories to discover installed mods.
+	/// Compatibility discovery API. Pipeline callers must use <see cref="ScanAsync"/>
+	/// so they can evaluate completeness before committing results.
 	/// </summary>
-	public sealed class ModScanner {
-		private static readonly Logger _logger = Logger.Instance;
+	public static async Task<List<ModuleModel>> ScanForModsAsync(
+		AppConfigSettings config,
+		CancellationToken token = default,
+		List<ModuleModel>? allMods = null) {
+		ModScanResult result = await new ModScanner().ScanAsync(config, token);
+		allMods ??= [];
+		allMods.AddRange(result.Modules);
+		return allMods;
+	}
 
-		/// <summary>
-		/// Scans configured mod directories and returns the combined module list.
-		/// </summary>
-		public static async Task<List<ModuleModel>> ScanForModsAsync(AppConfigSettings config, CancellationToken token = default, List<ModuleModel>? allMods = null) {
-			allMods ??= new List<ModuleModel>();
-			string modulesDirectory = config.ModulesDirectoryPath;
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ModScanner: Starting scan.", new { ModulesDirectory = modulesDirectory, IsSteam = config.IsGameFromSteam });
-			}
-			if (!string.IsNullOrWhiteSpace(modulesDirectory) && Directory.Exists(modulesDirectory)) {
-				List<ModuleModel> gameModules = await Task.Run(() => ScanDirectory(modulesDirectory, token), token);
-				allMods.AddRange(gameModules);
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("ModScanner: Scanned game modules.", new { Directory = modulesDirectory, Count = gameModules.Count });
-				}
-			} else {
-				_logger.Warning($"ModScanner: Modules directory '{modulesDirectory}' not found or not configured.");
-			}
-			if (config.IsGameFromSteam) {
-				string workshopDirectory = config.SteamWorkshopFolderPath;
-				if (!string.IsNullOrWhiteSpace(workshopDirectory) && Directory.Exists(workshopDirectory)) {
-					List<ModuleModel> workshopMods = await Task.Run(() => ScanDirectory(workshopDirectory, token), token);
-					allMods.AddRange(workshopMods);
-					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-						_logger.Debug("ModScanner: Scanned workshop mods.", new { Directory = workshopDirectory, Count = workshopMods.Count });
-					}
-				} else {
-					_logger.Warning($"ModScanner: Steam Workshop directory '{workshopDirectory}' not found or not configured.");
-				}
-			} else {
-				_logger.Info("ModScanner: Game is not from Steam, skipping Steam Workshop scan.");
-			}
-			_logger.Info($"ModScanner: Found {allMods.Count} total mods across all directories.");
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ModScanner: Scan complete.", new { TotalCount = allMods.Count });
-			}
-			return allMods;
+	private static Task<RootScan> ScanRootAsync(string path, string description, CancellationToken token) {
+		return Task.Run(() => ScanRoot(path, description, token), token);
+	}
+
+	private static RootScan ScanRoot(string path, string description, CancellationToken token) {
+		if (string.IsNullOrWhiteSpace(path)) {
+			return new RootScan(ModScanRootStatus.Missing, [], [$"The configured {description} root is missing or invalid: '{path}'."]);
 		}
-		/// <summary>
-		/// Scans a single directory for mod folders and parses each module.
-		/// </summary>
-		private static List<ModuleModel> ScanDirectory(string directoryPath, CancellationToken token) {
-			List<ModuleModel> mods = new List<ModuleModel>();
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ModScanner: Scanning directory.", new { Directory = directoryPath });
-			}
-			if (!Directory.Exists(directoryPath)) {
-				_logger.Warning($"ModScanner: Directory: '{directoryPath}' does not exist. Skipping scan.");
-				return mods;
-			}
-			string[] subDirectories;
-			try {
-				subDirectories = Directory.GetDirectories(directoryPath);
-			} catch (Exception ex) {
-				_logger.Error($"ModScanner: Failed to enumerate directories in '{directoryPath}', {ex.Message}");
-				return mods;
-			}
-			foreach (string subDir in subDirectories) {
+
+		try {
+			List<ModuleModel> modules = [];
+			List<string> diagnostics = [];
+			string[] directories = Directory.GetDirectories(path)
+				.OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
+				.ToArray();
+			foreach (string directory in directories) {
 				token.ThrowIfCancellationRequested();
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("ModScanner: Inspecting subdirectory.", new { Directory = subDir });
+				string? xmlPath = FindModuleXml(directory);
+				if (xmlPath is null) {
+					continue;
 				}
-				ModuleModel? mod = TryParseModuleFromDirectory(subDir);
-				if (mod is not null) {
-					if (!mod.IsSinglePlayerMod) {
-						_logger.Info($"ModScanner: Skipping multiplayer-only mod '{mod.ModuleName}' ({mod.ModuleId}).");
-						continue;
-					}
-					mods.Add(mod);
+				ModuleModel? module = ModParser.Parse(xmlPath, Path.GetDirectoryName(xmlPath) ?? directory);
+				if (module is null || string.IsNullOrWhiteSpace(module.ModuleId)) {
+					diagnostics.Add($"Failed to parse module metadata at '{xmlPath}'.");
+					continue;
+				}
+				if (module.IsSinglePlayerMod) {
+					modules.Add(module);
 				}
 			}
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ModScanner: Directory scan complete.", new { Directory = directoryPath, Count = mods.Count });
-			}
-			return mods;
+
+			ModScanRootStatus status = diagnostics.Count == 0
+				? ModScanRootStatus.Succeeded
+				: ModScanRootStatus.Partial;
+			return new RootScan(status, modules, diagnostics);
+		} catch (DirectoryNotFoundException ex) {
+			_logger.Error(ex, $"ModScanner: {description} root '{path}' is missing.");
+			return new RootScan(ModScanRootStatus.Missing, [], [$"The configured {description} root is missing: '{path}'."]);
+		} catch (UnauthorizedAccessException ex) {
+			_logger.Error(ex, $"ModScanner: Cannot access {description} root '{path}'.");
+			return new RootScan(ModScanRootStatus.Inaccessible, [], [$"The configured {description} root is inaccessible."]);
+		} catch (IOException ex) {
+			_logger.Error(ex, $"ModScanner: Cannot enumerate {description} root '{path}'.");
+			return new RootScan(ModScanRootStatus.Inaccessible, [], [$"The configured {description} root could not be enumerated."]);
+		} catch (OperationCanceledException) {
+			throw;
+		} catch (Exception ex) {
+			_logger.Error(ex, $"ModScanner: Unexpected failure scanning {description} root '{path}'.");
+			return new RootScan(ModScanRootStatus.Failed, [], [$"The configured {description} root failed unexpectedly."]);
 		}
-		/// <summary>
-		/// Attempts to parse a module from a directory or nested folders.
-		/// </summary>
-		private static ModuleModel? TryParseModuleFromDirectory(string directoryPath) {
-			string xmlFilePath = Path.Combine(directoryPath, "SubModule.xml");
-			if (File.Exists(xmlFilePath)) {
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("ModScanner: Found SubModule.xml.", new { Directory = directoryPath, XmlPath = xmlFilePath });
+	}
+
+	private static string? FindModuleXml(string directory) {
+		string direct = Path.Combine(directory, "SubModule.xml");
+		if (File.Exists(direct)) {
+			return direct;
+		}
+		try {
+			foreach (string inner in Directory.GetDirectories(directory).OrderBy(value => value, StringComparer.OrdinalIgnoreCase)) {
+				string nested = Path.Combine(inner, "SubModule.xml");
+				if (File.Exists(nested)) {
+					return nested;
 				}
-				return ModParser.Parse(xmlFilePath, directoryPath);
-			}
-			try {
-				string[] innerDirs = Directory.GetDirectories(directoryPath);
-				foreach (string innerDir in innerDirs) {
-					string nestedPath = Path.Combine(innerDir, "SubModule.xml");
-					if (File.Exists(nestedPath)) {
-						if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-							_logger.Debug("ModScanner: Found nested SubModule.xml.", new { Directory = directoryPath, XmlPath = nestedPath });
-						}
-						return ModParser.Parse(nestedPath, innerDir);
-					}
-				}
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("ModScanner: No SubModule.xml found.", new { Directory = directoryPath });
-				}
-			} catch (Exception ex) {
-				_logger.Error($"ModScanner: Failed searching nested directories in'{directoryPath}'", ex);
 			}
 			return null;
+		} catch (Exception ex) when (ex is UnauthorizedAccessException or IOException) {
+			throw new IOException($"Failed to inspect module directory '{directory}'.", ex);
 		}
+	}
+
+	private sealed record RootScan(
+		ModScanRootStatus Status,
+		IReadOnlyList<ModuleModel> Modules,
+		IReadOnlyList<string> Diagnostics) {
+		public static RootScan NotApplicable() => new(ModScanRootStatus.NotApplicable, [], []);
+		public static RootScan NotConfigured() => new(ModScanRootStatus.NotConfigured, [], []);
+		public ModScanRootResult ToResult() => new() {
+			Status = Status,
+			ModuleCount = Modules.Count,
+			Diagnostics = Diagnostics
+		};
 	}
 }
