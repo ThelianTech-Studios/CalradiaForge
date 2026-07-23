@@ -3,6 +3,7 @@
 ## Currently Implemented
 - `ModpackService` owns modpack CRUD, import/export, validation, and last-used persistence.
 - `ModpackData` owns file I/O for modpack JSON and last-used data and writes both atomically.
+- Named modpacks and last-used data use the shared bounded-retry atomic replacement path.
 - `ModpackFileHelper` sanitizes filenames.
 - `VanillaModules` provides built-in template load orders.
 - `NovusPresetConverter` supports import from Novus Launcher presets.

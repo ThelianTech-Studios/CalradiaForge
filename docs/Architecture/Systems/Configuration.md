@@ -2,6 +2,9 @@
 
 ## Currently Implemented
 - `AppConfig` owns JSON-backed persistence and saves through atomic same-directory file replacement.
+- First-run or newly introduced missing defaults are applied as one configuration update, avoiding repeated replacement of the same file during startup.
+- Existing valid empty optional settings do not trigger a startup rewrite; ordinary setting changes continue to persist immediately.
+- The shared atomic writer uses bounded retries for transient Windows sharing, lock, and replacement failures.
 - Invalid config JSON is logged and treated as an empty settings set so `AppConfigSettings` can seed typed defaults without crashing normal startup.
 - `AppConfigSettings` provides typed access and change notifications.
 - `AppPaths` resolves and creates the app's working directories.

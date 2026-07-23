@@ -10,6 +10,7 @@
 - `BLSEInstaller` handles BLSE as a special-case install path.
 - `ModInstaller` performs named module preflight before destination writes: exactly one `SubModule.xml`, parsed identity, target containment, and matching identity for an existing target.
 - `ModsData` atomically stores mod cache snapshots, validates rotation input, and can recover a corrupt current cache from its backup.
+- Current and backup mod-cache writes use the shared bounded-retry atomic replacement path.
 - Complete scans are deterministic: paths are scanned in stable order, module IDs compare case-insensitively, local modules win over Workshop duplicates, and the first stable entry wins within a root.
 
 ## Architecture Guidance
