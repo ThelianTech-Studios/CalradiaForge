@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## 0.13.36 - Internal | 2026-07-22
+
+> Refactor Phase 6.A: introduced the Core-owned `ModPipelineManager` for complete-scan commit decisions, coherent accepted module snapshots, shared scan/install admission, and awaitable operation quiescence, including the accepted archive-progress estimate cleanup in this build range.
+
+### Added
+
+- Added `ModPipelineManager` as the single Core workflow boundary for startup scans, explicit refreshes, cache commit authorization, installation admission, cancellation, and quiescence while preserving `ModScanner`, `ModsData`, `ModInstaller`, and `ModExtractor` as the low-level owners.
+- Added workflow-specific scan and pipeline result models with per-root status, completeness, commit state, local and Workshop counts, warnings, duplicate diagnostics, technical context, and monotonically versioned accepted snapshots.
+- Added an injectable scanner seam and focused regression coverage for complete, missing, inaccessible, empty, malformed, duplicate, cancelled, failed, busy, stopped, install-active, and cancellation-versus-commit cases.
+
+### Changed
+
+- Changed module discovery to return structured local and Workshop outcomes, scan paths in deterministic order, prefer local modules for case-insensitive duplicate IDs, and distinguish optional unconfigured Workshop state from configured missing or inaccessible roots.
+- Moved cache rotation and current-cache saving behind the manager's complete-result decision. Startup and refresh now publish one accepted snapshot only after persistence succeeds; rejected results retain the previous cache, snapshot version, and change state.
+- Made installation completion awaitable while keeping archive work service-owned and off the WPF dispatcher context. Scan and install operations now share deterministic single-operation admission, cooperative cancellation, permanent stop-admission, and awaitable quiescence, and failing progress subscribers no longer abort installation.
+- Routed application startup cache loading, Mods-page startup/refresh/install flows, Modpacks-page refresh and template creation, Settings cache clearing, and load-order validation through `ModPipelineManager` and one captured accepted snapshot instead of mutable `ModService` lists.
+- Changed `ModpackService.ValidateLoadOrder` to accept `IReadOnlyList<ModuleModel>` so callers can validate against an accepted snapshot without requiring a mutable list.
+- Changed `ModExtractor.EstimateFileCount` fallback estimates to use a minimum of one entry, including unreadable or unavailable archive metadata, and removed obsolete SharpCompress implementation comments.
+
+### Fixed
+
+- Prevented invalid configuration, incomplete roots, parse failures, cancellation, and unexpected scan failures from replacing accepted module state or producing false removal results.
+- Fixed cancellation-versus-commit ordering with a defined commit linearization point, kept accepted snapshot versions monotonic across cache reloads, and corrected inaccessible-root reporting so enumeration failures are not silently treated as missing or empty roots.
+- Restored the Phase 6.A regression suite after the owner-approved manager naming decision by aligning the manager and Novus regression tests with `ModPipelineManager`.
+
+### Removed
+
+- Removed `ModService` and its independent refresh/cache/change-state ownership after migrating production callers to `ModPipelineManager`.
+- Removed the fire-and-forget installer start/completion-event contract; callers now await the retained installation operation while progress events remain available.
+
+### Verification
+
+- Built the full solution in Debug and Release with zero compilation errors. Existing legacy-logger and SevenZipWrapper architecture warnings remain; no project, package-reference, application-version, DI/provider, Nexus, or Core-to-WPF dependency changes were introduced in this build range.
+- Passed all 32 focused manager/scanner/installer/Novus tests and the complete 92-test suite in both Debug and Release. These are automated Core and integration-style filesystem results; they do not claim interactive WPF runtime smoke testing or a new Steam path-resolution fix.
+
+---
+
 ## 0.13.35 - Internal | 2026-07-16
 
 > Refactor Phase 5: completed the game-platform detection and path workflow, integrated the existing Steam multi-library resolver into application startup and Settings, and restored a compiling, regression-tested internal source state.

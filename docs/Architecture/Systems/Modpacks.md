@@ -12,6 +12,7 @@
 - The built-in `Vanilla` modpack should exist on disk.
 - The "Last Used" load order is persisted separately from named modpacks.
 - Validation should report missing entries without mutating the saved modpack.
+- Validation accepts one read-only accepted mod-pipeline snapshot so a load-order operation uses one coherent module version.
 
 ## Key Files
 - `source/CalradiaForge.Core/Infra/Modpacks/ModpackService.cs`

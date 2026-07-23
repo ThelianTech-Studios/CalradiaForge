@@ -19,7 +19,7 @@
 - `ISteamClientRootProvider` isolates registry lookup, and `ISteamInstallationResolver` owns Steam metadata parsing and deterministic candidate selection.
 - `AppConfigSettings` remains the sole committed provider/game/launcher/Workshop/BLSE state.
 - Core notifications contain only toast-relevant text and severity. They contain no WPF types, windows, controls, settings, or filesystem paths.
-- `ModScanner` consumes configured paths. It does not discover Steam libraries, infer providers, or parse Steam metadata.
+- `ModScanner` captures and consumes configured paths. It does not discover Steam libraries, infer providers, or parse Steam metadata; it reports per-root completeness to `ModPipelineCoordinator`.
 - Core remains free of WPF references.
 
 ## Key Files
@@ -44,6 +44,6 @@ These tests do not read a real registry or Steam installation and do not prove r
 
 ## Deferred / Future Work
 
-- Phase 6.A registers the finalized resolver, workflow, notification queue, and platform dependencies in the application composition root; it must not redesign Phase 5 behavior.
-- A general structured scanner-result/cache contract remains Phase 7 work.
+- Phase 6.A consumes the finalized Phase 5 settings through `ModPipelineCoordinator` without redesigning detection. Phase 6.B will register the resolver, workflow, notification queue, coordinator, and platform dependencies in the application composition root.
+- Phase 6.A implements the workflow-specific structured scan/completeness/cache contract. Broader generalized result conventions remain Phase 7 work.
 - Epic, Game Pass, and GOG real-world automatic detection/support claims remain deferred. The existing Epic branch stays disabled by default.

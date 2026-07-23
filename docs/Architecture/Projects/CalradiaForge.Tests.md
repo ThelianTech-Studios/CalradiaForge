@@ -8,6 +8,7 @@
 
 - `Core.Tests` contains deterministic Core unit, regression, result, and integration-style filesystem tests.
 - Phase 5 coverage exercises Steam metadata resolution, automatic and manual detection workflows, the startup notification queue, invalid-configuration cache preservation, split-root scanning, and Novus preset validation.
+- Phase 6.A coverage exercises structured local/Workshop scan outcomes, parse and duplicate diagnostics, accepted-snapshot/cache commit gating, startup/refresh reuse, deterministic busy rejection, cooperative cancellation, stop-admission, quiescence, and awaitable installer completion.
 - Fixtures use isolated operating-system temporary directories and generated XML/zip/JSON data.
 - Archive and installer tests continue through `ModExtractor`, `ModInstaller`, `ModsData`, and `ModpackData` rather than replacing authoritative owners.
 - `Nexus.Tests` and `UI.Tests` are reserved for later work and do not imply current Nexus or WPF automation coverage.

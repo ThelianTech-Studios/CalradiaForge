@@ -796,9 +796,7 @@ Before the changelog stage, the accepted Phase x source-code changes have alread
 - manually inspected by the owner,
 - approved by the owner.
 
-Update and validate `docs/CHANGELOG.md` first. Then stop so the owner can review, commit, and push the accepted source and changelog state.
-
-Update `docs/MIGRATION_MAP.md` only in a later, explicitly requested stage after the accepted source and changelog state has been committed and pushed and the migration-map prerequisites have been reverified.
+Update and validate `docs/CHANGELOG.md` first then update `docs/MIGRATION_MAP.md`. Then stop so the owner can review, commit, and push the accepted source and changelog state.
 
 Source-code read-only rule:
 - Treat all source-code files as read-only throughout this workflow.

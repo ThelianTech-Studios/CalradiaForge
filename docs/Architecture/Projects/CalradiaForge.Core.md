@@ -15,6 +15,7 @@ Provide the deterministic, UI-agnostic behavior that the WPF app consumes.
 - Persist and read configuration data.
 - Provide strongly typed configuration access.
 - Parse and scan Bannerlord modules.
+- Coordinate startup/refresh scans, per-root completeness, cache commit authorization, atomic accepted module snapshots, deterministic operation admission, cancellation, and quiescence.
 - Install mods and handle archive extraction.
 - Manage BLSE installation as a special-case archive flow.
 - Store mod cache and modpack data.
@@ -48,7 +49,7 @@ Provide the deterministic, UI-agnostic behavior that the WPF app consumes.
 - Paths and platform detection: `GamePlatformDetectionResolver`, `GameDetectionService`, `StartupNotificationQueue`, `GamePathValidator`, `GameProvider`, `ISteamClientRootProvider`, `ISteamInstallationResolver`, `SteamInstallationResolver`, `SteamResolutionResult`, `EpicDetector`, `EpicManifestReader`
 - Launch: `GameLauncher`, `LaunchTarget`
 - EULA: `EulaService`
-- Mods: `ModService`, `ModScanner`, `ModParser`, `ModInstaller`, `ModExtractor`, `BLSEInstaller`, `ModsData`
+- Mods: `ModPipelineCoordinator`, `IModScanner`, `ModScanner`, `ModParser`, `ModInstaller`, `ModExtractor`, `BLSEInstaller`, `ModsData`, `AcceptedModSnapshot`, `ModPipelineResult`, `ModScanResult`
 - Modpacks: `ModpackService`, `ModpackData`, `ModpackFileHelper`, `VanillaModules`, `NovusPresetConverter`
 
 ## Design Constraints
@@ -58,6 +59,7 @@ Provide the deterministic, UI-agnostic behavior that the WPF app consumes.
 - Preserve `ModInstaller` and `ModExtractor` as the authority for archive install flow.
 - Preserve `ModpackData` and `ModsData` as the file I/O boundary for their domains.
 - Keep shared atomic-write mechanics internal to Core data/config owners rather than moving domain persistence into services or UI.
+- Keep cache rotation/save authorization and accepted module-state publication in `ModPipelineCoordinator`; rejected or incomplete scans preserve the prior snapshot.
 
 ## Known Extension Points
 - Nexus integration should not be added directly to Core.

@@ -54,6 +54,7 @@ Currently implemented cross-cutting systems live mostly in Core:
 - Localization
 - EULA gating
 - Mod scanning and installation
+- Mod-pipeline completeness, accepted snapshots, cache commit gating, and quiescence
 - Modpack persistence and templates
 - Game launch and platform detection
 

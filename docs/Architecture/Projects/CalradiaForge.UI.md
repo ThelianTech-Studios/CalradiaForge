@@ -13,6 +13,8 @@ Render the user interface and translate user intent into calls to Core services.
 - Present mods, modpacks, settings, FAQ, EULA, and language selection views.
 - Surface toast notifications.
 - Coordinate startup sequence and service initialization.
+- Manually compose the Phase 6.A mod-pipeline coordinator until Phase 6.B introduces the application provider.
+- Route startup, explicit refresh, install admission, cache clearing, and modpack module reads through the accepted mod-pipeline boundary.
 - Signal MainWindow readiness and map queued Core startup notifications into the existing toast surface.
 - Invoke the Core game-detection workflow for Settings re-detection and bounded manual path configuration.
 - Bind translated strings into the UI.
@@ -47,6 +49,7 @@ Render the user interface and translate user intent into calls to Core services.
 - Keep business rules in Core services.
 - Avoid duplicating persistence or parsing logic in code-behind.
 - Keep navigation-driven refreshes synchronized with the Core services rather than reimplementing them in UI.
+- Capture one accepted module snapshot for each UI/modpack operation instead of reading mutable scan lists piecemeal.
 
 ## Known Extension Points
 - New pages should consume existing services instead of duplicating logic.
