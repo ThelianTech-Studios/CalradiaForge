@@ -12,6 +12,7 @@
 
 	using CalradiaForge.Core.Infra.Logging;
 	using CalradiaForge.Core.Infra.Modpacks;
+	using CalradiaForge.Core.Infra.Mods;
 	using CalradiaForge.Core.Models;
 
 	using CalradiaForge.UI.Toasts;
@@ -186,18 +187,21 @@
 		/// This ensures both lists always reflect the latest state from ModsPage and disk,
 		/// even if the user switched modpacks, reordered mods, or created new modpacks
 		/// before navigating here.
-		/// Triggers a live mod rescan so <see cref="Core.Infra.Mods.ModService.CurrentMods"/>
-		/// is up-to-date before template creation or load order comparison.
+		/// Triggers a live mod rescan so the accepted pipeline snapshot is current
+		/// before template creation or load order comparison.
 		/// </summary>
 		private async void ModpacksPage_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e) {
 			if (e.NewValue is true) {
-				Core.Infra.Mods.ModService modService = App.ModService;
-				if (!modService.IsRefreshing) {
+				ModPipelineManager pipeline = App.ModPipelineManager;
+				if (!pipeline.IsRefreshing) {
 					try {
 						if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 							_logger.Debug("ModpacksPage: Refreshing mods on visibility.");
 						}
-						await modService.RefreshAsync();
+						ModPipelineResult result = await pipeline.RefreshAsync();
+						if (!result.Success && result.Status is not ModPipelineStatus.Busy) {
+							StatusText = result.UserSummary;
+						}
 					} catch (OperationCanceledException) {
 						// Refresh was cancelled — proceed with cached data
 					} catch (Exception ex) {
@@ -610,7 +614,8 @@
 			}
 
 			// Pass installed mods so the template resolves live version data
-			List<ModuleModel> installedMods = App.ModService.CurrentMods;
+			AcceptedModSnapshot snapshot = App.ModPipelineManager.AcceptedSnapshot;
+			List<ModuleModel> installedMods = snapshot.Modules.ToList();
 			bool success = _modpackService.CreateNew(name, createdBy, _pendingTemplate, installedMods);
 
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {

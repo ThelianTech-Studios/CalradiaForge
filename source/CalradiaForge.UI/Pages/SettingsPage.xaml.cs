@@ -27,7 +27,7 @@
 	public partial class SettingsPage : Page, INotifyPropertyChanged {
 		#region Fields
 		private readonly AppConfigSettings _config;
-		private readonly ModService _modService;
+		private readonly ModPipelineManager _modPipeline;
 		private readonly GameDetectionService _gameDetectionService;
 		private readonly Logger _logger = Logger.Instance;
 		private string _gameFolderPath = string.Empty;
@@ -83,7 +83,7 @@
 			InitializeComponent();
 			DataContext = this;
 			_config = App.AppSettingsInstance;
-			_modService = App.ModService;
+			_modPipeline = App.ModPipelineManager;
 			_gameDetectionService = App.GameDetectionService;
 
 			_panels = [PanelGeneral, PanelGameConfig, PanelTools, PanelWip, PanelAbout];
@@ -608,11 +608,11 @@
 		}
 
 		/// <summary>
-		/// Clears the mod cache via <see cref="ModService.ClearCache"/>.
+		/// Clears the mod cache through the accepted-snapshot coordinator boundary.
 		/// Forces a fresh directory scan on next application launch.
 		/// </summary>
 		private void ClearModCache_Click(object sender, RoutedEventArgs e) {
-			bool success = _modService.ClearCache();
+			bool success = _modPipeline.ClearCache();
 			if (success) {
 				App.Toasts.Show(new ToastRequest {
 					Title = "Cache Cleared",

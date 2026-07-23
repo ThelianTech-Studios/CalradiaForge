@@ -22,8 +22,7 @@
 	public partial class App : Application {
 		private static Logger _logger = Logger.Instance;
 		public static AppConfigSettings AppSettingsInstance { get; private set; } = null!;
-		public static ModService ModService { get; private set; } = null!;
-		public static object? ModManagerService { get; private set; }//ModManagerService Instance for managing the future Mod pipeline needs to change from obj to ModManagerService class once this has been developed. This Manager Service will act as the Manager that handles ModExtractor, ModInstaller, ModService, ModScanner and any other present/future Mod related services that will be needed for the future Mod pipeline and NexusMods API intergration. However NexusModsAPI will have its own service class that will be used to handle all NexusMods API related needs. And Pass the resolved Downloaded Mod filepath to ModManager to delegate the Mod Pipeline, ModManager will also handle the Manual Install Mods Pipeline currently present in the application.
+		public static ModPipelineManager ModPipelineManager { get; private set; } = null!;
 		public static ModInstaller ModInstaller { get; private set; } = null!;
 		public static ModpackService ModpackService { get; private set; } = null!;
 		public static GameLauncher GameLauncher { get; private set; } = null!;
@@ -73,9 +72,9 @@
 				_logger.Debug("App: OnExit begin.");
 			}
 			try {
-				if (ModInstaller?.IsInstalling == true) {
-					_logger.Info("App: Cancelling in-progress mod installation on exit.");
-					ModInstaller.CancelInstall();
+				if (ModPipelineManager is not null) {
+					ModPipelineManager.StopAcceptingNewWork();
+					ModPipelineManager.RequestCancellation();
 				}
 				if (ModpackService?.CurrentLoadOrderEntries is { Count: > 0 } entries) {
 					ModpackService.SaveLastUsed(entries);
@@ -186,19 +185,19 @@
 			GameDetectionService.InitializeForStartup(AppSettingsInstance);
 		}
 		/// <summary>
-		/// Initializes mod services and loads cached data.
+		/// Initializes the bounded mod pipeline and loads its accepted cache snapshot.
 		/// </summary>
 		private void InitializeModServices() {
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("App: Initializing mod services.", new { AppPaths.ModsCurrentFilePath, AppPaths.ModsBackupFilePath });
 			}
-			var modsData = new ModsData(AppPaths.ModsCurrentFilePath, AppPaths.ModsBackupFilePath);
-			ModService = new ModService(AppSettingsInstance, modsData);
-			ModService.LoadFromCache();
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("App: Mod cache loaded.", new { Count = ModService.CurrentMods.Count });
-			}
+			ModsData modsData = new(AppPaths.ModsCurrentFilePath, AppPaths.ModsBackupFilePath);
 			ModInstaller = new ModInstaller(AppSettingsInstance);
+			ModPipelineManager = new ModPipelineManager(AppSettingsInstance, modsData, ModInstaller);
+			var snapshot = ModPipelineManager.LoadAcceptedCache();
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("App: Accepted mod cache loaded.", new { snapshot.Version, Count = snapshot.Modules.Count });
+			}
 		}
 		/// <summary>
 		/// Initializes the modpack service and loads modpack data.
