@@ -21,6 +21,22 @@ public sealed class ModpackDataTests {
 	}
 
 	[Fact]
+	public void SaveModpack_WhenFileExists_AtomicallyReplacesItsContents() {
+		using TestDirectory temp = new();
+		string modpacksPath = temp.CreateDirectory("Modpacks");
+		ModpackData data = new(modpacksPath, temp.GetPath("last_used.data"));
+		ModpackModel modpack = CreateModpack("Replace Me");
+		Assert.True(data.SaveModpack(modpack));
+		modpack.LoadOrder.Add(new ModpackEntryModel("Sandbox", "Sandbox", "v1.0.0"));
+
+		Assert.True(data.SaveModpack(modpack));
+
+		ModpackModel loaded = Assert.Single(data.LoadAllModpacks());
+		Assert.Equal(2, loaded.LoadOrder.Count);
+		Assert.Empty(Directory.GetFiles(modpacksPath, "*.tmp"));
+	}
+
+	[Fact]
 	public void LoadAllModpacks_SkipsInvalidJsonWithoutDiscardingValidFiles() {
 		using TestDirectory temp = new();
 		string modpacksPath = temp.CreateDirectory("Modpacks");

@@ -19,6 +19,21 @@ public sealed class ModsDataTests {
 	}
 
 	[Fact]
+	public void SaveCurrentAndBackup_WhenFilesExist_AtomicallyReplaceTheirContents() {
+		using TestDirectory temp = new();
+		ModsData data = CreateData(temp, out _, out _);
+		data.SaveCurrent([TestDirectory.Module("OldCurrent")]);
+		data.SaveBackup([TestDirectory.Module("OldBackup")]);
+
+		data.SaveCurrent([TestDirectory.Module("NewCurrent")]);
+		data.SaveBackup([TestDirectory.Module("NewBackup")]);
+
+		Assert.Equal("NewCurrent", Assert.Single(data.LoadCurrent()).ModuleId);
+		Assert.Equal("NewBackup", Assert.Single(data.LoadBackup()).ModuleId);
+		Assert.Empty(Directory.GetFiles(temp.RootPath, "*.tmp"));
+	}
+
+	[Fact]
 	public void LoadCurrent_WhenCurrentIsCorrupt_RecoversAndRepairsFromBackup() {
 		using TestDirectory temp = new();
 		ModsData data = CreateData(temp, out string currentPath, out _);
