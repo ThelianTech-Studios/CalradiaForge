@@ -328,7 +328,7 @@
 		/// Missing entries are NOT removed from the modpack's saved data.
 		/// </summary>
 		/// <param name="modpack">The modpack to validate.</param>
-		/// <param name="installedMods">Currently installed mods from <see cref="Mods.ModService.CurrentMods"/>.</param>
+		/// <param name="installedMods">Modules from one accepted pipeline snapshot.</param>
 		/// <returns>
 		/// A tuple of (validEntries, missingModNames).
 		/// <c>validEntries</c> contains only entries whose ModuleId exists in <paramref name="installedMods"/>.
@@ -336,7 +336,7 @@
 		/// </returns>
 		public static (List<ModpackEntryModel> ValidEntries, List<string> MissingModNames) ValidateLoadOrder(
 			ModpackModel modpack,
-			List<ModuleModel> installedMods) {
+			IReadOnlyList<ModuleModel> installedMods) {
 
 			HashSet<string> installedIds = new(
 				installedMods

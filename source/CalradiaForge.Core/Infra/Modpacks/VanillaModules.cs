@@ -92,7 +92,7 @@
 		/// for modules not found in the installed list.
 		/// </summary>
 		/// <param name="installedMods">
-		/// Currently installed mods from <see cref="Mods.ModService.CurrentMods"/>.
+		/// Currently installed mods from one accepted pipeline snapshot.
 		/// When <c>null</c> or empty, fallback versions are used for all entries.
 		/// </param>
 		public static List<ModpackEntryModel> GetDefaultLoadOrder(List<ModuleModel>? installedMods) {
@@ -123,7 +123,7 @@
 		/// for modules not found in the installed list.
 		/// </summary>
 		/// <param name="installedMods">
-		/// Currently installed mods from <see cref="Mods.ModService.CurrentMods"/>.
+		/// Currently installed mods from one accepted pipeline snapshot.
 		/// When <c>null</c> or empty, fallback versions are used for all entries.
 		/// </param>
 		public static List<ModpackEntryModel> GetButterLibLoadOrder(List<ModuleModel>? installedMods) {
