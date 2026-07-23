@@ -2,12 +2,23 @@ namespace CalradiaForge.Core.Infra.Persistence {
 	using System;
 	using System.IO;
 	using System.Text;
+	using System.Threading;
 
 	/// <summary>
 	/// Writes text through a temporary file in the destination directory and then
 	/// atomically replaces the destination.
 	/// </summary>
 	internal static class AtomicFileWriter {
+		private const int ErrorSharingViolation = 32;
+		private const int ErrorLockViolation = 33;
+		private const int ErrorUnableToRemoveReplaced = 1175;
+		private static readonly TimeSpan[] _replaceRetryDelays = [
+			TimeSpan.FromMilliseconds(25),
+			TimeSpan.FromMilliseconds(50),
+			TimeSpan.FromMilliseconds(100),
+			TimeSpan.FromMilliseconds(200)
+		];
+
 		/// <summary>
 		/// Writes <paramref name="contents"/> without exposing a partially written
 		/// destination file.
@@ -43,7 +54,7 @@ namespace CalradiaForge.Core.Infra.Persistence {
 				}
 
 				if (File.Exists(fullDestinationPath)) {
-					File.Replace(temporaryFilePath, fullDestinationPath, destinationBackupFileName: null, ignoreMetadataErrors: true);
+					ReplaceFileWithRetry(temporaryFilePath, fullDestinationPath);
 				} else {
 					File.Move(temporaryFilePath, fullDestinationPath);
 				}
@@ -52,6 +63,25 @@ namespace CalradiaForge.Core.Infra.Persistence {
 					File.Delete(temporaryFilePath);
 				}
 			}
+		}
+
+		private static void ReplaceFileWithRetry(string temporaryFilePath, string fullDestinationPath) {
+			for (int attempt = 0; ; attempt++) {
+				try {
+					File.Replace(temporaryFilePath, fullDestinationPath, destinationBackupFileName: null, ignoreMetadataErrors: true);
+					return;
+				} catch (IOException ex) when (attempt < _replaceRetryDelays.Length && IsRetryableReplaceError(ex)) {
+					Thread.Sleep(_replaceRetryDelays[attempt]);
+				}
+			}
+		}
+
+		private static bool IsRetryableReplaceError(IOException exception) {
+			int errorCode = exception.HResult & 0xFFFF;
+			return errorCode is
+				ErrorSharingViolation or
+				ErrorLockViolation or
+				ErrorUnableToRemoveReplaced;
 		}
 	}
 }

@@ -36,40 +36,35 @@
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(configValueChanged));
 		}
 		#endregion
-		#region Config Settings Management Methods
-		/// <summary>
-		/// Adds a default key/value pair when the configuration is missing the key.
-		/// </summary>
-		private void AddIfMissing(string key, string? defaultValue = null) {
-			if (string.IsNullOrEmpty(_config[key])) {
-				_config[key] = defaultValue ?? string.Empty;
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("AppConfigSettings: Added default.", new { Key = key, Value = _config[key] });
-				}
-			} else if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("AppConfigSettings: Default already present.", new { Key = key, Value = _config[key] });
-			}
-		}
-		#endregion
 		#region Config Defaults
 		/// <summary>
 		/// Seeds required configuration keys with defaults when missing.
 		/// </summary>
 		internal void InitDefaults() {
-			AddIfMissing("Language", "en-US");
-			AddIfMissing("GameFolderPath");
-			AddIfMissing("GameLauncherFilePath");
-			AddIfMissing("SteamWorkshopFolderPath");
-			AddIfMissing("GamePlatform", GameProvider.NotInitialized.ToString());
-			AddIfMissing("LastSelectedModpack", "Last Used");
-			AddIfMissing("ModpackStartupMode", ModpackStartupMode.AlwaysAsk.ToString());
-			AddIfMissing("DebugMode", "False");
-			AddIfMissing("LastUnblockRunDate");
-			AddIfMissing("LastUnblockRunResult");
-			AddIfMissing("BLSEExePath");
-			AddIfMissing("DefaultLaunchTarget", LaunchTarget.Bannerlord.ToString());
-			AddIfMissing("EulaAccepted", "False");
-			AddIfMissing("LogFileDaysToKeep", "7");
+			KeyValuePair<string, string>[] defaults = [
+				new("Language", "en-US"),
+				new("GameFolderPath", string.Empty),
+				new("GameLauncherFilePath", string.Empty),
+				new("SteamWorkshopFolderPath", string.Empty),
+				new("GamePlatform", GameProvider.NotInitialized.ToString()),
+				new("LastSelectedModpack", "Last Used"),
+				new("ModpackStartupMode", ModpackStartupMode.AlwaysAsk.ToString()),
+				new("DebugMode", "False"),
+				new("LastUnblockRunDate", string.Empty),
+				new("LastUnblockRunResult", string.Empty),
+				new("BLSEExePath", string.Empty),
+				new("DefaultLaunchTarget", LaunchTarget.Bannerlord.ToString()),
+				new("EulaAccepted", "False"),
+				new("LogFileDaysToKeep", "7")
+			];
+
+			IReadOnlyList<string> appliedKeys = _config.ApplyDefaults(defaults);
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("AppConfigSettings: Default initialization complete.", new {
+					AppliedCount = appliedKeys.Count,
+					AppliedKeys = string.Join(", ", appliedKeys)
+				});
+			}
 		}
 		#endregion
 		#region Internal Config Settings

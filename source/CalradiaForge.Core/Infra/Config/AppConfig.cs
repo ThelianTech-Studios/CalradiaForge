@@ -47,24 +47,61 @@
 							NewValue = string.IsNullOrEmpty(value) ? "<empty>" : value
 						});
 					}
-					Save();
+					SaveLocked();
 				}
 			}
 		}
+
+		/// <summary>
+		/// Adds missing or empty default values as one persisted configuration update.
+		/// </summary>
+		/// <param name="defaults">Default key/value pairs to apply.</param>
+		/// <returns>The keys that were added or replaced with defaults.</returns>
+		internal IReadOnlyList<string> ApplyDefaults(IEnumerable<KeyValuePair<string, string>> defaults) {
+			ArgumentNullException.ThrowIfNull(defaults);
+
+			lock (_lock) {
+				List<string> appliedKeys = [];
+				foreach (KeyValuePair<string, string> entry in defaults) {
+					if (string.IsNullOrWhiteSpace(entry.Key)) {
+						throw new ArgumentException("Default configuration keys cannot be null or whitespace.", nameof(defaults));
+					}
+
+					string defaultValue = entry.Value ?? string.Empty;
+					bool keyIsMissing = !_configValues.TryGetValue(entry.Key, out string? currentValue);
+					bool storedValueIsNull = !keyIsMissing && currentValue is null;
+					bool requiredDefaultIsEmpty = string.IsNullOrEmpty(currentValue) && !string.IsNullOrEmpty(defaultValue);
+					if (keyIsMissing || storedValueIsNull || requiredDefaultIsEmpty) {
+						_configValues[entry.Key] = defaultValue;
+						appliedKeys.Add(entry.Key);
+					}
+				}
+
+				if (appliedKeys.Count > 0) {
+					SaveLocked();
+				}
+
+				return appliedKeys;
+			}
+		}
+
 		/// <summary>
 		/// Saves the current configuration values to disk.
 		/// </summary>
 		public void Save() {
-
 			lock (_lock) {
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("AppConfig: Saving config.", new { FilePath = _configFilePath, Count = _configValues.Count });
-				}
-				var json = JsonConvert.SerializeObject(_configValues, Formatting.Indented);
-				AtomicFileWriter.WriteAllText(_configFilePath, json);
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("AppConfig: Save complete.", new { FilePath = _configFilePath });
-				}
+				SaveLocked();
+			}
+		}
+
+		private void SaveLocked() {
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("AppConfig: Saving config.", new { FilePath = _configFilePath, Count = _configValues.Count });
+			}
+			var json = JsonConvert.SerializeObject(_configValues, Formatting.Indented);
+			AtomicFileWriter.WriteAllText(_configFilePath, json);
+			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				_logger.Debug("AppConfig: Save complete.", new { FilePath = _configFilePath });
 			}
 		}
 
@@ -96,15 +133,15 @@
 		}
 
 		/// <summary>
-		/// Loads configuration values from disk or initializes defaults when missing.
+		/// Loads configuration values from disk or starts with an empty in-memory store when missing.
 		/// </summary>
 		public void Load() {
 			lock (_lock) {
 				if (!File.Exists(_configFilePath)) {
 					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-						_logger.Debug("AppConfig: Config file missing; creating default.", new { FilePath = _configFilePath });
+						_logger.Debug("AppConfig: Config file missing; starting with empty in-memory config.", new { FilePath = _configFilePath });
 					}
-					Save();
+					_configValues = new Dictionary<string, string>();
 					return;
 				}
 				try {
