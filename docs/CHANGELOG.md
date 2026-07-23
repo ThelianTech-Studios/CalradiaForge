@@ -7,9 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## 0.13.46 - Internal | 2026-07-22
+## 0.13.49 - Internal | 2026-07-22
 
-> Refactor Phase 6.A: introduced the Core-owned `ModPipelineManager` for complete-scan commit decisions, coherent accepted module snapshots, shared scan/install admission, and awaitable operation quiescence, including the accepted archive-progress estimate cleanup in this build range.
+> Refactor Phase 6.A: introduced the Core-owned `ModPipelineManager` for complete-scan commit decisions, coherent accepted module snapshots, shared scan/install admission, and awaitable operation quiescence, including the accepted archive-progress estimate cleanup and first-startup JSON persistence hardening in this build range.
 
 ### Added
 
@@ -25,12 +25,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Routed application startup cache loading, Mods-page startup/refresh/install flows, Modpacks-page refresh and template creation, Settings cache clearing, and load-order validation through `ModPipelineManager` and one captured accepted snapshot instead of mutable `ModService` lists.
 - Changed `ModpackService.ValidateLoadOrder` to accept `IReadOnlyList<ModuleModel>` so callers can validate against an accepted snapshot without requiring a mutable list.
 - Changed `ModExtractor.EstimateFileCount` fallback estimates to use a minimum of one entry, including unreadable or unavailable archive metadata, and removed obsolete SharpCompress implementation comments.
+- Changed first-startup configuration initialization to collect missing defaults and repair stored null or empty required values in memory before persisting one complete `config.json`; valid empty optional settings no longer cause startup rewrites, while end-user setting changes continue to save immediately.
+- Hardened the shared atomic JSON writer with bounded retries for transient Windows sharing, lock, and replacement error 1175 failures. Configuration, named modpacks, last-used modpack data, and current and backup mod caches all use this path.
 
 ### Fixed
 
 - Prevented invalid configuration, incomplete roots, parse failures, cancellation, and unexpected scan failures from replacing accepted module state or producing false removal results.
 - Fixed cancellation-versus-commit ordering with a defined commit linearization point, kept accepted snapshot versions monotonic across cache reloads, and corrected inaccessible-root reporting so enumeration failures are not silently treated as missing or empty roots.
 - Restored the Phase 6.A regression suite after the owner-approved manager naming decision by aligning the manager and Novus regression tests with `ModPipelineManager`.
+- Fixed the first-launch crash caused when repeated startup default saves reached `File.Replace` and Windows reported that it was unable to remove the file being replaced.
 
 ### Removed
 
@@ -41,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Built the full solution in Debug and Release with zero compilation errors. Existing legacy-logger and SevenZipWrapper architecture warnings remain; no project, package-reference, application-version, DI/provider, Nexus, or Core-to-WPF dependency changes were introduced in this build range.
 - Passed all 32 focused manager/scanner/installer/Novus tests and the complete 92-test suite in both Debug and Release. These are automated Core and integration-style filesystem results; they do not claim interactive WPF runtime smoke testing or a new Steam path-resolution fix.
+- For the persistence fix, completed a clean Debug rebuild with zero compilation errors, passed all 16 focused persistence tests and the complete 98-test suite, and verified a Visual Studio 2026 Debug launch with a newly generated 14-setting config and no orphan temporary file.
 
 ---
 
