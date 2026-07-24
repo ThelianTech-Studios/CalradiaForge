@@ -10,7 +10,7 @@ public sealed class ModPipelineManagerTests {
 	[Fact]
 	public async Task CompleteScan_CommitsCacheAndPublishesOneVersionedSnapshot() {
 		using TestDirectory temp = new();
-		AppConfigSettings settings = CreateValidSettings(temp, GameProvider.StandAlone);
+		AppSettings settings = CreateValidSettings(temp, GameProvider.StandAlone);
 		ModsData data = CreateData(temp);
 		data.SaveCurrent([TestDirectory.Module("Old")]);
 		FakeScanner scanner = new(_ => Task.FromResult(CompleteResult(
@@ -35,7 +35,7 @@ public sealed class ModPipelineManagerTests {
 	[Fact]
 	public async Task IncompleteConfiguredWorkshop_PreservesAcceptedSnapshotAndBothCacheFiles() {
 		using TestDirectory temp = new();
-		AppConfigSettings settings = CreateValidSettings(temp, GameProvider.Steam);
+		AppSettings settings = CreateValidSettings(temp, GameProvider.Steam);
 		settings.SteamWorkshopFolderPath = temp.GetPath("MissingWorkshop");
 		ModsData data = CreateData(temp);
 		data.SaveCurrent([TestDirectory.Module("Current")]);
@@ -63,7 +63,7 @@ public sealed class ModPipelineManagerTests {
 	[Fact]
 	public async Task InvalidConfiguration_DoesNotInvokeScannerOrCommit() {
 		using TestDirectory temp = new();
-		AppConfigSettings settings = new(new AppConfig(temp.GetPath("config.json"))) {
+		AppSettings settings = new(new ConfigFileManager(temp.GetPath("config.json"))) {
 			GameProvider = GameProvider.ManualConfiguration,
 			GameFolderPath = temp.GetPath("MissingGame")
 		};
@@ -85,7 +85,7 @@ public sealed class ModPipelineManagerTests {
 	[Fact]
 	public async Task UnexpectedScannerFailure_PreservesAcceptedSnapshot() {
 		using TestDirectory temp = new();
-		AppConfigSettings settings = CreateValidSettings(temp, GameProvider.StandAlone);
+		AppSettings settings = CreateValidSettings(temp, GameProvider.StandAlone);
 		ModsData data = CreateData(temp);
 		data.SaveCurrent([TestDirectory.Module("Cached")]);
 		FakeScanner scanner = new(_ => throw new IOException("Injected scanner failure."));
@@ -103,7 +103,7 @@ public sealed class ModPipelineManagerTests {
 	[Fact]
 	public async Task StartupAndRefresh_UseTheSameCommitBoundary() {
 		using TestDirectory temp = new();
-		AppConfigSettings settings = CreateValidSettings(temp, GameProvider.StandAlone);
+		AppSettings settings = CreateValidSettings(temp, GameProvider.StandAlone);
 		ModsData data = CreateData(temp);
 		FakeScanner scanner = new(_ => Task.FromResult(CompleteResult([TestDirectory.Module("Native")])));
 		ModPipelineManager coordinator = CreateManager(settings, data, scanner);
@@ -123,7 +123,7 @@ public sealed class ModPipelineManagerTests {
 	[Fact]
 	public async Task LoadAcceptedCache_AfterCommitAdvancesVersionInsteadOfRegressingIt() {
 		using TestDirectory temp = new();
-		AppConfigSettings settings = CreateValidSettings(temp, GameProvider.StandAlone);
+		AppSettings settings = CreateValidSettings(temp, GameProvider.StandAlone);
 		ModsData data = CreateData(temp);
 		FakeScanner scanner = new(_ => Task.FromResult(CompleteResult([TestDirectory.Module("Native")])));
 		ModPipelineManager coordinator = CreateManager(settings, data, scanner);
@@ -140,7 +140,7 @@ public sealed class ModPipelineManagerTests {
 	[Fact]
 	public async Task CancellationBeforeCommitLinearization_PreservesCacheAndSnapshot() {
 		using TestDirectory temp = new();
-		AppConfigSettings settings = CreateValidSettings(temp, GameProvider.StandAlone);
+		AppSettings settings = CreateValidSettings(temp, GameProvider.StandAlone);
 		ModsData data = CreateData(temp);
 		data.SaveCurrent([TestDirectory.Module("Cached")]);
 		TaskCompletionSource<bool> commitBarrierEntered = new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -173,7 +173,7 @@ public sealed class ModPipelineManagerTests {
 	[Fact]
 	public async Task ConcurrentRequest_IsRejectedBusyUntilFirstOperationCompletes() {
 		using TestDirectory temp = new();
-		AppConfigSettings settings = CreateValidSettings(temp, GameProvider.StandAlone);
+		AppSettings settings = CreateValidSettings(temp, GameProvider.StandAlone);
 		ModsData data = CreateData(temp);
 		TaskCompletionSource<bool> entered = new(TaskCreationOptions.RunContinuationsAsynchronously);
 		TaskCompletionSource<bool> release = new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -200,7 +200,7 @@ public sealed class ModPipelineManagerTests {
 	[Fact]
 	public async Task ActiveInstall_SharesAdmissionCancellationAndQuiescenceBoundary() {
 		using TestDirectory temp = new();
-		AppConfigSettings settings = CreateValidSettings(temp, GameProvider.StandAlone);
+		AppSettings settings = CreateValidSettings(temp, GameProvider.StandAlone);
 		ModsData data = CreateData(temp);
 		string archivePath = temp.CreateZip(
 			"lifecycle.zip",
@@ -254,7 +254,7 @@ public sealed class ModPipelineManagerTests {
 	[Fact]
 	public async Task StopCancelAndQuiescence_AreIdempotentAndBlockFutureAdmission() {
 		using TestDirectory temp = new();
-		AppConfigSettings settings = CreateValidSettings(temp, GameProvider.StandAlone);
+		AppSettings settings = CreateValidSettings(temp, GameProvider.StandAlone);
 		ModsData data = CreateData(temp);
 		TaskCompletionSource<bool> entered = new(TaskCreationOptions.RunContinuationsAsynchronously);
 		FakeScanner scanner = new(async token => {
@@ -281,12 +281,12 @@ public sealed class ModPipelineManagerTests {
 		await coordinator.WaitForQuiescenceAsync();
 	}
 
-	private static AppConfigSettings CreateValidSettings(TestDirectory temp, GameProvider provider) {
+	private static AppSettings CreateValidSettings(TestDirectory temp, GameProvider provider) {
 		string gameRoot = temp.CreateDirectory("Game");
 		string modulesRoot = temp.CreateDirectory("Game", "Modules");
 		temp.WriteModule(modulesRoot, "Native", "Native");
 		temp.CreateDirectory("Game", "bin");
-		return new AppConfigSettings(new AppConfig(temp.GetPath($"config-{Guid.NewGuid():N}.json"))) {
+		return new AppSettings(new ConfigFileManager(temp.GetPath($"config-{Guid.NewGuid():N}.json"))) {
 			GameProvider = provider,
 			GameFolderPath = gameRoot
 		};
@@ -296,7 +296,7 @@ public sealed class ModPipelineManagerTests {
 		new(temp.GetPath("mods_current.data"), temp.GetPath("mods_backup.data"));
 
 	private static ModPipelineManager CreateManager(
-		AppConfigSettings settings,
+		AppSettings settings,
 		ModsData data,
 		IModScanner scanner) => new(settings, data, new ModInstaller(settings), scanner);
 
@@ -314,7 +314,7 @@ public sealed class ModPipelineManagerTests {
 	private sealed class FakeScanner(Func<CancellationToken, Task<ModScanResult>> scan) : IModScanner {
 		private int _callCount;
 		public int CallCount => Volatile.Read(ref _callCount);
-		public Task<ModScanResult> ScanAsync(AppConfigSettings config, CancellationToken token = default) {
+		public Task<ModScanResult> ScanAsync(AppSettings config, CancellationToken token = default) {
 			Interlocked.Increment(ref _callCount);
 			return scan(token);
 		}

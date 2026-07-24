@@ -11,8 +11,8 @@ internal static class GamePlatformTestFixture {
 	public const string BannerlordAppId = "261550";
 	public const string BannerlordInstallDirectory = "Mount & Blade II Bannerlord";
 
-	public static AppConfigSettings CreateSettings(TestDirectory temp) {
-		return new AppConfigSettings(new AppConfig(temp.GetPath($"config-{Guid.NewGuid():N}.json")));
+	public static AppSettings CreateSettings(TestDirectory temp) {
+		return new AppSettings(new ConfigFileManager(temp.GetPath($"config-{Guid.NewGuid():N}.json")));
 	}
 
 	public static string CreateLibrary(TestDirectory temp, params string[] segments) {

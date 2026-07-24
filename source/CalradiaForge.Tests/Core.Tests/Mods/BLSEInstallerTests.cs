@@ -25,7 +25,7 @@ public sealed class BLSEInstallerTests {
 		File.WriteAllText(Path.Combine(sourceBin, "Bannerlord.BLSE.dll"), "fixture-dll");
 		string gameRoot = temp.CreateDirectory("Game");
 		string targetBin = temp.CreateDirectory("Game", "bin", "Win64_Shipping_Client");
-		AppConfigSettings settings = new(new AppConfig(temp.GetPath("config.json"))) {
+		AppSettings settings = new(new ConfigFileManager(temp.GetPath("config.json"))) {
 			GameProvider = GameProvider.Steam,
 			GameFolderPath = gameRoot
 		};

@@ -15,7 +15,7 @@ public sealed class GameDetectionWorkflowTests {
 		using TestDirectory temp = new();
 		string gameRoot = CreateValidManualGame(temp, "ExistingGame");
 		string workshopRoot = temp.CreateDirectory("ExistingWorkshop");
-		AppConfigSettings settings = CreateSettings(temp);
+		AppSettings settings = CreateSettings(temp);
 		settings.GameProvider = GameProvider.Steam;
 		settings.GameFolderPath = gameRoot;
 		settings.GameLauncherFilePath = GetLauncherPath(gameRoot);
@@ -39,7 +39,7 @@ public sealed class GameDetectionWorkflowTests {
 		string gameLibrary = CreateLibrary(temp, "D", "SteamLibrary");
 		WriteLibraryFolders(clientRoot, gameLibrary);
 		CreateValidBannerlordInstall(temp, gameLibrary);
-		AppConfigSettings settings = CreateSettings(temp);
+		AppSettings settings = CreateSettings(temp);
 		StartupNotificationQueue queue = new();
 		GameDetectionService workflow = CreateWorkflow(
 			new FakeSteamClientRootProvider(clientRoot),
@@ -69,7 +69,7 @@ public sealed class GameDetectionWorkflowTests {
 		WriteLibraryFolders(clientRoot, gameLibrary);
 		CreateValidBannerlordInstall(temp, gameLibrary);
 		string configuredWorkshop = temp.CreateDirectory("OldManualWorkshop");
-		AppConfigSettings settings = CreateSettings(temp);
+		AppSettings settings = CreateSettings(temp);
 		settings.SteamWorkshopFolderPath = configuredWorkshop;
 		GameDetectionService workflow = CreateWorkflow(
 			new FakeSteamClientRootProvider(clientRoot),
@@ -92,7 +92,7 @@ public sealed class GameDetectionWorkflowTests {
 			"steamapps",
 			"common",
 			BannerlordInstallDirectory);
-		AppConfigSettings settings = CreateSettings(temp);
+		AppSettings settings = CreateSettings(temp);
 		settings.SteamWorkshopFolderPath = temp.CreateDirectory("OldWorkshop");
 		GameDetectionService workflow = CreateUnusedWorkflow();
 
@@ -109,7 +109,7 @@ public sealed class GameDetectionWorkflowTests {
 	public void ApplyManualGameFolder_WhenPathHasNoKnownSignature_CommitsStandalone() {
 		using TestDirectory temp = new();
 		string gameRoot = CreateValidManualGame(temp, "Games", BannerlordInstallDirectory);
-		AppConfigSettings settings = CreateSettings(temp);
+		AppSettings settings = CreateSettings(temp);
 
 		bool applied = CreateUnusedWorkflow().ApplyManualGameFolder(settings, gameRoot);
 
@@ -123,7 +123,7 @@ public sealed class GameDetectionWorkflowTests {
 		using TestDirectory temp = new();
 		string originalGame = CreateValidManualGame(temp, "ExistingGame");
 		string originalWorkshop = temp.CreateDirectory("ExistingWorkshop");
-		AppConfigSettings settings = CreateSettings(temp);
+		AppSettings settings = CreateSettings(temp);
 		settings.GameProvider = GameProvider.Steam;
 		settings.GameFolderPath = originalGame;
 		settings.GameLauncherFilePath = GetLauncherPath(originalGame);
@@ -147,7 +147,7 @@ public sealed class GameDetectionWorkflowTests {
 		using TestDirectory temp = new();
 		string gameRoot = CreateValidManualGame(temp, "ExistingGame");
 		string workshopRoot = temp.CreateDirectory("SelectedWorkshop");
-		AppConfigSettings settings = CreateSettings(temp);
+		AppSettings settings = CreateSettings(temp);
 		settings.GameProvider = GameProvider.Steam;
 		settings.GameFolderPath = gameRoot;
 		settings.GameLauncherFilePath = GetLauncherPath(gameRoot);
@@ -164,7 +164,7 @@ public sealed class GameDetectionWorkflowTests {
 	public void ApplyManualSteamWorkshopFolder_WhenInvalid_PreservesPreviousValue() {
 		using TestDirectory temp = new();
 		string previousWorkshop = temp.CreateDirectory("PreviousWorkshop");
-		AppConfigSettings settings = CreateSettings(temp);
+		AppSettings settings = CreateSettings(temp);
 		settings.GameProvider = GameProvider.Steam;
 		settings.SteamWorkshopFolderPath = previousWorkshop;
 
@@ -181,7 +181,7 @@ public sealed class GameDetectionWorkflowTests {
 		using TestDirectory temp = new();
 		string previousWorkshop = temp.CreateDirectory("PreviousWorkshop");
 		string selectedWorkshop = temp.CreateDirectory("SelectedWorkshop");
-		AppConfigSettings settings = CreateSettings(temp);
+		AppSettings settings = CreateSettings(temp);
 		settings.GameProvider = GameProvider.StandAlone;
 		settings.SteamWorkshopFolderPath = previousWorkshop;
 

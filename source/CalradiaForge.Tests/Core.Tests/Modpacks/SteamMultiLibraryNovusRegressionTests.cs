@@ -14,7 +14,7 @@ public sealed class SteamMultiLibraryNovusRegressionTests {
 	public async Task ImportedNovusPreset_AfterAlternateSteamLibraryScan_HasNoMissingWorkshopModules() {
 		using TestDirectory temp = new();
 		NovusSteamFixture fixture = CreateNovusSteamFixture(temp);
-		AppConfigSettings settings = new(new AppConfig(temp.GetPath("config.json")));
+		AppSettings settings = new(new ConfigFileManager(temp.GetPath("config.json")));
 
 		GameDetectionService workflow = new(
 			new GamePlatformDetectionResolver(

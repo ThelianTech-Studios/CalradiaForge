@@ -1,10 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFramework>net10.0-windows7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+    <UseWPF>true</UseWPF>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,12 +15,20 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
   </ItemGroup>
 
+  <!-- The test executable exercises the Core DEBUG logger factory and therefore
+       must carry the private Debug sink runtime asset. -->
+  <ItemGroup Condition="'$(Configuration)' == 'Debug'">
+    <PackageReference Include="Serilog.Sinks.Debug" Version="3.0.0" PrivateAssets="all" />
+  </ItemGroup>
+
   <ItemGroup>
+    <Using Include="System.IO" />
     <Using Include="Xunit" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\CalradiaForge.Core\CalradiaForge.Core.csproj" />
+    <ProjectReference Include="..\CalradiaForge.UI\CalradiaForge.UI.csproj" />
   </ItemGroup>
 
   <ItemGroup>

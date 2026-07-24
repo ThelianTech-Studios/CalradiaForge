@@ -13,7 +13,7 @@ public sealed class ModScannerTests {
 		string gameRoot = temp.CreateDirectory("Game");
 		string modulesPath = temp.CreateDirectory("Game", "Modules");
 		temp.WriteModule(modulesPath, "Local", "Local.Only");
-		AppConfigSettings settings = CreateScannerSettings(temp, gameRoot, string.Empty, GameProvider.Steam);
+		AppSettings settings = CreateScannerSettings(temp, gameRoot, string.Empty, GameProvider.Steam);
 
 		ModScanResult result = await new ModScanner().ScanAsync(settings);
 
@@ -29,7 +29,7 @@ public sealed class ModScannerTests {
 		string gameRoot = temp.CreateDirectory("Game");
 		string modulesPath = temp.CreateDirectory("Game", "Modules");
 		temp.WriteModule(modulesPath, "Local", "Local.Only");
-		AppConfigSettings settings = CreateScannerSettings(
+		AppSettings settings = CreateScannerSettings(
 			temp, gameRoot, temp.GetPath("MissingWorkshop"), GameProvider.Steam);
 
 		ModScanResult result = await new ModScanner().ScanAsync(settings);
@@ -44,7 +44,7 @@ public sealed class ModScannerTests {
 		using TestDirectory temp = new();
 		string gameRoot = temp.CreateDirectory("Game");
 		File.WriteAllText(temp.GetPath("Game", "Modules"), "not a directory");
-		AppConfigSettings settings = CreateScannerSettings(temp, gameRoot, string.Empty, GameProvider.StandAlone);
+		AppSettings settings = CreateScannerSettings(temp, gameRoot, string.Empty, GameProvider.StandAlone);
 
 		ModScanResult result = await new ModScanner().ScanAsync(settings);
 
@@ -60,7 +60,7 @@ public sealed class ModScannerTests {
 		temp.WriteModule(modulesPath, "Local", "Local.Only");
 		string workshopPath = temp.GetPath("WorkshopFile");
 		File.WriteAllText(workshopPath, "not a directory");
-		AppConfigSettings settings = CreateScannerSettings(temp, gameRoot, workshopPath, GameProvider.Steam);
+		AppSettings settings = CreateScannerSettings(temp, gameRoot, workshopPath, GameProvider.Steam);
 
 		ModScanResult result = await new ModScanner().ScanAsync(settings);
 
@@ -76,7 +76,7 @@ public sealed class ModScannerTests {
 		string modulesPath = temp.CreateDirectory("Game", "Modules");
 		temp.WriteModule(modulesPath, "Local", "Local.Only");
 		string workshopRoot = temp.CreateDirectory("Workshop");
-		AppConfigSettings settings = CreateScannerSettings(temp, gameRoot, workshopRoot, GameProvider.Steam);
+		AppSettings settings = CreateScannerSettings(temp, gameRoot, workshopRoot, GameProvider.Steam);
 
 		ModScanResult result = await new ModScanner().ScanAsync(settings);
 
@@ -93,7 +93,7 @@ public sealed class ModScannerTests {
 		string modulesPath = temp.CreateDirectory("Game", "Modules");
 		string broken = temp.CreateDirectory("Game", "Modules", "Broken");
 		File.WriteAllText(Path.Combine(broken, "SubModule.xml"), "<not-module />");
-		AppConfigSettings settings = CreateScannerSettings(temp, gameRoot, string.Empty, GameProvider.StandAlone);
+		AppSettings settings = CreateScannerSettings(temp, gameRoot, string.Empty, GameProvider.StandAlone);
 
 		ModScanResult result = await new ModScanner().ScanAsync(settings);
 
@@ -110,7 +110,7 @@ public sealed class ModScannerTests {
 		string localPath = temp.WriteModule(modulesPath, "A-Local", "Duplicate.Id", version: "v1.0.0");
 		string workshopRoot = temp.CreateDirectory("Workshop");
 		temp.WriteModule(workshopRoot, "Z-Workshop", "duplicate.id", version: "v9.0.0");
-		AppConfigSettings settings = CreateScannerSettings(temp, gameRoot, workshopRoot, GameProvider.Steam);
+		AppSettings settings = CreateScannerSettings(temp, gameRoot, workshopRoot, GameProvider.Steam);
 
 		ModScanResult result = await new ModScanner().ScanAsync(settings);
 
@@ -125,7 +125,7 @@ public sealed class ModScannerTests {
 	public async Task ScanForModsAsync_WhenSteamAndBannerlordUseDifferentSimulatedDrives_FindsAllElevenModules() {
 		using TestDirectory temp = new();
 		SplitDriveFixture fixture = CreateSplitDriveFixture(temp);
-		AppConfigSettings settings = CreateScannerSettings(temp, fixture.GameRoot, fixture.WorkshopRoot, GameProvider.Steam);
+		AppSettings settings = CreateScannerSettings(temp, fixture.GameRoot, fixture.WorkshopRoot, GameProvider.Steam);
 
 		List<ModuleModel> modules = await ModScanner.ScanForModsAsync(settings);
 
@@ -144,7 +144,7 @@ public sealed class ModScannerTests {
 	public async Task ScanForModsAsync_WhenProviderIsNotSteam_SkipsConfiguredWorkshopRoot() {
 		using TestDirectory temp = new();
 		SplitDriveFixture fixture = CreateSplitDriveFixture(temp);
-		AppConfigSettings settings = CreateScannerSettings(temp, fixture.GameRoot, fixture.WorkshopRoot, GameProvider.StandAlone);
+		AppSettings settings = CreateScannerSettings(temp, fixture.GameRoot, fixture.WorkshopRoot, GameProvider.StandAlone);
 
 		List<ModuleModel> modules = await ModScanner.ScanForModsAsync(settings);
 
@@ -165,7 +165,7 @@ public sealed class ModScannerTests {
 		temp.WriteModule(modulesPath, "LocalMod", "Local.Mod");
 		temp.WriteModule(unusedWorkshopRoot, "UnusedMod", "Unused.Mod");
 		temp.WriteModule(selectedWorkshopRoot, "WorkshopMod", "Workshop.Mod");
-		AppConfigSettings settings = CreateScannerSettings(temp, bannerlordLibraryRoot, selectedWorkshopRoot, GameProvider.Steam);
+		AppSettings settings = CreateScannerSettings(temp, bannerlordLibraryRoot, selectedWorkshopRoot, GameProvider.Steam);
 
 		List<ModuleModel> modules = await ModScanner.ScanForModsAsync(settings);
 
@@ -184,7 +184,7 @@ public sealed class ModScannerTests {
 		temp.WriteModule(workshopRoot, "Valid", "Valid.Workshop");
 		temp.WriteModule(workshopRoot, "Multiplayer", "Mp.Workshop", isSinglePlayer: false);
 		temp.CreateDirectory("Workshop", "Invalid");
-		AppConfigSettings settings = CreateScannerSettings(temp, gameRoot, workshopRoot, GameProvider.Steam);
+		AppSettings settings = CreateScannerSettings(temp, gameRoot, workshopRoot, GameProvider.Steam);
 
 		List<ModuleModel> modules = await ModScanner.ScanForModsAsync(settings);
 
@@ -197,7 +197,7 @@ public sealed class ModScannerTests {
 		string gameRoot = temp.CreateDirectory("Game");
 		string modulesPath = temp.CreateDirectory("Game", "Modules");
 		temp.WriteModule(modulesPath, "Local", "Local.Only");
-		AppConfigSettings settings = CreateScannerSettings(
+		AppSettings settings = CreateScannerSettings(
 			temp,
 			gameRoot,
 			temp.GetPath("MissingWorkshop"),
@@ -214,7 +214,7 @@ public sealed class ModScannerTests {
 		string gameRoot = temp.CreateDirectory("Game");
 		string modulesPath = temp.CreateDirectory("Game", "Modules");
 		temp.WriteModule(modulesPath, "Local", "Local.Only");
-		AppConfigSettings settings = CreateScannerSettings(temp, gameRoot, string.Empty, GameProvider.Steam);
+		AppSettings settings = CreateScannerSettings(temp, gameRoot, string.Empty, GameProvider.Steam);
 
 		List<ModuleModel> modules = await ModScanner.ScanForModsAsync(settings);
 
@@ -260,13 +260,13 @@ public sealed class ModScannerTests {
 			workshopModuleIds);
 	}
 
-	private static AppConfigSettings CreateScannerSettings(
+	private static AppSettings CreateScannerSettings(
 		TestDirectory temp,
 		string gameRoot,
 		string workshopRoot,
 		GameProvider provider) {
-		AppConfig config = new(temp.GetPath($"config-{Guid.NewGuid():N}.json"));
-		AppConfigSettings settings = new(config) {
+		ConfigFileManager config = new(temp.GetPath($"config-{Guid.NewGuid():N}.json"));
+		AppSettings settings = new(config) {
 			GameFolderPath = gameRoot,
 			GameProvider = provider,
 			SteamWorkshopFolderPath = workshopRoot

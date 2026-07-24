@@ -97,7 +97,7 @@ public sealed class ModInstallerTests {
 	}
 
 	private static ModInstaller CreateInstaller(TestDirectory temp, string gameRoot) {
-		AppConfigSettings settings = new(new AppConfig(temp.GetPath($"config-{Guid.NewGuid():N}.json"))) {
+		AppSettings settings = new(new ConfigFileManager(temp.GetPath($"config-{Guid.NewGuid():N}.json"))) {
 			GameFolderPath = gameRoot
 		};
 		return new ModInstaller(settings);

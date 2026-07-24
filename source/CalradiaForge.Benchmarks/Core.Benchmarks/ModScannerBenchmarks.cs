@@ -14,7 +14,7 @@ using CalradiaForge.Core.Models;
 [BenchmarkCategory("Phase4", "ProvisionalPreRefactorBaseline", "EndToEndFilesystem")]
 public class ModScannerBenchmarks {
 	private BenchmarkFixtureDirectory _fixture = null!;
-	private AppConfigSettings _settings = null!;
+	private AppSettings _settings = null!;
 
 	[Params(10, 100)]
 	public int ModuleCount { get; set; }
@@ -27,7 +27,7 @@ public class ModScannerBenchmarks {
 		for (int index = 0; index < ModuleCount; index++) {
 			_fixture.WriteModule(modulesRoot, index);
 		}
-		_settings = new AppConfigSettings(new AppConfig(_fixture.GetPath("config.json"))) {
+		_settings = new AppSettings(new ConfigFileManager(_fixture.GetPath("config.json"))) {
 			GameFolderPath = gameRoot,
 			GameProvider = GameProvider.StandAlone
 		};

@@ -40,6 +40,26 @@ public sealed class SteamInstallationResolverTests {
 	}
 
 	[Fact]
+	public void ResolveBannerlord_WithReportedEndUserPaths_ResolvesGameAndWorkshopFromAlternateLibrary() {
+		using TestDirectory temp = new();
+		string clientRoot = CreateLibrary(temp, "C", "Program Files (x86)", "Steam");
+		string gameLibrary = CreateLibrary(temp, "D", "SteamLibrary");
+		WriteLibraryFolders(clientRoot, clientRoot, gameLibrary);
+		string gameRoot = CreateValidBannerlordInstall(temp, gameLibrary);
+		string workshopRoot = CreateWorkshopContent(gameLibrary);
+		WriteWorkshopManifest(gameLibrary);
+
+		SteamResolutionResult result = new SteamInstallationResolver().ResolveBannerlord(clientRoot);
+
+		Assert.Equal(SteamResolutionStatus.SteamGameResolved, result.Status);
+		Assert.Equal(clientRoot, result.SteamClientRoot);
+		Assert.Equal(gameLibrary, result.BannerlordLibraryRoot);
+		Assert.Equal(gameRoot, result.GameFolderPath);
+		Assert.Equal(workshopRoot, result.WorkshopFolderPath);
+		Assert.Equal(WorkshopPathSource.BannerlordLibrary, result.WorkshopPathSource);
+	}
+
+	[Fact]
 	public void ResolveBannerlord_WhenWorkshopIsMissing_KeepsSteamGameResolution() {
 		using TestDirectory temp = new();
 		string clientRoot = CreateLibrary(temp, "C", "Steam");

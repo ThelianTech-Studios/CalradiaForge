@@ -18,7 +18,7 @@ public sealed class GamePlatformDetectionResolverTests {
 		string gameRoot = CreateValidBannerlordInstall(temp, gameLibrary);
 		string workshopRoot = CreateWorkshopContent(gameLibrary);
 		string blsePath = CreateBlseExecutable(gameRoot);
-		AppConfigSettings settings = CreateSettings(temp);
+		AppSettings settings = CreateSettings(temp);
 		GamePlatformDetectionResolver resolver = CreateResolver(clientRoot);
 
 		GameProvider provider = resolver.DetectGame(settings);
@@ -38,7 +38,7 @@ public sealed class GamePlatformDetectionResolverTests {
 		string gameLibrary = CreateLibrary(temp, "D", "SteamLibrary");
 		WriteLibraryFolders(clientRoot, gameLibrary);
 		string gameRoot = CreateValidBannerlordInstall(temp, gameLibrary);
-		AppConfigSettings settings = CreateSettings(temp);
+		AppSettings settings = CreateSettings(temp);
 		settings.SteamWorkshopFolderPath = temp.CreateDirectory("OldWorkshop");
 		settings.BLSEExePath = temp.GetPath("OldBlse.exe");
 
@@ -53,7 +53,7 @@ public sealed class GamePlatformDetectionResolverTests {
 	[Fact]
 	public void DetectGame_WhenResolutionIsRejected_AppliesOnlyCompleteFailureState() {
 		using TestDirectory temp = new();
-		AppConfigSettings settings = CreateSettings(temp);
+		AppSettings settings = CreateSettings(temp);
 		settings.GameProvider = GameProvider.Steam;
 		settings.GameFolderPath = temp.CreateDirectory("OldGame");
 		settings.GameLauncherFilePath = temp.GetPath("OldLauncher.exe");
@@ -79,7 +79,7 @@ public sealed class GamePlatformDetectionResolverTests {
 	[Fact]
 	public void DetectGame_WhenNoSteamRootExists_ClearsStaleProviderDerivedState() {
 		using TestDirectory temp = new();
-		AppConfigSettings settings = CreateSettings(temp);
+		AppSettings settings = CreateSettings(temp);
 		settings.GameProvider = GameProvider.GOG;
 		settings.GameFolderPath = temp.CreateDirectory("OldGame");
 		settings.GameLauncherFilePath = temp.GetPath("OldLauncher.exe");
@@ -101,7 +101,7 @@ public sealed class GamePlatformDetectionResolverTests {
 	[Fact]
 	public void DetectGame_WhenSteamRootProviderThrows_FailsSafelyToManualConfiguration() {
 		using TestDirectory temp = new();
-		AppConfigSettings settings = CreateSettings(temp);
+		AppSettings settings = CreateSettings(temp);
 		GamePlatformDetectionResolver resolver = new(
 			new ThrowingSteamClientRootProvider(),
 			new SteamInstallationResolver());
@@ -120,7 +120,7 @@ public sealed class GamePlatformDetectionResolverTests {
 		CreateValidBannerlordInstall(temp, clientRoot);
 		string resolvedWorkshop = CreateWorkshopContent(clientRoot);
 		string configuredWorkshop = temp.CreateDirectory("ManualWorkshop");
-		AppConfigSettings settings = CreateSettings(temp);
+		AppSettings settings = CreateSettings(temp);
 		settings.SteamWorkshopFolderPath = configuredWorkshop;
 
 		CreateResolver(clientRoot).DetectGame(settings);
