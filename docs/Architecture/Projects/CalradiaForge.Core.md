@@ -24,6 +24,7 @@ Provide the deterministic, UI-agnostic behavior that the WPF app consumes.
 - Load localization files and apply language settings.
 - Load and record EULA acceptance state.
 - Emit diagnostic logs.
+- Contribute Core services to a caller-owned `IServiceCollection` without building or exposing a provider.
 
 ## Public Boundaries
 - Public services are consumed by `CalradiaForge.UI` and `CalradiaForge.ConsoleUtils`.
@@ -33,6 +34,8 @@ Provide the deterministic, UI-agnostic behavior that the WPF app consumes.
 ## Dependencies
 ### Currently Implemented
 - `Newtonsoft.Json`
+- `Microsoft.Extensions.DependencyInjection.Abstractions`
+- `Serilog` and the approved file/async/enrichment packages
 - `SevenZipWrapper`
 
 ### Upstream Consumers
@@ -43,27 +46,29 @@ Provide the deterministic, UI-agnostic behavior that the WPF app consumes.
 - `CalradiaForge.Nexus` depends on Core when it gains implementation
 
 ## Major Systems
-- Configuration: `AppConfig`, `AppConfigSettings`, `AppPaths`
-- Logging: `Logger`
+- Configuration: `ConfigFileManager`, `AppSettings`, `LoggingSettings`, `AppPaths`
+- Dependency registration: `CalradiaForgeCoreServiceCollectionExtensions`, `CalradiaForgeCoreOptions`
+- Logging: provider-owned `Serilog.ILogger`, `SerilogLoggerFactory`, `LogFileLifecycle`, transitional `Logger`
 - Localization: `TranslationService`, `TranslationManager`, `TranslationStrings`
 - Paths and platform detection: `GamePlatformDetectionResolver`, `GameDetectionService`, `StartupNotificationQueue`, `GamePathValidator`, `GameProvider`, `ISteamClientRootProvider`, `ISteamInstallationResolver`, `SteamInstallationResolver`, `SteamResolutionResult`, `EpicDetector`, `EpicManifestReader`
 - Launch: `GameLauncher`, `LaunchTarget`
 - EULA: `EulaService`
-- Mods: `ModPipelineCoordinator`, `IModScanner`, `ModScanner`, `ModParser`, `ModInstaller`, `ModExtractor`, `BLSEInstaller`, `ModsData`, `AcceptedModSnapshot`, `ModPipelineResult`, `ModScanResult`
+- Mods: `ModPipelineManager`, `IModScanner`, `ModScanner`, `ModParser`, `ModInstaller`, `ModExtractor`, `BLSEInstaller`, `ModsData`, `AcceptedModSnapshot`, `ModPipelineResult`, `ModScanResult`
 - Modpacks: `ModpackService`, `ModpackData`, `ModpackFileHelper`, `VanillaModules`, `NovusPresetConverter`
 
 ## Design Constraints
 - Keep Core free of WPF references.
 - Keep UI behavior out of Core services.
-- Preserve `AppConfig` as the only JSON-backed config store.
+- Preserve `ConfigFileManager` as the only JSON-backed config-file manager.
 - Preserve `ModInstaller` and `ModExtractor` as the authority for archive install flow.
 - Preserve `ModpackData` and `ModsData` as the file I/O boundary for their domains.
 - Keep shared atomic-write mechanics internal to Core data/config owners rather than moving domain persistence into services or UI.
-- Keep cache rotation/save authorization and accepted module-state publication in `ModPipelineCoordinator`; rejected or incomplete scans preserve the prior snapshot.
+- Keep cache rotation/save authorization and accepted module-state publication in `ModPipelineManager`; rejected or incomplete scans preserve the prior snapshot.
+- Core registration must not register WPF types or build an application provider.
 
 ## Known Extension Points
 - Nexus integration should not be added directly to Core.
-- New configuration values belong in `AppConfigSettings` with matching documentation updates.
+- New application configuration values belong in `AppSettings`; early logging preferences belong in `LoggingSettings`.
 - New systems should follow the existing service/data-helper split.
 
 ## Deferred Work

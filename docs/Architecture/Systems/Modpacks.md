@@ -7,6 +7,8 @@
 - `ModpackFileHelper` sanitizes filenames.
 - `VanillaModules` provides built-in template load orders.
 - `NovusPresetConverter` supports import from Novus Launcher presets.
+- Startup loads named and last-used modpacks before shell creation, resolves the configured startup selection, and validates it against one accepted mod-pipeline snapshot.
+- Controlled shutdown persists the current last-used load order only after new pipeline work is blocked and active work has reached quiescence or the owner chooses the explicit exit path.
 
 ## Architecture Guidance
 - Modpack files are stored separately from the current mod cache.
@@ -21,6 +23,8 @@
 - `source/CalradiaForge.Core/Infra/Modpacks/ModpackFileHelper.cs`
 - `source/CalradiaForge.Core/Infra/Modpacks/VanillaModules.cs`
 - `source/CalradiaForge.Core/Infra/Modpacks/NovusPresetConverter.cs`
+- `source/CalradiaForge.UI/Lifecycle/ApplicationStartupCoordinator.cs`
+- `source/CalradiaForge.UI/Lifecycle/ApplicationShutdownCoordinator.cs`
 
 ## Deferred / Future Work
 - Additional import formats and modpack workflows should only be added when the source code requires them.

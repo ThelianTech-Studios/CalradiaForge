@@ -16,7 +16,7 @@ Provide a separate place for Nexus networking, authentication, download orchestr
 - Host Nexus networking outside Core.
 - Keep Core as the foundation.
 - Keep UI as presentation and intent only.
-- Keep Nexus-specific auth, downloads, and metadata logic out of `AppConfig`.
+- Keep Nexus-specific auth, downloads, and metadata logic out of `ConfigFileManager` and `AppSettings`.
 
 ## Public Boundaries
 - No public API is currently implemented.
@@ -34,7 +34,7 @@ Provide a separate place for Nexus networking, authentication, download orchestr
 - CalradiaForge must continue to work without Nexus.
 - Do not move Core app systems into Nexus.
 - Do not move Nexus networking into Core.
-- Do not store credentials in `AppConfig`.
+- Do not store credentials through `ConfigFileManager` or `AppSettings`.
 - Do not modify `ModuleModel` to store Nexus metadata.
 
 ## Known Extension Points

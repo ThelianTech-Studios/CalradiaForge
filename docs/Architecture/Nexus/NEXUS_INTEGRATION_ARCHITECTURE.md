@@ -51,7 +51,7 @@ CalradiaForge.Nexus -> CalradiaForge.Core
 - Credentials are decrypted only during explicit Nexus operation scope.
 
 ## Credential Storage
-- AppConfig must never store secrets.
+- `ConfigFileManager` and `AppSettings` must never store secrets.
 - Secrets belong in the dedicated Nexus credential flow, not in shared app settings.
 
 ## Credential Lifecycle
@@ -190,7 +190,7 @@ ModInstaller
 ## Settings Integration
 ### Planned / Locked Architecture
 - Nexus-related settings should live in the settings experience only when the feature exists.
-- Credentials must not be placed in `AppConfig`.
+- Credentials must not be placed in `ConfigFileManager` or `AppSettings`.
 
 ## Logging And Diagnostics
 - Credential-owning components must not intentionally pass credentials or secret URLs to logs; any future export or telemetry feature requires a separate data-handling policy.
@@ -236,7 +236,7 @@ ModInstaller
 - Existing `ModExtractor` and `ModInstaller` remain authoritative.
 - Credentials are stored only through DPAPI CurrentUser.
 - Credentials are decrypted only during explicit Nexus operation scope.
-- AppConfig must never store secrets.
+- `ConfigFileManager` and `AppSettings` must never store secrets.
 - NXM handler registration occurs only after authentication.
 - NXM links fail if authentication is missing.
 - Update checks are manual only.

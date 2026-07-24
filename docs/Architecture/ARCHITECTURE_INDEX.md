@@ -14,6 +14,7 @@ This index points to the current architecture foundation for CalradiaForge.
 - [CalradiaForge.Benchmarks](Projects/CalradiaForge.Benchmarks.md)
 
 ## System Documentation
+- [Application Lifecycle](Systems/ApplicationLifecycle.md)
 - [Configuration](Systems/Configuration.md)
 - [Logging](Systems/Logging.md)
 - [Localization](Systems/Localization.md)

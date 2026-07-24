@@ -33,9 +33,11 @@ The solution file is `source/CalradiaForge.slnx`.
 ### Currently Implemented
 - UI owns windows, pages, navigation, and user intent.
 - Core owns paths, config, logging, localization, mod discovery, mod installation, modpack storage, and launch logic.
+- The WPF `App` owns one validated application provider, while Core and UI registration modules extend the same service collection without building providers.
+- `ApplicationStartupCoordinator` and `ApplicationShutdownCoordinator` own ordered startup and quiescence; `App` retains final WPF/process and provider-disposal ownership.
 - ConsoleUtils owns developer-only tooling that reuses Core services.
 - Nexus is reserved as a separate integration boundary.
-- Tests and benchmarks are developer-only consumers organized by owning project; current Phase 4 implementation covers Core only.
+- Tests and benchmarks are developer-only consumers organized by owning project; the test project now covers Core and the Phase 6.B UI composition/lifecycle boundaries.
 
 ### Dependency Direction
 ```text
@@ -44,6 +46,7 @@ CalradiaForge.UI -> CalradiaForge.Nexus
 CalradiaForge.Nexus -> CalradiaForge.Core
 CalradiaForge.ConsoleUtils -> CalradiaForge.Core
 CalradiaForge.Tests -> CalradiaForge.Core
+CalradiaForge.Tests -> CalradiaForge.UI
 CalradiaForge.Benchmarks -> CalradiaForge.Core
 ```
 
@@ -51,6 +54,7 @@ CalradiaForge.Benchmarks -> CalradiaForge.Core
 Currently implemented cross-cutting systems live mostly in Core:
 - Configuration and runtime paths
 - Logging
+- Application composition, startup, shutdown, restart, and global exception handling
 - Localization
 - EULA gating
 - Mod scanning and installation
@@ -65,6 +69,8 @@ Currently implemented cross-cutting systems live mostly in Core:
 - Core remains UI-agnostic.
 - Filesystem state is owned by the appropriate data helper or service.
 - Long-running work stays service-owned rather than page-owned.
+- DI owns construction and dependency delivery; the root provider is not exposed as a service locator.
+- MainWindow and primary pages retain one-instance-per-application behavior until the later MVVM phase.
 
 ## Deferred / Planned Systems
 - Nexus Mods authentication, download management, metadata caching, and NXM handling are planned in the Nexus boundary.

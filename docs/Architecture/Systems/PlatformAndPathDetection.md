@@ -8,18 +8,18 @@
 - Workshop selection prefers the Bannerlord library, then one deterministic alternate library with valid `appworkshop_261550.acf` evidence preferred. Multiple Workshop roots are never merged.
 - `GamePlatformDetectionResolver` runs the supported automatic workflow, validates the game and launcher paths before committing settings, and clears stale provider-derived paths on total failure before setting `ManualConfiguration`.
 - Automatic detection replaces or clears the configured Workshop path. Valid startup configuration is reused without rerunning detection, so its current Workshop value is preserved.
-- `GameDetectionService` owns startup reuse/detection, explicit re-detection, manual game-folder selection, and Steam-only manual Workshop selection. Startup initialization is `void` and commits through `AppConfigSettings`; explicit re-detection returns `GameProvider`; manual operations return `bool`.
+- `GameDetectionService` owns startup reuse/detection, explicit re-detection, manual game-folder selection, and Steam-only manual Workshop selection. Startup initialization is `void` and commits through `AppSettings`; explicit re-detection returns `GameProvider`; manual operations return `bool`.
 - Manual game selection uses conservative normalized path signatures, clears the prior Workshop value, resolves the standard launcher, and replaces or clears optional BLSE state. It does not reverse-match through Steam metadata.
-- Startup detection feedback is held in a Core-safe FIFO `StartupNotificationQueue`. `MainWindow` begins the waiter during construction, signals readiness from `Loaded`, maps notifications into the existing toast surface, and cancels the wait when the window closes.
-- `AppConfigSettings.ModulesDirectoryPath` is the authoritative derived Modules path. The legacy `GamePathsHelper` has been removed.
+- Startup detection feedback is held in a Core-safe FIFO `StartupNotificationQueue`. The UI-owned `StartupNotificationDrainCoordinator` begins waiting before shell creation, and `MainWindow.Loaded` signals that the toast surface is ready. Controlled application shutdown cancels the drain.
+- `AppSettings.ModulesDirectoryPath` is the authoritative derived Modules path. The legacy `GamePathsHelper` has been removed.
 
 ## Boundaries
 
 - UI decides when detection or manual configuration runs; Core decides validation, provider ordering, path selection, and committed settings.
 - `ISteamClientRootProvider` isolates registry lookup, and `ISteamInstallationResolver` owns Steam metadata parsing and deterministic candidate selection.
-- `AppConfigSettings` remains the sole committed provider/game/launcher/Workshop/BLSE state.
+- `AppSettings` remains the sole committed provider/game/launcher/Workshop/BLSE state.
 - Core notifications contain only toast-relevant text and severity. They contain no WPF types, windows, controls, settings, or filesystem paths.
-- `ModScanner` captures and consumes configured paths. It does not discover Steam libraries, infer providers, or parse Steam metadata; it reports per-root completeness to `ModPipelineCoordinator`.
+- `ModScanner` captures and consumes configured paths. It does not discover Steam libraries, infer providers, or parse Steam metadata; it reports per-root completeness to `ModPipelineManager`.
 - Core remains free of WPF references.
 
 ## Key Files
@@ -33,6 +33,8 @@
 - `source/CalradiaForge.Core/Infra/Paths/GamePathValidator.cs`
 - `source/CalradiaForge.Core/Models/StartupNotification.cs`
 - `source/CalradiaForge.UI/App.xaml.cs`
+- `source/CalradiaForge.UI/Lifecycle/ApplicationStartupCoordinator.cs`
+- `source/CalradiaForge.UI/Lifecycle/StartupNotificationDrainCoordinator.cs`
 - `source/CalradiaForge.UI/Views/MainWindow.xaml.cs`
 - `source/CalradiaForge.UI/Pages/SettingsPage.xaml.cs`
 
@@ -44,6 +46,6 @@ These tests do not read a real registry or Steam installation and do not prove r
 
 ## Deferred / Future Work
 
-- Phase 6.A consumes the finalized Phase 5 settings through `ModPipelineCoordinator` without redesigning detection. Phase 6.B will register the resolver, workflow, notification queue, coordinator, and platform dependencies in the application composition root.
+- The application composition root registers the resolver, detection workflow, notification queue, `ModPipelineManager`, and platform dependencies as one shared graph.
 - Phase 6.A implements the workflow-specific structured scan/completeness/cache contract. Broader generalized result conventions remain Phase 7 work.
 - Epic, Game Pass, and GOG real-world automatic detection/support claims remain deferred. The existing Epic branch stays disabled by default.

@@ -1,18 +1,20 @@
 # Configuration
 
 ## Currently Implemented
-- `AppConfig` owns JSON-backed persistence and saves through atomic same-directory file replacement.
+- `ConfigFileManager` owns JSON-backed key/value persistence in `config.json` and saves through atomic same-directory file replacement.
 - First-run or newly introduced missing defaults are applied as one configuration update, avoiding repeated replacement of the same file during startup.
 - Existing valid empty optional settings do not trigger a startup rewrite; ordinary setting changes continue to persist immediately.
 - The shared atomic writer uses bounded retries for transient Windows sharing, lock, and replacement failures.
-- Invalid config JSON is logged and treated as an empty settings set so `AppConfigSettings` can seed typed defaults without crashing normal startup.
-- `AppConfigSettings` provides typed access and change notifications.
+- Invalid config JSON is logged and treated as an empty settings set so the typed settings facades can seed defaults without crashing normal startup.
+- `AppSettings` provides typed application settings and change notifications.
+- `LoggingSettings` owns the persisted `DebugMode` preference required before Serilog construction. It shares the same `ConfigFileManager` and `config.json`; it is not a second configuration store.
+- Log archive retention is a fixed logging policy and is no longer configurable. Startup removes the retired `LogFileDaysToKeep` key when present.
 - `AppPaths` resolves and creates the app's working directories.
 - Configuration stores the resolved provider, game path, launcher path, optional Workshop path, and optional BLSE path. `GameProvider.Steam` with an empty Workshop path is valid and keeps local module scanning available.
 
 ## Architecture Guidance
-- `AppConfig` is the only component that performs config JSON read/write.
-- `AppConfigSettings` is a typed facade over `AppConfig`.
+- `ConfigFileManager` is the only component that performs config JSON read/write.
+- `AppSettings` and `LoggingSettings` are typed facades over the same `ConfigFileManager`.
 - Configuration changes are saved immediately through the underlying store.
 - Config replacement must not expose a partially written destination file.
 - Paths are resolved in Core, not in UI code-behind.
@@ -22,8 +24,9 @@
 - Manual Workshop selection is Steam-only and updates only `SteamWorkshopFolderPath`; invalid input preserves the previous value.
 
 ## Key Files
-- `source/CalradiaForge.Core/Infra/Config/AppConfig.cs`
-- `source/CalradiaForge.Core/Infra/Config/AppConfigSettings.cs`
+- `source/CalradiaForge.Core/Infra/Config/ConfigFileManager.cs`
+- `source/CalradiaForge.Core/Infra/Config/AppSettings.cs`
+- `source/CalradiaForge.Core/Infra/Config/LoggingSettings.cs`
 - `source/CalradiaForge.Core/Infra/Paths/AppPaths.cs`
 - `source/CalradiaForge.Core/Infra/GamePlatform/GamePlatformDetectionResolver.cs`
 - `source/CalradiaForge.Core/Infra/GamePlatform/GameDetectionService.cs`

@@ -1,7 +1,7 @@
 # Mod Management
 
 ## Currently Implemented
-- `ModPipelineCoordinator` is the single Core workflow boundary for startup/refresh scans, cache commit authorization, accepted snapshot/version publication, install admission, cancellation, and quiescence.
+- `ModPipelineManager` is the single Core workflow boundary for startup/refresh scans, cache commit authorization, accepted snapshot/version publication, install admission, cancellation, and quiescence.
 - `ModScanner` remains the low-level discovery owner and returns structured local/Workshop completeness, counts, warnings, parse diagnostics, and duplicate diagnostics.
 - For Steam, scanner inputs are independent resolved game and Workshop roots; split-library discovery is owned by the path-resolution system rather than `ModScanner`.
 - `ModParser` reads `SubModule.xml` metadata.
@@ -20,12 +20,13 @@
 - Steam with no configured Workshop path is an explicit complete local-only state. A configured missing/inaccessible Workshop root is incomplete, while a valid empty Workshop root is a complete zero-result.
 - Modpack/load-order consumers capture one accepted snapshot so they cannot observe mixed scan versions.
 - The coordinator rejects concurrent scan/install requests as busy, can permanently stop admission, cooperatively cancels active work, and exposes awaitable quiescence for Phase 6.B.
+- Application shutdown uses that admission, cancellation, and quiescence contract before persisting the last-used load order and disposing the service provider.
 - BLSE is treated separately from normal mod counts and install rules.
 - Unknown, unparsable, or identity-mismatched existing module folders are not overwritten automatically.
 - Upgrade copying stops when the previous target cannot be removed completely.
 
 ## Key Files
-- `source/CalradiaForge.Core/Infra/Mods/ModPipelineCoordinator.cs`
+- `source/CalradiaForge.Core/Infra/Mods/ModPipelineManager.cs`
 - `source/CalradiaForge.Core/Infra/Mods/IModScanner.cs`
 - `source/CalradiaForge.Core/Infra/Mods/ModScanner.cs`
 - `source/CalradiaForge.Core/Infra/Mods/ModParser.cs`
