@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## 0.13.83 - Internal | 2026-07-23
+
+> Refactor Phase 6.C: completed the application-wide migration from the retired legacy logger to the provider-owned Serilog pipeline, added the narrow pre-Serilog startup-failure fallback, and preserved the single provider-disposal close path.
+
+### Added
+
+- Added `EmergencyStartupLogWriter` for fatal failures before the provider-owned Serilog pipeline becomes operational. It lazily appends UTC-stamped exception details to `CalradiaForge_StartupFailure.log`, tries the application Logs directory followed by narrow Local AppData and temporary-directory fallbacks, and contains all secondary write failures so diagnostics cannot block fatal shutdown.
+- Added focused tests for primary emergency-log writes, fallback-directory selection, all-candidates-failed containment, persisted Debug Mode after configuration reload, and the absence of an emergency file during successful provider construction.
+
+### Changed
+
+- Migrated every normal Core and UI legacy logger caller to structured `Serilog.Log` events across configuration, EULA, platform detection, launch, localization, paths, modpack persistence/import, scanning, parsing, extraction, installation, BLSE, DLL unblocking, cache management, the accepted pipeline, retained pages, and the main window.
+- Replaced interpolated and anonymous diagnostic payloads with named Serilog properties and exception-first overloads. Routine Debug filtering now belongs to the configured Serilog minimum level; explicit guards remain only where diagnostic payload construction is meaningfully expensive.
+- Kept `ConfigFileManager` and `LoggingSettings` independent of ordinary logging during pre-provider bootstrap, reduced duplicate exception and routine language-application events, and preserved their persistence, recovery, notification, and localization behavior.
+- Added explicit Serilog-operational state to `App`: fatal startup, dispatcher, task, and AppDomain failures use the emergency writer only before the shared pipeline is available, use Serilog while it is operational, and avoid logging through it after provider disposal begins.
+- Changed `AppPaths.LogResolvedPaths(Logger)` to the parameterless `AppPaths.LogResolvedPaths()` structured-logging boundary and migrated its application startup caller.
+- Regenerated the committed `en-US.json` runtime language artifact with the accepted lifecycle-confirmation and Steam Workshop-not-found strings already represented by the current translation contract.
+
+### Removed
+
+- Removed the obsolete `Logger` singleton, its parallel `LogLevel` and `MinimumLevel` state, custom session-log files, debugger mirroring, legacy retention cleanup, and debug-payload JSON serialization after the zero-caller inventory passed.
+- Removed transitional legacy-level synchronization from `SerilogLoggerFactory`; persisted `LoggingSettings.DebugMode` now configures the shared Serilog pipeline as the sole runtime logging-level authority.
+
+### Verification
+
+- Built the full solution in Debug and Release with zero compilation errors and passed all 156 tests in both configurations. The focused logging/composition set passed all 19 tests.
+- Confirmed the Release output excludes `Serilog.Sinks.Debug.dll`, the Debug output retains it, Core remains free of WPF references, and provider disposal remains the only normal Serilog close path.
+- Confirmed static inventories contain no normal `Logger.Instance`, `Logger.LogLevel`, legacy logger construction, or competing close path. The four retained level guards protect expensive diagnostic construction.
+- The owner manually inspected and approved the accepted source state before this documentation closeout. This docs-only workflow did not perform additional runtime smoke testing and does not claim a Steam Workshop scanner/path-resolution fix.
+- Confirmed the accepted build adds no Nexus functionality, startup update checks, timed polling, silent scans, package changes, application major/minor version changes, or credential persistence through `AppConfig`.
+
+---
+
 ## 0.13.73 - Internal | 2026-07-23
 
 > Refactor Phase 6.B: established one validated Core/UI dependency-injection provider and an application-owned startup, shutdown, restart, and logging lifecycle, then completed the accepted themed XAML lifecycle-dialog patch while retaining the legacy logger-call migration for Phase 6.C.

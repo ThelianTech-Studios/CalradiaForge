@@ -4,8 +4,8 @@
 
 ```text
 <Metadata>
-Last Changelog Version: v0.13.73
-Last Git Commit ID: 29ae996c84bf4a686fdea85cdd9c927c43b72e63
+Last Changelog Version: v0.13.83
+Last Git Commit ID: 3759bf0d8231bd9616c3b1a63f6542a934bcd442
 Last Git Branch Used: dev-V0-14-CodeRefactor(HEAD)
 Last Map Compile Date: 2026-07-23
 </Metadata>
@@ -40,6 +40,7 @@ Workflow rules for when and how to update this file are owned by `docs/refactor/
 
 | Version | Migration scope | Source comparison | Status |
 |---|---|---|---|
+| `v0.13.83` | Phase 6.C application-wide legacy logger migration, structured Serilog callers, emergency startup-failure fallback, logger retirement, lifecycle guards, runtime language artifact, and supporting tests | `29ae996...3759bf0` | Mapped from committed accepted source diff |
 | `v0.13.73` | Phase 6.B single-provider dependency injection, configuration/logging ownership, coordinated application lifecycle, themed XAML lifecycle dialogs, retained UI injection, and supporting tests | `11c0cd1...29ae996` | Mapped from committed accepted source diff |
 | `v0.13.49` | Phase 6.A mod-pipeline manager, structured scan/commit/snapshot lifecycle, awaitable installation, UI integration, archive-progress cleanup, and first-startup atomic JSON persistence hardening | `1889e47...11c0cd1` | Mapped from committed accepted source diff |
 | `v0.13.35` | Phase 5 game-platform detection/path workflow, startup notifications, scanner/cache safety, and accepted ancillary source refinements | `1f037b1...1889e47` | Mapped from committed accepted source diff |
@@ -47,6 +48,75 @@ Workflow rules for when and how to update this file are owned by `docs/refactor/
 | `v0.13.22` | Atomic persistence, mod-cache recovery, archive/install preflight guardrails, and UI configuration-reference repair | `1b23045...710881c` | Mapped from committed build diff |
 | `v0.13.14` | Serilog infrastructure foundation, log-retention configuration, data-helper cleanup, application configuration-property rename, and neutral formatter/redaction-removal follow-up | `37c322e...HEAD` | Mapped from committed build diff |
 | `v0.13.6` | Cleanup/nullability/path/logging-message migration rows listed in this document | `dev-release...HEAD` | Mapped from current committed branch diff |
+
+<details open>
+<summary><strong>v0.13.83</strong> - Internal build: Phase 6.C structured Serilog caller migration, emergency startup diagnostics, legacy logger retirement, and the full accepted committed source range.</summary>
+
+**Source comparison:** `29ae996...3759bf0`
+
+**Status:** Mapped from the committed and pushed accepted source endpoint. The implementation report records zero-error Debug and Release solution builds, all 156 tests passing in both configurations, all 19 focused logging/composition tests passing, Release exclusion of the Debug sink, and successful zero-reference, Core-boundary, and sole-close-path inventories. The owner manually inspected and approved the accepted source before this documentation closeout; this docs-only pass performed no additional runtime smoke.
+
+**Changed implementation/test/resource files:** 38 (`+1157/-1114`)
+
+**Scope rule:** Includes all 38 committed source paths in the comparison range: 37 Phase 6.C implementation/test files and the accepted generated English runtime language artifact from the intervening Phase 6.B closeout commit. All seven committed documentation paths are excluded as documentation-only. No project, solution, package-reference, application-version, configuration-schema, or Nexus file changed in the range.
+
+| Area | Files | Summary |
+|---|---:|---|
+| Configuration and pre-provider bootstrap | 3 | Migrated typed-setting diagnostics to structured Serilog while removing ordinary logging from the pre-provider JSON/settings bootstrap boundary. |
+| Core EULA, platform, launch, localization, and paths | 11 | Migrated normal diagnostics and exceptions to named Serilog properties while preserving existing workflows and retaining only justified expensive-debug guards. |
+| Logging infrastructure | 3 | Added the error-only emergency startup writer, deleted the general legacy logger, and made Serilog the sole runtime level authority. |
+| Modpack and mod workflows | 12 | Migrated persistence, import, scan, parse, extraction, install, BLSE, unblock, cache, and accepted-pipeline diagnostics without changing authoritative workflow behavior. |
+| UI lifecycle and retained surfaces | 5 | Migrated page/window callers and added explicit operational-state guards around pre-pipeline, active-pipeline, and post-disposal exception handling. |
+| Logging and composition tests | 3 | Added emergency-writer coverage and verified persisted minimum levels and the absence of emergency files on successful startup. |
+| Runtime language artifact | 1 | Added the accepted lifecycle-confirmation and Steam Workshop-not-found strings to the committed English manifest. |
+
+<details>
+<summary><strong>Detailed file map</strong></summary>
+
+| File | Change | Key Identifiers | Original vs Updated | Summary |
+|---|---|---|---|---|
+| `source/CalradiaForge.Core/Infra/Config/AppSettings.cs` | Modified (`+55/-47`) | `AppSettings`; typed property setters/defaults | Removed the `Logger.Instance` field and migrated setting/default diagnostics to named `Log.Debug` properties. | Keeps configuration persistence and change notification intact while routing post-bootstrap diagnostics through the shared pipeline. |
+| `source/CalradiaForge.Core/Infra/Config/ConfigFileManager.cs` | Modified (`+1/-27`) | Constructor; indexer; `Load`; `Save` | Removed ordinary legacy diagnostics from configuration construction, read/write, missing-file, and invalid-JSON recovery paths. | Preserves the sole JSON persistence boundary without creating a logging dependency before the provider exists. |
+| `source/CalradiaForge.Core/Infra/Config/LoggingSettings.cs` | Modified (`+0/-7`) | `LoggingSettings.DebugMode` | Removed the legacy logger field and Debug Mode change event while retaining persistence and `PropertyChanged`. | Keeps early logging settings bootstrap-safe; Serilog construction consumes the persisted value after reload. |
+| `source/CalradiaForge.Core/Infra/Eula/EulaService.cs` | Modified (`+20/-21`) | `Load`; `RecordAcceptance` | Replaced legacy calls with structured Serilog and guarded embedded-resource enumeration with `Log.IsEnabled(Debug)`. | EULA fallback and acceptance behavior are unchanged; the guard remains for a potentially expensive payload. |
+| `source/CalradiaForge.Core/Infra/GamePlatform/Epic/EpicDetector.cs` | Modified (`+15/-18`) | Epic registry/path detection helpers | Migrated registry, inferred-path, and validation events to structured Serilog. | Preserves Epic detection logic while standardizing path and failure diagnostics. |
+| `source/CalradiaForge.Core/Infra/GamePlatform/Epic/EpicManifestReader.cs` | Modified (`+17/-18`) | Manifest enumeration/parsing/matching | Migrated manifest diagnostics and parse failures to named properties and exception-first overloads. | Manifest selection and failure-return behavior remain unchanged. |
+| `source/CalradiaForge.Core/Infra/GamePlatform/GameDetectionService.cs` | Modified (`+6/-14`) | Manual game/Workshop selection; normalization failures | Removed the legacy singleton field and migrated rejection and exception diagnostics. | Detection and settings-mutation rules are unchanged. |
+| `source/CalradiaForge.Core/Infra/GamePlatform/GamePlatformDetectionResolver.cs` | Modified (`+15/-16`) | Automatic/Steam/Epic resolution; optional paths | Migrated resolver failures and path diagnostics to Serilog; retained a Debug guard for diagnostic enumeration. | No platform, Steam Workshop scanner, or path-resolution algorithm changed. |
+| `source/CalradiaForge.Core/Infra/Launch/GameLauncher.cs` | Modified (`+60/-59`) | Validation; launch requests/results; Steam wait/process checks | Replaced instance/static legacy calls with structured Serilog and exception-first failure events. | Launch validation, process creation, Steam polling, and result contracts remain unchanged. |
+| `source/CalradiaForge.Core/Infra/Localization/TranslationManager.cs` | Modified (`+40/-29`) | Manifest/language/default-file loading | Migrated diagnostics and removed duplicate Debug exception records after Error events. | File loading, fallback, locking, and serialization behavior remain unchanged. |
+| `source/CalradiaForge.Core/Infra/Localization/TranslationService.cs` | Modified (`+22/-19`) | Manifest discovery; language selection/application | Migrated diagnostics and consolidated successful language application into one Debug event. | Preserves language selection and fallback while reducing routine production noise. |
+| `source/CalradiaForge.Core/Infra/Logging/EmergencyStartupLogWriter.cs` | Added (`+86/-0`) | `EmergencyStartupLogWriter`; `TryWrite`; candidate directories | Added synchronous, lazy, UTF-8 startup-failure append with app Logs, Local AppData, and temp fallbacks plus contained debugger reporting. | Provides the only pre-Serilog fatal diagnostic path and owns no persistent stream, background work, or disposal path. |
+| `source/CalradiaForge.Core/Infra/Logging/Logger.cs` | Deleted (`+0/-171`) | Removed `Logger`; `LogLevel`; `MinimumLevel`; legacy cleanup | Deleted the singleton compatibility logger, parallel session files, debugger mirroring, retention cleanup, and JSON debug serialization. | Completes the breaking source-level retirement after zero normal callers were verified. |
+| `source/CalradiaForge.Core/Infra/Logging/SerilogLoggerFactory.cs` | Modified (`+0/-4`) | `SerilogLoggerFactory.Create` | Removed transitional synchronization to `Logger.Instance.MinimumLevel`. | Persisted `LoggingSettings.DebugMode` now controls the sole shared runtime logger. |
+| `source/CalradiaForge.Core/Infra/Modpacks/ModpackData.cs` | Modified (`+55/-47`) | Save/load/enumerate/delete/import/last-used methods | Migrated modpack file diagnostics to structured events and exception-first overloads. | Persistence formats, atomic file ownership, and return behavior are unchanged. |
+| `source/CalradiaForge.Core/Infra/Modpacks/ModpackService.cs` | Modified (`+57/-44`) | Load/refresh/save/create/import/export/validate methods | Migrated service diagnostics and retained a Debug guard around costly missing-module joining. | Modpack workflow and accepted-snapshot validation behavior remain unchanged. |
+| `source/CalradiaForge.Core/Infra/Modpacks/NovusPresetConverter.cs` | Modified (`+20/-23`) | `ConvertFromFile`; `ConvertFromXml`; `ParseModuleEntries` | Replaced legacy Novus conversion diagnostics with named Serilog properties. | Conversion and parsing results are unchanged. |
+| `source/CalradiaForge.Core/Infra/Modpacks/VanillaModules.cs` | Modified (`+7/-5`) | `BuildFromTemplate` | Migrated fallback-version diagnostics to structured Serilog. | Vanilla template contents and version fallback behavior remain unchanged. |
+| `source/CalradiaForge.Core/Infra/Mods/BLSEInstaller.cs` | Modified (`+71/-56`) | `IsBLSEArchive`; `InstallAsync`; platform-bin discovery/copy | Migrated BLSE archive, extraction, copy, and failure diagnostics to named events. | BLSE validation and installation mechanics remain service-owned and unchanged. |
+| `source/CalradiaForge.Core/Infra/Mods/DLLUnblocker.cs` | Modified (`+26/-27`) | Unblock-all/BLSE/directory/file methods | Replaced legacy progress and exception diagnostics with structured Serilog. | Unblocking traversal, status accounting, and failure handling remain unchanged. |
+| `source/CalradiaForge.Core/Infra/Mods/ModExtractor.cs` | Modified (`+33/-37`) | `ExtractToTempResultAsync`; `FindModRoot`; cleanup | Migrated extraction, root-selection, and cleanup diagnostics to structured Serilog. | Archive extraction authority, progress, cleanup, and result semantics remain unchanged. |
+| `source/CalradiaForge.Core/Infra/Mods/ModInstaller.cs` | Modified (`+98/-70`) | Validation; install/cancel; archive/BLSE processing; copy/delete helpers | Migrated install lifecycle, progress-subscriber, version, copy, and exception events to named properties. | Installation sequencing, cancellation, isolation, archive authority, and results are unchanged. |
+| `source/CalradiaForge.Core/Infra/Mods/ModParser.cs` | Modified (`+21/-28`) | `Parse`; `ParseSPFlag`; `ParseDependencies` | Replaced legacy XML/module/dependency events with structured properties and exception-first overloads. | Module parsing and duplicate-dependency behavior remain unchanged. |
+| `source/CalradiaForge.Core/Infra/Mods/ModPipelineManager.cs` | Modified (`+7/-4`) | `RunScanAsync`; accepted snapshot/failure events | Migrated accepted-snapshot and failure messages to structured Serilog. | Admission, completeness, commit, snapshot, cancellation, and quiescence contracts are unchanged; the existing `ModPipelineCoordinator` message prefix remains. |
+| `source/CalradiaForge.Core/Infra/Mods/ModScanner.cs` | Modified (`+6/-7`) | `ScanRoot` error paths | Migrated missing, inaccessible, enumeration, and unexpected root failures to exception-first structured events. | Scanner result classification is unchanged; this is not a Workshop scanner fix. |
+| `source/CalradiaForge.Core/Infra/Mods/ModsData.cs` | Modified (`+17/-29`) | Current/backup save/load; rotation; recovery; cache clear | Replaced legacy file/cache diagnostics with structured Serilog. | Atomic persistence, backup recovery, rotation authorization, and cache behavior remain unchanged. |
+| `source/CalradiaForge.Core/Infra/Paths/AppPaths.cs` | Modified (`+23/-18`) | `LogResolvedPaths()`; path-log helpers | Changed `LogResolvedPaths(Logger)` to a parameterless structured-logging method and retained a Debug guard before lazy path resolution. | Removes the legacy-logger parameter; `App` supplies the corresponding updated startup call. |
+| `source/CalradiaForge.Core/Infra/Paths/ExplorerHelper.cs` | Modified (`+5/-7`) | Folder/URL open helpers | Migrated invalid-target warnings and shell failures to structured Serilog. | Shell invocation and Boolean result behavior remain unchanged. |
+| `source/CalradiaForge.Core/Infra/Paths/GamePathValidator.cs` | Modified (`+61/-59`) | Game folder/executable/Workshop validation | Migrated validation diagnostics to named Serilog properties. | Validation predicates and results remain unchanged; no Steam Workshop path fix is represented. |
+| `source/CalradiaForge.UI/App.xaml.cs` | Modified (`+39/-7`) | `_serilogOperational`; `IsSerilogOperational`; startup/exit/global exception handlers | Added an explicit operational flag, routed pre-pipeline fatal failures to the emergency writer, and prevented global callbacks from using Serilog after disposal begins. | Preserves provider disposal as the sole normal close path while separating pre-provider, operational, and post-disposal diagnostics. |
+| `source/CalradiaForge.UI/Pages/ModpacksPage.xaml.cs` | Modified (`+48/-44`) | Constructor; visibility/list/load-order/edit/import/template/save handlers | Removed the legacy field and migrated 14 Debug call sites to named Serilog properties. | Retained-page and modpack behavior are unchanged. |
+| `source/CalradiaForge.UI/Pages/ModsPage.xaml.cs` | Modified (`+50/-47`) | Cache/list/modpack/install/launch/refresh handlers | Removed the legacy field and migrated 15 Debug call sites to structured Serilog. | Accepted-snapshot, install, launch, and refresh behavior are unchanged. |
+| `source/CalradiaForge.UI/Pages/SettingsPage.xaml.cs` | Modified (`+60/-87`) | Settings/path/detection/debug/unblock/cache handlers | Removed the legacy field/guards and migrated 30 Debug, Information, Warning, and Error sites. | Settings workflows and persisted Debug Mode behavior remain unchanged; filtering moves to Serilog. |
+| `source/CalradiaForge.UI/Views/MainWindow.xaml.cs` | Modified (`+8/-12`) | Constructor; close; navigation handlers | Removed the legacy field and migrated initialization, failure, and navigation events. | Shell navigation and coordinated-close behavior remain unchanged. |
+| `source/CalradiaForge.Tests/Core.Tests/Logging/EmergencyStartupLogWriterTests.cs` | Added (`+60/-0`) | Three `TryWrite` facts | Added coverage for primary append and exception details, fallback selection, and contained all-candidate failure. | Verifies the emergency path without constructing the provider logger. |
+| `source/CalradiaForge.Tests/Core.Tests/Logging/SerilogLoggerFactoryTests.cs` | Modified (`+28/-6`) | Minimum-level test; `Create_AppliesPersistedDebugModeAfterSettingsReload` | Removed transitional legacy-level assertions and added restart-style persisted Debug Mode coverage. | Locks Serilog as the sole runtime minimum-level authority. |
+| `source/CalradiaForge.Tests/UI.Tests/Composition/UiServiceCollectionExtensionsTests.cs` | Modified (`+3/-0`) | Validated-provider/global-logger composition fact | Added an assertion that successful provider construction creates no startup-failure file. | Protects the emergency writer's error-only boundary. |
+| `source/Languages/en-US.json` | Modified (`+17/-0`) | Lifecycle-confirmation and Workshop-not-found keys | Added 15 confirmation strings and two Steam Workshop-not-found notification strings to the generated English runtime manifest. | Aligns the committed language artifact with the accepted translation contract; it is not a scanner/path-resolution fix. |
+
+</details>
+
+</details>
 
 <details open>
 <summary><strong>v0.13.73</strong> - Internal build: Phase 6.B single-provider dependency injection, application lifecycle ownership, logging lifecycle, themed XAML confirmations, and the full accepted committed source range.</summary>

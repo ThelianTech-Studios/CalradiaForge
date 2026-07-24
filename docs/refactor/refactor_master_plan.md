@@ -205,7 +205,7 @@ flowchart TD
 - [X] Phase 5: Resolver/workflow integration, Steam split-library behavior, manual configuration, startup queue, scanner safety, test migration, and automated verification are complete; owner real-Steam/WPF smoke remains pending before release acceptance.
 - [X] Phase 6.A: A Core-owned `ModPipelineCoordinator` makes scan completeness/commit decisions, publishes an accepted snapshot, and exposes active-work quiescence.
 - [X] Phase 6.B: One validated provider owns composition, settings/bootstrap, the Serilog lifecycle, and controlled WPF startup/shutdown/restart.
-- [ ] Phase 6.C: Legacy logger callers migrate in verified batches; the general logger retires and `EmergencyStartupLogWriter` is the only pre-Serilog fallback.
+- [X] Phase 6.C: Legacy logger callers migrated in verified batches; the general logger retired and `EmergencyStartupLogWriter` is the only pre-Serilog fallback.
 - [ ] Phase 7: Workflow result contracts and coordinator state are implemented for selected high-risk workflows.
 - [ ] Phase 8: Shell/navigation and major page workflows use consistent ViewModel patterns.
 - [ ] Phase 9: A post-refactor performance audit report exists with authoritative baselines, classified findings, and pending developer decisions; no production optimization was performed.
@@ -603,9 +603,9 @@ Unless a phase-specific instruction or the owner explicitly changes the sequence
 3. Complete reviewer and correction passes.
 4. Report changed files, completed work, deferred items, risks, and verification results.
 5. Stop for manual developer inspection and approval before changelog or migration-map work.
-6. After developer approval, update `docs/CHANGELOG.md` unless the owner instructs otherwise. The accepted build-version entry must cover every completed source-code change in that build, including phase work and manually made source changes.
-7. The owner manually commits and pushes the accepted source and changelog changes to `origin`.
-8. Update `docs/MIGRATION_MAP.md` only when the owner explicitly requests that workflow and only after its changelog and commit prerequisites are satisfied. Map every committed source-code change in the comparison range under its build version; do not omit a change because it was outside the named phase or made manually.
+6. After developer approval, the owner commits and pushes the accepted source endpoint to `origin` so source bookkeeping has one immutable comparison target.
+7. By default, complete one documentation-only closeout that updates and validates `docs/CHANGELOG.md` first and then updates and validates `docs/MIGRATION_MAP.md` from that same accepted source endpoint. The changelog must cover every completed source-code change in the build, including phase work and manually made source changes, and the migration map must map every committed source-code change in the comparison range.
+8. Stop so the owner can review, commit, and push the changelog and migration-map edits together. Do not publish automatically unless the owner explicitly requests it.
 9. Stop on any mismatch between the relevant Git diff and the build-version changelog section, including a source-code change that lacks build-version documentation.
 
 Documentation-only planning or audit work does not receive a migration-map source section under the current code-only policy.
@@ -776,27 +776,28 @@ Final implementation report:
   - deferred or excluded items,
   - unresolved risks,
   - owner actions still required.
-- Clearly identify every accepted source-code change that the later changelog workflow must document.
+- Clearly identify every accepted source-code change that the combined changelog and migration-map closeout must document.
 - Provide a concise implementation summary suitable for comparison against the Git diff during changelog and migration-map closeout.
 - State explicitly that:
   - `docs/CHANGELOG.md` was not updated,
   - `docs/MIGRATION_MAP.md` was not updated,
   - the owner must manually inspect and approve the implementation,
-  - after owner approval, the separate changelog workflow runs before the owner commits/pushes accepted source and changelog changes; migration-map work remains a later explicitly requested, prerequisite-gated workflow.
+  - after owner approval, the owner commits/pushes the accepted source endpoint, then the combined changelog and migration-map closeout prepares both documentation files for one later owner review, commit, and push.
 ```
 
-### Phase X Changelog Closeout and Later Migration-Map Workflow
+### Phase X Combined Changelog and Migration-Map Closeout Workflow
 
 ```text
-Complete the separately gated Phase x changelog closeout and later migration-map workflow for CalradiaForge.
+Complete the combined Phase x changelog and migration-map closeout workflow for CalradiaForge.
 
 This workflow is documentation-only.
 
-Before the changelog stage, the accepted Phase x source-code changes have already been:
+Before this documentation closeout, the accepted Phase x source-code changes have already been:
 - manually inspected by the owner,
-- approved by the owner.
+- approved by the owner,
+- committed and pushed to the configured `origin` branch.
 
-Update and validate `docs/CHANGELOG.md` first then update `docs/MIGRATION_MAP.md`. Then stop so the owner can review, commit, and push the accepted source and changelog state.
+Update and validate `docs/CHANGELOG.md` first, then update and validate `docs/MIGRATION_MAP.md` from the same accepted source endpoint in this workflow. Then stop so the owner can review, commit, and push both documentation edits together.
 
 Source-code read-only rule:
 - Treat all source-code files as read-only throughout this workflow.
@@ -816,10 +817,10 @@ Before editing:
 - Read the `Shared Implementation Phase Closeout Workflow`.
 - Read the relevant files under `docs/Architecture`.
 - Read the current `docs/CHANGELOG.md` during either stage.
-- During the later migration-map stage, read the metadata block and latest version section in `docs/MIGRATION_MAP.md`.
+- Before editing the migration map, read the metadata block and latest version section in `docs/MIGRATION_MAP.md`.
 - Read the final Phase x implementation report when it is available.
-- During the changelog stage, inspect the exact owner-approved Git or working-tree source diff needed to reconstruct the accepted implementation.
-- During the later migration-map stage, inspect the committed Git history and source-code diff for the accepted source endpoint.
+- During the changelog stage, inspect the exact owner-approved committed source diff needed to reconstruct the accepted implementation.
+- During the migration-map stage, inspect the committed Git history and source-code diff for the same accepted source endpoint.
 - Read affected source files only as necessary to accurately document accepted changes.
 
 Repository preflight:
@@ -829,17 +830,17 @@ Repository preflight:
   - the configured upstream branch,
   - the upstream commit ID,
   - the working-tree status.
-- During the changelog stage, identify the exact owner-approved source endpoint. Approved source changes may still be uncommitted, but unrelated or ambiguous source changes are a blocker.
-- Before the later migration-map stage, verify that the accepted source changes and changelog are committed and pushed to `origin` and that current `HEAD` is the accepted documented state.
+- Identify the exact owner-approved, committed source endpoint before editing either documentation file. Uncommitted, unrelated, or ambiguous source changes are a blocker.
+- Verify that the accepted source changes are committed and pushed to `origin`, that current `HEAD` is the accepted documented source state, and that the working tree contains no uncommitted source changes. The new changelog draft does not need an intermediate commit before migration-map editing.
 - Do not pull, merge, rebase, reset, amend, cherry-pick, or otherwise alter Git history.
 - Documentation changes already present in the working tree may be preserved when they are part of this requested workflow.
 - If source changes cannot be distinguished from the owner-approved changelog scope:
   - report the ambiguity,
   - stop the changelog stage before editing.
-- If uncommitted source-code changes are present when the later migration-map stage begins:
+- If uncommitted source-code changes are present when this combined closeout begins:
   - report them,
-  - stop before editing `docs/MIGRATION_MAP.md`.
-- If local `HEAD` contains accepted source or changelog commits that have not been pushed to the configured `origin` branch when the migration-map stage begins:
+  - stop before editing either documentation file.
+- If local `HEAD` contains accepted source commits that have not been pushed to the configured `origin` branch when this combined closeout begins:
   - report the discrepancy,
   - stop before editing,
   - do not push automatically unless the owner explicitly requests it.
@@ -861,13 +862,12 @@ Subagent workflow:
   - keep all source files read-only,
   - instruct subagents not to modify any files,
   - require structured reports identifying changed files, symbols, behavior, and corresponding changelog or migration-map coverage.
-- During changelog closeout, use a reviewer subagent when practical to compare the exact owner-approved source diff, target changelog section, implementation evidence, and Phase x constraints.
-- During a later migration-map stage, use a reviewer subagent when practical to compare the committed source diff, committed target changelog section, new migration-map section, migration-map metadata, and Phase x constraints.
+- During the combined closeout, use a reviewer subagent when practical to compare the committed owner-approved source diff, target changelog section, new migration-map section, migration-map metadata, implementation evidence, and Phase x constraints.
 - Resolve documentation omissions or inaccuracies before finalizing.
 - Do not use reviewer findings as permission to change source code.
 
 Changelog workflow:
-- Complete the changelog update and validation as its own closeout stage.
+- Complete the changelog update and validation first within the combined closeout.
 - Use the following as evidence:
   - the exact owner-approved source-code diff,
   - the final implementation report,
@@ -923,15 +923,15 @@ Changelog validation:
   - date correctness,
   - coverage of all accepted source changes,
   - absence of planned or deferred work presented as shipped,
-  - consistency with the exact owner-approved Git or working-tree diff,
+  - consistency with the exact owner-approved committed source diff,
   - consistency with the final implementation report.
-- Record the exact changelog version and section that will later be used for the migration map.
-- Stop after validation so the owner can review, commit, and push the accepted source and changelog state.
+- Record the exact changelog version and section that will be used for the migration map.
+- After validation, proceed directly to the migration-map stage without an intermediate commit or push.
 
 Migration-map workflow:
-- Begin migration-map work only after it is explicitly requested and the accepted source and changelog state has been committed and pushed.
+- Begin migration-map work after the changelog stage passes validation in this same closeout. The accepted source endpoint must already be committed and pushed; the new changelog draft remains the working-tree documentation input and does not require an intermediate commit.
 - The migration map must analyze committed source-code changes only.
-- The committed changelog section is the documentation input for this later stage and is not part of the source-code comparison range.
+- The validated target changelog section is the documentation input for this stage and is not part of the source-code comparison range.
 
 Migration-map preflight:
 - Read the metadata block at the top of `docs/MIGRATION_MAP.md`.
@@ -942,7 +942,7 @@ Migration-map preflight:
   - **Branch**.
 - Verify that the latest existing migration-map section matches the metadata value for **Last Changelog Version**.
 - Verify that the metadata value for **Last Git Commit ID** identifies a valid commit reachable from the current branch.
-- Verify that the target changelog section is committed and pushed with the accepted source state.
+- Verify that the target changelog draft accurately represents the accepted committed source state and uses the exact version that the new migration-map section will document.
 - Use the metadata value for **Last Git Commit ID** as the exclusive comparison starting point.
 - Use the current accepted source `HEAD` as the comparison endpoint.
 - Analyze the Git comparison range:
@@ -1040,8 +1040,7 @@ Final reconciliation:
 
 Final repository state:
 - Do not commit or push automatically unless the user explicitly requests Git publication.
-- At the end of the changelog stage, leave the changelog with the accepted source state for owner review, commit, and push.
-- At the end of the separately requested migration-map stage, leave only the migration-map update for owner review unless the user explicitly requests publication.
+- At the end of the combined closeout, leave the changelog and migration-map updates together for owner review, commit, and push.
 - Do not modify the already accepted source-code commit.
 
 Final report:
@@ -1053,7 +1052,7 @@ Final report:
   - reviewer findings and corrections,
   - unresolved mismatches or risks,
   - verification performed.
-- During the later migration-map stage, additionally report:
+- During the migration-map stage, additionally report:
   - the previous migration-map commit ID,
   - the accepted source `HEAD` used as the comparison endpoint,
   - the exact Git comparison range,
@@ -1064,8 +1063,8 @@ Final report:
 - State explicitly that:
   - source files remained read-only,
   - accepted source changes were owner-approved before changelog closeout,
-  - if migration-map work ran, the accepted source and changelog state was committed and pushed first and the later stage was separately requested,
-  - the resulting documentation edit remains ready for owner review and any explicitly requested publication.
+  - the accepted source endpoint was committed and pushed before the combined documentation closeout,
+  - the changelog and migration map were prepared together and remain ready for owner review and any explicitly requested publication.
 ```
 
 ## Open Questions Before Implementation
