@@ -542,24 +542,16 @@ Phase 6.A supplies the mod-pipeline quiescence dependency.
 
 ---
 
-# 21. Shutdown Confirmation and Commitment
+# 21. Shutdown and Restart Confirmation Before Commitment
 
-Normal MainWindow close first asks:
+Normal MainWindow close first inspects the authoritative active mod-pipeline operation:
 
-```text
-Are you sure you want to shut down CalradiaForge?
-[OK] [Cancel]
-```
+- when no meaningful interruptible work is active, close commits without a confirmation dialog;
+- when tracked work is active, one themed shutdown warning presents the localized operation summary;
+- cancelling or closing that warning aborts shutdown without beginning commitment;
+- accepting the warning commits shutdown through the guarded async path.
 
-Cancel:
-
-- cancels the close,
-- does not begin shutdown.
-
-OK:
-
-- commits shutdown,
-- calls the guarded async shutdown path.
+Restart always presents its ordinary themed confirmation first. If that confirmation is accepted, one authoritative active-operation snapshot determines whether a second interruption warning is required. Cancelling or closing either restart prompt aborts restart without reverting settings already persisted for the replacement process.
 
 Once shutdown begins, it is irreversible. The application will not resume normal operation after provider disposal begins.
 
@@ -751,8 +743,10 @@ Require focused evidence for:
 ## Shutdown/restart
 
 - duplicate requests are guarded,
-- normal close confirms before commitment,
-- cancel prevents shutdown,
+- idle normal close commits without a dialog,
+- active normal close shows one warning before commitment,
+- restart shows its ordinary confirmation and only adds a second warning for active work,
+- cancel/custom-close prevents shutdown or restart at every applicable prompt,
 - 15-second timeout choice behaves correctly,
 - continue-waiting adds a bounded interval,
 - exit-anyway performs best effort without process kill,
