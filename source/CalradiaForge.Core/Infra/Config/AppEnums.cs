@@ -1,7 +1,7 @@
 ﻿namespace CalradiaForge.Core.Infra.Config {
 	/// <summary>
 	/// Defines how the ModsPage ComboBox selects a modpack on application startup.
-	/// Persisted in <see cref="AppConfigSettings.ModpackStartupMode"/>.
+	/// Persisted in <see cref="AppSettings.ModpackStartupMode"/>.
 	/// </summary>
 	public enum ModpackStartupMode {
 		/// <summary>

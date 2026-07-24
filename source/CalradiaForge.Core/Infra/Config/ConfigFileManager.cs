@@ -9,7 +9,7 @@
 	/// <summary>
 	/// Provides thread-safe key/value configuration persistence backed by JSON.
 	/// </summary>
-	public sealed class AppConfig {
+	public sealed class ConfigFileManager {
 		private readonly Logger _logger = Logger.Instance;
 		private readonly object _lock = new();
 		private Dictionary<string, string> _configValues = new();
@@ -17,13 +17,13 @@
 		/// <summary>
 		/// Initializes a new configuration store using the specified file path.
 		/// </summary>
-		public AppConfig(string filePath) {
+		public ConfigFileManager(string filePath) {
 			if (string.IsNullOrWhiteSpace(filePath)) {
 				throw new ArgumentException("File path cannot be null or whitespace.", nameof(filePath));
 			}
 			_configFilePath = filePath;
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("AppConfig: Initialized.", new { FilePath = _configFilePath });
+				_logger.Debug("ConfigFileManager: Initialized.", new { FilePath = _configFilePath });
 			}
 		}
 
@@ -41,7 +41,7 @@
 					_configValues.TryGetValue(key, out var oldValue);
 					_configValues[key] = value;
 					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-						_logger.Debug("AppConfig: Wrote key.", new {
+						_logger.Debug("ConfigFileManager: Wrote key.", new {
 							Key = key,
 							OldValue = string.IsNullOrEmpty(oldValue) ? "<empty>" : oldValue,
 							NewValue = string.IsNullOrEmpty(value) ? "<empty>" : value
@@ -94,14 +94,26 @@
 			}
 		}
 
+		/// <summary>Removes a persisted setting when it exists.</summary>
+		public bool Remove(string key) {
+			ArgumentException.ThrowIfNullOrWhiteSpace(key);
+			lock (_lock) {
+				if (!_configValues.Remove(key)) {
+					return false;
+				}
+				SaveLocked();
+				return true;
+			}
+		}
+
 		private void SaveLocked() {
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("AppConfig: Saving config.", new { FilePath = _configFilePath, Count = _configValues.Count });
+				_logger.Debug("ConfigFileManager: Saving config.", new { FilePath = _configFilePath, Count = _configValues.Count });
 			}
 			var json = JsonConvert.SerializeObject(_configValues, Formatting.Indented);
 			AtomicFileWriter.WriteAllText(_configFilePath, json);
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("AppConfig: Save complete.", new { FilePath = _configFilePath });
+				_logger.Debug("ConfigFileManager: Save complete.", new { FilePath = _configFilePath });
 			}
 		}
 
@@ -139,7 +151,7 @@
 			lock (_lock) {
 				if (!File.Exists(_configFilePath)) {
 					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-						_logger.Debug("AppConfig: Config file missing; starting with empty in-memory config.", new { FilePath = _configFilePath });
+						_logger.Debug("ConfigFileManager: Config file missing; starting with empty in-memory config.", new { FilePath = _configFilePath });
 					}
 					_configValues = new Dictionary<string, string>();
 					return;
@@ -148,11 +160,11 @@
 					var json = File.ReadAllText(_configFilePath);
 					_configValues = JsonConvert.DeserializeObject<Dictionary<string, string>>(json) ?? new Dictionary<string, string>();
 				} catch (JsonException ex) {
-					_logger.Error(ex, "AppConfig: Config file contains invalid JSON. Falling back to defaults.");
+					_logger.Error(ex, "ConfigFileManager: Config file contains invalid JSON. Falling back to defaults.");
 					_configValues = new Dictionary<string, string>();
 				}
 				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("AppConfig: Config loaded.", new { FilePath = _configFilePath, Count = _configValues.Count });
+					_logger.Debug("ConfigFileManager: Config loaded.", new { FilePath = _configFilePath, Count = _configValues.Count });
 				}
 			}
 		}
