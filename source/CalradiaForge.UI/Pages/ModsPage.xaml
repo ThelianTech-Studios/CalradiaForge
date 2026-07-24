@@ -3,7 +3,6 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-			xmlns:local="clr-namespace:CalradiaForge.UI"
 			xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
 			xmlns:mahIcons="http://metro.mahapps.com/winfx/xaml/iconpacks"
 			xmlns:dd="urn:gong-wpf-dragdrop"
@@ -28,7 +27,7 @@
 				<ColumnDefinition Width="Auto" />
 			</Grid.ColumnDefinitions>
 			<TextBlock Grid.Column="0"
-								 Text="{Binding Strings.Mods_ModpacksLabel, Source={x:Static local:App.Translator}}"
+								 Text="{Binding Translator.Strings.Mods_ModpacksLabel}"
 								 Style="{StaticResource ModsPageModListLabel}" />
 			<ComboBox x:Name="ModPackComboBox" Grid.Column="1" MinWidth="120"
 								Style="{StaticResource ModsPageComboBox}"
@@ -37,10 +36,10 @@
 								SelectedIndex="{Binding SelectedModpackIndex}"
 								SelectionChanged="ModPack_SelectionChanged" />
 			<StackPanel Grid.Column="2" Orientation="Horizontal">
-				<Button Content="{Binding Strings.Mods_InstallButton, Source={x:Static local:App.Translator}}"
+				<Button Content="{Binding Translator.Strings.Mods_InstallButton}"
 								Margin="8,0,0,0"
 								Style="{StaticResource ModsPageActionButton}"
-								ToolTip="{Binding Strings.Mods_InstallButton, Source={x:Static local:App.Translator}}"
+								ToolTip="{Binding Translator.Strings.Mods_InstallButton}"
 								Click="InstallModsButton_Click" />
 			</StackPanel>
 		</Grid>
@@ -52,7 +51,7 @@
 				<ColumnDefinition Width="*" />
 			</Grid.ColumnDefinitions>
 			<TextBlock Grid.Column="0"
-								 Text="{Binding Strings.Mods_LoadOrderHeader, Source={x:Static local:App.Translator}}"
+								 Text="{Binding Translator.Strings.Mods_LoadOrderHeader}"
 								 Style="{StaticResource ModsListHeader}" />
 			<Grid Grid.Column="1">
 				<Grid.ColumnDefinitions>
@@ -61,7 +60,7 @@
 					<ColumnDefinition Width="Auto" />
 				</Grid.ColumnDefinitions>
 				<TextBlock Grid.Column="0"
-									 Text="{Binding Strings.Mods_AvailableModsHeader, Source={x:Static local:App.Translator}}"
+									 Text="{Binding Translator.Strings.Mods_AvailableModsHeader}"
 									 Style="{StaticResource ModsListHeader}" />
 				<TextBox x:Name="SearchBox" Grid.Column="1"
 								 Style="{StaticResource ModsPageSearchBox}"
@@ -71,7 +70,7 @@
 				<Button Grid.Column="2" Width="35" Height="35"
 								Background="Transparent" BorderThickness="0"
 								Cursor="Hand"
-								ToolTip="{Binding Strings.Mods_RefreshTooltip, Source={x:Static local:App.Translator}}"
+								ToolTip="{Binding Translator.Strings.Mods_RefreshTooltip}"
 								Click="RefreshModsButton_Click">
 					<mahIcons:PackIconMaterial Kind="Refresh" Width="20" Height="20"
 																		 Foreground="{StaticResource TB.Txt.Bright}" />
@@ -108,11 +107,11 @@
 							Content="{Binding PlayButtonText}"
 							Style="{StaticResource PlaySplitButtonLeft}"
 							IsEnabled="{Binding CanStart}"
-							ToolTip="{Binding Strings.Mods_LaunchTargetTooltip, Source={x:Static local:App.Translator}}"
+							ToolTip="{Binding Translator.Strings.Mods_LaunchTargetTooltip}"
 							Click="PlayButton_Click" />
 			<Button x:Name="PlayTargetDropdown"
 							Style="{StaticResource PlaySplitButtonRight}"
-							ToolTip="{Binding Strings.Mods_LaunchTargetTooltip, Source={x:Static local:App.Translator}}"
+							ToolTip="{Binding Translator.Strings.Mods_LaunchTargetTooltip}"
 							Click="PlayTargetDropdown_Click">
 				<mahIcons:PackIconMaterial Kind="ChevronDown" Width="10" Height="10" />
 				<Button.ContextMenu>
@@ -129,7 +128,7 @@
 																						 VerticalAlignment="Center"
 																						 Margin="0,0,8,0"
 																						 Visibility="Visible" />
-									<TextBlock Text="{Binding Strings.Mods_LaunchTargetBannerlord, Source={x:Static local:App.Translator}}"
+									<TextBlock Text="{Binding Translator.Strings.Mods_LaunchTargetBannerlord}"
 														 VerticalAlignment="Center" />
 								</StackPanel>
 							</MenuItem.Header>
@@ -145,7 +144,7 @@
 																						 VerticalAlignment="Center"
 																						 Margin="0,0,8,0"
 																						 Visibility="Collapsed" />
-									<TextBlock Text="{Binding Strings.Mods_LaunchTargetBLSE, Source={x:Static local:App.Translator}}"
+									<TextBlock Text="{Binding Translator.Strings.Mods_LaunchTargetBLSE}"
 														 VerticalAlignment="Center" />
 								</StackPanel>
 							</MenuItem.Header>

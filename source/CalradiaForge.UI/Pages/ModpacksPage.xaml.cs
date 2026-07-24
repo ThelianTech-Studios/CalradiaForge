@@ -10,6 +10,7 @@
 	using System.Windows.Input;
 	using System.Windows.Media;
 
+	using CalradiaForge.Core.Infra.Localization;
 	using CalradiaForge.Core.Infra.Logging;
 	using CalradiaForge.Core.Infra.Modpacks;
 	using CalradiaForge.Core.Infra.Mods;
@@ -30,6 +31,8 @@
 	public partial class ModpacksPage : Page, INotifyPropertyChanged {
 		#region Fields
 		private readonly ModpackService _modpackService;
+		private readonly ModPipelineManager _modPipeline;
+		private readonly ToastService _toasts;
 		private readonly Logger _logger = Logger.Instance;
 		private int _selectedModpackIndex = -1;
 		private int _selectedEntryIndex = -1;
@@ -69,6 +72,9 @@
 		/// Displayed in the left list for visual comparison.
 		/// </summary>
 		public ObservableCollection<ModpackEntryModel> ActiveLoadOrder { get; set; } = [];
+
+		/// <summary>Gets the translation service used by page bindings.</summary>
+		public TranslationService Translator { get; }
 		#endregion
 
 		#region Bound Properties
@@ -158,11 +164,17 @@
 		/// <summary>
 		/// Initializes the modpacks page and populates initial lists.
 		/// </summary>
-		public ModpacksPage() {
+		public ModpacksPage(
+			ModpackService modpackService,
+			ModPipelineManager modPipeline,
+			ToastService toasts,
+			TranslationService translator) {
+			_modpackService = modpackService ?? throw new ArgumentNullException(nameof(modpackService));
+			_modPipeline = modPipeline ?? throw new ArgumentNullException(nameof(modPipeline));
+			_toasts = toasts ?? throw new ArgumentNullException(nameof(toasts));
+			Translator = translator ?? throw new ArgumentNullException(nameof(translator));
 			InitializeComponent();
 			DataContext = this;
-
-			_modpackService = App.ModpackService;
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("ModpacksPage: Initializing.");
 			}
@@ -192,7 +204,7 @@
 		/// </summary>
 		private async void ModpacksPage_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e) {
 			if (e.NewValue is true) {
-				ModPipelineManager pipeline = App.ModPipelineManager;
+				ModPipelineManager pipeline = _modPipeline;
 				if (!pipeline.IsRefreshing) {
 					try {
 						if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
@@ -206,7 +218,7 @@
 						// Refresh was cancelled — proceed with cached data
 					} catch (Exception ex) {
 						StatusText = $"Mod rescan failed: {ex.Message}";
-						App.Toasts.Show(new ToastRequest {
+						_toasts.Show(new ToastRequest {
 							Title = "Mod Rescan Failed",
 							Message = ex.Message,
 							Severity = ToastSeverity.Error
@@ -473,13 +485,13 @@
 					LoadSelectedModpackData();
 				}
 
-				App.Toasts.Show(new ToastRequest {
+				_toasts.Show(new ToastRequest {
 					Title = "Modpack Imported",
 					Message = $"'{modpack.ModpackName}' imported with {modpack.LoadOrder.Count} entries.",
 					Severity = ToastSeverity.Success
 				});
 			} else {
-				App.Toasts.Show(new ToastRequest {
+				_toasts.Show(new ToastRequest {
 					Title = "Import Failed",
 					Message = message,
 					Severity = ToastSeverity.Error
@@ -601,7 +613,7 @@
 
 			if (string.IsNullOrWhiteSpace(name)) {
 				StatusText = "Modpack name cannot be empty.";
-				App.Toasts.Show(new ToastRequest {
+				_toasts.Show(new ToastRequest {
 					Title = "Name Required",
 					Message = "Enter a name for the new modpack.",
 					Severity = ToastSeverity.Warning
@@ -614,7 +626,7 @@
 			}
 
 			// Pass installed mods so the template resolves live version data
-			AcceptedModSnapshot snapshot = App.ModPipelineManager.AcceptedSnapshot;
+			AcceptedModSnapshot snapshot = _modPipeline.AcceptedSnapshot;
 			List<ModuleModel> installedMods = snapshot.Modules.ToList();
 			bool success = _modpackService.CreateNew(name, createdBy, _pendingTemplate, installedMods);
 
@@ -635,14 +647,14 @@
 				}
 
 				StatusText = $"Created '{name}' with {_pendingTemplate} template.";
-				App.Toasts.Show(new ToastRequest {
+				_toasts.Show(new ToastRequest {
 					Title = "Modpack Created",
 					Message = $"'{name}' created with {_pendingTemplate} template.",
 					Severity = ToastSeverity.Success
 				});
 			} else {
 				StatusText = $"Failed to create '{name}'. A modpack with this name may already exist.";
-				App.Toasts.Show(new ToastRequest {
+				_toasts.Show(new ToastRequest {
 					Title = "Create Failed",
 					Message = $"A modpack named '{name}' may already exist.",
 					Severity = ToastSeverity.Error
@@ -677,7 +689,7 @@
 
 			if (_modpackService.CurrentLoadOrderEntries.Count == 0) {
 				StatusText = "No active load order found. Arrange mods on the Mods page first.";
-				App.Toasts.Show(new ToastRequest {
+				_toasts.Show(new ToastRequest {
 					Title = "Nothing to Save",
 					Message = "Arrange mods on the Mods page first.",
 					Severity = ToastSeverity.Warning
@@ -697,14 +709,14 @@
 				PopulateModpackList();
 				PopulateActiveLoadOrder();
 				StatusText = $"Saved active load order to '{_selectedModpack.ModpackName}'.";
-				App.Toasts.Show(new ToastRequest {
+				_toasts.Show(new ToastRequest {
 					Title = "Modpack Saved",
 					Message = $"'{_selectedModpack.ModpackName}' updated with {entries.Count} entries.",
 					Severity = ToastSeverity.Success
 				});
 			} else {
 				StatusText = $"Failed to save '{_selectedModpack.ModpackName}'.";
-				App.Toasts.Show(new ToastRequest {
+				_toasts.Show(new ToastRequest {
 					Title = "Save Failed",
 					Message = $"Could not save '{_selectedModpack.ModpackName}'. Check logs for details.",
 					Severity = ToastSeverity.Error

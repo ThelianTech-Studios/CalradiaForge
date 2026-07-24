@@ -34,10 +34,12 @@
 	/// </summary>
 	public partial class ModsPage : Page, INotifyPropertyChanged, IDropTarget {
 		#region Fields
+		private readonly AppSettings _appSettings;
 		private readonly ModPipelineManager _modPipeline;
 		private readonly ModInstaller _modInstaller;
 		private readonly ModpackService _modpackService;
 		private readonly GameLauncher _gameLauncher;
+		private readonly ToastService _toasts;
 		private readonly Logger _logger = Logger.Instance;
 		private bool _canStart;
 		private bool _isRefreshing;
@@ -51,16 +53,6 @@
 		private DateTime _lastExtractionProgressUpdate = DateTime.MinValue;
 
 		/// <summary>
-		/// Tracks whether the initial startup scan from <see cref="StartupRescanAsync"/>
-		/// has completed. Pre-scan calls to <see cref="ApplySelectedModpack"/> suppress
-		/// toast notifications to prevent duplicate toasts during the startup sequence
-		/// (constructor → Loaded → scan). Only the post-scan apply shows the toast.
-		/// Also gates <see cref="RefreshAvailableMods"/> and <see cref="RefreshModpackList"/>
-		/// to prevent duplicate work while the startup scan is still in progress.
-		/// </summary>
-		private bool _hasCompletedInitialScan;
-
-		/// <summary>
 		/// Minimum interval between extraction progress UI updates.
 		/// Prevents dispatcher flooding on fast SSDs where hundreds of
 		/// per-file events fire before the UI can render a single frame.
@@ -69,9 +61,12 @@
 
 		/// <summary>
 		/// Shorthand accessor for the active translation strings.
-		/// Avoids repeating <c>App.Translator.Strings</c> throughout the file.
+		/// Avoids repeating <c>Translator.Strings</c> throughout the file.
 		/// </summary>
-		private static TranslationStrings T => App.Translator.Strings;
+		private TranslationStrings T => Translator.Strings;
+
+		/// <summary>Gets the translation service used by page bindings.</summary>
+		public TranslationService Translator { get; }
 
 		/// <summary>
 		/// Sentinel "ghost" modpack inserted at index 0 when
@@ -173,18 +168,26 @@
 		#region Constructor
 		/// <summary>
 		/// Initializes the mods page and wires UI bindings and services.
-		/// The constructor populates lists from cached data with toasts suppressed.
-		/// The authoritative scan and single toast fire happens later in
-		/// <see cref="StartupRescanAsync"/> triggered by the Loaded event.
+		/// The application startup coordinator completes the authoritative startup
+		/// scan before constructing this retained page.
 		/// </summary>
-		public ModsPage() {
+		public ModsPage(
+			AppSettings appSettings,
+			ModPipelineManager modPipeline,
+			ModInstaller modInstaller,
+			ModpackService modpackService,
+			GameLauncher gameLauncher,
+			ToastService toasts,
+			TranslationService translator) {
+			_appSettings = appSettings ?? throw new ArgumentNullException(nameof(appSettings));
+			_modPipeline = modPipeline ?? throw new ArgumentNullException(nameof(modPipeline));
+			_modInstaller = modInstaller ?? throw new ArgumentNullException(nameof(modInstaller));
+			_modpackService = modpackService ?? throw new ArgumentNullException(nameof(modpackService));
+			_gameLauncher = gameLauncher ?? throw new ArgumentNullException(nameof(gameLauncher));
+			_toasts = toasts ?? throw new ArgumentNullException(nameof(toasts));
+			Translator = translator ?? throw new ArgumentNullException(nameof(translator));
 			InitializeComponent();
 			DataContext = this;
-
-			_modPipeline = App.ModPipelineManager;
-			_modInstaller = App.ModInstaller;
-			_modpackService = App.ModpackService;
-			_gameLauncher = App.GameLauncher;
 
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("ModsPage: Initializing.");
@@ -196,11 +199,11 @@
 			AvailableModsView.Filter = ModSearchFilter;
 
 			// Restore persisted launch target from config
-			_activeLaunchTarget = App.AppSettingsInstance.DefaultLaunchTarget;
+			_activeLaunchTarget = _appSettings.DefaultLaunchTarget;
 			UpdateLaunchTargetCheckmarks();
 
-			// Populate from cache with toasts suppressed — the startup scan
-			// in Loaded will apply the modpack authoritatively with toasts
+			// The startup coordinator already published the accepted snapshot and
+			// queued any startup validation notification for the readiness drain.
 			PopulateAvailableModsFromCache();
 			PopulateModpackList(suppressToast: true);
 			UpdateCanStart();
@@ -219,15 +222,11 @@
 		}
 
 		/// <summary>
-		/// Handles the Loaded event — subscribes to install service events
-		/// and kicks off the startup rescan. Using Loaded ensures handlers
-		/// are always wired even after WPF re-layout Unloaded/Loaded cycles.
-		/// <see cref="StartupRescanAsync"/> is the single authoritative startup
-		/// path — it scans, applies the modpack with toasts enabled, and sets
-		/// <see cref="_hasCompletedInitialScan"/>. All earlier calls from the
-		/// constructor run with toasts suppressed.
+		/// Handles the Loaded event and subscribes to install service events.
+		/// Using Loaded ensures handlers are always wired even after WPF
+		/// re-layout Unloaded/Loaded cycles.
 		/// </summary>
-		private async void ModsPage_Loaded(object sender, RoutedEventArgs e) {
+		private void ModsPage_Loaded(object sender, RoutedEventArgs e) {
 			// Guard against duplicate subscriptions from repeated Loaded fires
 			_modInstaller.InstallProgressChanged -= OnInstallProgressChanged;
 			_modInstaller.ExtractionProgressChanged -= OnExtractionProgressChanged;
@@ -241,7 +240,6 @@
 				DependencyWarningText = T.Mods_InstallInProgress;
 			}
 
-			await StartupRescanAsync();
 		}
 
 		/// <summary>
@@ -267,7 +265,7 @@
 				DependencyWarningText = progressMsg;
 
 				if (_installToastId != Guid.Empty) {
-					App.Toasts.UpdateProgress(_installToastId, summary.TotalCount, summary.TotalCount + 1, progressMsg);
+					_toasts.UpdateProgress(_installToastId, summary.TotalCount, summary.TotalCount + 1, progressMsg);
 				}
 			});
 		}
@@ -279,7 +277,7 @@
 		/// </summary>
 		private async Task HandleInstallCompletedAsync(ModInstallSummary summary) {
 			if (_installToastId != Guid.Empty) {
-				App.Toasts.Close(_installToastId);
+				_toasts.Close(_installToastId);
 				_installToastId = Guid.Empty;
 			}
 
@@ -289,13 +287,13 @@
 				? ToastSeverity.Warning
 				: ToastSeverity.Success;
 
-			App.Toasts.Show(new ToastRequest {
+			_toasts.Show(new ToastRequest {
 				Title = summary.FailedCount > 0 ? T.Toast_InstallCompleteWithErrors : T.Toast_InstallComplete,
 				Message = summary.ToSummaryString(),
 				Severity = severity
 			});
 
-			string modulesPath = App.AppSettingsInstance.ModulesDirectoryPath;
+			string modulesPath = _appSettings.ModulesDirectoryPath;
 			if (!string.IsNullOrWhiteSpace(modulesPath) && Directory.Exists(modulesPath)) {
 				UnblockResult unblockResult = await DLLUnblocker.UnblockAllAsync(modulesPath);
 				DependencyWarningText += $" | DLLs: {unblockResult.ToSummaryString()}";
@@ -368,7 +366,7 @@
 
 				// Update the persistent progress toast with batch-level values
 				if (_installToastId != Guid.Empty) {
-					App.Toasts.UpdateProgress(
+					_toasts.UpdateProgress(
 						_installToastId,
 						progress.BatchFilesExtracted,
 						progress.EstimatedTotalFiles,
@@ -436,14 +434,13 @@
 		/// </summary>
 		/// <param name="suppressToast">
 		/// When <c>true</c>, the subsequent <see cref="ApplySelectedModpack"/> call
-		/// will not fire a missing-mods toast. Used during the constructor to avoid
-		/// duplicate toasts before <see cref="StartupRescanAsync"/> completes.
+		/// will not fire a missing-mods toast.
 		/// </param>
 		private void PopulateModpackList(bool suppressToast = false) {
 			ModPackComboBox.SelectionChanged -= ModPack_SelectionChanged;
 			ModpackList.Clear();
 
-			bool isAlwaysAsk = App.AppSettingsInstance.ModpackStartupMode == ModpackStartupMode.AlwaysAsk;
+			bool isAlwaysAsk = _appSettings.ModpackStartupMode == ModpackStartupMode.AlwaysAsk;
 
 			if (isAlwaysAsk) {
 				ModpackList.Add(_ghostModpack);
@@ -465,7 +462,7 @@
 
 		/// <summary>
 		/// Determines which modpack index to select on startup based on
-		/// the <see cref="AppConfigSettings.ModpackStartupMode"/> setting.
+		/// the <see cref="AppSettings.ModpackStartupMode"/> setting.
 		/// </summary>
 		/// <returns>
 		/// The resolved index into <see cref="ModpackList"/>.
@@ -477,7 +474,7 @@
 				return -1;
 			}
 
-			ModpackStartupMode mode = App.AppSettingsInstance.ModpackStartupMode;
+			ModpackStartupMode mode = _appSettings.ModpackStartupMode;
 
 			switch (mode) {
 				case ModpackStartupMode.AlwaysDefault:
@@ -487,7 +484,7 @@
 
 				case ModpackStartupMode.LastUsed:
 					// Restore the previously selected modpack
-					string lastSelected = App.AppSettingsInstance.LastSelectedModpack;
+					string lastSelected = _appSettings.LastSelectedModpack;
 					if (!string.IsNullOrWhiteSpace(lastSelected)) {
 						int lastIndex = FindModpackIndexByName(lastSelected);
 						if (lastIndex >= 0) {
@@ -534,8 +531,6 @@
 		/// (added, deleted, or modified modpack files).
 		/// Preserves the ghost sentinel at index 0 if AlwaysAsk mode is active
 		/// and the user hasn't yet picked a real modpack.
-		/// Skipped if the initial startup scan has not yet completed,
-		/// because <see cref="StartupRescanAsync"/> handles the first apply.
 		/// </summary>
 		/// <param name="suppressApply">
 		/// When <c>true</c>, skips the <see cref="ApplySelectedModpack"/> call
@@ -543,13 +538,6 @@
 		/// (e.g. <see cref="RefreshAvailableMods"/> follows immediately after).
 		/// </param>
 		public void RefreshModpackList(bool suppressApply = false) {
-			if (!_hasCompletedInitialScan) {
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("ModsPage: Skipping modpack refresh — initial scan not yet complete.");
-				}
-				return;
-			}
-
 			_modpackService.Refresh();
 
 			ModpackModel? previousModpack = _selectedModpack;
@@ -559,7 +547,7 @@
 			ModPackComboBox.SelectionChanged -= ModPack_SelectionChanged;
 			ModpackList.Clear();
 
-			bool isAlwaysAsk = App.AppSettingsInstance.ModpackStartupMode == ModpackStartupMode.AlwaysAsk;
+			bool isAlwaysAsk = _appSettings.ModpackStartupMode == ModpackStartupMode.AlwaysAsk;
 
 			// Re-inject ghost if AlwaysAsk is active and user was still on it
 			if (isAlwaysAsk && wasGhostSelected) {
@@ -681,7 +669,7 @@
 				if (showToast) {
 					// Build a line-per-mod message for the toast
 					string toastBody = string.Join("\n", missingModNames.Select(n => $"• {n}"));
-					App.Toasts.Show(new ToastRequest {
+					_toasts.Show(new ToastRequest {
 						Title = $"{missingModNames.Count} {T.Toast_MissingMods}",
 						Message = toastBody,
 						Severity = ToastSeverity.Warning,
@@ -836,9 +824,6 @@
 		/// Handles modpack ComboBox selection changes.
 		/// When the user picks a real modpack after the ghost sentinel,
 		/// removes the ghost from the list so it can't be re-selected.
-		/// During startup (before <see cref="_hasCompletedInitialScan"/> is set),
-		/// toasts are suppressed because <see cref="StartupRescanAsync"/> will
-		/// apply the modpack authoritively with fresh data.
 		/// </summary>
 		private void ModPack_SelectionChanged(object sender, SelectionChangedEventArgs e) {
 			// If user picked a real modpack, remove the ghost sentinel
@@ -861,9 +846,7 @@
 				ModPackComboBox.SelectionChanged += ModPack_SelectionChanged;
 			}
 
-			// Suppress toasts during startup — StartupRescanAsync owns the
-			// authoritative apply with fresh data and shows the toast once
-			ApplySelectedModpack(showToast: _hasCompletedInitialScan);
+			ApplySelectedModpack();
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("ModsPage: Modpack selection changed.", new { SelectedIndex = SelectedModpackIndex, SelectedName = _selectedModpack?.ModpackName });
 			}
@@ -874,7 +857,7 @@
 
 		/// <summary>
 		/// Validates the game directory, opens a file dialog for archive selection,
-		/// and delegates the install through <see cref="ModPipelineCoordinator"/>.
+		/// and delegates the install through <see cref="ModPipelineManager"/>.
 		/// The install runs on the service layer — surviving page navigation.
 		/// Progress and completion are observed via service events.
 		/// Shows a persistent progress toast for the duration of the install.
@@ -882,7 +865,7 @@
 		private async void InstallModsButton_Click(object sender, RoutedEventArgs e) {
 			// Guard — service rejects duplicates, but skip the dialog too
 			if (_modInstaller.IsInstalling) {
-				App.Toasts.Show(new ToastRequest {
+				_toasts.Show(new ToastRequest {
 					Title = T.Toast_InstallInProgress,
 					Message = T.Mods_InstallInProgress,
 					Severity = ToastSeverity.Warning
@@ -892,7 +875,7 @@
 
 			// Step 1: Validate game directory
 			if (!_modPipeline.ValidateInstallGameDirectory(out string validationError)) {
-				App.Toasts.Show(new ToastRequest {
+				_toasts.Show(new ToastRequest {
 					Title = "Invalid Game Directory",
 					Message = validationError,
 					Severity = ToastSeverity.Error
@@ -916,7 +899,7 @@
 				_logger.Debug("ModsPage: Installing mods.", new { ArchiveCount = dialog.FileNames.Length });
 			}
 			// Step 3: Show persistent progress toast with progress bar
-			_installToastId = App.Toasts.Show(new ToastRequest {
+			_installToastId = _toasts.Show(new ToastRequest {
 				Title = T.Toast_InstallingMods,
 				Message = $"Processing {dialog.FileNames.Length} archive(s)...",
 				Severity = ToastSeverity.Info,
@@ -936,7 +919,7 @@
 				IsInstalling = false;
 				DependencyWarningText = "Another mod operation is already active.";
 				if (_installToastId != Guid.Empty) {
-					App.Toasts.Close(_installToastId);
+					_toasts.Close(_installToastId);
 					_installToastId = Guid.Empty;
 				}
 				return;
@@ -965,7 +948,7 @@
 						$"{snapshot.AddedModules.Count} mod(s) added, " +
 						$"{snapshot.RemovedModules.Count} mod(s) removed since last scan.";
 
-					App.Toasts.Show(new ToastRequest {
+					_toasts.Show(new ToastRequest {
 						Title = T.Toast_ModListUpdated,
 						Message = $"{snapshot.AddedModules.Count} added, {snapshot.RemovedModules.Count} removed.",
 						Severity = ToastSeverity.Info
@@ -979,7 +962,7 @@
 				// Refresh was cancelled
 			} catch (Exception ex) {
 				DependencyWarningText = $"Refresh failed: {ex.Message}";
-				App.Toasts.Show(new ToastRequest {
+				_toasts.Show(new ToastRequest {
 					Title = T.Toast_RefreshFailed,
 					Message = ex.Message,
 					Severity = ToastSeverity.Error
@@ -1013,7 +996,7 @@
 
 			// Persist which modpack was selected
 			if (_selectedModpack is not null) {
-				App.AppSettingsInstance.LastSelectedModpack = _selectedModpack.ModpackName;
+				_appSettings.LastSelectedModpack = _selectedModpack.ModpackName;
 			}
 
 			// Launch the game with the active target (auto-starts Steam if needed)
@@ -1023,7 +1006,7 @@
 			GameLaunchResult result = await _gameLauncher.LaunchAsync(CurrentLoadOrder.ToList(), _activeLaunchTarget);
 			DependencyWarningText = result.Message;
 
-			App.Toasts.Show(new ToastRequest {
+			_toasts.Show(new ToastRequest {
 				Title = result.Success ? T.Toast_GameLaunched : T.Toast_LaunchFailed,
 				Message = result.Message,
 				Severity = result.Success ? ToastSeverity.Success : ToastSeverity.Error
@@ -1070,7 +1053,7 @@
 		/// </summary>
 		private void SetActiveLaunchTarget(LaunchTarget target) {
 			_activeLaunchTarget = target;
-			App.AppSettingsInstance.DefaultLaunchTarget = target;
+			_appSettings.DefaultLaunchTarget = target;
 			UpdateLaunchTargetCheckmarks();
 			OnPropertyChanged(nameof(PlayButtonText));
 			UpdateCanStart();
@@ -1140,90 +1123,12 @@
 		#region Auto Refresh
 
 		/// <summary>
-		/// Performs a background mod rescan on startup to ensure
-		/// the UI reflects the actual file system state.
-		/// The cache provides instant UI population, but mods may have been
-		/// added or removed from the Modules directory between sessions.
-		/// This is the single authoritative startup path — the only call
-		/// that applies the modpack with toasts enabled during initial load.
-		/// Sets <see cref="_hasCompletedInitialScan"/> when finished so
-		/// subsequent navigation-triggered refreshes are no longer blocked.
-		/// </summary>
-		private async Task StartupRescanAsync() {
-			if (_hasCompletedInitialScan || _modPipeline.IsRefreshing) {
-				return;
-			}
-			try {
-				IsRefreshing = true;
-				if (_modPipeline.AcceptedSnapshot.Modules.Count == 0) {
-					DependencyWarningText = T.Mods_ScanningForMods;
-				}
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("ModsPage: Startup rescan starting.", new { ExistingCount = _modPipeline.AcceptedSnapshot.Modules.Count });
-				}
-				ModPipelineResult result = await _modPipeline.InitializeForStartupAsync();
-				UpdateAvailableModsList();
-
-				// This is the single authoritative apply — toasts enabled
-				ApplySelectedModpack(showToast: true);
-
-				if (!result.Success) {
-					DependencyWarningText = result.UserSummary;
-					ShowPipelineWarning(result);
-				} else if (result.HasChanges) {
-					AcceptedModSnapshot snapshot = result.AcceptedSnapshot;
-					DependencyWarningText =
-						$"{snapshot.AddedModules.Count} mod(s) added, " +
-						$"{snapshot.RemovedModules.Count} mod(s) removed since last session.";
-				} else if (result.AcceptedSnapshot.Modules.Count > 0) {
-					// Preserve the AlwaysAsk prompt if ghost is still selected
-					if (IsGhostModpack(_selectedModpack)) {
-						DependencyWarningText = T.Mods_SelectModpackPrompt;
-					} else {
-						DependencyWarningText = string.Empty;
-					}
-				} else {
-					DependencyWarningText = T.Mods_NoModsFound;
-					App.Toasts.Show(new ToastRequest {
-						Title = T.Toast_NoModsFound,
-						Message = T.Mods_NoModsFound,
-						Severity = ToastSeverity.Warning
-					});
-				}
-			} catch (OperationCanceledException) {
-				// Scan was cancelled — cache data remains in the UI
-			} catch (Exception ex) {
-				DependencyWarningText = $"Auto-scan failed: {ex.Message}";
-				App.Toasts.Show(new ToastRequest {
-					Title = T.Toast_AutoScanFailed,
-					Message = ex.Message,
-					Severity = ToastSeverity.Error
-				});
-			} finally {
-				_hasCompletedInitialScan = true;
-				IsRefreshing = false;
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("ModsPage: Startup rescan finished.", new { Count = _modPipeline.AcceptedSnapshot.Modules.Count });
-				}
-			}
-		}
-
-		/// <summary>
 		/// Refreshes the available mods list by performing a live directory scan.
 		/// Called when navigating back to ModsPage to pick up any changes
 		/// from mod installations, deletions, cache clears, or rescans
 		/// performed elsewhere (e.g. mods removed from the game directory).
-		/// Skipped if the initial startup scan has not yet completed,
-		/// because <see cref="StartupRescanAsync"/> already covers the
-		/// same work and running both produces duplicate scans.
 		/// </summary>
 		public async void RefreshAvailableMods() {
-			if (!_hasCompletedInitialScan) {
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("ModsPage: Skipping refresh — initial scan not yet complete.");
-				}
-				return;
-			}
 			if (_modPipeline.IsRefreshing) {
 				return;
 			}
@@ -1243,7 +1148,7 @@
 				// Refresh was cancelled — no action needed
 			} catch (Exception ex) {
 				DependencyWarningText = $"Refresh failed: {ex.Message}";
-				App.Toasts.Show(new ToastRequest {
+				_toasts.Show(new ToastRequest {
 					Title = T.Toast_RefreshFailed,
 					Message = ex.Message,
 					Severity = ToastSeverity.Error
@@ -1260,7 +1165,7 @@
 			if (result.Status is ModPipelineStatus.Busy or ModPipelineStatus.Cancelled) {
 				return;
 			}
-			App.Toasts.Show(new ToastRequest {
+			_toasts.Show(new ToastRequest {
 				Title = T.Toast_RefreshFailed,
 				Message = result.UserSummary,
 				Severity = ToastSeverity.Warning

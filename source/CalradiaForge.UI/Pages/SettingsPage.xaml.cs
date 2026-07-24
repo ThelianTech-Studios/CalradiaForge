@@ -15,6 +15,7 @@
 	using CalradiaForge.Core.Infra.Paths;
 	using CalradiaForge.Core.Models;
 
+	using CalradiaForge.UI.Lifecycle;
 	using CalradiaForge.UI.Toasts;
 
 	using Microsoft.Win32;
@@ -26,15 +27,18 @@
 	/// </summary>
 	public partial class SettingsPage : Page, INotifyPropertyChanged {
 		#region Fields
-		private readonly AppConfigSettings _config;
+		private readonly AppSettings _config;
+		private readonly LoggingSettings _loggingSettings;
 		private readonly ModPipelineManager _modPipeline;
 		private readonly GameDetectionService _gameDetectionService;
+		private readonly ToastService _toasts;
+		private readonly IApplicationLifetime _applicationLifetime;
 		private readonly Logger _logger = Logger.Instance;
 		private string _gameFolderPath = string.Empty;
 		private string _gameLauncherFilePath = string.Empty;
 		private string _steamWorkshopFolderPath = string.Empty;
 		private string _blseExePath = string.Empty;
-		private static TranslationStrings T => App.Translator.Strings;
+		private TranslationStrings T => Translator.Strings;
 
 		/// <summary>
 		/// Panel references indexed to match <see cref="SettingsNavBar"/> selection order.
@@ -63,6 +67,9 @@
 			get => _blseExePath;
 			set { _blseExePath = value; OnPropertyChanged(); }
 		}
+
+		/// <summary>Gets the translation service used by page bindings.</summary>
+		public TranslationService Translator { get; }
 		#endregion
 
 		#region INotifyPropertyChanged
@@ -79,12 +86,25 @@
 		/// <summary>
 		/// Initializes the settings page and loads current configuration values.
 		/// </summary>
-		public SettingsPage() {
+		public SettingsPage(
+			AppSettings appSettings,
+			LoggingSettings loggingSettings,
+			ModPipelineManager modPipeline,
+			GameDetectionService gameDetectionService,
+			ToastService toasts,
+			TranslationService translator,
+			IApplicationLifetime applicationLifetime) {
+			_config = appSettings ?? throw new ArgumentNullException(nameof(appSettings));
+			_loggingSettings = loggingSettings ?? throw new ArgumentNullException(nameof(loggingSettings));
+			_modPipeline = modPipeline ?? throw new ArgumentNullException(nameof(modPipeline));
+			_gameDetectionService = gameDetectionService
+				?? throw new ArgumentNullException(nameof(gameDetectionService));
+			_toasts = toasts ?? throw new ArgumentNullException(nameof(toasts));
+			Translator = translator ?? throw new ArgumentNullException(nameof(translator));
+			_applicationLifetime = applicationLifetime
+				?? throw new ArgumentNullException(nameof(applicationLifetime));
 			InitializeComponent();
 			DataContext = this;
-			_config = App.AppSettingsInstance;
-			_modPipeline = App.ModPipelineManager;
-			_gameDetectionService = App.GameDetectionService;
 
 			_panels = [PanelGeneral, PanelGameConfig, PanelTools, PanelWip, PanelAbout];
 
@@ -153,14 +173,14 @@
 			}
 
 			// Debug mode toggle
-			DebugModeToggle.IsChecked = _config.DebugMode;
+			DebugModeToggle.IsChecked = _loggingSettings.DebugMode;
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("SettingsPage: Loaded current values.", new {
 					GameFolderPath,
 					GameLauncherFilePath,
 					SteamWorkshopFolderPath,
 					BLSEExePath,
-					DebugMode = _config.DebugMode
+					DebugMode = _loggingSettings.DebugMode
 				});
 			}
 		}
@@ -174,19 +194,19 @@
 		private void PopulateLanguageComboBox() {
 			LanguageComboBox.SelectionChanged -= LanguageComboBox_SelectionChanged;
 
-			LanguageComboBox.ItemsSource = App.Translator.AvailableLanguages;
-			LanguageComboBox.IsEnabled = App.Translator.AvailableLanguages.Count > 1;
+			LanguageComboBox.ItemsSource = Translator.AvailableLanguages;
+			LanguageComboBox.IsEnabled = Translator.AvailableLanguages.Count > 1;
 
 			// Select the active language
-			string activeCode = App.Translator.ActiveLanguageCode;
-			int selectedIndex = App.Translator.AvailableLanguages
+			string activeCode = Translator.ActiveLanguageCode;
+			int selectedIndex = Translator.AvailableLanguages
 				.Select((lang, i) => new { lang, i })
 				.FirstOrDefault(x => string.Equals(x.lang.Code, activeCode, StringComparison.OrdinalIgnoreCase))?.i ?? 0;
 			LanguageComboBox.SelectedIndex = selectedIndex;
 
 			LanguageComboBox.SelectionChanged += LanguageComboBox_SelectionChanged;
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("SettingsPage: Populated languages.", new { Count = App.Translator.AvailableLanguages.Count, SelectedIndex = selectedIndex });
+				_logger.Debug("SettingsPage: Populated languages.", new { Count = Translator.AvailableLanguages.Count, SelectedIndex = selectedIndex });
 			}
 		}
 
@@ -305,7 +325,7 @@
 				return;
 			}
 			if (LanguageComboBox.SelectedItem is LanguageOption selected) {
-				App.Translator.SetLanguage(selected.Code);
+				Translator.SetLanguage(selected.Code);
 				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 					_logger.Debug("SettingsPage: Language selection changed.", new { Code = selected.Code, DisplayName = selected.DisplayName });
 				}
@@ -334,21 +354,20 @@
 
 		/// <summary>
 		/// Handles debug mode toggle switch changes.
-		/// Auto-saves to config immediately and adjusts log verbosity.
+		/// Auto-saves the next-process setting and enters the app-owned restart flow.
 		/// </summary>
-		private void DebugMode_Toggled(object sender, RoutedEventArgs e) {
+		private async void DebugMode_Toggled(object sender, RoutedEventArgs e) {
 			if (!IsLoaded) {
 				return;
 			}
 			bool enabled = DebugModeToggle.IsChecked == true;
-			_config.DebugMode = enabled;
-			_logger.MinimumLevel = enabled
-				? Logger.LogLevel.Debug
-				: Logger.LogLevel.Info;
-			_logger.Info($"SettingsPage: DebugMode changed to {enabled}. Log level: {_logger.MinimumLevel}");
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("SettingsPage: Debug mode toggled.", new { Enabled = enabled });
+			if (_loggingSettings.DebugMode == enabled) {
+				return;
 			}
+
+			_loggingSettings.DebugMode = enabled;
+			_logger.Info($"SettingsPage: DebugMode changed to {enabled}; restart required.");
+			await _applicationLifetime.RequestRestartAsync(RestartReason.DebugModeChanged);
 		}
 
 		#endregion
@@ -368,7 +387,7 @@
 
 			if (!_gameDetectionService.ApplyManualGameFolder(_config, selectedPath)) {
 				_logger.Warning("SettingsPage: Game folder selection was rejected by the detection workflow.");
-				App.Toasts.Show(new ToastRequest {
+				_toasts.Show(new ToastRequest {
 					Title = "Invalid Game Folder",
 					Message = "Select a valid Bannerlord installation containing the standard launcher executable.",
 					Severity = ToastSeverity.Error
@@ -410,7 +429,7 @@
 
 			if (!GamePathValidator.ValidateGameExecutable(selectedPath)) {
 				_logger.Warning($"SettingsPage: Executable validation failed.");
-				App.Toasts.Show(new ToastRequest {
+				_toasts.Show(new ToastRequest {
 					Title = "Invalid Executable",
 					Message = "Please select a valid Bannerlord executable.",
 					Severity = ToastSeverity.Error
@@ -440,7 +459,7 @@
 
 			if (!_gameDetectionService.ApplyManualSteamWorkshopFolder(_config, selectedPath)) {
 				_logger.Warning("SettingsPage: Workshop folder selection was rejected by the detection workflow.");
-				App.Toasts.Show(new ToastRequest {
+				_toasts.Show(new ToastRequest {
 					Title = "Invalid Workshop Folder",
 					Message = "Select a valid Bannerlord Workshop folder for the current Steam installation.",
 					Severity = ToastSeverity.Error
@@ -472,7 +491,7 @@
 
 			if (!GamePathValidator.ValidateGameExecutable(selectedPath)) {
 				_logger.Warning($"SettingsPage: BLSE executable validation failed.");
-				App.Toasts.Show(new ToastRequest {
+				_toasts.Show(new ToastRequest {
 					Title = "Invalid BLSE Executable",
 					Message = "Please select a valid BLSE standalone executable.",
 					Severity = ToastSeverity.Error
@@ -527,7 +546,7 @@
 				&& GamePathValidator.ValidateGameFolder(_config.GameFolderPath);
 			bool steamWithoutWorkshop = provider == GameProvider.Steam
 				&& string.IsNullOrWhiteSpace(_config.SteamWorkshopFolderPath);
-			App.Toasts.Show(new ToastRequest {
+			_toasts.Show(new ToastRequest {
 				Title = steamWithoutWorkshop
 					? T.Toast_SteamWorkshopNotFoundTitle
 					: detected ? "Game Detected" : "Detection Failed", //this needs a translation string property
@@ -544,7 +563,7 @@
 				|| GamePathValidator.ValidateWorkshopFolder(_config.SteamWorkshopFolderPath)) {
 				return;
 			}
-			App.Toasts.Show(new ToastRequest {
+			_toasts.Show(new ToastRequest {
 				Title = T.Toast_SteamWorkshopNotFoundTitle,
 				Message = T.Toast_SteamWorkshopNotFoundMessage,
 				Severity = ToastSeverity.Warning
@@ -562,7 +581,7 @@
 		private async void UnblockDlls_Click(object sender, RoutedEventArgs e) {
 			if (!GamePathValidator.ValidateGameFolder(_config.GameFolderPath)) {
 				_logger.Warning($"SettingsPage: Cannot unblock DLLs - Invalid game folder.");
-				App.Toasts.Show(new ToastRequest {
+				_toasts.Show(new ToastRequest {
 					Title = "Cannot Unblock DLLs",
 					Message = "Invalid game folder.",
 					Severity = ToastSeverity.Warning
@@ -585,7 +604,7 @@
 				UnblockLastRunText.Text = $"Last run:  {timestamp}";//this needs a translation string property combined with result
 				UnblockResultText.Text = $"Result:  {summary}";//this needs a translation string property combined with result
 
-				App.Toasts.Show(new ToastRequest {
+				_toasts.Show(new ToastRequest {
 					Title = "DLL Unblock Complete",
 					Message = summary,
 					Severity = ToastSeverity.Success
@@ -599,7 +618,7 @@
 					_logger.Debug("SettingsPage: Unblock failed.", ex);
 				}
 				UnblockResultText.Text = $"Result:  Error - {ex.Message}"; //this needs a translation string property combined with result
-				App.Toasts.Show(new ToastRequest {
+				_toasts.Show(new ToastRequest {
 					Title = "Unblock Failed",
 					Message = ex.Message,
 					Severity = ToastSeverity.Error
@@ -614,13 +633,13 @@
 		private void ClearModCache_Click(object sender, RoutedEventArgs e) {
 			bool success = _modPipeline.ClearCache();
 			if (success) {
-				App.Toasts.Show(new ToastRequest {
+				_toasts.Show(new ToastRequest {
 					Title = "Cache Cleared",
 					Message = "Mod cache has been cleared. A fresh scan will run on next launch.",
 					Severity = ToastSeverity.Success
 				});
 			} else {
-				App.Toasts.Show(new ToastRequest {
+				_toasts.Show(new ToastRequest {
 					Title = "Cache Clear Failed",
 					Message = "Could not clear the mod cache. Check logs for details.",
 					Severity = ToastSeverity.Error
