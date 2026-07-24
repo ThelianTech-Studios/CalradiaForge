@@ -1,15 +1,13 @@
 ﻿namespace CalradiaForge.UI.Views {
 	using System;
-	using System.Threading;
-	using System.Threading.Tasks;
+	using System.ComponentModel;
 	using System.Windows;
 	using System.Windows.Controls;
 	using System.Windows.Input;
 
 	using CalradiaForge.Core.Infra.Localization;
 	using CalradiaForge.Core.Infra.Logging;
-	using CalradiaForge.Core.Models;
-
+	using CalradiaForge.UI.Lifecycle;
 	using CalradiaForge.UI.Pages;
 	using CalradiaForge.UI.Toasts;
 
@@ -22,21 +20,37 @@
 		private readonly Logger _logger = Logger.Instance;
 		private readonly Page[] _pages;
 		private readonly SettingsPage _settingsPage;
-		private readonly CancellationTokenSource _startupNotificationCancellation = new();
+		private readonly TranslationService _translator;
+		private readonly StartupNotificationDrainCoordinator _startupNotificationDrain;
+		private readonly IApplicationLifetime _applicationLifetime;
+		private bool _applicationShutdownPrepared;
+		private bool _shutdownRequestInProgress;
 		/// <summary>
 		/// Initializes the main window and navigation pages.
 		/// </summary>
-		public MainWindow() {
+		public MainWindow(
+			ModsPage modsPage,
+			ModpacksPage modpacksPage,
+			FaqPage faqPage,
+			SettingsPage settingsPage,
+			ToastService toastService,
+			TranslationService translator,
+			StartupNotificationDrainCoordinator startupNotificationDrain,
+			IApplicationLifetime applicationLifetime) {
 			InitializeComponent();
 			Loaded += MainWindow_Loaded;
-			Closed += MainWindow_Closed;
-			_ = ObserveStartupNotificationsAsync();
+			Closing += MainWindow_Closing;
+			_translator = translator ?? throw new ArgumentNullException(nameof(translator));
+			_startupNotificationDrain = startupNotificationDrain
+				?? throw new ArgumentNullException(nameof(startupNotificationDrain));
+			_applicationLifetime = applicationLifetime
+				?? throw new ArgumentNullException(nameof(applicationLifetime));
 			_pages = [
-				new ModsPage(),
-				new ModpacksPage(),
-				new FaqPage(),
+				modsPage ?? throw new ArgumentNullException(nameof(modsPage)),
+				modpacksPage ?? throw new ArgumentNullException(nameof(modpacksPage)),
+				faqPage ?? throw new ArgumentNullException(nameof(faqPage)),
 			];
-			_settingsPage = new SettingsPage();
+			_settingsPage = settingsPage ?? throw new ArgumentNullException(nameof(settingsPage));
 			MainContentFrame.Navigate(_pages[0]);
 
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
@@ -46,59 +60,51 @@
 			NavBarControler.OptionsItemClick += NavBarControler_OnOptionsItemClick;
 
 			// Bind the toast overlay to the shared ToastService
-			ToastHost.ItemsSource = App.Toasts.VisibleToasts;
+			ToastHost.ItemsSource = (toastService ?? throw new ArgumentNullException(nameof(toastService))).VisibleToasts;
 
 			// Apply translated nav labels and re-apply when language changes
 			ApplyNavTranslations();
-			App.Translator.Strings.PropertyChanged += (_, _) => Dispatcher.BeginInvoke(ApplyNavTranslations);
-		}
-
-		private async Task ObserveStartupNotificationsAsync() {
-			try {
-				await App.StartupNotifications.DrainWhenReadyAsync(
-					DeliverStartupNotificationAsync,
-					_startupNotificationCancellation.Token);
-			} catch (OperationCanceledException) when (_startupNotificationCancellation.IsCancellationRequested) {
-				// Window shutdown cancels an outstanding readiness wait or drain.
-			} catch (Exception ex) {
-				_logger.Error(ex, "MainWindow: Failed to drain startup notifications.");
-			}
-		}
-
-		private static Task DeliverStartupNotificationAsync(
-			StartupNotification notification,
-			CancellationToken cancellationToken) {
-			cancellationToken.ThrowIfCancellationRequested();
-			App.Toasts.Show(new ToastRequest {
-				Title = notification.Title,
-				Message = notification.Message,
-				Severity = MapStartupSeverity(notification.Severity)
-			});
-			return Task.CompletedTask;
-		}
-
-		private static ToastSeverity MapStartupSeverity(StartupNotificationSeverity severity) {
-			return severity switch {
-				StartupNotificationSeverity.Success => ToastSeverity.Success,
-				StartupNotificationSeverity.Warning => ToastSeverity.Warning,
-				StartupNotificationSeverity.Error => ToastSeverity.Error,
-				_ => ToastSeverity.Info
-			};
+			_translator.Strings.PropertyChanged += (_, _) => Dispatcher.BeginInvoke(ApplyNavTranslations);
 		}
 
 		private void MainWindow_Loaded(object sender, RoutedEventArgs e) {
-			App.StartupNotifications.SignalReady();//once this is called we and any start up notifications delivered via Toast, we should look to implement telling app to dispose of startup service once all notifications have been delivered. This will allow us to free up memory and resources used by the startup service.
+			_startupNotificationDrain.SignalReady();
 		}
 
-		private void MainWindow_Closed(object? sender, EventArgs e) {
-			_startupNotificationCancellation.Cancel();// this will be unnecessary once we implement the dispose of startup service after all notifications have been delivered. This will allow us to free up memory and resources used by the startup service, since ToastService should handle real-time notifications after startup.
+		private async void MainWindow_Closing(object? sender, CancelEventArgs e) {
+			if (_applicationShutdownPrepared) {
+				return;
+			}
+
+			e.Cancel = true;
+			if (_shutdownRequestInProgress) {
+				return;
+			}
+
+			_shutdownRequestInProgress = true;
+			try {
+				await _applicationLifetime.RequestShutdownAsync(ShutdownReason.UserRequest);
+			} catch (Exception ex) {
+				_logger.Error(ex, "MainWindow: Shutdown request failed.");
+			} finally {
+				if (!_applicationShutdownPrepared) {
+					_shutdownRequestInProgress = false;
+				}
+			}
+		}
+
+		/// <summary>
+		/// Allows the app-owned lifecycle to complete the final WPF shutdown.
+		/// </summary>
+		public void PrepareForApplicationShutdown() {
+			_applicationShutdownPrepared = true;
 		}
 
 		/// <summary>
 		/// Applies translated labels to navigation items.
 		/// </summary>
 		private void ApplyNavTranslations() {
-			TranslationStrings s = App.Translator.Strings;
+			TranslationStrings s = _translator.Strings;
 
 			// Main nav items (indices 0–2)
 			if (NavBarControler.ItemsSource is HamburgerMenuItemCollection mainItems) {
