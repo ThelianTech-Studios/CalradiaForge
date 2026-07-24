@@ -203,8 +203,8 @@ flowchart TD
 - [X] Phase 3: The implementation/reviewer pass completed the decision-safe archive and persistence slices; owner-gated BLSE, reserved-folder, named-modpack recovery, normal-upgrade policy, and flat-archive target naming/blocking remain explicitly deferred.
 - [X] Phase 4: Core tests and reusable performance benchmark infrastructure exist; correctness tests and benchmarks are separated; provisional baselines are labeled.
 - [X] Phase 5: Resolver/workflow integration, Steam split-library behavior, manual configuration, startup queue, scanner safety, test migration, and automated verification are complete; owner real-Steam/WPF smoke remains pending before release acceptance.
-- [ ] Phase 6.A: A Core-owned `ModPipelineCoordinator` makes scan completeness/commit decisions, publishes an accepted snapshot, and exposes active-work quiescence.
-- [ ] Phase 6.B: One validated provider owns composition, settings/bootstrap, the Serilog lifecycle, and controlled WPF startup/shutdown/restart.
+- [X] Phase 6.A: A Core-owned `ModPipelineCoordinator` makes scan completeness/commit decisions, publishes an accepted snapshot, and exposes active-work quiescence.
+- [X] Phase 6.B: One validated provider owns composition, settings/bootstrap, the Serilog lifecycle, and controlled WPF startup/shutdown/restart.
 - [ ] Phase 6.C: Legacy logger callers migrate in verified batches; the general logger retires and `EmergencyStartupLogWriter` is the only pre-Serilog fallback.
 - [ ] Phase 7: Workflow result contracts and coordinator state are implemented for selected high-risk workflows.
 - [ ] Phase 8: Shell/navigation and major page workflows use consistent ViewModel patterns.
