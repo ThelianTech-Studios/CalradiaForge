@@ -11,7 +11,7 @@ using CalradiaForge.Core.Models;
 public sealed class ModScanner : IModScanner {
 	private static readonly Logger _logger = Logger.Instance;
 
-	public async Task<ModScanResult> ScanAsync(AppConfigSettings config, CancellationToken token = default) {
+	public async Task<ModScanResult> ScanAsync(AppSettings config, CancellationToken token = default) {
 		ArgumentNullException.ThrowIfNull(config);
 		string localRoot = config.ModulesDirectoryPath;
 		bool scanWorkshop = config.IsGameFromSteam;
@@ -81,7 +81,7 @@ public sealed class ModScanner : IModScanner {
 	/// so they can evaluate completeness before committing results.
 	/// </summary>
 	public static async Task<List<ModuleModel>> ScanForModsAsync(
-		AppConfigSettings config,
+		AppSettings config,
 		CancellationToken token = default,
 		List<ModuleModel>? allMods = null) {
 		ModScanResult result = await new ModScanner().ScanAsync(config, token);

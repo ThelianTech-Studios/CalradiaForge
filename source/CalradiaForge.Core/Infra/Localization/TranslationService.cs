@@ -14,7 +14,7 @@
 	public sealed class TranslationService {
 		private static readonly Logger _logger = Logger.Instance;
 		private readonly TranslationManager _manager;
-		private readonly AppConfigSettings _config;
+		private readonly AppSettings _config;
 
 		/// <summary>
 		/// The bindable translation string provider. UI pages bind to properties on this object.
@@ -35,14 +35,14 @@
 		/// <summary>
 		/// Initializes a new translation service with the provided manager and configuration.
 		/// </summary>
-		public TranslationService(TranslationManager manager, AppConfigSettings config) {
+		public TranslationService(TranslationManager manager, AppSettings config) {
 			_manager = manager ?? throw new ArgumentNullException(nameof(manager));
 			_config = config ?? throw new ArgumentNullException(nameof(config));
 		}
 
 		/// <summary>
 		/// Initializes the service by loading the manifest and applying
-		/// the persisted language from <see cref="AppConfigSettings.Language"/>.
+		/// the persisted language from <see cref="AppSettings.Language"/>.
 		/// Call once during app startup after config is loaded.
 		/// </summary>
 		public void Initialize() {

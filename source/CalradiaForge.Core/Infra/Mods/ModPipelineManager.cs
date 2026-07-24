@@ -12,7 +12,7 @@ using CalradiaForge.Core.Models;
 /// </summary>
 public sealed class ModPipelineManager {
 	private readonly object _stateLock = new();
-	private readonly AppConfigSettings _appConfig;
+	private readonly AppSettings _appConfig;
 	private readonly ModsData _modsData;
 	private readonly ModInstaller _modInstaller;
 	private readonly IModScanner _modScanner;
@@ -27,14 +27,14 @@ public sealed class ModPipelineManager {
 	private ModPipelineOperation _activeOperation;
 
 	public ModPipelineManager(
-		AppConfigSettings appConfig,
+		AppSettings appConfig,
 		ModsData modsData,
 		ModInstaller modInstaller,
 		IModScanner? modScanner = null)
 		: this(appConfig, modsData, modInstaller, modScanner, null) { }
 
 	internal ModPipelineManager(
-		AppConfigSettings appConfig,
+		AppSettings appConfig,
 		ModsData modsData,
 		ModInstaller modInstaller,
 		IModScanner? modScanner,

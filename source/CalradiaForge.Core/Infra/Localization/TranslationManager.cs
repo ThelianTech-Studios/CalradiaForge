@@ -13,7 +13,7 @@
 	/// Handles reading the <c>languages.json</c> manifest and individual
 	/// language translation files from the <see cref="AppPaths.LanguagesDirectory"/>.
 	/// Read-only — never writes or auto-saves.
-	/// Analogous to <see cref="Config.AppConfig"/> but without persistence.
+	/// Analogous to <see cref="Config.ConfigFileManager"/> but without persistence.
 	/// </summary>
 	public sealed class TranslationManager {
 

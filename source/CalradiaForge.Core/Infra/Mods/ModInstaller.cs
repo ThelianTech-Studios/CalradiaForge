@@ -22,7 +22,7 @@
 	/// Navigation away from the page does not cancel or orphan the task.
 	/// </summary>
 	public sealed class ModInstaller {
-		private readonly AppConfigSettings _appConfig;
+		private readonly AppSettings _appConfig;
 		private readonly Logger _logger = Logger.Instance;
 		private readonly SemaphoreSlim _installLock = new(1, 1);
 		private readonly object _stateLock = new();
@@ -39,7 +39,7 @@
 		/// <summary>
 		/// Initializes a new mod installer with the provided configuration.
 		/// </summary>
-		public ModInstaller(AppConfigSettings appConfig) {
+		public ModInstaller(AppSettings appConfig) {
 			_appConfig = appConfig ?? throw new ArgumentNullException(nameof(appConfig));
 		}
 

@@ -33,13 +33,13 @@
 		private const int _steamStartupDelayMs = 8000;
 		private const int _steamPollIntervalMs = 1000;
 		private const int _steamMaxWaitMs = 60000;
-		private readonly AppConfigSettings _config;
+		private readonly AppSettings _config;
 		private readonly Logger _logger = Logger.Instance;
 
 		/// <summary>
 		/// Initializes a new launcher using the provided configuration.
 		/// </summary>
-		public GameLauncher(AppConfigSettings config) {
+		public GameLauncher(AppSettings config) {
 			_config = config ?? throw new ArgumentNullException(nameof(config));
 		}
 

@@ -6,7 +6,7 @@ namespace CalradiaForge.Core.Infra.Eula {
 
 	/// <summary>
 	/// Reads the embedded EULA text and provides acceptance checking against persisted config.
-	/// Core-only — no UI references. Receives <see cref="AppConfigSettings"/> by parameter.
+	/// Core-only — no UI references. Receives <see cref="AppSettings"/> by parameter.
 	/// </summary>
 	public sealed class EulaService {
 		private const string EulaEmbeddedResourceName = "CalradiaForge.Resources.EULA.txt";
@@ -59,14 +59,14 @@ namespace CalradiaForge.Core.Infra.Eula {
 		/// Determines whether the user needs to accept the EULA.
 		/// Returns <c>true</c> when the persisted flag is <c>false</c>.
 		/// </summary>
-		public bool RequiresAcceptance(AppConfigSettings config) {
+		public bool RequiresAcceptance(AppSettings config) {
 			return !config.EulaAccepted;
 		}
 
 		/// <summary>
 		/// Records EULA acceptance in the provided configuration store.
 		/// </summary>
-		public void RecordAcceptance(AppConfigSettings config) {
+		public void RecordAcceptance(AppSettings config) {
 			config.EulaAccepted = true;
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
 				_logger.Debug("EulaService: Acceptance recorded.");

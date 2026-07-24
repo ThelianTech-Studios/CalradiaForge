@@ -8,7 +8,7 @@ using CalradiaForge.Core.Infra.Paths;
 
 /// <summary>
 /// Detects Bannerlord through supported platform metadata and commits one
-/// coherent provider/path selection to <see cref="AppConfigSettings"/>.
+/// coherent provider/path selection to <see cref="AppSettings"/>.
 /// </summary>
 public sealed class GamePlatformDetectionResolver {
 	private const string _bannerlordExecutableName = "Bannerlord.exe";
@@ -31,7 +31,7 @@ public sealed class GamePlatformDetectionResolver {
 	/// <summary>
 	/// Runs automatic detection in the approved provider order.
 	/// </summary>
-	public GameProvider DetectGame(AppConfigSettings config) {
+	public GameProvider DetectGame(AppSettings config) {
 		ArgumentNullException.ThrowIfNull(config);
 
 		try {
@@ -49,7 +49,7 @@ public sealed class GamePlatformDetectionResolver {
 		return config.GameProvider;
 	}
 
-	private bool TryDetectSteam(AppConfigSettings config) {
+	private bool TryDetectSteam(AppSettings config) {
 		try {
 			string? steamClientRoot = _steamClientRootProvider.GetSteamClientRoot();
 			if (string.IsNullOrWhiteSpace(steamClientRoot)) {
@@ -94,7 +94,7 @@ public sealed class GamePlatformDetectionResolver {
 		}
 	}
 
-	private bool TryDetectEpic(AppConfigSettings config) {
+	private bool TryDetectEpic(AppSettings config) {
 		try {
 			if (!EpicDetector.IsEpicGameInstalled()) {
 				return false;
@@ -143,7 +143,7 @@ public sealed class GamePlatformDetectionResolver {
 		}
 	}
 
-	private static void ApplyManualConfigurationFallback(AppConfigSettings config) {
+	private static void ApplyManualConfigurationFallback(AppSettings config) {
 		config.GameFolderPath = string.Empty;
 		config.GameLauncherFilePath = string.Empty;
 		config.SteamWorkshopFolderPath = string.Empty;

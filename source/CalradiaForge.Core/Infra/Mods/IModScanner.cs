@@ -7,5 +7,5 @@ using CalradiaForge.Core.Models;
 /// Injectable low-level scanner seam used for deterministic pipeline tests.
 /// </summary>
 public interface IModScanner {
-	Task<ModScanResult> ScanAsync(AppConfigSettings config, CancellationToken token = default);
+	Task<ModScanResult> ScanAsync(AppSettings config, CancellationToken token = default);
 }

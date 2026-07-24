@@ -25,7 +25,7 @@ public sealed class GameDetectionService {
 	/// <summary>
 	/// Reuses a valid configured installation or runs detection and queues one result.
 	/// </summary>
-	public void InitializeForStartup(AppConfigSettings config) {
+	public void InitializeForStartup(AppSettings config) {
 		ArgumentNullException.ThrowIfNull(config);
 		if (HasValidConfiguredGame(config)) {
 			return;
@@ -37,7 +37,7 @@ public sealed class GameDetectionService {
 	}
 
 	/// <summary>Runs an explicit automatic re-detection.</summary>
-	public GameProvider RedetectGame(AppConfigSettings config) {
+	public GameProvider RedetectGame(AppSettings config) {
 		ArgumentNullException.ThrowIfNull(config);
 		return _resolver.DetectGame(config);
 	}
@@ -45,7 +45,7 @@ public sealed class GameDetectionService {
 	/// <summary>
 	/// Applies one manually selected game folder without invoking platform metadata discovery.
 	/// </summary>
-	public bool ApplyManualGameFolder(AppConfigSettings config, string selectedGameFolder) {
+	public bool ApplyManualGameFolder(AppSettings config, string selectedGameFolder) {
 		ArgumentNullException.ThrowIfNull(config);
 		if (string.IsNullOrWhiteSpace(selectedGameFolder)) {
 			return false;
@@ -87,7 +87,7 @@ public sealed class GameDetectionService {
 	/// Applies a manually selected Workshop root only for an existing Steam configuration.
 	/// </summary>
 	public bool ApplyManualSteamWorkshopFolder(
-		AppConfigSettings config,
+		AppSettings config,
 		string selectedWorkshopFolder) {
 		ArgumentNullException.ThrowIfNull(config);
 		if (config.GameProvider != GameProvider.Steam) {
@@ -113,7 +113,7 @@ public sealed class GameDetectionService {
 		}
 	}
 
-	private static bool HasValidConfiguredGame(AppConfigSettings config) {
+	private static bool HasValidConfiguredGame(AppSettings config) {
 		if (config.GameProvider is GameProvider.NotInitialized or GameProvider.ManualConfiguration) {
 			return false;
 		}
@@ -122,7 +122,7 @@ public sealed class GameDetectionService {
 			&& GamePathValidator.ValidateGameExecutable(config.GameLauncherFilePath);
 	}
 
-	private void QueueStartupResult(AppConfigSettings config, GameProvider provider) {
+	private void QueueStartupResult(AppSettings config, GameProvider provider) {
 		StartupNotification notification = provider switch {
 			GameProvider.Steam when string.IsNullOrWhiteSpace(config.SteamWorkshopFolderPath) => new(
 				"Steam Workshop Not Found",

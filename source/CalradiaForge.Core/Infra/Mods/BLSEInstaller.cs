@@ -31,7 +31,7 @@
 	/// 1. Detect the correct platform subfolder based on <see cref="GameProvider"/>
 	/// 2. Unblock all files in the temp source folder (removes Zone.Identifier ADS)
 	/// 3. Copy unblocked files into the game's bin directory
-	/// 4. Auto-set <see cref="AppConfigSettings.BLSEExePath"/>
+	/// 4. Auto-set <see cref="AppSettings.BLSEExePath"/>
 	///
 	/// Always overwrites existing files — no version comparison is performed.
 	/// </summary>
@@ -86,10 +86,10 @@
 
 		/// <summary>
 		/// Installs BLSE from an extracted archive into the game's bin directory.
-		/// Selects the correct platform subfolder based on <see cref="AppConfigSettings.GameProvider"/>,
+		/// Selects the correct platform subfolder based on <see cref="AppSettings.GameProvider"/>,
 		/// unblocks all files in the temp source folder to strip Zone.Identifier ADS,
 		/// then copies the clean files into the game's matching bin path. Always overwrites.
-		/// On success, auto-sets <see cref="AppConfigSettings.BLSEExePath"/>.
+		/// On success, auto-sets <see cref="AppSettings.BLSEExePath"/>.
 		/// </summary>
 		/// <param name="extractedDir">The temp directory where the BLSE archive was extracted.</param>
 		/// <param name="config">App config — provides game folder path, game provider, and receives the BLSE exe path.</param>
@@ -97,7 +97,7 @@
 		/// <returns>A <see cref="BLSEInstallResult"/> describing the outcome.</returns>
 		public static async Task<BLSEInstallResult> InstallAsync(
 			string extractedDir,
-			AppConfigSettings config,
+			AppSettings config,
 			CancellationToken token = default) {
 
 			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
