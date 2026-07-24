@@ -10,7 +10,7 @@ public sealed class SerilogLoggerFactoryTests {
 	[Theory]
 	[InlineData(false, false)]
 	[InlineData(true, true)]
-	public void Create_UsesPersistedMinimumLevelForSerilogAndTransitionalLegacyLogger(
+	public void Create_UsesPersistedMinimumLevel(
 		bool debugMode,
 		bool debugEnabled) {
 		using TestDirectory temp = new();
@@ -21,18 +21,40 @@ public sealed class SerilogLoggerFactoryTests {
 			settings,
 			new LogFileLifecycle(logsDirectory, latest),
 			latest);
-		Logger.LogLevel originalLegacyLevel = Logger.Instance.MinimumLevel;
 
 		Serilog.ILogger logger = factory.Create();
 		try {
 			Assert.Equal(debugEnabled, logger.IsEnabled(LogEventLevel.Debug));
 			Assert.True(logger.IsEnabled(LogEventLevel.Information));
-			Assert.Equal(
-				debugMode ? Logger.LogLevel.Debug : Logger.LogLevel.Info,
-				Logger.Instance.MinimumLevel);
 		} finally {
 			((IDisposable)logger).Dispose();
-			Logger.Instance.MinimumLevel = originalLegacyLevel;
+		}
+	}
+
+	[Fact]
+	public void Create_AppliesPersistedDebugModeAfterSettingsReload() {
+		using TestDirectory temp = new();
+		string configPath = temp.GetPath("config.json");
+		ConfigFileManager firstManager = new(configPath);
+		firstManager.Load();
+		LoggingSettings firstSettings = new(firstManager);
+		firstSettings.DebugMode = true;
+
+		ConfigFileManager restartedManager = new(configPath);
+		restartedManager.Load();
+		LoggingSettings restartedSettings = new(restartedManager);
+		string logsDirectory = temp.CreateDirectory("Logs");
+		string latest = Path.Combine(logsDirectory, "CalradiaForge_Latest.log");
+		SerilogLoggerFactory factory = new(
+			restartedSettings,
+			new LogFileLifecycle(logsDirectory, latest),
+			latest);
+
+		Serilog.ILogger logger = factory.Create();
+		try {
+			Assert.True(logger.IsEnabled(LogEventLevel.Debug));
+		} finally {
+			((IDisposable)logger).Dispose();
 		}
 	}
 

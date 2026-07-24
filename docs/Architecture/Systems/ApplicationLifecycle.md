@@ -13,6 +13,7 @@
 - `App` guards shutdown/restart commitment and snapshots the authoritative mod-pipeline operation before an interruption warning. Idle close proceeds without confirmation; restart always receives its ordinary prompt and receives one additional warning only when tracked work is active.
 - `App` owns the renewable 15-second graceful-shutdown choice, disposes the provider once, starts a replacement process only after disposal, and then terminates WPF.
 - WPF dispatcher failures are fatal, use native WPF `MessageBox` presentation, and route to controlled shutdown. Unobserved task exceptions are logged and observed without automatically becoming fatal. AppDomain termination cleanup remains best effort.
+- Before the shared Serilog instance becomes operational, fatal provider/bootstrap/logger-construction and app-owned exception boundaries use the synchronous best-effort `EmergencyStartupLogWriter`. After activation they use the shared Serilog pipeline, and no Serilog call is made after provider disposal begins.
 
 ## Ownership
 
@@ -44,6 +45,7 @@ Core registration contributes only Core services. UI registration contributes WP
 - WPF operating-system session ending is synchronous: it never cancels Windows logoff/shutdown, immediately stops admission and requests cancellation, synchronously cancels notification draining and attempts authorized persistence, and then lets `OnExit` perform fallback provider/logger disposal. This forced path cannot prove quiescence.
 - `Environment.Exit`, process kill, and fire-and-forget lifecycle work are not used.
 - Provider disposal is the sole normal Serilog close path.
+- Clearing the app's operational-logger state precedes provider disposal, preventing lifecycle/global-exception callbacks from logging through the disposed logger.
 - Restart uses the current executable path and starts the replacement only after provider disposal and file release.
 
 ## Key Files

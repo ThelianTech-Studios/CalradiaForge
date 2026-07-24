@@ -15,7 +15,6 @@
 	using CalradiaForge.Core.Infra.Config;
 	using CalradiaForge.Core.Infra.Launch;
 	using CalradiaForge.Core.Infra.Localization;
-	using CalradiaForge.Core.Infra.Logging;
 	using CalradiaForge.Core.Infra.Modpacks;
 	using CalradiaForge.Core.Infra.Mods;
 	using CalradiaForge.Core.Models;
@@ -25,6 +24,7 @@
 	using GongSolutions.Wpf.DragDrop;
 
 	using Microsoft.Win32;
+	using Serilog;
 
 	/// <summary>
 	/// Mods dashboard page. Manages active load order, available mods,
@@ -40,7 +40,6 @@
 		private readonly ModpackService _modpackService;
 		private readonly GameLauncher _gameLauncher;
 		private readonly ToastService _toasts;
-		private readonly Logger _logger = Logger.Instance;
 		private bool _canStart;
 		private bool _isRefreshing;
 		private bool _isInstalling;
@@ -189,9 +188,7 @@
 			InitializeComponent();
 			DataContext = this;
 
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ModsPage: Initializing.");
-			}
+			Log.Debug("ModsPage: Initializing.");
 			LoadOrderView = CollectionViewSource.GetDefaultView(CurrentLoadOrder);
 			LoadOrderView.Filter = ModSearchFilter;
 
@@ -398,9 +395,10 @@
 			foreach (ModuleModel mod in snapshot.Modules) {
 				AvailableModsList.Add(mod);
 			}
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ModsPage: Populated cached mods.", new { snapshot.Version, Count = snapshot.Modules.Count });
-			}
+			Log.Debug(
+				"ModsPage: Populated {Count} cached mods from snapshot version {SnapshotVersion}.",
+				snapshot.Modules.Count,
+				snapshot.Version);
 		}
 
 		/// <summary>
@@ -414,9 +412,10 @@
 				AvailableModsList.Add(mod);
 			}
 			AvailableModsView.Refresh();
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ModsPage: Updated available mods list.", new { snapshot.Version, Count = snapshot.Modules.Count });
-			}
+			Log.Debug(
+				"ModsPage: Updated available mods list with {Count} mods from snapshot version {SnapshotVersion}.",
+				snapshot.Modules.Count,
+				snapshot.Version);
 		}
 
 		#endregion
@@ -455,9 +454,12 @@
 			ModPackComboBox.SelectionChanged += ModPack_SelectionChanged;
 
 			ApplySelectedModpack(showToast: !suppressToast);
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ModsPage: Populated modpack list.", new { Count = ModpackList.Count, StartupIndex = SelectedModpackIndex, AlwaysAsk = isAlwaysAsk, SuppressToast = suppressToast });
-			}
+			Log.Debug(
+				"ModsPage: Populated {ModpackCount} modpacks with startup index {StartupIndex}; always ask: {AlwaysAsk}; suppress toast: {SuppressToast}.",
+				ModpackList.Count,
+				SelectedModpackIndex,
+				isAlwaysAsk,
+				suppressToast);
 		}
 
 		/// <summary>
@@ -612,9 +614,9 @@
 				LoadOrderView.Refresh();
 				AvailableModsView.Refresh();
 				UpdateCanStart();
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("ModsPage: No modpack selected.", new { AvailableCount = AvailableModsList.Count });
-				}
+				Log.Debug(
+					"ModsPage: No modpack selected; {AvailableCount} mods are available.",
+					AvailableModsList.Count);
 				return;
 			}
 
@@ -629,9 +631,7 @@
 				LoadOrderView.Refresh();
 				AvailableModsView.Refresh();
 				UpdateCanStart();
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("ModsPage: Ghost modpack selected.");
-				}
+				Log.Debug("ModsPage: Ghost modpack selected.");
 				return;
 			}
 
@@ -687,9 +687,12 @@
 			// Update the service's working copy for cross-page access
 			SyncLoadOrderToService();
 			UpdateCanStart();
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ModsPage: Applied modpack.", new { ModpackName = _selectedModpack.ModpackName, LoadOrderCount = CurrentLoadOrder.Count, AvailableCount = AvailableModsList.Count, MissingCount = missingModNames.Count });
-			}
+			Log.Debug(
+				"ModsPage: Applied modpack {ModpackName} with {LoadOrderCount} load-order entries, {AvailableCount} available mods, and {MissingCount} missing mods.",
+				_selectedModpack.ModpackName,
+				CurrentLoadOrder.Count,
+				AvailableModsList.Count,
+				missingModNames.Count);
 		}
 
 		#endregion
@@ -847,9 +850,10 @@
 			}
 
 			ApplySelectedModpack();
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ModsPage: Modpack selection changed.", new { SelectedIndex = SelectedModpackIndex, SelectedName = _selectedModpack?.ModpackName });
-			}
+			Log.Debug(
+				"ModsPage: Modpack selection changed to index {SelectedIndex} ({SelectedName}).",
+				SelectedModpackIndex,
+				_selectedModpack?.ModpackName);
 		}
 		#endregion
 
@@ -895,9 +899,7 @@
 				return;
 			}
 
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ModsPage: Installing mods.", new { ArchiveCount = dialog.FileNames.Length });
-			}
+			Log.Debug("ModsPage: Installing mods from {ArchiveCount} archives.", dialog.FileNames.Length);
 			// Step 3: Show persistent progress toast with progress bar
 			_installToastId = _toasts.Show(new ToastRequest {
 				Title = T.Toast_InstallingMods,
@@ -1013,9 +1015,11 @@
 			});
 
 			UpdateCanStart();
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ModsPage: Launch result.", new { Target = _activeLaunchTarget.ToString(), Success = result.Success, Message = result.Message });
-			}
+			Log.Debug(
+				"ModsPage: Launch target {LaunchTarget} completed with success {Success}: {ResultMessage}",
+				_activeLaunchTarget,
+				result.Success,
+				result.Message);
 		}
 
 		/// <summary>
@@ -1057,9 +1061,7 @@
 			UpdateLaunchTargetCheckmarks();
 			OnPropertyChanged(nameof(PlayButtonText));
 			UpdateCanStart();
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ModsPage: Launch target set.", new { Target = target.ToString() });
-			}
+			Log.Debug("ModsPage: Launch target set to {LaunchTarget}.", target);
 		}
 
 		/// <summary>
@@ -1098,9 +1100,12 @@
 			} else {
 				CanStart = hasLoadOrder && canLaunchBase;
 			}
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ModsPage: CanStart evaluated.", new { HasLoadOrder = hasLoadOrder, CanLaunchBase = canLaunchBase, Target = _activeLaunchTarget.ToString(), CanStart });
-			}
+			Log.Debug(
+				"ModsPage: CanStart evaluated to {CanStart}; has load order: {HasLoadOrder}; can launch base game: {CanLaunchBase}; target: {LaunchTarget}.",
+				CanStart,
+				hasLoadOrder,
+				canLaunchBase,
+				_activeLaunchTarget);
 		}
 
 		#endregion
@@ -1114,9 +1119,9 @@
 		private void SyncLoadOrderToService() {
 			_modpackService.CurrentLoadOrderEntries =
 				ModpackService.BuildEntryListFromModules(CurrentLoadOrder.ToList());
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ModsPage: Synced load order.", new { EntryCount = _modpackService.CurrentLoadOrderEntries.Count });
-			}
+			Log.Debug(
+				"ModsPage: Synced {EntryCount} load-order entries.",
+				_modpackService.CurrentLoadOrderEntries.Count);
 		}
 		#endregion
 
@@ -1134,9 +1139,7 @@
 			}
 			try {
 				IsRefreshing = true;
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("ModsPage: Refreshing available mods.");
-				}
+				Log.Debug("ModsPage: Refreshing available mods.");
 				ModPipelineResult result = await _modPipeline.RefreshAsync();
 				UpdateAvailableModsList();
 				ApplySelectedModpack();
@@ -1155,9 +1158,9 @@
 				});
 			} finally {
 				IsRefreshing = false;
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("ModsPage: Refresh available mods complete.", new { Count = _modPipeline.AcceptedSnapshot.Modules.Count });
-				}
+				Log.Debug(
+					"ModsPage: Available-mod refresh completed with {ModCount} accepted mods.",
+					_modPipeline.AcceptedSnapshot.Modules.Count);
 			}
 		}
 

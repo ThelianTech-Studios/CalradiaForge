@@ -6,18 +6,17 @@
 	using System.Windows.Input;
 
 	using CalradiaForge.Core.Infra.Localization;
-	using CalradiaForge.Core.Infra.Logging;
 	using CalradiaForge.UI.Lifecycle;
 	using CalradiaForge.UI.Pages;
 	using CalradiaForge.UI.Toasts;
 
 	using MahApps.Metro.Controls;
+	using Serilog;
 
 	/// <summary>
 	/// Main application window hosting navigation and page content.
 	/// </summary>
 	public partial class MainWindow : Window {
-		private readonly Logger _logger = Logger.Instance;
 		private readonly Page[] _pages;
 		private readonly SettingsPage _settingsPage;
 		private readonly TranslationService _translator;
@@ -53,9 +52,7 @@
 			_settingsPage = settingsPage ?? throw new ArgumentNullException(nameof(settingsPage));
 			MainContentFrame.Navigate(_pages[0]);
 
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("MainWindow: Initialized pages.", new { PageCount = _pages.Length });
-			}
+			Log.Debug("MainWindow: Initialized {PageCount} pages.", _pages.Length);
 			// Wire the Options item (Settings) — separate from ItemsSource
 			NavBarControler.OptionsItemClick += NavBarControler_OnOptionsItemClick;
 
@@ -85,7 +82,7 @@
 			try {
 				await _applicationLifetime.RequestShutdownAsync(ShutdownReason.UserRequest);
 			} catch (Exception ex) {
-				_logger.Error(ex, "MainWindow: Shutdown request failed.");
+				Log.Error(ex, "MainWindow: Shutdown request failed.");
 			} finally {
 				if (!_applicationShutdownPrepared) {
 					_shutdownRequestInProgress = false;
@@ -169,9 +166,10 @@
 					modspage.RefreshAvailableMods();
 				}
 				MainContentFrame.Navigate(_pages[index]);
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("MainWindow: Navigated to page.", new { PageIndex = index, PageType = targetPage.GetType().Name });
-				}
+				Log.Debug(
+					"MainWindow: Navigated to page {PageIndex} of type {PageType}.",
+					index,
+					targetPage.GetType().Name);
 			}
 
 		}
@@ -183,9 +181,7 @@
 			// Deselect the main nav so Settings appears as the active context
 			NavBarControler.SelectedIndex = -1;
 			MainContentFrame.Navigate(_settingsPage);
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("MainWindow: Navigated to settings.");
-			}
+			Log.Debug("MainWindow: Navigated to settings.");
 		}
 	}
 }

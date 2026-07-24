@@ -3,8 +3,10 @@ namespace CalradiaForge.Core.Infra.GamePlatform;
 using CalradiaForge.Core.Infra.Config;
 using CalradiaForge.Core.Infra.GamePlatform.Epic;
 using CalradiaForge.Core.Infra.GamePlatform.Steam;
-using CalradiaForge.Core.Infra.Logging;
 using CalradiaForge.Core.Infra.Paths;
+
+using Serilog;
+using Serilog.Events;
 
 /// <summary>
 /// Detects Bannerlord through supported platform metadata and commits one
@@ -16,7 +18,6 @@ public sealed class GamePlatformDetectionResolver {
 	private static readonly bool _enableUnsupportedPlatforms = false;
 	private readonly ISteamClientRootProvider _steamClientRootProvider;
 	private readonly ISteamInstallationResolver _steamInstallationResolver;
-	private readonly Logger _logger = Logger.Instance;
 
 	/// <summary>
 	/// Initializes the resolver with replaceable Steam metadata dependencies.
@@ -43,7 +44,7 @@ public sealed class GamePlatformDetectionResolver {
 				return config.GameProvider;
 			}
 		} catch (Exception ex) {
-			_logger.Error(ex, "GamePlatformDetectionResolver: Automatic detection failed unexpectedly.");
+			Log.Error(ex, "GamePlatformDetectionResolver: Automatic detection failed unexpectedly.");
 		}
 		ApplyManualConfigurationFallback(config);
 		return config.GameProvider;
@@ -53,9 +54,7 @@ public sealed class GamePlatformDetectionResolver {
 		try {
 			string? steamClientRoot = _steamClientRootProvider.GetSteamClientRoot();
 			if (string.IsNullOrWhiteSpace(steamClientRoot)) {
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("GamePlatformDetectionResolver: Steam client root was not found.");
-				}
+				Log.Debug("GamePlatformDetectionResolver: Steam client root was not found.");
 				return false;
 			}
 
@@ -69,13 +68,13 @@ public sealed class GamePlatformDetectionResolver {
 
 			string gameFolderPath = NormalizeDirectory(result.GameFolderPath);
 			if (!GamePathValidator.ValidateGameFolder(gameFolderPath)) {
-				_logger.Warning($"GamePlatformDetectionResolver: Resolved Steam game path was rejected.");
+				Log.Warning("GamePlatformDetectionResolver: Resolved Steam game path was rejected.");
 				return false;
 			}
 
 			string launcherPath = ResolveStandardLauncherPath(gameFolderPath);
 			if (!GamePathValidator.ValidateGameExecutable(launcherPath)) {
-				_logger.Warning($"GamePlatformDetectionResolver: Resolved Steam launcher was rejected.");
+				Log.Warning("GamePlatformDetectionResolver: Resolved Steam launcher was rejected.");
 				return false;
 			}
 
@@ -89,7 +88,7 @@ public sealed class GamePlatformDetectionResolver {
 			config.GameProvider = GameProvider.Steam;
 			return true;
 		} catch (Exception ex) {
-			_logger.Error(ex, "GamePlatformDetectionResolver: Steam detection failed.");
+			Log.Error(ex, "GamePlatformDetectionResolver: Steam detection failed.");
 			return false;
 		}
 	}
@@ -123,23 +122,23 @@ public sealed class GamePlatformDetectionResolver {
 			config.GameProvider = GameProvider.EpicGames;
 			return true;
 		} catch (Exception ex) {
-			_logger.Error(ex, "GamePlatformDetectionResolver: Epic detection failed.");
+			Log.Error(ex, "GamePlatformDetectionResolver: Epic detection failed.");
 			return false;
 		}
 	}
 
 	private void LogSteamDiagnostics(IEnumerable<SteamPathDiagnostic> diagnostics) {
-		if (_logger.MinimumLevel != Logger.LogLevel.Debug) {
+		if (!Log.IsEnabled(LogEventLevel.Debug)) {
 			return;
 		}
 
 		foreach (SteamPathDiagnostic diagnostic in diagnostics) {
-			_logger.Debug("GamePlatformDetectionResolver: Steam path diagnostic.", new {
+			Log.Debug(
+				"GamePlatformDetectionResolver: Steam path diagnostic. Code={Code} Message={Message} Path={Path} IsWarning={IsWarning}",
 				diagnostic.Code,
 				diagnostic.Message,
 				diagnostic.Path,
-				diagnostic.IsWarning
-			});
+				diagnostic.IsWarning);
 		}
 	}
 
@@ -172,7 +171,7 @@ public sealed class GamePlatformDetectionResolver {
 				_blseStandaloneExecutableName);
 			return File.Exists(candidate) ? candidate : string.Empty;
 		} catch (Exception ex) {
-			Logger.Instance.Error(ex, "GamePlatformDetectionResolver: Optional BLSE check failed.");
+			Log.Error(ex, "GamePlatformDetectionResolver: Optional BLSE check failed.");
 			return string.Empty;
 		}
 	}
@@ -188,7 +187,7 @@ public sealed class GamePlatformDetectionResolver {
 				return normalizedPath;
 			}
 		} catch (Exception ex) {
-			_logger.Error(ex, "GamePlatformDetectionResolver: Optional Workshop path could not be normalized.");
+			Log.Error(ex, "GamePlatformDetectionResolver: Optional Workshop path could not be normalized.");
 		}
 
 		return string.Empty;

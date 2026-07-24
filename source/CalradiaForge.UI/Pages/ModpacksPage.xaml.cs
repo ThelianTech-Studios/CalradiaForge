@@ -11,7 +11,6 @@
 	using System.Windows.Media;
 
 	using CalradiaForge.Core.Infra.Localization;
-	using CalradiaForge.Core.Infra.Logging;
 	using CalradiaForge.Core.Infra.Modpacks;
 	using CalradiaForge.Core.Infra.Mods;
 	using CalradiaForge.Core.Models;
@@ -21,6 +20,7 @@
 	using MahApps.Metro.IconPacks;
 
 	using Microsoft.Win32;
+	using Serilog;
 
 	/// <summary>
 	/// Modpacks management page. Handles creating, saving, importing modpacks,
@@ -33,7 +33,6 @@
 		private readonly ModpackService _modpackService;
 		private readonly ModPipelineManager _modPipeline;
 		private readonly ToastService _toasts;
-		private readonly Logger _logger = Logger.Instance;
 		private int _selectedModpackIndex = -1;
 		private int _selectedEntryIndex = -1;
 		private string _selectedCreatedBy = string.Empty;
@@ -175,9 +174,7 @@
 			Translator = translator ?? throw new ArgumentNullException(nameof(translator));
 			InitializeComponent();
 			DataContext = this;
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ModpacksPage: Initializing.");
-			}
+			Log.Debug("ModpacksPage: Initializing.");
 			PopulateModpackList();
 			PopulateActiveLoadOrder();
 
@@ -207,9 +204,7 @@
 				ModPipelineManager pipeline = _modPipeline;
 				if (!pipeline.IsRefreshing) {
 					try {
-						if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-							_logger.Debug("ModpacksPage: Refreshing mods on visibility.");
-						}
+						Log.Debug("ModpacksPage: Refreshing mods on visibility.");
 						ModPipelineResult result = await pipeline.RefreshAsync();
 						if (!result.Success && result.Status is not ModPipelineStatus.Busy) {
 							StatusText = result.UserSummary;
@@ -227,9 +222,10 @@
 				}
 				PopulateModpackList();
 				PopulateActiveLoadOrder();
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("ModpacksPage: Visibility refresh complete.", new { ModpackCount = _modpackService.AllModpacks.Count, ActiveLoadOrderCount = _modpackService.CurrentLoadOrderEntries.Count });
-				}
+				Log.Debug(
+					"ModpacksPage: Visibility refresh completed with {ModpackCount} modpacks and {ActiveLoadOrderCount} active load-order entries.",
+					_modpackService.AllModpacks.Count,
+					_modpackService.CurrentLoadOrderEntries.Count);
 			}
 		}
 
@@ -265,9 +261,10 @@
 					SelectedModpackIndex = index;
 					ModpackComboBox.SelectionChanged += ModpackComboBox_SelectionChanged;
 					LoadSelectedModpackData();
-					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-						_logger.Debug("ModpacksPage: Restored selection.", new { SelectedIndex = SelectedModpackIndex, ModpackName = previousSelection });
-					}
+					Log.Debug(
+						"ModpacksPage: Restored selection to index {SelectedIndex} ({ModpackName}).",
+						SelectedModpackIndex,
+						previousSelection);
 					return;
 				}
 			}
@@ -279,9 +276,10 @@
 
 			ModpackComboBox.SelectionChanged += ModpackComboBox_SelectionChanged;
 			LoadSelectedModpackData();
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ModpacksPage: Populated modpack list.", new { Count = ModpackList.Count, SelectedIndex = SelectedModpackIndex });
-			}
+			Log.Debug(
+				"ModpacksPage: Populated {ModpackCount} modpacks with selected index {SelectedIndex}.",
+				ModpackList.Count,
+				SelectedModpackIndex);
 		}
 
 		/// <summary>
@@ -307,9 +305,10 @@
 			foreach (ModpackEntryModel entry in _selectedModpack.LoadOrder) {
 				EditableLoadOrder.Add(entry.Clone());
 			}
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ModpacksPage: Loaded modpack data.", new { ModpackName = _selectedModpack.ModpackName, EntryCount = _selectedModpack.LoadOrder.Count });
-			}
+			Log.Debug(
+				"ModpacksPage: Loaded modpack {ModpackName} with {EntryCount} entries.",
+				_selectedModpack.ModpackName,
+				_selectedModpack.LoadOrder.Count);
 		}
 
 		/// <summary>
@@ -323,9 +322,9 @@
 			foreach (ModpackEntryModel entry in _modpackService.CurrentLoadOrderEntries) {
 				ActiveLoadOrder.Add(entry.Clone());
 			}
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ModpacksPage: Populated active load order.", new { EntryCount = ActiveLoadOrder.Count });
-			}
+			Log.Debug(
+				"ModpacksPage: Populated active load order with {EntryCount} entries.",
+				ActiveLoadOrder.Count);
 		}
 
 		#endregion
@@ -335,9 +334,10 @@
 		private void ModpackComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e) {
 			LoadSelectedModpackData();
 			StatusText = string.Empty;
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ModpacksPage: Modpack selection changed.", new { SelectedIndex = SelectedModpackIndex, ModpackName = _selectedModpack?.ModpackName });
-			}
+			Log.Debug(
+				"ModpacksPage: Selection changed to index {SelectedIndex} ({ModpackName}).",
+				SelectedModpackIndex,
+				_selectedModpack?.ModpackName);
 		}
 
 		#endregion
@@ -389,9 +389,11 @@
 			SelectedEntryIndex = index;
 
 			StatusText = $"Updated '{_selectedEntry.ModuleName}' in working copy. Click Save to persist.";
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ModpacksPage: Entry updated.", new { ModuleId = _selectedEntry.ModuleId, ModuleName = _selectedEntry.ModuleName, Version = _selectedEntry.RequiredVersion });
-			}
+			Log.Debug(
+				"ModpacksPage: Updated entry {ModuleId} ({ModuleName}) to version {RequiredVersion}.",
+				_selectedEntry.ModuleId,
+				_selectedEntry.ModuleName,
+				_selectedEntry.RequiredVersion);
 		}
 
 		/// <summary>
@@ -440,9 +442,10 @@
 			EditableLoadOrder.Remove(entry);
 			ClearEditPanel();
 			StatusText = $"Removed '{entry.ModuleName}'. Click Save to persist.";
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ModpacksPage: Entry removed.", new { ModuleId = entry.ModuleId, ModuleName = entry.ModuleName });
-			}
+			Log.Debug(
+				"ModpacksPage: Removed entry {ModuleId} ({ModuleName}).",
+				entry.ModuleId,
+				entry.ModuleName);
 		}
 
 		#endregion
@@ -467,9 +470,7 @@
 				return;
 			}
 
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ModpacksPage: Importing modpack.", new { FilePath = dialog.FileName });
-			}
+			Log.Debug("ModpacksPage: Importing modpack from {FilePath}.", dialog.FileName);
 			var (success, modpack, message) = _modpackService.Import(dialog.FileName);
 			StatusText = message;
 
@@ -560,9 +561,7 @@
 			_pendingTemplate = template;
 			UpdateTemplateCheckmarks();
 			StatusText = $"Template set to {template}. Click Create New to use it.";
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ModpacksPage: Template selected.", new { Template = template.ToString() });
-			}
+			Log.Debug("ModpacksPage: Template {ModpackTemplate} selected.", template);
 		}
 		/// <summary>
 		/// Toggles the checkmark icon visibility in the template dropdown.
@@ -630,9 +629,12 @@
 			List<ModuleModel> installedMods = snapshot.Modules.ToList();
 			bool success = _modpackService.CreateNew(name, createdBy, _pendingTemplate, installedMods);
 
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ModpacksPage: Create modpack result.", new { ModpackName = name, Template = _pendingTemplate.ToString(), Success = success, EntryCount = installedMods.Count });
-			}
+			Log.Debug(
+				"ModpacksPage: Created modpack {ModpackName} from template {ModpackTemplate} with success {Success} and {EntryCount} entries.",
+				name,
+				_pendingTemplate,
+				success,
+				installedMods.Count);
 			if (success) {
 				HideCreatePanel();
 				PopulateModpackList();
@@ -702,9 +704,11 @@
 
 			bool success = _modpackService.Save(_selectedModpack, entries);
 
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ModpacksPage: Save modpack result.", new { ModpackName = _selectedModpack.ModpackName, EntryCount = entries.Count, Success = success });
-			}
+			Log.Debug(
+				"ModpacksPage: Saved modpack {ModpackName} with {EntryCount} entries and success {Success}.",
+				_selectedModpack.ModpackName,
+				entries.Count,
+				success);
 			if (success) {
 				PopulateModpackList();
 				PopulateActiveLoadOrder();

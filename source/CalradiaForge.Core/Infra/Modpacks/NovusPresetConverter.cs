@@ -3,8 +3,9 @@
 	using System.Collections.Generic;
 	using System.Xml.Linq;
 
-	using CalradiaForge.Core.Infra.Logging;
 	using CalradiaForge.Core.Models;
+
+	using Serilog;
 
 	/// <summary>
 	/// Pure static converter for Novus Launcher preset XML files.
@@ -22,8 +23,6 @@
 	/// receives all data as parameters.
 	/// </summary>
 	public static class NovusPresetConverter {
-		private static readonly Logger _logger = Logger.Instance;
-
 		/// <summary>
 		/// Parses a Novus Launcher preset XML file and converts it to a <see cref="ModpackModel"/>.
 		/// The <c>LastUpdated</c> field is set to today's date regardless of the XML content.
@@ -35,7 +34,7 @@
 		/// </returns>
 		public static ModpackModel? ConvertFromFile(string xmlFilePath) {
 			if (string.IsNullOrWhiteSpace(xmlFilePath) || !File.Exists(xmlFilePath)) {
-				_logger.Warning($"NovusConverter: File not found: '{xmlFilePath}'");
+				Log.Warning("NovusConverter: File not found: {FilePath}.", xmlFilePath);
 				return null;
 			}
 
@@ -43,10 +42,7 @@
 				string xml = File.ReadAllText(xmlFilePath);
 				return ConvertFromXml(xml);
 			} catch (Exception ex) {
-				_logger.Error(ex, $"NovusConverter: Failed to read file '{xmlFilePath}'");
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("NovusConverter: File read failed.", new { FilePath = xmlFilePath }, ex);
-				}
+				Log.Error(ex, "NovusConverter: Failed to read file {FilePath}.", xmlFilePath);
 				return null;
 			}
 		}
@@ -61,7 +57,7 @@
 		/// </returns>
 		public static ModpackModel? ConvertFromXml(string xmlContent) {
 			if (string.IsNullOrWhiteSpace(xmlContent)) {
-				_logger.Warning("NovusConverter: XML content is null or empty.");
+				Log.Warning("NovusConverter: XML content is null or empty.");
 				return null;
 			}
 
@@ -70,7 +66,7 @@
 				XElement? presetElement = doc.Root;
 
 				if (presetElement is null || !string.Equals(presetElement.Name.LocalName, "Preset", StringComparison.OrdinalIgnoreCase)) {
-					_logger.Warning("NovusConverter: Root element is not <Preset>.");
+					Log.Warning("NovusConverter: Root element is not <Preset>.");
 					return null;
 				}
 
@@ -78,14 +74,14 @@
 				string createdBy = presetElement.Attribute("CreatedBy")?.Value?.Trim() ?? "Unknown";
 
 				if (string.IsNullOrWhiteSpace(name)) {
-					_logger.Warning("NovusConverter: Preset has no Name attribute.");
+					Log.Warning("NovusConverter: Preset has no Name attribute.");
 					return null;
 				}
 
 				List<ModpackEntryModel> loadOrder = ParseModuleEntries(presetElement);
 
 				if (loadOrder.Count == 0) {
-					_logger.Warning($"NovusConverter: Preset '{name}' has no module entries.");
+					Log.Warning("NovusConverter: Preset {PresetName} has no module entries.", name);
 					return null;
 				}
 
@@ -96,16 +92,19 @@
 					LoadOrder = loadOrder
 				};
 
-				_logger.Info($"NovusConverter: Converted preset '{name}' with {loadOrder.Count} module(s).");
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("NovusConverter: Conversion complete.", new { PresetName = name, CreatedBy = createdBy, EntryCount = loadOrder.Count });
-				}
+				Log.Information(
+					"NovusConverter: Converted preset {PresetName} with {EntryCount} module(s).",
+					name,
+					loadOrder.Count);
+				Log.Debug(
+					"NovusConverter: Conversion complete for {PresetName}, created by {CreatedBy}, with {EntryCount} entries.",
+					name,
+					createdBy,
+					loadOrder.Count);
 				return modpack;
 			} catch (Exception ex) {
-				_logger.Error(ex, "NovusConverter: Failed to parse XML content.");
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("NovusConverter: XML parse failed.", new { Length = xmlContent.Length }, ex);
-				}
+				Log.Error(ex, "NovusConverter: Failed to parse XML content.");
+				Log.Debug(ex, "NovusConverter: XML parse failed for content length {ContentLength}.", xmlContent.Length);
 				return null;
 			}
 		}
@@ -124,9 +123,7 @@
 				string url = module.Attribute("URL")?.Value?.Trim() ?? string.Empty;
 
 				if (string.IsNullOrWhiteSpace(id)) {
-					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-						_logger.Debug("NovusConverter: Skipping module with empty Id.");
-					}
+					Log.Debug("NovusConverter: Skipping module with empty Id.");
 					continue;
 				}
 

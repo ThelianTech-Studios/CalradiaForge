@@ -1,7 +1,6 @@
 ﻿namespace CalradiaForge.Core.Infra.Config {
 	using System.Collections.Generic;
 
-	using CalradiaForge.Core.Infra.Logging;
 	using CalradiaForge.Core.Infra.Persistence;
 
 	using Newtonsoft.Json;
@@ -10,7 +9,6 @@
 	/// Provides thread-safe key/value configuration persistence backed by JSON.
 	/// </summary>
 	public sealed class ConfigFileManager {
-		private readonly Logger _logger = Logger.Instance;
 		private readonly object _lock = new();
 		private Dictionary<string, string> _configValues = new();
 		private readonly string _configFilePath;
@@ -22,9 +20,6 @@
 				throw new ArgumentException("File path cannot be null or whitespace.", nameof(filePath));
 			}
 			_configFilePath = filePath;
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ConfigFileManager: Initialized.", new { FilePath = _configFilePath });
-			}
 		}
 
 		/// <summary>
@@ -38,15 +33,7 @@
 			}
 			set {
 				lock (_lock) {
-					_configValues.TryGetValue(key, out var oldValue);
 					_configValues[key] = value;
-					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-						_logger.Debug("ConfigFileManager: Wrote key.", new {
-							Key = key,
-							OldValue = string.IsNullOrEmpty(oldValue) ? "<empty>" : oldValue,
-							NewValue = string.IsNullOrEmpty(value) ? "<empty>" : value
-						});
-					}
 					SaveLocked();
 				}
 			}
@@ -107,14 +94,8 @@
 		}
 
 		private void SaveLocked() {
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ConfigFileManager: Saving config.", new { FilePath = _configFilePath, Count = _configValues.Count });
-			}
 			var json = JsonConvert.SerializeObject(_configValues, Formatting.Indented);
 			AtomicFileWriter.WriteAllText(_configFilePath, json);
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ConfigFileManager: Save complete.", new { FilePath = _configFilePath });
-			}
 		}
 
 		/// <summary>
@@ -150,21 +131,14 @@
 		public void Load() {
 			lock (_lock) {
 				if (!File.Exists(_configFilePath)) {
-					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-						_logger.Debug("ConfigFileManager: Config file missing; starting with empty in-memory config.", new { FilePath = _configFilePath });
-					}
 					_configValues = new Dictionary<string, string>();
 					return;
 				}
 				try {
 					var json = File.ReadAllText(_configFilePath);
 					_configValues = JsonConvert.DeserializeObject<Dictionary<string, string>>(json) ?? new Dictionary<string, string>();
-				} catch (JsonException ex) {
-					_logger.Error(ex, "ConfigFileManager: Config file contains invalid JSON. Falling back to defaults.");
+				} catch (JsonException) {
 					_configValues = new Dictionary<string, string>();
-				}
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("ConfigFileManager: Config loaded.", new { FilePath = _configFilePath, Count = _configValues.Count });
 				}
 			}
 		}

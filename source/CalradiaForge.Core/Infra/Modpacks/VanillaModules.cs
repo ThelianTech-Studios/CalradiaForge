@@ -3,8 +3,9 @@
 	using System.Collections.Generic;
 	using System.Linq;
 
-	using CalradiaForge.Core.Infra.Logging;
 	using CalradiaForge.Core.Models;
+
+	using Serilog;
 
 	/// <summary>
 	/// Provides default Bannerlord module load order templates.
@@ -17,7 +18,6 @@
 	/// Otherwise, hardcoded fallback versions are used per entry.
 	/// </remarks>
 	public static class VanillaModules {
-		private static readonly Logger _logger = Logger.Instance;
 		/// <summary>
 		/// Display name used for the built-in vanilla modpack template.
 		/// </summary>
@@ -221,9 +221,11 @@
 						installed.ModuleURL));
 				} else {
 					result.Add(new ModpackEntryModel(id, name, fallbackVersion));
-					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-						_logger.Debug("VanillaModules: Using fallback module version.", new { ModuleId = id, ModuleName = name, FallbackVersion = fallbackVersion });
-					}
+					Log.Debug(
+						"VanillaModules: Using fallback module version for {ModuleId} ({ModuleName}): {FallbackVersion}.",
+						id,
+						name,
+						fallbackVersion);
 				}
 			}
 

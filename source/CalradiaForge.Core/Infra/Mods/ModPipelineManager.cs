@@ -1,9 +1,10 @@
 namespace CalradiaForge.Core.Infra.Mods;
 
 using CalradiaForge.Core.Infra.Config;
-using CalradiaForge.Core.Infra.Logging;
 using CalradiaForge.Core.Infra.Paths;
 using CalradiaForge.Core.Models;
+
+using Serilog;
 
 /// <summary>
 /// Core-owned sequencing boundary for scan admission, completeness decisions,
@@ -17,7 +18,6 @@ public sealed class ModPipelineManager {
 	private readonly ModInstaller _modInstaller;
 	private readonly IModScanner _modScanner;
 	private readonly Func<CancellationToken, Task>? _beforeCommit;
-	private readonly Logger _logger = Logger.Instance;
 	private AcceptedModSnapshot _acceptedSnapshot = AcceptedModSnapshot.Empty;
 	private TaskCompletionSource<bool>? _activeCompletion;
 	private CancellationTokenSource? _activeCancellation;
@@ -217,7 +217,10 @@ public sealed class ModPipelineManager {
 			AcceptedModSnapshot accepted = new(previous.Version + 1, modules, added, removed);
 			Volatile.Write(ref _acceptedSnapshot, accepted);
 
-			_logger.Info($"ModPipelineCoordinator: Accepted snapshot v{accepted.Version} with {modules.Count} modules.");
+			Log.Information(
+				"ModPipelineCoordinator: Accepted snapshot v{SnapshotVersion} with {ModuleCount} modules.",
+				accepted.Version,
+				modules.Count);
 			return new ModPipelineResult {
 				Operation = operation,
 				Status = ModPipelineStatus.Succeeded,
@@ -239,7 +242,7 @@ public sealed class ModPipelineManager {
 			return RejectedResult(operation, ModPipelineStatus.Cancelled,
 				"Module operation was cancelled; the previous snapshot was preserved.");
 		} catch (Exception ex) {
-			_logger.Error(ex, "ModPipelineCoordinator: Scan failed; accepted state was preserved.");
+			Log.Error(ex, "ModPipelineCoordinator: Scan failed; accepted state was preserved.");
 			return new ModPipelineResult {
 				Operation = operation,
 				Status = ModPipelineStatus.Failed,

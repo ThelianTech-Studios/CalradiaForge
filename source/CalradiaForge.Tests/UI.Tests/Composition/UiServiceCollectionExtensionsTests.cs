@@ -74,6 +74,9 @@ public sealed class UiServiceCollectionExtensionsTests {
 			Assert.Same(first, second);
 			Assert.Same(first, Log.Logger);
 			Assert.NotNull(provider.GetRequiredService<ApplicationStartupCoordinator>());
+			Assert.False(File.Exists(Path.Combine(
+				options.LogsDirectory,
+				"CalradiaForge_StartupFailure.log")));
 		} finally {
 			if (Directory.Exists(root)) {
 				Directory.Delete(root, recursive: true);

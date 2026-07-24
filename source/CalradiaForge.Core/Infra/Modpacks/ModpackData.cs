@@ -2,11 +2,11 @@
 	using System;
 	using System.Collections.Generic;
 
-	using CalradiaForge.Core.Infra.Logging;
 	using CalradiaForge.Core.Infra.Persistence;
 	using CalradiaForge.Core.Models;
 
 	using Newtonsoft.Json;
+	using Serilog;
 
 	/// <summary>
 	/// Handles low-level JSON read/write operations for modpack files and the last-used data file.
@@ -17,7 +17,6 @@
 		private readonly object _lock = new();
 		private readonly string _modpacksDirectory;
 		private readonly string _lastUsedFilePath;
-		private readonly Logger _logger = Logger.Instance;
 
 		/// <summary>
 		/// Creates a new <see cref="ModpackData"/> instance.
@@ -48,15 +47,17 @@
 				try {
 					string filePath = ModpackFileHelper.GetModpackFilePath(_modpacksDirectory, modpack.ModpackName);
 					modpack.FileName = ModpackFileHelper.SanitizeFileName(modpack.ModpackName);
-					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-						_logger.Debug("ModpackData: Saving modpack.", new { ModpackName = modpack.ModpackName, FilePath = filePath, EntryCount = modpack.LoadOrder.Count });
-					}
+					Log.Debug(
+						"ModpackData: Saving modpack {ModpackName} with {EntryCount} entries to {FilePath}.",
+						modpack.ModpackName,
+						modpack.LoadOrder.Count,
+						filePath);
 					string json = JsonConvert.SerializeObject(modpack, Formatting.Indented);
 					AtomicFileWriter.WriteAllText(filePath, json);
-					_logger.Info($"ModpackData: Saved modpack '{modpack.ModpackName}' to '{filePath}'");
+					Log.Information("ModpackData: Saved modpack {ModpackName} to {FilePath}.", modpack.ModpackName, filePath);
 					return true;
 				} catch (Exception ex) {
-					_logger.Error(ex, $"ModpackData: Failed to save modpack '{modpack.ModpackName}'");
+					Log.Error(ex, "ModpackData: Failed to save modpack {ModpackName}.", modpack.ModpackName);
 					return false;
 				}
 			}
@@ -71,10 +72,8 @@
 			lock (_lock) {
 				try {
 					if (!File.Exists(filePath)) {
-						_logger.Warning($"ModpackData: Modpack file not found: '{filePath}'");
-						if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-							_logger.Debug("ModpackData: Load failed, file missing.", new { FilePath = filePath });
-						}
+						Log.Warning("ModpackData: Modpack file not found: {FilePath}.", filePath);
+						Log.Debug("ModpackData: Load failed because {FilePath} is missing.", filePath);
 						return null;
 					}
 					string json = File.ReadAllText(filePath);
@@ -82,12 +81,14 @@
 					if (modpack is not null) {
 						modpack.FileName = Path.GetFileNameWithoutExtension(filePath);
 					}
-					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-						_logger.Debug("ModpackData: Loaded modpack.", new { FilePath = filePath, ModpackName = modpack?.ModpackName, EntryCount = modpack?.LoadOrder.Count ?? 0 });
-					}
+					Log.Debug(
+						"ModpackData: Loaded modpack {ModpackName} with {EntryCount} entries from {FilePath}.",
+						modpack?.ModpackName,
+						modpack?.LoadOrder.Count ?? 0,
+						filePath);
 					return modpack;
 				} catch (Exception ex) {
-					_logger.Error(ex, $"ModpackData: Failed to load modpack from '{filePath}'");
+					Log.Error(ex, "ModpackData: Failed to load modpack from {FilePath}.", filePath);
 					return null;
 				}
 			}
@@ -115,19 +116,21 @@
 								modpacks.Add(modpack);
 							}
 						} catch (Exception ex) {
-							_logger.Warning($"ModpackData: Skipping invalid modpack file '{file}': {ex.Message}");
-							if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-								_logger.Debug("ModpackData: Invalid modpack skipped.", new { FilePath = file, Error = ex.Message });
-							}
+							Log.Warning(ex, "ModpackData: Skipping invalid modpack file {FilePath}.", file);
+							Log.Debug(ex, "ModpackData: Invalid modpack skipped at {FilePath}.", file);
 						}
 					}
 				} catch (Exception ex) {
-					_logger.Error(ex, "ModpackData: Failed to enumerate modpack directory.");
+					Log.Error(ex, "ModpackData: Failed to enumerate modpack directory.");
 				}
-				_logger.Info($"ModpackData: Loaded {modpacks.Count} modpack(s) from '{_modpacksDirectory}'");
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("ModpackData: Load all complete.", new { ModpackCount = modpacks.Count, Directory = _modpacksDirectory });
-				}
+				Log.Information(
+					"ModpackData: Loaded {ModpackCount} modpack(s) from {ModpacksDirectory}.",
+					modpacks.Count,
+					_modpacksDirectory);
+				Log.Debug(
+					"ModpackData: Load all complete with {ModpackCount} modpack(s) from {ModpacksDirectory}.",
+					modpacks.Count,
+					_modpacksDirectory);
 				return modpacks;
 			}
 		}
@@ -142,14 +145,14 @@
 				try {
 					string filePath = ModpackFileHelper.GetModpackFilePathFromFileName(_modpacksDirectory, sanitizedFileName);
 					if (!File.Exists(filePath)) {
-						_logger.Warning($"ModpackData: Cannot delete — file not found: '{filePath}'");
+						Log.Warning("ModpackData: Cannot delete — file not found: {FilePath}.", filePath);
 						return false;
 					}
 					File.Delete(filePath);
-					_logger.Info($"ModpackData: Deleted modpack file '{filePath}'");
+					Log.Information("ModpackData: Deleted modpack file {FilePath}.", filePath);
 					return true;
 				} catch (Exception ex) {
-					_logger.Error(ex, $"ModpackData: Failed to delete modpack '{sanitizedFileName}'");
+					Log.Error(ex, "ModpackData: Failed to delete modpack {SanitizedFileName}.", sanitizedFileName);
 					return false;
 				}
 			}
@@ -181,13 +184,14 @@
 				try {
 					string json = JsonConvert.SerializeObject(modpack, Formatting.Indented);
 					AtomicFileWriter.WriteAllText(_lastUsedFilePath, json);
-					_logger.Info("ModpackData: Saved last-used load order.");
-					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-						_logger.Debug("ModpackData: Saved last-used file.", new { FilePath = _lastUsedFilePath, EntryCount = modpack.LoadOrder.Count });
-					}
+					Log.Information("ModpackData: Saved last-used load order.");
+					Log.Debug(
+						"ModpackData: Saved last-used file with {EntryCount} entries to {FilePath}.",
+						modpack.LoadOrder.Count,
+						_lastUsedFilePath);
 					return true;
 				} catch (Exception ex) {
-					_logger.Error(ex, "ModpackData: Failed to save last-used load order.");
+					Log.Error(ex, "ModpackData: Failed to save last-used load order.");
 					return false;
 				}
 			}
@@ -201,19 +205,18 @@
 			lock (_lock) {
 				try {
 					if (!File.Exists(_lastUsedFilePath)) {
-						if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-							_logger.Debug("ModpackData: Last-used file missing.", new { FilePath = _lastUsedFilePath });
-						}
+						Log.Debug("ModpackData: Last-used file is missing at {FilePath}.", _lastUsedFilePath);
 						return null;
 					}
 					string json = File.ReadAllText(_lastUsedFilePath);
 					ModpackModel? modpack = JsonConvert.DeserializeObject<ModpackModel>(json);
-					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-						_logger.Debug("ModpackData: Loaded last-used file.", new { FilePath = _lastUsedFilePath, EntryCount = modpack?.LoadOrder.Count ?? 0 });
-					}
+					Log.Debug(
+						"ModpackData: Loaded last-used file with {EntryCount} entries from {FilePath}.",
+						modpack?.LoadOrder.Count ?? 0,
+						_lastUsedFilePath);
 					return modpack;
 				} catch (Exception ex) {
-					_logger.Error(ex, "ModpackData: Failed to load last-used load order.");
+					Log.Error(ex, "ModpackData: Failed to load last-used load order.");
 					return null;
 				}
 			}
@@ -234,26 +237,31 @@
 			lock (_lock) {
 				try {
 					if (!File.Exists(importFilePath)) {
-						_logger.Warning($"ModpackData: Import file not found: '{importFilePath}'");
+						Log.Warning("ModpackData: Import file not found: {ImportFilePath}.", importFilePath);
 						return null;
 					}
 					if (!importFilePath.EndsWith(".json", StringComparison.OrdinalIgnoreCase)) {
-						_logger.Warning($"ModpackData: Import file is not a .json file: '{importFilePath}'");
+						Log.Warning("ModpackData: Import file is not a .json file: {ImportFilePath}.", importFilePath);
 						return null;
 					}
 					string json = File.ReadAllText(importFilePath);
 					ModpackModel? modpack = JsonConvert.DeserializeObject<ModpackModel>(json);
 					if (modpack is null || string.IsNullOrWhiteSpace(modpack.ModpackName)) {
-						_logger.Warning($"ModpackData: Import file has invalid or missing modpack data: '{importFilePath}'");
+						Log.Warning("ModpackData: Import file has invalid or missing modpack data: {ImportFilePath}.", importFilePath);
 						return null;
 					}
-					_logger.Info($"ModpackData: Successfully imported modpack '{modpack.ModpackName}' from '{importFilePath}'");
-					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-						_logger.Debug("ModpackData: Imported modpack file.", new { ImportFilePath = importFilePath, ModpackName = modpack.ModpackName, EntryCount = modpack.LoadOrder.Count });
-					}
+					Log.Information(
+						"ModpackData: Successfully imported modpack {ModpackName} from {ImportFilePath}.",
+						modpack.ModpackName,
+						importFilePath);
+					Log.Debug(
+						"ModpackData: Imported modpack {ModpackName} with {EntryCount} entries from {ImportFilePath}.",
+						modpack.ModpackName,
+						modpack.LoadOrder.Count,
+						importFilePath);
 					return modpack;
 				} catch (Exception ex) {
-					_logger.Error(ex, $"ModpackData: Failed to import modpack from '{importFilePath}'");
+					Log.Error(ex, "ModpackData: Failed to import modpack from {ImportFilePath}.", importFilePath);
 					return null;
 				}
 			}

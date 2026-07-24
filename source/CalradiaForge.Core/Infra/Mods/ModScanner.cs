@@ -1,16 +1,15 @@
 namespace CalradiaForge.Core.Infra.Mods;
 
 using CalradiaForge.Core.Infra.Config;
-using CalradiaForge.Core.Infra.Logging;
 using CalradiaForge.Core.Models;
+
+using Serilog;
 
 /// <summary>
 /// Low-level scanner that discovers modules and reports per-root completeness.
 /// It does not authorize persistence or publish application state.
 /// </summary>
 public sealed class ModScanner : IModScanner {
-	private static readonly Logger _logger = Logger.Instance;
-
 	public async Task<ModScanResult> ScanAsync(AppSettings config, CancellationToken token = default) {
 		ArgumentNullException.ThrowIfNull(config);
 		string localRoot = config.ModulesDirectoryPath;
@@ -126,18 +125,18 @@ public sealed class ModScanner : IModScanner {
 				: ModScanRootStatus.Partial;
 			return new RootScan(status, modules, diagnostics);
 		} catch (DirectoryNotFoundException ex) {
-			_logger.Error(ex, $"ModScanner: {description} root '{path}' is missing.");
+			Log.Error(ex, "ModScanner: {Description} root {Path} is missing.", description, path);
 			return new RootScan(ModScanRootStatus.Missing, [], [$"The configured {description} root is missing: '{path}'."]);
 		} catch (UnauthorizedAccessException ex) {
-			_logger.Error(ex, $"ModScanner: Cannot access {description} root '{path}'.");
+			Log.Error(ex, "ModScanner: Cannot access {Description} root {Path}.", description, path);
 			return new RootScan(ModScanRootStatus.Inaccessible, [], [$"The configured {description} root is inaccessible."]);
 		} catch (IOException ex) {
-			_logger.Error(ex, $"ModScanner: Cannot enumerate {description} root '{path}'.");
+			Log.Error(ex, "ModScanner: Cannot enumerate {Description} root {Path}.", description, path);
 			return new RootScan(ModScanRootStatus.Inaccessible, [], [$"The configured {description} root could not be enumerated."]);
 		} catch (OperationCanceledException) {
 			throw;
 		} catch (Exception ex) {
-			_logger.Error(ex, $"ModScanner: Unexpected failure scanning {description} root '{path}'.");
+			Log.Error(ex, "ModScanner: Unexpected failure scanning {Description} root {Path}.", description, path);
 			return new RootScan(ModScanRootStatus.Failed, [], [$"The configured {description} root failed unexpectedly."]);
 		}
 	}

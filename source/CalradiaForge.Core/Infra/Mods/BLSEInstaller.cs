@@ -4,9 +4,10 @@
 	using System.Threading.Tasks;
 
 	using CalradiaForge.Core.Infra.Config;
-	using CalradiaForge.Core.Infra.Logging;
 	using CalradiaForge.Core.Infra.Paths;
 	using CalradiaForge.Core.Models;
+
+	using Serilog;
 
 	/// <summary>
 	/// Handles detection and installation of the Bannerlord Software Extender (BLSE)
@@ -36,8 +37,6 @@
 	/// Always overwrites existing files — no version comparison is performed.
 	/// </summary>
 	public static class BLSEInstaller {
-		private static readonly Logger _logger = Logger.Instance;
-
 		/// <summary>
 		/// The definitive marker file used to identify a BLSE archive.
 		/// If this executable exists anywhere in the extracted directory tree,
@@ -66,20 +65,17 @@
 				return false;
 			}
 			try {
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("BLSEInstaller: Scanning for BLSE marker.", new { ExtractedDir = extractedDir });
-				}
+				Log.Debug("BLSEInstaller: Scanning {ExtractedDirectory} for the BLSE marker.", extractedDir);
 				string[] matches = Directory.GetFiles(extractedDir, _blseStandaloneExeName, SearchOption.AllDirectories);
 				bool found = matches.Length > 0;
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("BLSEInstaller: BLSE marker scan result.", new { ExtractedDir = extractedDir, MatchCount = matches.Length });
-				}
+				Log.Debug(
+					"BLSEInstaller: BLSE marker scan found {MatchCount} matches in {ExtractedDirectory}.",
+					matches.Length,
+					extractedDir);
 				return found;
 			} catch (Exception ex) {
-				_logger.Warning($"BLSEInstaller: Failed to scan for BLSE marker: {ex.Message}");
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("BLSEInstaller: BLSE marker scan failed.", new { ExtractedDir = extractedDir }, ex);
-				}
+				Log.Warning(ex, "BLSEInstaller: Failed to scan {ExtractedDirectory} for the BLSE marker.", extractedDir);
+				Log.Debug(ex, "BLSEInstaller: BLSE marker scan failed in {ExtractedDirectory}.", extractedDir);
 				return false;
 			}
 		}
@@ -100,30 +96,32 @@
 			AppSettings config,
 			CancellationToken token = default) {
 
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("BLSEInstaller: Starting install.", new { ExtractedDir = extractedDir, GameProvider = config.GameProvider.ToString() });
-			}
+			Log.Debug(
+				"BLSEInstaller: Starting install from {ExtractedDirectory} for {GameProvider}.",
+				extractedDir,
+				config.GameProvider);
 			// Validate game folder
 			string gameFolderPath = config.GameFolderPath;
 			if (string.IsNullOrWhiteSpace(gameFolderPath) || !Directory.Exists(gameFolderPath)) {
 				string error = "Game folder not configured or not found. Please check your Settings.";
-				_logger.Warning($"BLSEInstaller: {error}");
+				Log.Warning("BLSEInstaller: {ErrorMessage}", error);
 				return BLSEInstallResult.Fail(error);
 			}
 
 			// Determine the correct bin subfolder name for this platform
 			string platformBinName = ResolvePlatformBinFolder(config.GameProvider);
-			_logger.Info($"BLSEInstaller: Platform '{config.GameProvider}' resolved to bin folder '{platformBinName}'.");
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("BLSEInstaller: Platform bin resolved.", new { PlatformBinName = platformBinName });
-			}
+			Log.Information(
+				"BLSEInstaller: Platform {GameProvider} resolved to bin folder {PlatformBinName}.",
+				config.GameProvider,
+				platformBinName);
+			Log.Debug("BLSEInstaller: Platform bin resolved to {PlatformBinName}.", platformBinName);
 
 			// Locate the platform-specific source folder in the extracted archive
 			// Expected path: extractedDir/bin/<platformBinName>
 			string? sourceBinDir = FindPlatformBinInExtracted(extractedDir, platformBinName);
 			if (sourceBinDir is null) {
 				string error = $"BLSE archive does not contain the expected '{platformBinName}' folder for your platform ({config.GameProvider}).";
-				_logger.Warning($"BLSEInstaller: {error}");
+				Log.Warning("BLSEInstaller: {ErrorMessage}", error);
 				return BLSEInstallResult.Fail(error);
 			}
 
@@ -132,12 +130,13 @@
 			// For all others: GameFolder/bin/<platformBinName>
 			string targetBinDir = ResolveGameBinPath(gameFolderPath, platformBinName, config.GameProvider);
 
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("BLSEInstaller: Resolved bin paths.", new { SourceBinDir = sourceBinDir, TargetBinDir = targetBinDir });
-			}
+			Log.Debug(
+				"BLSEInstaller: Resolved source bin {SourceBinDirectory} and target bin {TargetBinDirectory}.",
+				sourceBinDir,
+				targetBinDir);
 			if (!Directory.Exists(targetBinDir)) {
 				string error = $"Game bin directory not found at '{targetBinDir}'. Please verify your game installation.";
-				_logger.Warning($"BLSEInstaller: {error}");
+				Log.Warning("BLSEInstaller: {ErrorMessage}", error);
 				return BLSEInstallResult.Fail(error);
 			}
 
@@ -145,40 +144,49 @@
 				// Step 1: Unblock all BLSE files in the temp source folder before copying.
 				// Strips Zone.Identifier ADS from .exe, .dll, and .config files so they
 				// arrive in the game bin already clean — no secondary unblock pass needed.
-				_logger.Info($"BLSEInstaller: Unblocking BLSE files in temp source '{sourceBinDir}'...");
+				Log.Information("BLSEInstaller: Unblocking BLSE files in temporary source {SourceBinDirectory}.", sourceBinDir);
 				UnblockResult unblockResult = await DLLUnblocker.UnblockBLSEFilesAsync(sourceBinDir, token);
-				_logger.Info($"BLSEInstaller: Unblock complete — {unblockResult.UnblockedCount} file(s) unblocked, {unblockResult.FailedCount} failed.");
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("BLSEInstaller: Unblock summary.", new { Unblocked = unblockResult.UnblockedCount, Failed = unblockResult.FailedCount });
-				}
+				Log.Information(
+					"BLSEInstaller: Unblock complete — {UnblockedCount} file(s) unblocked, {FailedCount} failed.",
+					unblockResult.UnblockedCount,
+					unblockResult.FailedCount);
+				Log.Debug(
+					"BLSEInstaller: Unblock summary — unblocked: {UnblockedCount}; failed: {FailedCount}.",
+					unblockResult.UnblockedCount,
+					unblockResult.FailedCount);
 
 				// Step 2: Copy all unblocked files into the game bin folder
-				_logger.Info($"BLSEInstaller: Copying BLSE files from '{sourceBinDir}' to '{targetBinDir}'...");
+				Log.Information(
+					"BLSEInstaller: Copying BLSE files from {SourceBinDirectory} to {TargetBinDirectory}.",
+					sourceBinDir,
+					targetBinDir);
 				int filesCopied = await Task.Run(() => CopyBinFiles(sourceBinDir, targetBinDir, token), token);
-				_logger.Info($"BLSEInstaller: Copied {filesCopied} file(s) to '{targetBinDir}'.");
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("BLSEInstaller: Copy complete.", new { FilesCopied = filesCopied, TargetBinDir = targetBinDir });
-				}
+				Log.Information(
+					"BLSEInstaller: Copied {FilesCopied} file(s) to {TargetBinDirectory}.",
+					filesCopied,
+					targetBinDir);
+				Log.Debug(
+					"BLSEInstaller: Copy complete; {FilesCopied} file(s) copied to {TargetBinDirectory}.",
+					filesCopied,
+					targetBinDir);
 
 				// Step 3: Auto-set the BLSE exe path in config
 				string blseExePath = Path.Combine(targetBinDir, _blseStandaloneExeName);
 				if (File.Exists(blseExePath)) {
 					config.BLSEExePath = blseExePath;
-					_logger.Info($"BLSEInstaller: Auto-configured BLSEExePath to '{blseExePath}'.");
-					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-						_logger.Debug("BLSEInstaller: BLSE exe configured.", new { BlseExePath = blseExePath });
-					}
+					Log.Information("BLSEInstaller: Auto-configured BLSEExePath to {BlseExePath}.", blseExePath);
+					Log.Debug("BLSEInstaller: BLSE executable configured at {BlseExePath}.", blseExePath);
 				}
 
 				string successMessage = $"BLSE installed to game bin folder. ({filesCopied} file(s) copied)";
-				_logger.Info($"BLSEInstaller: {successMessage}");
+				Log.Information("BLSEInstaller: {SuccessMessage}", successMessage);
 				return BLSEInstallResult.Ok(successMessage);
 
 			} catch (OperationCanceledException) {
 				throw;
 			} catch (Exception ex) {
 				string error = $"Failed to install BLSE: {ex.Message}";
-				_logger.Error(ex, $"BLSEInstaller: {error}");
+				Log.Error(ex, "BLSEInstaller: Failed to install BLSE.");
 				return BLSEInstallResult.Fail(error);
 			}
 		}
@@ -218,23 +226,28 @@
 				string[] candidates = Directory.GetDirectories(
 					extractedDir, platformBinName, SearchOption.AllDirectories);
 
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("BLSEInstaller: Searching extracted dirs.", new { ExtractedDir = extractedDir, PlatformBinName = platformBinName, CandidateCount = candidates.Length });
-				}
+				Log.Debug(
+					"BLSEInstaller: Searching {CandidateCount} candidate directories under {ExtractedDirectory} for {PlatformBinName}.",
+					candidates.Length,
+					extractedDir,
+					platformBinName);
 				foreach (string candidate in candidates) {
 					if (File.Exists(Path.Combine(candidate, _blseStandaloneExeName))) {
-						if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-							_logger.Debug("BLSEInstaller: Found platform bin.", new { Candidate = candidate });
-						}
+						Log.Debug("BLSEInstaller: Found platform bin at {CandidateDirectory}.", candidate);
 						return candidate;
 					}
 				}
 			} catch (Exception ex) {
-				_logger.Warning(
-					$"BLSEInstaller: Error searching for '{platformBinName}' in extracted archive: {ex.Message}");
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("BLSEInstaller: Search failed.", new { ExtractedDir = extractedDir, PlatformBinName = platformBinName }, ex);
-				}
+				Log.Warning(
+					ex,
+					"BLSEInstaller: Error searching for {PlatformBinName} in extracted archive {ExtractedDirectory}.",
+					platformBinName,
+					extractedDir);
+				Log.Debug(
+					ex,
+					"BLSEInstaller: Search failed in {ExtractedDirectory} for {PlatformBinName}.",
+					extractedDir,
+					platformBinName);
 			}
 			return null;
 		}
@@ -249,9 +262,11 @@
 			string[] files = Directory.GetFiles(sourceDir);
 			int count = 0;
 
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("BLSEInstaller: Copying bin files.", new { SourceDir = sourceDir, TargetDir = targetDir, FileCount = files.Length });
-			}
+			Log.Debug(
+				"BLSEInstaller: Copying {FileCount} bin files from {SourceDirectory} to {TargetDirectory}.",
+				files.Length,
+				sourceDir,
+				targetDir);
 			foreach (string sourceFile in files) {
 				token.ThrowIfCancellationRequested();
 				string fileName = Path.GetFileName(sourceFile);

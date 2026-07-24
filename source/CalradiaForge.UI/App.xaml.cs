@@ -25,6 +25,7 @@ public partial class App : Application, IApplicationLifetime {
 	private ServiceProvider? _provider;
 	private Task? _committedLifecycleTask;
 	private int _providerDisposed;
+	private int _serilogOperational;
 
 	public App() {
 		InitializeComponent();
@@ -47,6 +48,7 @@ public partial class App : Application, IApplicationLifetime {
 
 			ApplicationStartupCoordinator startup =
 				_provider.GetRequiredService<ApplicationStartupCoordinator>();
+			Volatile.Write(ref _serilogOperational, 1);
 			bool shellStarted = await startup.StartAsync();
 			if (!shellStarted) {
 				await StartCommittedLifecycleAsync(
@@ -102,7 +104,11 @@ public partial class App : Application, IApplicationLifetime {
 				}
 			}
 		} catch (Exception ex) {
-			Debug.WriteLine($"[App] Operating-system shutdown preparation failed: {ex}");
+			if (IsSerilogOperational) {
+				Log.Error(ex, "Operating-system shutdown preparation failed.");
+			} else {
+				Debug.WriteLine($"[App] Operating-system shutdown preparation failed: {ex}");
+			}
 		} finally {
 			// SessionEnding is synchronous. Do not cancel Windows logoff/shutdown to await
 			// the ordinary async lifecycle; OnExit performs fallback provider disposal.
@@ -114,6 +120,7 @@ public partial class App : Application, IApplicationLifetime {
 		// Normal shutdown disposes asynchronously before calling Application.Shutdown.
 		// This synchronous path is a last-resort fallback only.
 		if (Interlocked.Exchange(ref _providerDisposed, 1) == 0) {
+			Volatile.Write(ref _serilogOperational, 0);
 			try {
 				_provider?.Dispose();
 			} catch (Exception ex) {
@@ -214,6 +221,7 @@ public partial class App : Application, IApplicationLifetime {
 			return;
 		}
 
+		Volatile.Write(ref _serilogOperational, 0);
 		ServiceProvider? provider = _provider;
 		_provider = null;
 		if (provider is not null) {
@@ -233,7 +241,7 @@ public partial class App : Application, IApplicationLifetime {
 
 	private async Task HandleStartupFailureAsync(Exception exception) {
 		try {
-			if (_provider is not null) {
+			if (IsSerilogOperational) {
 				Log.Fatal(exception, "Fatal application startup failure.");
 				ShowFatalErrorOnUiThread("CalradiaForge could not start and will now close.");
 				await StartCommittedLifecycleAsync(
@@ -246,7 +254,9 @@ public partial class App : Application, IApplicationLifetime {
 			Debug.WriteLine($"[App] Controlled startup cleanup failed: {cleanupException}");
 		}
 
-		Logger.Instance.Error(exception, "App: Fatal failure before provider/logger availability.");
+		EmergencyStartupLogWriter.TryWrite(
+			exception,
+			"Fatal application startup failure before the Serilog pipeline became operational.");
 		MessageBox.Show(
 			"CalradiaForge could not initialize and will now close.",
 			"CalradiaForge Fatal Error",
@@ -300,7 +310,13 @@ public partial class App : Application, IApplicationLifetime {
 		DispatcherUnhandledExceptionEventArgs e) {
 		e.Handled = true;
 		try {
-			Log.Fatal(e.Exception, "Fatal WPF dispatcher exception.");
+			if (IsSerilogOperational) {
+				Log.Fatal(e.Exception, "Fatal WPF dispatcher exception.");
+			} else {
+				EmergencyStartupLogWriter.TryWrite(
+					e.Exception,
+					"Fatal WPF dispatcher exception before the Serilog pipeline became operational.");
+			}
 			ShowFatalErrorOnUiThread("CalradiaForge encountered a fatal error and will close.");
 			await StartCommittedLifecycleAsync(
 				ShutdownReason.FatalDispatcher,
@@ -312,9 +328,15 @@ public partial class App : Application, IApplicationLifetime {
 		}
 	}
 
-	private static void OnUnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e) {
+	private void OnUnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e) {
 		try {
-			Log.Error(e.Exception, "Unobserved task exception.");
+			if (IsSerilogOperational) {
+				Log.Error(e.Exception, "Unobserved task exception.");
+			} else if (Volatile.Read(ref _providerDisposed) == 0) {
+				EmergencyStartupLogWriter.TryWrite(
+					e.Exception,
+					"Unobserved task exception before the Serilog pipeline became operational.");
+			}
 		} catch {
 			Debug.WriteLine($"[App] Unobserved task exception: {e.Exception}");
 		} finally {
@@ -326,7 +348,13 @@ public partial class App : Application, IApplicationLifetime {
 		Exception exception = e.ExceptionObject as Exception
 			?? new InvalidOperationException("AppDomain raised a non-Exception failure object.");
 		try {
-			Log.Fatal(exception, "Unhandled AppDomain exception. IsTerminating={IsTerminating}.", e.IsTerminating);
+			if (IsSerilogOperational) {
+				Log.Fatal(exception, "Unhandled AppDomain exception. IsTerminating={IsTerminating}.", e.IsTerminating);
+			} else if (Volatile.Read(ref _providerDisposed) == 0) {
+				EmergencyStartupLogWriter.TryWrite(
+					exception,
+					$"Unhandled AppDomain exception before the Serilog pipeline became operational. IsTerminating={e.IsTerminating}.");
+			}
 		} catch {
 			Debug.WriteLine($"[App] AppDomain unhandled exception: {exception}");
 		}
@@ -336,4 +364,8 @@ public partial class App : Application, IApplicationLifetime {
 				() => RequestShutdownAsync(ShutdownReason.FatalStartup));
 		}
 	}
+
+	private bool IsSerilogOperational =>
+		Volatile.Read(ref _serilogOperational) != 0
+		&& Volatile.Read(ref _providerDisposed) == 0;
 }

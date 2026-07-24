@@ -10,7 +10,6 @@
 	using CalradiaForge.Core.Infra.Config;
 	using CalradiaForge.Core.Infra.GamePlatform;
 	using CalradiaForge.Core.Infra.Localization;
-	using CalradiaForge.Core.Infra.Logging;
 	using CalradiaForge.Core.Infra.Mods;
 	using CalradiaForge.Core.Infra.Paths;
 	using CalradiaForge.Core.Models;
@@ -19,6 +18,7 @@
 	using CalradiaForge.UI.Toasts;
 
 	using Microsoft.Win32;
+	using Serilog;
 
 	/// <summary>
 	/// Settings page with tabbed sections for General, Game Configuration,
@@ -33,7 +33,6 @@
 		private readonly GameDetectionService _gameDetectionService;
 		private readonly ToastService _toasts;
 		private readonly IApplicationLifetime _applicationLifetime;
-		private readonly Logger _logger = Logger.Instance;
 		private string _gameFolderPath = string.Empty;
 		private string _gameLauncherFilePath = string.Empty;
 		private string _steamWorkshopFolderPath = string.Empty;
@@ -115,9 +114,7 @@
 			LoadUnblockStatus();
 			SetVersionText();
 			PopulateLanguageComboBox();
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("SettingsPage: Initialized.", new { GameProvider = _config.GameProvider.ToString() });
-			}
+			Log.Debug("SettingsPage: Initialized for game provider {GameProvider}.", _config.GameProvider);
 		}
 		#endregion
 
@@ -174,15 +171,13 @@
 
 			// Debug mode toggle
 			DebugModeToggle.IsChecked = _loggingSettings.DebugMode;
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("SettingsPage: Loaded current values.", new {
-					GameFolderPath,
-					GameLauncherFilePath,
-					SteamWorkshopFolderPath,
-					BLSEExePath,
-					DebugMode = _loggingSettings.DebugMode
-				});
-			}
+			Log.Debug(
+				"SettingsPage: Loaded current values: game folder {GameFolderPath}, launcher {GameLauncherFilePath}, Workshop folder {SteamWorkshopFolderPath}, BLSE executable {BLSEExePath}, debug mode {DebugMode}.",
+				GameFolderPath,
+				GameLauncherFilePath,
+				SteamWorkshopFolderPath,
+				BLSEExePath,
+				_loggingSettings.DebugMode);
 		}
 
 		/// <summary>
@@ -205,9 +200,10 @@
 			LanguageComboBox.SelectedIndex = selectedIndex;
 
 			LanguageComboBox.SelectionChanged += LanguageComboBox_SelectionChanged;
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("SettingsPage: Populated languages.", new { Count = Translator.AvailableLanguages.Count, SelectedIndex = selectedIndex });
-			}
+			Log.Debug(
+				"SettingsPage: Populated {LanguageCount} languages with selected index {SelectedIndex}.",
+				Translator.AvailableLanguages.Count,
+				selectedIndex);
 		}
 
 		/// <summary>
@@ -232,9 +228,9 @@
 					WorkshopPathSection.Visibility = Visibility.Visible;
 					break;
 			}
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("SettingsPage: Updated path section visibility.", new { GameProvider = _config.GameProvider.ToString() });
-			}
+			Log.Debug(
+				"SettingsPage: Updated path section visibility for game provider {GameProvider}.",
+				_config.GameProvider);
 		}
 
 		/// <summary>
@@ -245,15 +241,11 @@
 			if (GamePathValidator.ValidateGameFolder(_config.GameFolderPath)) {
 				GameFolderValidation.Text = "✓ Valid Bannerlord installation detected.";//this needs a translation string property
 				GameFolderValidation.Style = (Style)FindResource("SettingsValidationOk");
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("SettingsPage: Game folder valid.", new { GameFolderPath = _config.GameFolderPath });
-				}
+				Log.Debug("SettingsPage: Game folder {GameFolderPath} is valid.", _config.GameFolderPath);
 			} else {
 				GameFolderValidation.Text = "✗ Invalid Bannerlord installation.";//this needs a translation string property
 				GameFolderValidation.Style = (Style)FindResource("SettingsValidationError");
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("SettingsPage: Game folder invalid.", new { GameFolderPath = _config.GameFolderPath });
-				}
+				Log.Debug("SettingsPage: Game folder {GameFolderPath} is invalid.", _config.GameFolderPath);
 			}
 		}
 
@@ -267,21 +259,15 @@
 				&& GamePathValidator.ValidateGameExecutable(_config.BLSEExePath)) {
 				BLSEValidation.Text = "✓ BLSE executable found.";//this needs a translation string property
 				BLSEValidation.Style = (Style)FindResource("SettingsValidationOk");
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("SettingsPage: BLSE path valid.", new { BLSEExePath = _config.BLSEExePath });
-				}
+				Log.Debug("SettingsPage: BLSE executable path {BLSEExePath} is valid.", _config.BLSEExePath);
 			} else if (string.IsNullOrWhiteSpace(_config.BLSEExePath)) {
 				BLSEValidation.Text = "Not configured — optional. Select if you use BLSE mods.";//this needs a translation string property
 				BLSEValidation.Style = (Style)FindResource("SettingsValidationOk");
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("SettingsPage: BLSE path not configured.");
-				}
+				Log.Debug("SettingsPage: BLSE path is not configured.");
 			} else {
 				BLSEValidation.Text = "✗ The selected BLSE executable was not found.";//this needs a translation string property
 				BLSEValidation.Style = (Style)FindResource("SettingsValidationError");
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("SettingsPage: BLSE path invalid.", new { BLSEExePath = _config.BLSEExePath });
-				}
+				Log.Debug("SettingsPage: BLSE executable path {BLSEExePath} is invalid.", _config.BLSEExePath);
 			}
 		}
 
@@ -326,9 +312,10 @@
 			}
 			if (LanguageComboBox.SelectedItem is LanguageOption selected) {
 				Translator.SetLanguage(selected.Code);
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("SettingsPage: Language selection changed.", new { Code = selected.Code, DisplayName = selected.DisplayName });
-				}
+				Log.Debug(
+					"SettingsPage: Language selection changed to {LanguageCode} ({LanguageDisplayName}).",
+					selected.Code,
+					selected.DisplayName);
 			}
 		}
 
@@ -347,9 +334,9 @@
 			} else {
 				_config.ModpackStartupMode = ModpackStartupMode.LastUsed;
 			}
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("SettingsPage: Modpack startup mode changed.", new { Mode = _config.ModpackStartupMode.ToString() });
-			}
+			Log.Debug(
+				"SettingsPage: Modpack startup mode changed to {ModpackStartupMode}.",
+				_config.ModpackStartupMode);
 		}
 
 		/// <summary>
@@ -366,7 +353,9 @@
 			}
 
 			_loggingSettings.DebugMode = enabled;
-			_logger.Info($"SettingsPage: DebugMode changed to {enabled}; restart required.");
+			Log.Information(
+				"SettingsPage: DebugMode changed to {DebugMode}; restart required.",
+				enabled);
 			await _applicationLifetime.RequestRestartAsync(RestartReason.DebugModeChanged);
 		}
 
@@ -386,7 +375,7 @@
 			string selectedPath = dialogWindow.FolderName;
 
 			if (!_gameDetectionService.ApplyManualGameFolder(_config, selectedPath)) {
-				_logger.Warning("SettingsPage: Game folder selection was rejected by the detection workflow.");
+				Log.Warning("SettingsPage: Game folder selection was rejected by the detection workflow.");
 				_toasts.Show(new ToastRequest {
 					Title = "Invalid Game Folder",
 					Message = "Select a valid Bannerlord installation containing the standard launcher executable.",
@@ -406,9 +395,7 @@
 			}
 			UpdateGameFolderValidation();
 			UpdateBLSEValidation();
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("SettingsPage: Game folder selected.", new { GameFolderPath = selectedPath });
-			}
+			Log.Debug("SettingsPage: Game folder {GameFolderPath} selected.", selectedPath);
 		}
 
 		/// <summary>
@@ -428,7 +415,7 @@
 			selectedPath = dialogWindow.FileName;
 
 			if (!GamePathValidator.ValidateGameExecutable(selectedPath)) {
-				_logger.Warning($"SettingsPage: Executable validation failed.");
+				Log.Warning("SettingsPage: Executable validation failed.");
 				_toasts.Show(new ToastRequest {
 					Title = "Invalid Executable",
 					Message = "Please select a valid Bannerlord executable.",
@@ -439,9 +426,7 @@
 
 			_config.GameLauncherFilePath = selectedPath;
 			GameLauncherFilePath = selectedPath;
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("SettingsPage: Game executable selected.", new { GameLauncherFilePath = selectedPath });
-			}
+			Log.Debug("SettingsPage: Game executable {GameLauncherFilePath} selected.", selectedPath);
 		}
 
 		/// <summary>
@@ -458,7 +443,7 @@
 			string selectedPath = dialogWindow.FolderName;
 
 			if (!_gameDetectionService.ApplyManualSteamWorkshopFolder(_config, selectedPath)) {
-				_logger.Warning("SettingsPage: Workshop folder selection was rejected by the detection workflow.");
+				Log.Warning("SettingsPage: Workshop folder selection was rejected by the detection workflow.");
 				_toasts.Show(new ToastRequest {
 					Title = "Invalid Workshop Folder",
 					Message = "Select a valid Bannerlord Workshop folder for the current Steam installation.",
@@ -468,9 +453,7 @@
 			}
 
 			SteamWorkshopFolderPath = _config.SteamWorkshopFolderPath;
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("SettingsPage: Workshop folder selected.", new { SteamWorkshopFolderPath = selectedPath });
-			}
+			Log.Debug("SettingsPage: Workshop folder {SteamWorkshopFolderPath} selected.", selectedPath);
 		}
 
 		/// <summary>
@@ -490,7 +473,7 @@
 			string selectedPath = dialogWindow.FileName;
 
 			if (!GamePathValidator.ValidateGameExecutable(selectedPath)) {
-				_logger.Warning($"SettingsPage: BLSE executable validation failed.");
+				Log.Warning("SettingsPage: BLSE executable validation failed.");
 				_toasts.Show(new ToastRequest {
 					Title = "Invalid BLSE Executable",
 					Message = "Please select a valid BLSE standalone executable.",
@@ -503,10 +486,8 @@
 			_config.BLSEExePath = selectedPath;
 			BLSEExePath = selectedPath;
 			UpdateBLSEValidation();
-			_logger.Info($"SettingsPage: BLSE executable set to '{selectedPath}'");
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("SettingsPage: BLSE executable selected.", new { BLSEExePath = selectedPath });
-			}
+			Log.Information("SettingsPage: BLSE executable set to {BLSEExePath}.", selectedPath);
+			Log.Debug("SettingsPage: BLSE executable {BLSEExePath} selected.", selectedPath);
 		}
 
 		/// <summary>
@@ -514,13 +495,11 @@
 		/// and refreshes all displayed paths, visibility, and BLSE validation.
 		/// </summary>
 		private void RedetectGame_Click(object sender, RoutedEventArgs e) {
-			_logger.Info("SettingsPage: Re-detecting game installation...");
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("SettingsPage: Starting game detection.", new {
-					GameFolderPath = _config.GameFolderPath,
-					GameProvider = _config.GameProvider.ToString()
-				});
-			}
+			Log.Information("SettingsPage: Re-detecting game installation.");
+			Log.Debug(
+				"SettingsPage: Starting game detection from game folder {GameFolderPath} and provider {GameProvider}.",
+				_config.GameFolderPath,
+				_config.GameProvider);
 			GameProvider provider = _gameDetectionService.RedetectGame(_config);
 
 			GameFolderPath = _config.GameFolderPath;
@@ -531,16 +510,16 @@
 			UpdatePathSectionVisibility();
 			UpdateGameFolderValidation();
 			UpdateBLSEValidation();
-			_logger.Info($"SettingsPage: Manual detection complete. Platform: {_config.GameProvider}");
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("SettingsPage: Detection results.", new {
-					GameFolderPath = _config.GameFolderPath,
-					GameLauncherFilePath = _config.GameLauncherFilePath,
-					SteamWorkshopFolderPath = _config.SteamWorkshopFolderPath,
-					BLSEExePath = _config.BLSEExePath,
-					GameProvider = _config.GameProvider.ToString()
-				});
-			}
+			Log.Information(
+				"SettingsPage: Manual detection completed for platform {GameProvider}.",
+				_config.GameProvider);
+			Log.Debug(
+				"SettingsPage: Detection results: game folder {GameFolderPath}, launcher {GameLauncherFilePath}, Workshop folder {SteamWorkshopFolderPath}, BLSE executable {BLSEExePath}, provider {GameProvider}.",
+				_config.GameFolderPath,
+				_config.GameLauncherFilePath,
+				_config.SteamWorkshopFolderPath,
+				_config.BLSEExePath,
+				_config.GameProvider);
 
 			bool detected = provider != GameProvider.ManualConfiguration
 				&& GamePathValidator.ValidateGameFolder(_config.GameFolderPath);
@@ -580,7 +559,7 @@
 		/// </summary>
 		private async void UnblockDlls_Click(object sender, RoutedEventArgs e) {
 			if (!GamePathValidator.ValidateGameFolder(_config.GameFolderPath)) {
-				_logger.Warning($"SettingsPage: Cannot unblock DLLs - Invalid game folder.");
+				Log.Warning("SettingsPage: Cannot unblock DLLs because the game folder is invalid.");
 				_toasts.Show(new ToastRequest {
 					Title = "Cannot Unblock DLLs",
 					Message = "Invalid game folder.",
@@ -609,14 +588,10 @@
 					Message = summary,
 					Severity = ToastSeverity.Success
 				});
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("SettingsPage: Unblock summary.", new { Summary = summary });
-				}
+				Log.Debug("SettingsPage: DLL unblock summary: {UnblockSummary}", summary);
 			} catch (Exception ex) {
-				_logger.Error(ex, "SettingsPage: Unblock operation failed.");
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("SettingsPage: Unblock failed.", ex);
-				}
+				Log.Error(ex, "SettingsPage: Unblock operation failed.");
+				Log.Debug(ex, "SettingsPage: Unblock failed.");
 				UnblockResultText.Text = $"Result:  Error - {ex.Message}"; //this needs a translation string property combined with result
 				_toasts.Show(new ToastRequest {
 					Title = "Unblock Failed",
@@ -645,9 +620,7 @@
 					Severity = ToastSeverity.Error
 				});
 			}
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("SettingsPage: Clear mod cache.", new { Success = success });
-			}
+			Log.Debug("SettingsPage: Clear mod cache completed with success {Success}.", success);
 		}
 
 		/// <summary>

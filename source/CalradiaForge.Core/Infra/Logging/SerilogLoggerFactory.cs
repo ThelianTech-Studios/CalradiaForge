@@ -47,10 +47,6 @@ public sealed class SerilogLoggerFactory {
 			throw new InvalidOperationException("The Serilog logger factory can create only one logger instance.");
 		}
 
-		// Phase 6.C removes this compatibility assignment with the legacy logger callers.
-		Logger.Instance.MinimumLevel = _loggingSettings.DebugMode
-			? Logger.LogLevel.Debug
-			: Logger.LogLevel.Info;
 		_logFileLifecycle.PrepareForStartup();
 		var formatter = new SerilogTextFormatter();
 		var configuration = new LoggerConfiguration()

@@ -2,7 +2,8 @@
 	using System;
 	using System.Reflection;
 
-	using CalradiaForge.Core.Infra.Logging;
+	using Serilog;
+	using Serilog.Events;
 
 	/// <summary>
 	/// Provides resolved application paths and ensures required folders exist.
@@ -124,36 +125,40 @@
 		/// <summary>
 		/// Logs resolved paths with creation metadata.
 		/// </summary>
-		/// <param name="logger">The logger instance used for logging.</param>
-		public static void LogResolvedPaths(Logger logger) {
-			if (logger.MinimumLevel != Logger.LogLevel.Debug) {
+		public static void LogResolvedPaths() {
+			if (!Log.IsEnabled(LogEventLevel.Debug)) {
 				return;
 			}
-			LogResolvedPath(logger, _configDirectory.Value);
-			LogResolvedPath(logger, _logsDirectory.Value);
-			LogResolvedPath(logger, _modpacksDirectory.Value);
-			LogResolvedPath(logger, _dataDirectory.Value);
-			LogResolvedPath(logger, _languagesDirectory.Value);
-			LogResolvedPath(logger, _downloadsDirectory.Value);
-			LogResolvedPath(logger, _downloadsMetadataDirectory.Value);
-			LogResolvedHiddenPath(logger, _extractionDirectory.Value);
+			LogResolvedPath(_configDirectory.Value);
+			LogResolvedPath(_logsDirectory.Value);
+			LogResolvedPath(_modpacksDirectory.Value);
+			LogResolvedPath(_dataDirectory.Value);
+			LogResolvedPath(_languagesDirectory.Value);
+			LogResolvedPath(_downloadsDirectory.Value);
+			LogResolvedPath(_downloadsMetadataDirectory.Value);
+			LogResolvedHiddenPath(_extractionDirectory.Value);
 
 		}
 		/// <summary>
 		/// Methods for logging a resolved directory path with creation metadata. Supports regular directories.
 		/// </summary>
-		/// <param name="logger">The logger instance to use for logging.</param>
 		/// <param name="directory">The resolved directory to log.</param>
-		private static void LogResolvedPath(Logger logger, ResolvedDirectory directory) {
-			logger.Debug("AppPaths: Resolved path.", new { directory.Path, directory.Created });
+		private static void LogResolvedPath(ResolvedDirectory directory) {
+			Log.Debug(
+				"AppPaths: Resolved path. Path={Path} Created={Created}",
+				directory.Path,
+				directory.Created);
 		}
 		/// <summary>
 		/// Methods for logging a resolved directory path with creation metadata. Supports hidden directories.
 		/// </summary>
-		/// <param name="logger">The logger instance to use for logging.</param>
 		/// <param name="directory">The resolved hidden directory to log.</param>
-		private static void LogResolvedHiddenPath(Logger logger, ResolvedHiddenDirectory directory) {
-			logger.Debug("AppPaths: Resolved hidden path.", new { directory.Path, directory.Created, directory.Hidden });
+		private static void LogResolvedHiddenPath(ResolvedHiddenDirectory directory) {
+			Log.Debug(
+				"AppPaths: Resolved hidden path. Path={Path} Created={Created} Hidden={Hidden}",
+				directory.Path,
+				directory.Created,
+				directory.Hidden);
 		}
 		#endregion
 

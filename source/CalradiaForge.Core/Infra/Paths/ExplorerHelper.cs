@@ -3,7 +3,7 @@
 	using System.Diagnostics;
 	using System.IO;
 
-	using CalradiaForge.Core.Infra.Logging;
+	using Serilog;
 
 	/// <summary>
 	/// Opens folders and URLs via the OS shell.
@@ -11,8 +11,6 @@
 	/// Defensively ensures directories exist before opening.
 	/// </summary>
 	public static class ExplorerHelper {
-		private static readonly Logger _logger = Logger.Instance;
-
 		/// <summary>
 		/// Opens a folder in Windows Explorer.
 		/// Creates the directory if it does not exist.
@@ -21,7 +19,7 @@
 		/// <returns><c>true</c> when the folder was opened successfully.</returns>
 		public static bool OpenFolder(string folderPath) {
 			if (string.IsNullOrWhiteSpace(folderPath)) {
-				_logger.Warning("ExplorerHelper: Cannot open folder — path is null or empty.");
+				Log.Warning("ExplorerHelper: Cannot open folder — path is null or empty.");
 				return false;
 			}
 			try {
@@ -35,7 +33,7 @@
 				});
 				return true;
 			} catch (Exception ex) {
-				_logger.Error(ex, $"ExplorerHelper: Failed to open folder '{folderPath}'");
+				Log.Error(ex, "ExplorerHelper: Failed to open folder {FolderPath}", folderPath);
 				return false;
 			}
 		}
@@ -47,7 +45,7 @@
 		/// <returns><c>true</c> when the URL was opened successfully.</returns>
 		public static bool OpenUrl(string url) {
 			if (string.IsNullOrWhiteSpace(url)) {
-				_logger.Warning("ExplorerHelper: Cannot open URL — value is null or empty.");
+				Log.Warning("ExplorerHelper: Cannot open URL — value is null or empty.");
 				return false;
 			}
 			try {
@@ -57,7 +55,7 @@
 				});
 				return true;
 			} catch (Exception ex) {
-				_logger.Error(ex, $"ExplorerHelper: Failed to open URL '{url}'");
+				Log.Error(ex, "ExplorerHelper: Failed to open URL {Url}", url);
 				return false;
 			}
 		}

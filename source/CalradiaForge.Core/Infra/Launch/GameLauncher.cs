@@ -6,9 +6,10 @@
 	using System.Threading.Tasks;
 
 	using CalradiaForge.Core.Infra.Config;
-	using CalradiaForge.Core.Infra.Logging;
 	using CalradiaForge.Core.Infra.Paths;
 	using CalradiaForge.Core.Models;
+
+	using Serilog;
 
 
 
@@ -34,7 +35,6 @@
 		private const int _steamPollIntervalMs = 1000;
 		private const int _steamMaxWaitMs = 60000;
 		private readonly AppSettings _config;
-		private readonly Logger _logger = Logger.Instance;
 
 		/// <summary>
 		/// Initializes a new launcher using the provided configuration.
@@ -55,50 +55,44 @@
 		public bool CanLaunch(out string error) {
 			if (_config.GameProvider == GameProvider.NotInitialized) {
 				error = "Game platform not configured. Please check your Settings.";
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("GameLauncher: Game provider not initialized.");
-				}
+				Log.Debug("GameLauncher: Game provider not initialized.");
 				return false;
 			}
 
 			if (_config.GameProvider == GameProvider.EpicGames) {
 				error = "Epic Games requires authentication through the Epic launcher. " +
 					"Your load order is ready — launch Bannerlord through the Epic Games Store.";
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("GameLauncher: Epic launch blocked.");
-				}
+				Log.Debug("GameLauncher: Epic launch blocked.");
 				return false;
 			}
 
 			if (_config.GameProvider == GameProvider.GamePass) {
 				error = "GamePass requires Xbox account login through the Xbox app. " +
 					"Your load order is ready — launch Bannerlord through the Xbox app.";
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("GameLauncher: GamePass launch blocked.");
-				}
+				Log.Debug("GameLauncher: GamePass launch blocked.");
 				return false;
 			}
 
 			if (string.IsNullOrWhiteSpace(_config.GameFolderPath) || !Directory.Exists(_config.GameFolderPath)) {
 				error = "Game folder not found. Please check your Settings.";
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("GameLauncher: Game folder invalid.", new { GameFolderPath = _config.GameFolderPath });
-				}
+				Log.Debug(
+					"GameLauncher: Game folder invalid. GameFolderPath={GameFolderPath}",
+					_config.GameFolderPath);
 				return false;
 			}
 
 			if (string.IsNullOrWhiteSpace(_config.GameLauncherFilePath) || !File.Exists(_config.GameLauncherFilePath)) {
 				error = "Game executable not found. Please check your Settings.";
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("GameLauncher: Game executable invalid.", new { ExePath = _config.GameLauncherFilePath });
-				}
+				Log.Debug(
+					"GameLauncher: Game executable invalid. ExePath={ExePath}",
+					_config.GameLauncherFilePath);
 				return false;
 			}
 
 			error = string.Empty;
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("GameLauncher: Launch validation passed.", new { GameProvider = _config.GameProvider.ToString() });
-			}
+			Log.Debug(
+				"GameLauncher: Launch validation passed. GameProvider={GameProvider}",
+				_config.GameProvider);
 			return true;
 		}
 
@@ -112,15 +106,15 @@
 		public bool CanLaunchBLSE(out string error) {
 			if (string.IsNullOrWhiteSpace(_config.BLSEExePath) || !File.Exists(_config.BLSEExePath)) {
 				error = "BLSE executable not found. Please configure it in Settings → Game Config.";
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("GameLauncher: BLSE executable invalid.", new { BLSEExePath = _config.BLSEExePath });
-				}
+				Log.Debug(
+					"GameLauncher: BLSE executable invalid. BLSEExePath={BLSEExePath}",
+					_config.BLSEExePath);
 				return false;
 			}
 			error = string.Empty;
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("GameLauncher: BLSE executable validated.", new { BLSEExePath = _config.BLSEExePath });
-			}
+			Log.Debug(
+				"GameLauncher: BLSE executable validated. BLSEExePath={BLSEExePath}",
+				_config.BLSEExePath);
 			return true;
 		}
 
@@ -150,9 +144,11 @@
 				return GameLaunchResult.Fail(blseError);
 			}
 
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("GameLauncher: Launch requested.", new { Target = target.ToString(), LoadOrderCount = loadOrder.Count, GameProvider = _config.GameProvider.ToString() });
-			}
+			Log.Debug(
+				"GameLauncher: Launch requested. Target={Target} LoadOrderCount={LoadOrderCount} GameProvider={GameProvider}",
+				target,
+				loadOrder.Count,
+				_config.GameProvider);
 			// Ensure Steam is running for Steam installs before launching the game
 			if (_config.GameProvider == GameProvider.Steam) {
 				GameLaunchResult steamResult = await EnsureSteamRunningAsync();
@@ -163,15 +159,19 @@
 
 			string arguments = BuildLaunchArguments(loadOrder);
 			string exePath = ResolveExePath(target);
-			_logger.Info($"GameLauncher: Launching {target} with arguments: {arguments}");
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("GameLauncher: Launch details.", new { ExePath = exePath, Arguments = arguments });
-			}
+			Log.Information(
+				"GameLauncher: Launching {Target} with arguments: {Arguments}",
+				target,
+				arguments);
+			Log.Debug(
+				"GameLauncher: Launch details. ExePath={ExePath} Arguments={Arguments}",
+				exePath,
+				arguments);
 
 			try {
 				return LaunchExe(exePath, arguments, target);
 			} catch (Exception ex) {
-				_logger.Error($"GameLauncher: Failed to launch game.", ex);
+				Log.Error(ex, "GameLauncher: Failed to launch game.");
 				return GameLaunchResult.Fail($"Launch failed: {ex.Message}");
 			}
 		}
@@ -183,9 +183,10 @@
 			string exePath = target == LaunchTarget.BLSE
 				? _config.BLSEExePath
 				: _config.GameLauncherFilePath;
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("GameLauncher: Resolved exe path.", new { Target = target.ToString(), ExePath = exePath });
-			}
+			Log.Debug(
+				"GameLauncher: Resolved exe path. Target={Target} ExePath={ExePath}",
+				target,
+				exePath);
 			return exePath;
 		}
 
@@ -225,9 +226,10 @@
 			}
 
 			string arg = $"_MODULES_*{string.Join("*", ids)}*_MODULES_";
-			if (Logger.Instance.MinimumLevel == Logger.LogLevel.Debug) {
-				Logger.Instance.Debug("GameLauncher: Built modules argument.", new { ModuleCount = ids.Count, Argument = arg });
-			}
+			Log.Debug(
+				"GameLauncher: Built modules argument. ModuleCount={ModuleCount} Argument={Argument}",
+				ids.Count,
+				arg);
 			return arg;
 		}
 
@@ -250,10 +252,11 @@
 			}
 
 			Process.Start(startInfo);
-			_logger.Info($"GameLauncher: Launched '{exePath}' as {target} (Platform: {_config.GameProvider}).");
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("GameLauncher: Launch executed.", new { ExePath = exePath, Target = target.ToString(), GameProvider = _config.GameProvider.ToString() });
-			}
+			Log.Information(
+				"GameLauncher: Launched {ExePath} as {Target} (Platform: {GameProvider}).",
+				exePath,
+				target,
+				_config.GameProvider);
 			return GameLaunchResult.Ok($"Game launched via {_config.GameProvider} ({target}).");
 		}
 
@@ -271,14 +274,12 @@
 		/// </returns>
 		private async Task<GameLaunchResult> EnsureSteamRunningAsync() {
 			if (IsSteamRunning()) {
-				_logger.Info("GameLauncher: Steam is already running.");
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("GameLauncher: Steam check passed.");
-				}
+				Log.Information("GameLauncher: Steam is already running.");
+				Log.Debug("GameLauncher: Steam check passed.");
 				return GameLaunchResult.Ok("Steam is running.");
 			}
 
-			_logger.Info("GameLauncher: Steam is not running. Attempting to start Steam...");
+			Log.Information("GameLauncher: Steam is not running. Attempting to start Steam...");
 
 			try {
 				Process.Start(new ProcessStartInfo {
@@ -286,7 +287,7 @@
 					UseShellExecute = true
 				});
 			} catch (Exception ex) {
-				_logger.Error("GameLauncher: Failed to start Steam.", ex);
+				Log.Error(ex, "GameLauncher: Failed to start Steam.");
 				return GameLaunchResult.Fail("Failed to start Steam. Please launch Steam manually and try again.");
 			}
 
@@ -298,18 +299,17 @@
 			}
 
 			if (!IsSteamRunning()) {
-				_logger.Warning("GameLauncher: Steam did not start within the timeout period.");
+				Log.Warning("GameLauncher: Steam did not start within the timeout period.");
 				return GameLaunchResult.Fail("Steam did not start in time. Please launch Steam manually and try again.");
 			}
 
 			// Wait for Steam to fully initialize (login, overlay, API)
-			_logger.Info($"GameLauncher: Steam process detected. Waiting {_steamStartupDelayMs}ms for full initialization...");
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("GameLauncher: Steam process detected.", new { StartupDelayMs = _steamStartupDelayMs });
-			}
+			Log.Information(
+				"GameLauncher: Steam process detected. Waiting {StartupDelayMs}ms for full initialization...",
+				_steamStartupDelayMs);
 			await Task.Delay(_steamStartupDelayMs);
 
-			_logger.Info("GameLauncher: Steam is ready.");
+			Log.Information("GameLauncher: Steam is ready.");
 			return GameLaunchResult.Ok("Steam started successfully.");
 		}
 
@@ -329,9 +329,10 @@
 					process.Dispose();
 				}
 
-				if (Logger.Instance.MinimumLevel == Logger.LogLevel.Debug) {
-					Logger.Instance.Debug("GameLauncher: Steam process check.", new { Running = running, Count = steamProcesses.Length });
-				}
+				Log.Debug(
+					"GameLauncher: Steam process check. Running={Running} Count={Count}",
+					running,
+					steamProcesses.Length);
 				return running;
 			} catch {
 				// If we can't check, assume it's running to avoid blocking launch

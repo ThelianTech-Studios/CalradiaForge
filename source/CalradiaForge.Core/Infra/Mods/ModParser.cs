@@ -1,34 +1,29 @@
 ﻿namespace CalradiaForge.Core.Infra.Mods {
 	using System.Xml.Linq;
 
-	using CalradiaForge.Core.Infra.Logging;
 	using CalradiaForge.Core.Models;
+
+	using Serilog;
 
 	/// <summary>
 	/// Parses Bannerlord SubModule.xml files into module models.
 	/// </summary>
 	public sealed class ModParser {
-		private static readonly Logger _logger = Logger.Instance;
-
 		/// <summary>
 		/// Parses a SubModule.xml file and returns a populated module model.
 		/// </summary>
 		public static ModuleModel? Parse(string modXMLPath, string installPath) {
 			if (string.IsNullOrWhiteSpace(modXMLPath)) {
-				_logger.Warning($"SubModule.xml not found or path is empty: '{modXMLPath}'");
+				Log.Warning("SubModule.xml not found or path is empty: {XmlPath}.", modXMLPath);
 				return null;
 			}
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ModParser: Parsing module.", new { XmlPath = modXMLPath, InstallPath = installPath });
-			}
+			Log.Debug("ModParser: Parsing module from {XmlPath} at {InstallPath}.", modXMLPath, installPath);
 			try {
 				XDocument doc = XDocument.Load(modXMLPath);
 				XElement? moduleElement = doc.Root;
 				if (moduleElement is null || moduleElement.Name.LocalName != "Module") {
-					_logger.Warning($"Invalid SubModule.xml format: Root element is missing or not 'Module' in '{modXMLPath}'");
-					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-						_logger.Debug("ModParser: Invalid module XML structure.", new { XmlPath = modXMLPath });
-					}
+					Log.Warning("Invalid SubModule.xml format: Root element is missing or not 'Module' in {XmlPath}.", modXMLPath);
+					Log.Debug("ModParser: Invalid module XML structure in {XmlPath}.", modXMLPath);
 					return null;
 				}
 				string moduleID = GetValueAttribute(moduleElement, "Id") ?? string.Empty;
@@ -39,9 +34,13 @@
 				bool isSinglePlayer = ParseSPFlag(moduleElement);
 				List<DependenciesModulesModel> dependencies = ParseDependencies(moduleElement);
 
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("ModParser: Parsed module.", new { ModuleId = moduleID, ModuleName = moduleName, ModuleVersion = moduleVersion, IsSinglePlayer = isSinglePlayer, DependencyCount = dependencies.Count });
-				}
+				Log.Debug(
+					"ModParser: Parsed module {ModuleId} ({ModuleName}) version {ModuleVersion}; single-player: {IsSinglePlayer}; dependencies: {DependencyCount}.",
+					moduleID,
+					moduleName,
+					moduleVersion,
+					isSinglePlayer,
+					dependencies.Count);
 				return new ModuleModel {
 					ModuleId = moduleID,
 					ModuleName = moduleName,
@@ -52,10 +51,8 @@
 					DependencyModules = dependencies
 				};
 			} catch (Exception ex) {
-				_logger.Error($"Error parsing SubModule.xml with path: {modXMLPath}.", ex);
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("ModParser: Exception while parsing module.", new { XmlPath = modXMLPath }, ex);
-				}
+				Log.Error(ex, "Error parsing SubModule.xml with path {XmlPath}.", modXMLPath);
+				Log.Debug(ex, "ModParser: Exception while parsing module at {XmlPath}.", modXMLPath);
 				return null;
 			}
 		}
@@ -88,9 +85,7 @@
 			if (!string.IsNullOrWhiteSpace(spValue)) {
 				return string.Equals(spValue, "true", StringComparison.OrdinalIgnoreCase);
 			}
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ModParser: Singleplayer flag missing; defaulting to true.");
-			}
+			Log.Debug("ModParser: Singleplayer flag missing; defaulting to true.");
 			return true; // Default to true if not specified 
 		}
 		/// <summary>
@@ -108,8 +103,8 @@
 					bool hasVersionRequirement = !string.IsNullOrEmpty(depVersion);
 					if (!string.IsNullOrEmpty(depId) && seenIds.Add(depId)) {
 						dependencies.Add(new DependenciesModulesModel(depId, depVersion, isOptional, hasVersionRequirement));
-					} else if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-						_logger.Debug("ModParser: Skipping duplicate dependency.", new { DependencyId = depId });
+					} else {
+						Log.Debug("ModParser: Skipping duplicate dependency {DependencyId}.", depId);
 					}
 				}
 			}
@@ -121,14 +116,12 @@
 					bool hasVersionRequirement = !string.IsNullOrEmpty(depVersion);
 					if (!string.IsNullOrEmpty(depId) && seenIds.Add(depId)) {
 						dependencies.Add(new DependenciesModulesModel(depId, depVersion, false, hasVersionRequirement));
-					} else if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-						_logger.Debug("ModParser: Skipping duplicate legacy dependency.", new { DependencyId = depId });
+					} else {
+						Log.Debug("ModParser: Skipping duplicate legacy dependency {DependencyId}.", depId);
 					}
 				}
 			}
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ModParser: Parsed dependencies.", new { DependencyCount = dependencies.Count });
-			}
+			Log.Debug("ModParser: Parsed {DependencyCount} dependencies.", dependencies.Count);
 			return dependencies;
 		}
 	}

@@ -48,7 +48,7 @@ Provide the deterministic, UI-agnostic behavior that the WPF app consumes.
 ## Major Systems
 - Configuration: `ConfigFileManager`, `AppSettings`, `LoggingSettings`, `AppPaths`
 - Dependency registration: `CalradiaForgeCoreServiceCollectionExtensions`, `CalradiaForgeCoreOptions`
-- Logging: provider-owned `Serilog.ILogger`, `SerilogLoggerFactory`, `LogFileLifecycle`, transitional `Logger`
+- Logging: provider-owned `Serilog.ILogger`, global structured `Log.*` calls, `SerilogLoggerFactory`, `LogFileLifecycle`, and the error-only `EmergencyStartupLogWriter`
 - Localization: `TranslationService`, `TranslationManager`, `TranslationStrings`
 - Paths and platform detection: `GamePlatformDetectionResolver`, `GameDetectionService`, `StartupNotificationQueue`, `GamePathValidator`, `GameProvider`, `ISteamClientRootProvider`, `ISteamInstallationResolver`, `SteamInstallationResolver`, `SteamResolutionResult`, `EpicDetector`, `EpicManifestReader`
 - Launch: `GameLauncher`, `LaunchTarget`

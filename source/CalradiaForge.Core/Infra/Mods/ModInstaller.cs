@@ -5,8 +5,9 @@
 	using System.Threading.Tasks;
 
 	using CalradiaForge.Core.Infra.Config;
-	using CalradiaForge.Core.Infra.Logging;
 	using CalradiaForge.Core.Models;
+
+	using Serilog;
 
 	/// <summary>
 	/// Orchestrates batch mod installation from archive files.
@@ -23,7 +24,6 @@
 	/// </summary>
 	public sealed class ModInstaller {
 		private readonly AppSettings _appConfig;
-		private readonly Logger _logger = Logger.Instance;
 		private readonly SemaphoreSlim _installLock = new(1, 1);
 		private readonly object _stateLock = new();
 		private CancellationTokenSource? _cts;
@@ -95,9 +95,10 @@
 		/// <returns><c>true</c> if the game directory is valid and ready for installation.</returns>
 		public bool ValidateGameDirectory(out string errorMessage) {
 			string gameFolderPath = _appConfig.GameFolderPath;
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ModInstaller: Validating game directory.", new { GameFolderPath = gameFolderPath, ModulesPath = _appConfig.ModulesDirectoryPath });
-			}
+			Log.Debug(
+				"ModInstaller: Validating game directory {GameFolderPath} with modules path {ModulesPath}.",
+				gameFolderPath,
+				_appConfig.ModulesDirectoryPath);
 			if (string.IsNullOrWhiteSpace(gameFolderPath)) {
 				errorMessage = "Game directory has not been set. Please go to Settings and set the game directory path.";
 				return false;
@@ -112,9 +113,10 @@
 				return false;
 			}
 			errorMessage = string.Empty;
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ModInstaller: Game directory validated.", new { GameFolderPath = gameFolderPath, ModulesPath = modulesPath });
-			}
+			Log.Debug(
+				"ModInstaller: Game directory {GameFolderPath} validated with modules path {ModulesPath}.",
+				gameFolderPath,
+				modulesPath);
 			return true;
 		}
 
@@ -131,13 +133,11 @@
 			CancellationToken cancellationToken = default) {
 			ArgumentNullException.ThrowIfNull(archivePaths);
 			if (!await _installLock.WaitAsync(0, cancellationToken)) {
-				_logger.Warning("ModInstaller: Install already in progress. Ignoring duplicate request.");
+				Log.Warning("ModInstaller: Install already in progress. Ignoring duplicate request.");
 				return null;
 			}
 
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ModInstaller: Starting install batch.", new { ArchiveCount = archivePaths.Length });
-			}
+			Log.Debug("ModInstaller: Starting install batch with {ArchiveCount} archives.", archivePaths.Length);
 			CancellationTokenSource operationCancellation =
 				CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 			lock (_stateLock) {
@@ -154,9 +154,9 @@
 				summary = await Task.Run(() => InstallModsAsync(archivePaths, token), token)
 					.ConfigureAwait(false);
 			} catch (OperationCanceledException) when (token.IsCancellationRequested) {
-				_logger.Info("ModInstaller: Install batch was cancelled.");
+				Log.Information("ModInstaller: Install batch was cancelled.");
 			} catch (Exception ex) {
-				_logger.Error(ex, "ModInstaller: Unhandled exception in install batch.");
+				Log.Error(ex, "ModInstaller: Unhandled exception in install batch.");
 			} finally {
 				LastSummary = summary;
 				lock (_stateLock) {
@@ -181,7 +181,7 @@
 				cts = _cts;
 			}
 			if (cts is { IsCancellationRequested: false }) {
-				_logger.Info("ModInstaller: Cancellation requested.");
+				Log.Information("ModInstaller: Cancellation requested.");
 				try {
 					cts.Cancel();
 				} catch (ObjectDisposedException) {
@@ -214,10 +214,11 @@
 			// Build the processing queue
 			Queue<string> installQueue = new(archivePaths);
 			int totalArchives = archivePaths.Length;
-			_logger.Info($"ModInstaller: Queued {installQueue.Count} archive(s) for installation.");
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ModInstaller: Install queue prepared.", new { ArchiveCount = totalArchives, ModulesPath = modulesPath });
-			}
+			Log.Information("ModInstaller: Queued {ArchiveCount} archive(s) for installation.", installQueue.Count);
+			Log.Debug(
+				"ModInstaller: Install queue prepared with {ArchiveCount} archives for {ModulesPath}.",
+				totalArchives,
+				modulesPath);
 
 			// Batch-level tracking for cumulative extraction progress
 			DateTime batchStartUtc = DateTime.UtcNow;
@@ -239,9 +240,11 @@
 				int currentArchiveIndex = archiveIndex;
 				int archiveFilesExtracted = 0;
 
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("ModInstaller: Processing archive.", new { ArchivePath = archivePath, ArchiveIndex = currentArchiveIndex + 1, TotalArchives = totalArchives });
-				}
+				Log.Debug(
+					"ModInstaller: Processing archive {ArchivePath} ({ArchiveIndex} of {TotalArchives}).",
+					archivePath,
+					currentArchiveIndex + 1,
+					totalArchives);
 
 				// Reject unsupported archive formats before attempting extraction
 				if (!IsAcceptedArchive(archivePath)) {
@@ -251,7 +254,10 @@
 						Status = ModInstallStatus.Failed,
 						Message = $"Unsupported archive format '{ext}'. Only .zip, .rar, and .7z are currently accepted."
 					};
-					_logger.Warning($"ModInstaller: Rejected '{archiveFileName}' — unsupported format '{ext}'.");
+					Log.Warning(
+						"ModInstaller: Rejected {ArchiveFileName} — unsupported format {ArchiveExtension}.",
+						archiveFileName,
+						ext);
 					summary.Results.Add(skipped);
 					RaiseInstallProgressChanged(summary);
 					archiveIndex++;
@@ -289,10 +295,8 @@
 				archiveIndex++;
 			}
 
-			_logger.Info($"ModInstaller: Batch complete. {summary.ToSummaryString()}");
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ModInstaller: Batch complete.", new { Results = summary.Results.Count });
-			}
+			Log.Information("ModInstaller: Batch complete. {Summary}", summary.ToSummaryString());
+			Log.Debug("ModInstaller: Batch complete with {ResultCount} results.", summary.Results.Count);
 			return summary;
 		}
 
@@ -302,7 +306,7 @@
 				try {
 					handler(summary);
 				} catch (Exception ex) {
-					_logger.Error(ex, "ModInstaller: Install progress subscriber failed.");
+					Log.Error(ex, "ModInstaller: Install progress subscriber failed.");
 				}
 			}
 		}
@@ -313,7 +317,7 @@
 				try {
 					handler(progress);
 				} catch (Exception ex) {
-					_logger.Error(ex, "ModInstaller: Extraction progress subscriber failed.");
+					Log.Error(ex, "ModInstaller: Extraction progress subscriber failed.");
 				}
 			}
 		}
@@ -339,9 +343,10 @@
 				ArchiveExtractionResult extractionResult = await ModExtractor.ExtractToTempResultAsync(
 					archivePath, token, onFileExtracted);
 				tempDir = extractionResult.TempDirectory;
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("ModInstaller: Archive extracted.", new { ArchivePath = archivePath, TempDir = tempDir ?? "<null>" });
-				}
+				Log.Debug(
+					"ModInstaller: Archive {ArchivePath} extracted to {TempDirectory}.",
+					archivePath,
+					tempDir ?? "<null>");
 				if (!extractionResult.Success || tempDir is null) {
 					result.Status = ModInstallStatus.Failed;
 					result.Message = string.IsNullOrWhiteSpace(extractionResult.Message)
@@ -359,9 +364,7 @@
 				// that go into the game's bin directory, not the Modules folder.
 				if (subModuleXmlFiles.Length == 0) {
 					if (BLSEInstaller.IsBLSEArchive(tempDir)) {
-						if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-							_logger.Debug("ModInstaller: BLSE fallback triggered.", new { TempDir = tempDir });
-						}
+						Log.Debug("ModInstaller: BLSE fallback triggered for {TempDirectory}.", tempDir);
 						return await ProcessBLSEInstallAsync(tempDir, archiveFileName, token);
 					}
 
@@ -383,7 +386,7 @@
 				if (!preflight.Success || preflight.Module is null) {
 					result.Status = ModInstallStatus.Failed;
 					result.Message = preflight.Message;
-					_logger.Warning($"ModInstaller: {preflight.Message}");
+					Log.Warning("ModInstaller: {PreflightMessage}", preflight.Message);
 					return result;
 				}
 
@@ -395,23 +398,29 @@
 				result.InstalledVersion = newMod.ModuleVersion!;
 
 				string targetPath = preflight.TargetPath;
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("ModInstaller: Target module path.", new { preflight.ModuleFolderName, TargetPath = targetPath });
-				}
+				Log.Debug(
+					"ModInstaller: Target module folder {ModuleFolderName} at {TargetPath}.",
+					preflight.ModuleFolderName,
+					targetPath);
 
 				// Check if mod is already installed — version comparison
 				VersionCheckOutcome versionOutcome = CheckExistingVersion(newMod, preflight.ExistingModule);
 				result.PreviousVersion = versionOutcome.ExistingVersion;
 
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("ModInstaller: Version check outcome.", new { Action = versionOutcome.Action.ToString(), ExistingVersion = versionOutcome.ExistingVersion ?? "<none>", NewVersion = newMod.ModuleVersion });
-				}
+				Log.Debug(
+					"ModInstaller: Version check outcome {VersionAction}; existing: {ExistingVersion}; new: {NewVersion}.",
+					versionOutcome.Action,
+					versionOutcome.ExistingVersion ?? "<none>",
+					newMod.ModuleVersion);
 
 				switch (versionOutcome.Action) {
 					case VersionAction.Skip:
 						result.Status = ModInstallStatus.Skipped;
 						result.Message = $"Already installed with same or newer version ({versionOutcome.ExistingVersion}).";
-						_logger.Info($"ModInstaller: Skipped '{newMod.ModuleName}' — {result.Message}");
+						Log.Information(
+							"ModInstaller: Skipped {ModuleName} — {ResultMessage}",
+							newMod.ModuleName,
+							result.Message);
 						return result;
 
 					case VersionAction.Upgrade:
@@ -433,10 +442,16 @@
 
 				// Copy the mod root into the Modules folder
 				await Task.Run(() => CopyDirectory(modRoot, targetPath, token), token);
-				_logger.Info($"ModInstaller: {result.Status} '{newMod.ModuleName}' ({newMod.ModuleVersion}) to '{targetPath}'");
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("ModInstaller: Copy complete.", new { TargetPath = targetPath, Status = result.Status.ToString() });
-				}
+				Log.Information(
+					"ModInstaller: {InstallStatus} {ModuleName} ({ModuleVersion}) to {TargetPath}.",
+					result.Status,
+					newMod.ModuleName,
+					newMod.ModuleVersion,
+					targetPath);
+				Log.Debug(
+					"ModInstaller: Copy complete to {TargetPath} with status {InstallStatus}.",
+					targetPath,
+					result.Status);
 				return result;
 
 			} catch (OperationCanceledException) {
@@ -446,7 +461,7 @@
 			} catch (Exception ex) {
 				result.Status = ModInstallStatus.Failed;
 				result.Message = $"Error: {ex.Message}";
-				_logger.Error(ex, $"ModInstaller: Failed to install '{archiveFileName}'");
+				Log.Error(ex, "ModInstaller: Failed to install {ArchiveFileName}.", archiveFileName);
 				return result;
 			} finally {
 				// Always clean up the temp extraction directory
@@ -469,10 +484,13 @@
 			string archiveFileName,
 			CancellationToken token) {
 
-			_logger.Info($"ModInstaller: Detected BLSE archive in '{archiveFileName}'. Delegating to BLSEInstaller.");
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ModInstaller: Processing BLSE install.", new { TempDir = tempDir, ArchiveFileName = archiveFileName });
-			}
+			Log.Information(
+				"ModInstaller: Detected BLSE archive in {ArchiveFileName}. Delegating to BLSEInstaller.",
+				archiveFileName);
+			Log.Debug(
+				"ModInstaller: Processing BLSE install from {ArchiveFileName} in {TempDirectory}.",
+				archiveFileName,
+				tempDir);
 
 			BLSEInstallResult blseResult = await BLSEInstaller.InstallAsync(tempDir, _appConfig, token);
 
@@ -485,17 +503,22 @@
 			if (blseResult.Success) {
 				result.Status = ModInstallStatus.Installed;
 				result.Message = blseResult.Message;
-				_logger.Info($"BLSEInstaller: BLSE installed successfully from '{archiveFileName}'.");
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("ModInstaller: BLSE install success.", new { ArchiveFileName = archiveFileName, Message = blseResult.Message });
-				}
+				Log.Information("BLSEInstaller: BLSE installed successfully from {ArchiveFileName}.", archiveFileName);
+				Log.Debug(
+					"ModInstaller: BLSE install succeeded for {ArchiveFileName}: {ResultMessage}",
+					archiveFileName,
+					blseResult.Message);
 			} else {
 				result.Status = ModInstallStatus.Failed;
 				result.Message = blseResult.Message;
-				_logger.Warning($"BLSEInstaller: BLSE installation failed from '{archiveFileName}': {blseResult.Message}");
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("ModInstaller: BLSE install failed.", new { ArchiveFileName = archiveFileName, Message = blseResult.Message });
-				}
+				Log.Warning(
+					"BLSEInstaller: BLSE installation failed from {ArchiveFileName}: {ResultMessage}",
+					archiveFileName,
+					blseResult.Message);
+				Log.Debug(
+					"ModInstaller: BLSE install failed for {ArchiveFileName}: {ResultMessage}",
+					archiveFileName,
+					blseResult.Message);
 			}
 
 			return result;
@@ -647,9 +670,12 @@
 				return parsedNew.CompareTo(parsedExisting);
 			}
 
-			if (Logger.Instance.MinimumLevel == Logger.LogLevel.Debug) {
-				Logger.Instance.Debug("ModInstaller: Version parse fallback.", new { NewVersion = newVersion, ExistingVersion = existingVersion, CleanNew = cleanNew, CleanExisting = cleanExisting });
-			}
+			Log.Debug(
+				"ModInstaller: Version parse fallback for new version {NewVersion} ({CleanNewVersion}) and existing version {ExistingVersion} ({CleanExistingVersion}).",
+				newVersion,
+				cleanNew,
+				existingVersion,
+				cleanExisting);
 			// Fallback to string comparison if parsing fails
 			return string.Compare(cleanNew, cleanExisting, StringComparison.OrdinalIgnoreCase);
 		}
@@ -662,9 +688,10 @@
 		/// Copies a directory tree to a target path, honoring cancellation.
 		/// </summary>
 		private static void CopyDirectory(string sourceDir, string targetDir, CancellationToken token) {
-			if (Logger.Instance.MinimumLevel == Logger.LogLevel.Debug) {
-				Logger.Instance.Debug("ModInstaller: Copying directory.", new { SourceDir = sourceDir, TargetDir = targetDir });
-			}
+			Log.Debug(
+				"ModInstaller: Copying directory from {SourceDirectory} to {TargetDirectory}.",
+				sourceDir,
+				targetDir);
 			Directory.CreateDirectory(targetDir);
 
 			foreach (string file in Directory.GetFiles(sourceDir)) {
@@ -679,9 +706,10 @@
 				CopyDirectory(subDir, targetSubDir, token);
 			}
 
-			if (Logger.Instance.MinimumLevel == Logger.LogLevel.Debug) {
-				Logger.Instance.Debug("ModInstaller: Directory copy complete.", new { SourceDir = sourceDir, TargetDir = targetDir });
-			}
+			Log.Debug(
+				"ModInstaller: Directory copy complete from {SourceDirectory} to {TargetDirectory}.",
+				sourceDir,
+				targetDir);
 		}
 
 		/// <summary>
@@ -695,7 +723,7 @@
 				}
 				return !Directory.Exists(path);
 			} catch (Exception ex) {
-				Logger.Instance.Warning($"ModInstaller: Failed to delete directory '{path}': {ex.Message}");
+				Log.Warning(ex, "ModInstaller: Failed to delete directory {DirectoryPath}.", path);
 				return false;
 			}
 		}

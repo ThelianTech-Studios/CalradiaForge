@@ -5,9 +5,10 @@
 - First-run or newly introduced missing defaults are applied as one configuration update, avoiding repeated replacement of the same file during startup.
 - Existing valid empty optional settings do not trigger a startup rewrite; ordinary setting changes continue to persist immediately.
 - The shared atomic writer uses bounded retries for transient Windows sharing, lock, and replacement failures.
-- Invalid config JSON is logged and treated as an empty settings set so the typed settings facades can seed defaults without crashing normal startup.
+- Invalid config JSON is treated as an empty settings set so the typed settings facades can seed defaults without crashing normal startup.
 - `AppSettings` provides typed application settings and change notifications.
 - `LoggingSettings` owns the persisted `DebugMode` preference required before Serilog construction. It shares the same `ConfigFileManager` and `config.json`; it is not a second configuration store.
+- `ConfigFileManager` and `LoggingSettings` perform no ordinary logging during pre-Serilog bootstrap; unrecoverable bootstrap failures are diagnosed by the app-owned emergency startup writer.
 - Log archive retention is a fixed logging policy and is no longer configurable. Startup removes the retired `LogFileDaysToKeep` key when present.
 - `AppPaths` resolves and creates the app's working directories.
 - Configuration stores the resolved provider, game path, launcher path, optional Workshop path, and optional BLSE path. `GameProvider.Steam` with an empty Workshop path is valid and keeps local module scanning available.

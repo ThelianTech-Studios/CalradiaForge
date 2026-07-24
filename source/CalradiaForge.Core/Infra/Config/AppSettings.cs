@@ -4,24 +4,22 @@ namespace CalradiaForge.Core.Infra.Config {
 	using System.IO;
 
 	using CalradiaForge.Core.Infra.Launch;
-	using CalradiaForge.Core.Infra.Logging;
 	using CalradiaForge.Core.Infra.Paths;
+
+	using Serilog;
 
 	/// <summary>
 	/// Provides strongly typed access to persisted application settings.
 	/// Using string keys directly can lead to typos and makes it harder to understand what each setting is for. This class provides a clear interface for accessing configuration values, improving code readability and maintainability.
 	/// </summary>
 	public sealed class AppSettings : INotifyPropertyChanged {
-		private readonly Logger _logger = Logger.Instance;
 		private readonly ConfigFileManager _config;
 		/// <summary>
 		/// Initializes a new settings wrapper around the provided configuration store.
 		/// </summary>
 		public AppSettings(ConfigFileManager config) {
 			_config = config;
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("AppSettings: Initializing defaults.");
-			}
+			Log.Debug("AppSettings: Initializing defaults.");
 			InitDefaults();
 		}
 		#region INotifyPropertyChanged Implementation
@@ -57,12 +55,10 @@ namespace CalradiaForge.Core.Infra.Config {
 			];
 
 			IReadOnlyList<string> appliedKeys = _config.ApplyDefaults(defaults);
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("AppSettings: Default initialization complete.", new {
-					AppliedCount = appliedKeys.Count,
-					AppliedKeys = string.Join(", ", appliedKeys)
-				});
-			}
+			Log.Debug(
+				"AppSettings: Default initialization complete. AppliedCount={AppliedCount}, AppliedKeys={AppliedKeys}.",
+				appliedKeys.Count,
+				string.Join(", ", appliedKeys));
 		}
 		#endregion
 		#region Internal Config Settings
@@ -87,9 +83,10 @@ namespace CalradiaForge.Core.Infra.Config {
 				if (_config["GamePlatform"] != value.ToString()) {
 					string oldValue = _config["GamePlatform"];
 					_config["GamePlatform"] = value.ToString();
-					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-						_logger.Debug("AppSettings: GameProvider changed.", new { OldValue = oldValue, NewValue = _config["GamePlatform"] });
-					}
+					Log.Debug(
+						"AppSettings: GameProvider changed. OldValue={OldValue}, NewValue={NewValue}.",
+						oldValue,
+						_config["GamePlatform"]);
 					OnPropertyChanged(nameof(GameProvider));
 					OnPropertyChanged(nameof(IsGameFromSteam));
 				}
@@ -105,9 +102,10 @@ namespace CalradiaForge.Core.Infra.Config {
 				if (_config["Language"] != value) {
 					string oldValue = _config["Language"];
 					_config["Language"] = value;
-					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-						_logger.Debug("AppSettings: Language changed.", new { OldValue = oldValue, NewValue = value });
-					}
+					Log.Debug(
+						"AppSettings: Language changed. OldValue={OldValue}, NewValue={NewValue}.",
+						oldValue,
+						value);
 					OnPropertyChanged(nameof(Language));
 				}
 			}
@@ -121,9 +119,10 @@ namespace CalradiaForge.Core.Infra.Config {
 				if (_config["GameFolderPath"] != value) {
 					string oldValue = _config["GameFolderPath"];
 					_config["GameFolderPath"] = value;
-					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-						_logger.Debug("AppSettings: GameFolderPath changed.", new { OldValue = oldValue, NewValue = value });
-					}
+					Log.Debug(
+						"AppSettings: GameFolderPath changed. OldValue={OldValue}, NewValue={NewValue}.",
+						oldValue,
+						value);
 					OnPropertyChanged(nameof(GameFolderPath));
 					OnPropertyChanged(nameof(ModulesDirectoryPath));
 				}
@@ -138,9 +137,10 @@ namespace CalradiaForge.Core.Infra.Config {
 				if (_config["GameLauncherFilePath"] != value) {
 					string oldValue = _config["GameLauncherFilePath"];
 					_config["GameLauncherFilePath"] = value;
-					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-						_logger.Debug("AppSettings: GameLauncherFilePath changed.", new { OldValue = oldValue, NewValue = value });
-					}
+					Log.Debug(
+						"AppSettings: GameLauncherFilePath changed. OldValue={OldValue}, NewValue={NewValue}.",
+						oldValue,
+						value);
 					OnPropertyChanged(nameof(GameLauncherFilePath));
 				}
 			}
@@ -155,9 +155,10 @@ namespace CalradiaForge.Core.Infra.Config {
 				if (_config["SteamWorkshopFolderPath"] != value) {
 					string oldValue = _config["SteamWorkshopFolderPath"];
 					_config["SteamWorkshopFolderPath"] = value;
-					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-						_logger.Debug("AppSettings: SteamWorkshopFolderPath changed.", new { OldValue = oldValue, NewValue = value });
-					}
+					Log.Debug(
+						"AppSettings: SteamWorkshopFolderPath changed. OldValue={OldValue}, NewValue={NewValue}.",
+						oldValue,
+						value);
 					OnPropertyChanged(nameof(SteamWorkshopFolderPath));
 				}
 			}
@@ -174,9 +175,10 @@ namespace CalradiaForge.Core.Infra.Config {
 				if (_config["LastSelectedModpack"] != value) {
 					string oldValue = _config["LastSelectedModpack"];
 					_config["LastSelectedModpack"] = value;
-					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-						_logger.Debug("AppSettings: LastSelectedModpack changed.", new { OldValue = oldValue, NewValue = value });
-					}
+					Log.Debug(
+						"AppSettings: LastSelectedModpack changed. OldValue={OldValue}, NewValue={NewValue}.",
+						oldValue,
+						value);
 					OnPropertyChanged(nameof(LastSelectedModpack));
 				}
 			}
@@ -191,9 +193,10 @@ namespace CalradiaForge.Core.Infra.Config {
 				if (_config["ModpackStartupMode"] != value.ToString()) {
 					string oldValue = _config["ModpackStartupMode"];
 					_config["ModpackStartupMode"] = value.ToString();
-					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-						_logger.Debug("AppSettings: ModpackStartupMode changed.", new { OldValue = oldValue, NewValue = _config["ModpackStartupMode"] });
-					}
+					Log.Debug(
+						"AppSettings: ModpackStartupMode changed. OldValue={OldValue}, NewValue={NewValue}.",
+						oldValue,
+						_config["ModpackStartupMode"]);
 					OnPropertyChanged(nameof(ModpackStartupMode));
 				}
 			}
@@ -209,9 +212,10 @@ namespace CalradiaForge.Core.Infra.Config {
 				if (_config["LastUnblockRunDate"] != value) {
 					string oldValue = _config["LastUnblockRunDate"];
 					_config["LastUnblockRunDate"] = value;
-					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-						_logger.Debug("AppSettings: LastUnblockRunDate changed.", new { OldValue = oldValue, NewValue = value });
-					}
+					Log.Debug(
+						"AppSettings: LastUnblockRunDate changed. OldValue={OldValue}, NewValue={NewValue}.",
+						oldValue,
+						value);
 					OnPropertyChanged(nameof(LastUnblockRunDate));
 				}
 			}
@@ -226,9 +230,10 @@ namespace CalradiaForge.Core.Infra.Config {
 				if (_config["LastUnblockRunResult"] != value) {
 					string oldValue = _config["LastUnblockRunResult"];
 					_config["LastUnblockRunResult"] = value;
-					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-						_logger.Debug("AppSettings: LastUnblockRunResult changed.", new { OldValue = oldValue, NewValue = value });
-					}
+					Log.Debug(
+						"AppSettings: LastUnblockRunResult changed. OldValue={OldValue}, NewValue={NewValue}.",
+						oldValue,
+						value);
 					OnPropertyChanged(nameof(LastUnblockRunResult));
 				}
 			}
@@ -243,9 +248,10 @@ namespace CalradiaForge.Core.Infra.Config {
 				if (_config["BLSEExePath"] != value) {
 					string oldValue = _config["BLSEExePath"];
 					_config["BLSEExePath"] = value;
-					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-						_logger.Debug("AppSettings: BLSEExePath changed.", new { OldValue = oldValue, NewValue = value });
-					}
+					Log.Debug(
+						"AppSettings: BLSEExePath changed. OldValue={OldValue}, NewValue={NewValue}.",
+						oldValue,
+						value);
 					OnPropertyChanged(nameof(BLSEExePath));
 				}
 			}
@@ -260,9 +266,10 @@ namespace CalradiaForge.Core.Infra.Config {
 				if (_config["DefaultLaunchTarget"] != value.ToString()) {
 					string oldValue = _config["DefaultLaunchTarget"];
 					_config["DefaultLaunchTarget"] = value.ToString();
-					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-						_logger.Debug("AppSettings: DefaultLaunchTarget changed.", new { OldValue = oldValue, NewValue = _config["DefaultLaunchTarget"] });
-					}
+					Log.Debug(
+						"AppSettings: DefaultLaunchTarget changed. OldValue={OldValue}, NewValue={NewValue}.",
+						oldValue,
+						_config["DefaultLaunchTarget"]);
 					OnPropertyChanged(nameof(DefaultLaunchTarget));
 				}
 			}
@@ -280,9 +287,10 @@ namespace CalradiaForge.Core.Infra.Config {
 				if (_config["EulaAccepted"] != stringValue) {
 					string oldValue = _config["EulaAccepted"];
 					_config["EulaAccepted"] = stringValue;
-					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-						_logger.Debug("AppSettings: EulaAccepted changed.", new { OldValue = oldValue, NewValue = stringValue });
-					}
+					Log.Debug(
+						"AppSettings: EulaAccepted changed. OldValue={OldValue}, NewValue={NewValue}.",
+						oldValue,
+						stringValue);
 				}
 			}
 		}

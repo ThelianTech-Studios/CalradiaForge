@@ -3,11 +3,12 @@
 	using System.Collections.Generic;
 	using System.IO;
 
-	using CalradiaForge.Core.Infra.Logging;
 	using CalradiaForge.Core.Infra.Paths;
 	using CalradiaForge.Core.Models;
 
 	using Newtonsoft.Json;
+
+	using Serilog;
 
 	/// <summary>
 	/// Handles reading the <c>languages.json</c> manifest and individual
@@ -21,7 +22,6 @@
 		private readonly string _languagesDirectory;
 		private readonly string _manifestFileName;
 		private readonly string _defaultLanguageFileName;
-		private static readonly Logger _logger = Logger.Instance;
 
 		/// <summary>
 		/// Initializes a new translation manager for the specified language directory.
@@ -47,25 +47,28 @@
 		/// </summary>
 		public List<LanguageOption> LoadManifest() {
 			string manifestPath = _manifestFileName;
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("TranslationLoader: Loading manifest.", new { ManifestPath = manifestPath });
-			}
+			Log.Debug(
+				"TranslationLoader: Loading manifest. ManifestPath={ManifestPath}",
+				manifestPath);
 			if (!File.Exists(manifestPath)) {
-				_logger.Warning($"TranslationLoader: Manifest not found at '{manifestPath}'.");
+				Log.Warning(
+					"TranslationLoader: Manifest not found at {ManifestPath}.",
+					manifestPath);
 				return [];
 			}
 			try {
 				string json = File.ReadAllText(manifestPath);
 				List<LanguageOption>? options = JsonConvert.DeserializeObject<List<LanguageOption>>(json);
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("TranslationLoader: Manifest loaded.", new { ManifestPath = manifestPath, Count = options?.Count ?? 0 });
-				}
+				Log.Debug(
+					"TranslationLoader: Manifest loaded. ManifestPath={ManifestPath} Count={Count}",
+					manifestPath,
+					options?.Count ?? 0);
 				return options ?? [];
 			} catch (Exception ex) {
-				_logger.Error(ex, $"TranslationLoader: Failed to read manifest at '{manifestPath}'.");
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("TranslationLoader: Manifest read failed.", new { ManifestPath = manifestPath }, ex);
-				}
+				Log.Error(
+					ex,
+					"TranslationLoader: Failed to read manifest at {ManifestPath}.",
+					manifestPath);
 				return [];
 			}
 		}
@@ -77,15 +80,18 @@
 		/// </summary>
 		public Dictionary<string, string> LoadLanguageFile(string languageCode) {
 			if (string.IsNullOrWhiteSpace(languageCode)) {
-				_logger.Warning("TranslationLoader: Language code is null or empty.");
+				Log.Warning("TranslationLoader: Language code is null or empty.");
 				return new Dictionary<string, string>();
 			}
 			string filePath = Path.Combine(_languagesDirectory, $"{languageCode}.json");
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("TranslationLoader: Loading language file.", new { FilePath = filePath, LanguageCode = languageCode });
-			}
+			Log.Debug(
+				"TranslationLoader: Loading language file. FilePath={FilePath} LanguageCode={LanguageCode}",
+				filePath,
+				languageCode);
 			if (!File.Exists(filePath)) {
-				_logger.Warning($"TranslationLoader: Language file not found at '{filePath}'.");
+				Log.Warning(
+					"TranslationLoader: Language file not found at {FilePath}.",
+					filePath);
 				return new Dictionary<string, string>();
 			}
 
@@ -100,15 +106,16 @@
 					json = File.ReadAllText(filePath);
 				}
 				Dictionary<string, string>? pairs = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("TranslationLoader: Language file loaded.", new { FilePath = filePath, Count = pairs?.Count ?? 0 });
-				}
+				Log.Debug(
+					"TranslationLoader: Language file loaded. FilePath={FilePath} Count={Count}",
+					filePath,
+					pairs?.Count ?? 0);
 				return pairs ?? new Dictionary<string, string>();
 			} catch (Exception ex) {
-				_logger.Error(ex, $"TranslationLoader: Failed to read language file at '{filePath}'.");
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("TranslationLoader: Language file read failed.", new { FilePath = filePath }, ex);
-				}
+				Log.Error(
+					ex,
+					"TranslationLoader: Failed to read language file at {FilePath}.",
+					filePath);
 				return new Dictionary<string, string>();
 			}
 		}
@@ -129,9 +136,10 @@
 			void WriteFile() {
 				string json = JsonConvert.SerializeObject(defaultTranslations, Formatting.Indented);
 				File.WriteAllText(filePath, json);
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("TranslationLoader: Default language file generated.", new { FilePath = filePath, Count = defaultTranslations.Count });
-				}
+				Log.Debug(
+					"TranslationLoader: Default language file generated. FilePath={FilePath} Count={Count}",
+					filePath,
+					defaultTranslations.Count);
 			}
 
 			bool isDefaultFile = IsDefaultLanguageFile(filePath);
@@ -142,7 +150,10 @@
 					}
 				}
 			} catch (Exception ex) {
-				_logger.Error(ex, $"TranslationLoader: Failed to write default language file at '{filePath}'.");
+				Log.Error(
+					ex,
+					"TranslationLoader: Failed to write default language file at {FilePath}.",
+					filePath);
 			}
 		}
 		#endregion

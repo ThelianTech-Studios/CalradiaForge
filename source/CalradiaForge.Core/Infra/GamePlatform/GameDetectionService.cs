@@ -1,9 +1,10 @@
 namespace CalradiaForge.Core.Infra.GamePlatform;
 
 using CalradiaForge.Core.Infra.Config;
-using CalradiaForge.Core.Infra.Logging;
 using CalradiaForge.Core.Infra.Paths;
 using CalradiaForge.Core.Models;
+
+using Serilog;
 
 /// <summary>
 /// Owns startup, re-detection, and bounded manual game-path workflows.
@@ -11,7 +12,6 @@ using CalradiaForge.Core.Models;
 public sealed class GameDetectionService {
 	private readonly GamePlatformDetectionResolver _resolver;
 	private readonly StartupNotificationQueue _startupNotifications;
-	private readonly Logger _logger = Logger.Instance;
 
 	/// <summary>Initializes the workflow with its Core dependencies.</summary>
 	public GameDetectionService(
@@ -53,17 +53,13 @@ public sealed class GameDetectionService {
 		try {
 			string normalizedPath = GamePlatformDetectionResolver.NormalizeDirectory(selectedGameFolder);
 			if (!GamePathValidator.ValidateGameFolder(normalizedPath)) {
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("GameDetectionWorkflow: Manual game folder rejected.");
-				}
+				Log.Debug("GameDetectionWorkflow: Manual game folder rejected.");
 				return false;
 			}
 
 			string launcherPath = GamePlatformDetectionResolver.ResolveStandardLauncherPath(normalizedPath);
 			if (!GamePathValidator.ValidateGameExecutable(launcherPath)) {
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("GameDetectionWorkflow: Manual launcher rejected.");
-				}
+				Log.Debug("GameDetectionWorkflow: Manual launcher rejected.");
 				return false;
 			}
 
@@ -76,9 +72,7 @@ public sealed class GameDetectionService {
 			config.GameProvider = provider;
 			return true;
 		} catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException) {
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("GameDetectionWorkflow: Manual game folder could not be normalized.", ex);
-			}
+			Log.Debug(ex, "GameDetectionWorkflow: Manual game folder could not be normalized.");
 			return false;
 		}
 	}
@@ -106,9 +100,7 @@ public sealed class GameDetectionService {
 			config.SteamWorkshopFolderPath = normalizedPath;
 			return true;
 		} catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException) {
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("GameDetectionWorkflow: Manual Workshop folder could not be normalized.", ex);
-			}
+			Log.Debug(ex, "GameDetectionWorkflow: Manual Workshop folder could not be normalized.");
 			return false;
 		}
 	}

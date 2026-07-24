@@ -4,10 +4,10 @@
 	using System.Threading;
 	using System.Threading.Tasks;
 
-	using CalradiaForge.Core.Infra.Logging;
 	using CalradiaForge.Core.Infra.Paths;
 	using CalradiaForge.Core.Models;
 
+	using Serilog;
 	using SevenZipWrapper;
 
 	/// <summary>
@@ -15,8 +15,6 @@
 	/// and locates the true mod root directory (handling lazy nested folder structures).
 	/// </summary>
 	public static class ModExtractor {
-		private static readonly Logger _logger = Logger.Instance;
-
 		/// <summary>
 		/// Heuristic for estimating file count from archive size.
 		/// Used as a fallback if the archive cannot be opened for exact counting.
@@ -76,12 +74,10 @@
 			Action<int>? onFileExtracted = null) {
 
 			if (string.IsNullOrWhiteSpace(archivePath) || !File.Exists(archivePath)) {
-				_logger.Warning($"ModExtractor: Archive not found: '{archivePath}'");
+				Log.Warning("ModExtractor: Archive not found: {ArchivePath}.", archivePath);
 				return ArchiveExtractionResult.Fail("Archive file was not found.");
 			}
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ModExtractor: Starting extraction.", new { ArchivePath = archivePath });
-			}
+			Log.Debug("ModExtractor: Starting extraction of {ArchivePath}.", archivePath);
 			string tempDir = Path.Combine(AppPaths.ExtractionDirectory, Guid.NewGuid().ToString());
 			try {
 				await Task.Run(() => {
@@ -95,26 +91,35 @@
 
 						Directory.CreateDirectory(tempDir);
 						archive.Extract(tempDir, overwrite: true, onFileExtracted, token);
-						if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-							_logger.Debug("ModExtractor: Extraction complete.", new { ArchivePath = archivePath, TempDir = tempDir });
-						}
+						Log.Debug(
+							"ModExtractor: Extraction complete for {ArchivePath} in {TempDirectory}.",
+							archivePath,
+							tempDir);
 					}
 				}, token);
 
-				_logger.Info($"ModExtractor: Extracted '{Path.GetFileName(archivePath)}' to temp: '{tempDir}'");
+				Log.Information(
+					"ModExtractor: Extracted {ArchiveFileName} to temporary directory {TempDirectory}.",
+					Path.GetFileName(archivePath),
+					tempDir);
 				return ArchiveExtractionResult.Ok(tempDir);
 			} catch (OperationCanceledException) {
 				CleanupTempDirectory(tempDir);
 				throw;
 			} catch (UnsafeArchiveEntryException ex) {
-				_logger.Warning($"ModExtractor: Blocked unsafe archive '{Path.GetFileName(archivePath)}': {ex.Message}");
+				Log.Warning(
+					ex,
+					"ModExtractor: Blocked unsafe archive {ArchiveFileName}.",
+					Path.GetFileName(archivePath));
 				CleanupTempDirectory(tempDir);
 				return ArchiveExtractionResult.Fail($"Unsafe archive blocked: {ex.Message}");
 			} catch (Exception ex) {
-				_logger.Error(ex, $"ModExtractor: Failed to extract '{archivePath}'");
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("ModExtractor: Extraction failed.", new { ArchivePath = archivePath, TempDir = tempDir }, ex);
-				}
+				Log.Error(ex, "ModExtractor: Failed to extract {ArchivePath}.", archivePath);
+				Log.Debug(
+					ex,
+					"ModExtractor: Extraction failed for {ArchivePath} in {TempDirectory}.",
+					archivePath,
+					tempDir);
 				CleanupTempDirectory(tempDir);
 				return ArchiveExtractionResult.Fail($"Archive could not be opened or extracted: {ex.Message}");
 			}
@@ -183,14 +188,10 @@
 				return null;
 			}
 
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ModExtractor: Searching for mod root.", new { ExtractedDir = extractedDir });
-			}
+			Log.Debug("ModExtractor: Searching for mod root in {ExtractedDirectory}.", extractedDir);
 			// Check if SubModule.xml is directly in the extracted directory
 			if (File.Exists(Path.Combine(extractedDir, "SubModule.xml"))) {
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("ModExtractor: Found SubModule.xml at root.", new { ExtractedDir = extractedDir });
-				}
+				Log.Debug("ModExtractor: Found SubModule.xml at extraction root {ExtractedDirectory}.", extractedDir);
 				return extractedDir;
 			}
 
@@ -208,9 +209,10 @@
 				// Check each subdirectory for SubModule.xml
 				foreach (string subDir in subDirs) {
 					if (File.Exists(Path.Combine(subDir, "SubModule.xml"))) {
-						if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-							_logger.Debug("ModExtractor: Found SubModule.xml in subdirectory.", new { ExtractedDir = extractedDir, ModRoot = subDir });
-						}
+						Log.Debug(
+							"ModExtractor: Found SubModule.xml under {ExtractedDirectory} at mod root {ModRoot}.",
+							extractedDir,
+							subDir);
 						return subDir;
 					}
 				}
@@ -226,10 +228,8 @@
 				break;
 			}
 
-			_logger.Warning($"ModExtractor: No SubModule.xml found in extracted archive at: '{extractedDir}'");
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ModExtractor: Mod root not found.", new { ExtractedDir = extractedDir });
-			}
+			Log.Warning("ModExtractor: No SubModule.xml found in extracted archive at {ExtractedDirectory}.", extractedDir);
+			Log.Debug("ModExtractor: Mod root not found in {ExtractedDirectory}.", extractedDir);
 			return null;
 		}
 
@@ -238,22 +238,18 @@
 		/// </summary>
 		public static void CleanupTempDirectory(string tempDir) {
 			if (!TryResolveManagedTempDirectory(tempDir, out string managedTempDir)) {
-				_logger.Warning($"ModExtractor: Refused to clean unmanaged temp directory '{tempDir}'.");
+				Log.Warning("ModExtractor: Refused to clean unmanaged temp directory {TempDirectory}.", tempDir);
 				return;
 			}
 
 			try {
 				if (Directory.Exists(managedTempDir)) {
 					Directory.Delete(managedTempDir, recursive: true);
-					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-						_logger.Debug("ModExtractor: Cleaned temp directory.", new { TempDir = managedTempDir });
-					}
+					Log.Debug("ModExtractor: Cleaned temporary directory {TempDirectory}.", managedTempDir);
 				}
 			} catch (Exception ex) {
-				_logger.Warning($"ModExtractor: Failed to clean up temp directory '{managedTempDir}': {ex.Message}");
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("ModExtractor: Temp cleanup failed.", new { TempDir = managedTempDir }, ex);
-				}
+				Log.Warning(ex, "ModExtractor: Failed to clean up temporary directory {TempDirectory}.", managedTempDir);
+				Log.Debug(ex, "ModExtractor: Temporary cleanup failed for {TempDirectory}.", managedTempDir);
 			}
 		}
 
