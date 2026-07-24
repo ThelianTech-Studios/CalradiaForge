@@ -7,6 +7,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## 0.13.73 - Internal | 2026-07-23
+
+> Refactor Phase 6.B: established one validated Core/UI dependency-injection provider and an application-owned startup, shutdown, restart, and logging lifecycle, then completed the accepted themed XAML lifecycle-dialog patch while retaining the legacy logger-call migration for Phase 6.C.
+
+### Added
+
+- Added Core and UI service-registration modules with validated storage-path options, one singleton root provider, retained singleton shell/pages, and deferred `MainWindow` resolution so language selection, EULA acceptance, detection, cache loading, the authoritative startup scan, modpack validation, and notification setup finish before the main shell is constructed.
+- Added explicit application-lifecycle contracts and coordinators for startup, shutdown, restart, state persistence, tracked-work cancellation and quiescence, startup-notification draining, final provider disposal, replacement-process launch, and best-effort Windows session-ending handling.
+- Added a themed, XAML-backed `ConfirmDialogWindow` with its presentation rules isolated in `ConfirmDialogWindowStyles.xaml`. Each invocation creates a fresh owner-assigned modal window with application-theme resources, custom title bar and controls, focus/hover/pressed/disabled visuals, optional scrollable operation details, and center-screen fallback when no usable owner exists.
+- Added WPF-neutral confirmation purposes and display models in Core, current-language resolution with English fallback strings for shutdown, restart, delayed shutdown, and active scan/install warnings, plus UI dialog services and policy mapping for those models.
+- Added UI-facing seams for deferred shell creation, modal EULA and language selection, application lifetime, startup-notification presentation, and active-work coordination without adding WPF references to Core.
+- Added automated UI coverage for validated provider composition, singleton lifetimes, dialog model and policy mapping, lifecycle enum stability, shutdown/finalization behavior, and readiness-gated notification draining. Added Core coverage for logging lifecycle, Serilog construction and disposal, configuration migration, confirmation localization/models, and the already-supported alternate Steam-library layout.
+
+### Changed
+
+- Removed WPF `StartupUri`, set explicit application shutdown mode, and made `App` the sole composition and lifecycle root. It now builds one validated provider, owns ordered startup, routes fatal startup and dispatcher failures through native WPF error presentation, and performs controlled provider disposal exactly once.
+- Migrated retained pages, `MainWindow`, EULA, language selection, toast delivery, and their existing Core workflows from static `App` service access and local construction to explicit constructor dependencies. Page localization bindings now use injected `TranslationService` instances while preserving retained-page behavior.
+- Moved the initial authoritative mod scan from `ModsPage` into the startup coordinator. The page now consumes the accepted pipeline snapshot while retaining explicit refresh, install, launch, modpack, and settings workflows through injected services.
+- Changed normal close to proceed without a prompt while the authoritative mod pipeline is idle and to show one themed warning while tracked work is active. Restart now shows the ordinary confirmation first and, after acceptance, one additional operation warning when a scan or installation is active.
+- Changed interactive shutdown to stop new work, request cooperative cancellation, wait for quiescence in bounded 15-second intervals, stop notification delivery, and persist authorized last-used state before final closure. Delayed-shutdown choices now map primary to exit anyway and secondary or title-bar close to continue waiting.
+- Changed restart finalization to dispose the current provider before launching the replacement process, suppress replacement launch when disposal fails, and still complete final WPF shutdown if disposal or process launch reports a failure.
+- Renamed the JSON persistence owner from `AppConfig` to `ConfigFileManager` and its general typed facade from `AppConfigSettings` to `AppSettings`, migrating Core, UI, test, and benchmark callers. Added persisted key removal without changing the shared `config.json` storage boundary.
+- Separated persisted `DebugMode` into `LoggingSettings` over the same shared configuration file, removed the obsolete configurable `LogFileDaysToKeep` setting, and changed Debug Mode updates to request a controlled restart rather than mutating logging levels in-process.
+- Replaced configurable log retention with provider-owned `LogFileLifecycle`: the prior `CalradiaForge_Latest.log` is archived at startup without overwriting collisions, expired archives are removed after a fixed seven-day retention window, and the active latest file remains available until provider disposal flushes and releases it.
+- Changed `SerilogLoggerFactory` to allow one provider-owned logger construction, apply persisted Debug Mode consistently to Serilog and the transitional legacy logger, assign the shared global logger, and leave archival to the next startup. Legacy `Logger` cleanup is restricted to its own historical filename family; broad legacy call-site retirement remains deferred to Phase 6.C.
+- Made `ToastService` provider-disposable so pending animation work and timers are cancelled during shutdown, and moved startup notification readiness, FIFO delivery, cancellation, and logging into a dedicated drain coordinator.
+- Added `Microsoft.Extensions.DependencyInjection` `10.0.10` to UI and its abstractions package to Core, updated Serilog to `4.4.0`, retained `Serilog.Sinks.Debug` `3.0.0` as a private Debug-only runtime asset, and retargeted the test host to WPF-capable `net10.0-windows7.0` with a UI project reference.
+
+### Fixed
+
+- Replaced basic non-themed lifecycle confirmation boxes with the accepted application-themed WPF dialog while preserving deliberate native fatal-error boxes.
+- Prevented direct `MainWindow` closure from bypassing coordinated shutdown and prevented competing close/restart requests from creating multiple lifecycle commitments.
+- Prevented startup services and retained pages from being created through competing object graphs, and prevented the main shell from resolving before first-run gates and the authoritative startup workflow complete.
+- Prevented logger disposal from archiving the current session prematurely, archive-name collisions from overwriting an existing file, and the transitional legacy cleanup path from deleting the new latest/archive log family.
+- Prevented startup-notification work, toast timers, and dispatcher callbacks from continuing after lifecycle cancellation or provider disposal.
+
+### Removed
+
+- Removed the configurable `LogRetentionPolicy` and the persisted `LogFileDaysToKeep` option in favor of the fixed Phase 6.B retention contract.
+- Removed static UI service-locator properties and page-owned startup scan orchestration after migrating their callers to the validated provider and startup coordinator.
+
+### Verification
+
+- Built the full solution in Debug and Release with zero compilation errors. Existing legacy-logger and SevenZipWrapper architecture warnings remain.
+- Passed all 34 focused dialog/lifecycle tests and the complete 152-test suite in both Debug and Release. Automated coverage validates composition, lifecycle policy, delayed-choice mapping, configuration, logging, notification, and existing alternate-library behavior; it does not represent a new Steam Workshop scanner or path-resolution fix.
+- The accepted implementation report records a Visual Studio 2026 Debug launch that verified application-themed dialog rendering and owner centering, secondary and title-bar cancellation, primary restart with replacement-process launch, persisted Debug Mode, idle close without a prompt, and title-bar dragging. Active-work warnings, delayed-timeout interaction, ownerless fallback, long-content scrolling, fatal-error presentation, and disabled-state visuals were not reproduced live and are not claimed as runtime-verified.
+- Confirmed the accepted build does not add Nexus functionality, startup update checks, timed polling, silent scans, Core-to-WPF dependencies, application major/minor version changes, or the Phase 6.C legacy logger-call-site migration.
+
+---
+
 ## 0.13.49 - Internal | 2026-07-22
 
 > Refactor Phase 6.A: introduced the Core-owned `ModPipelineManager` for complete-scan commit decisions, coherent accepted module snapshots, shared scan/install admission, and awaitable operation quiescence, including the accepted archive-progress estimate cleanup and first-startup JSON persistence hardening in this build range.
