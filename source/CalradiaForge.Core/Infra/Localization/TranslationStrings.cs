@@ -220,6 +220,23 @@
 			Eula_DeclineButton = GetOrDefault(translations, nameof(Eula_DeclineButton), DefaultEula_DeclineButton);
 			Eula_AcceptButton = GetOrDefault(translations, nameof(Eula_AcceptButton), DefaultEula_AcceptButton);
 
+			// Confirmation Dialog
+			ConfirmDialogShutdownPrimaryButtonString = GetOrDefault(translations, nameof(ConfirmDialogShutdownPrimaryButtonString), DefaultConfirmDialogShutdownPrimaryButtonString);
+			ConfirmDialogRestartPrimaryButtonString = GetOrDefault(translations, nameof(ConfirmDialogRestartPrimaryButtonString), DefaultConfirmDialogRestartPrimaryButtonString);
+			ConfirmDialogSecondaryButtonString = GetOrDefault(translations, nameof(ConfirmDialogSecondaryButtonString), DefaultConfirmDialogSecondaryButtonString);
+			ConfirmDialogDSPrimaryButtonString = GetOrDefault(translations, nameof(ConfirmDialogDSPrimaryButtonString), DefaultConfirmDialogDSPrimaryButtonString);
+			ConfirmDialogDSSecondaryButtonString = GetOrDefault(translations, nameof(ConfirmDialogDSSecondaryButtonString), DefaultConfirmDialogDSSecondaryButtonString);
+			ConfirmDialogShutdownTitleString = GetOrDefault(translations, nameof(ConfirmDialogShutdownTitleString), DefaultConfirmDialogShutdownTitleString);
+			ConfirmDialogRestartTitleString = GetOrDefault(translations, nameof(ConfirmDialogRestartTitleString), DefaultConfirmDialogRestartTitleString);
+			ConfirmDialogDSTitleString = GetOrDefault(translations, nameof(ConfirmDialogDSTitleString), DefaultConfirmDialogDSTitleString);
+			ConfirmDialogShutdownMessageString = GetOrDefault(translations, nameof(ConfirmDialogShutdownMessageString), DefaultConfirmDialogShutdownMessageString);
+			ConfirmDialogRestartMessageString = GetOrDefault(translations, nameof(ConfirmDialogRestartMessageString), DefaultConfirmDialogRestartMessageString);
+			ConfirmDialogDSMessageString = GetOrDefault(translations, nameof(ConfirmDialogDSMessageString), DefaultConfirmDialogDSMessageString);
+			ConfirmDialogShutdownActiveOperationsMessageString = GetOrDefault(translations, nameof(ConfirmDialogShutdownActiveOperationsMessageString), DefaultConfirmDialogShutdownActiveOperationsMessageString);
+			ConfirmDialogRestartActiveOperationsMessageString = GetOrDefault(translations, nameof(ConfirmDialogRestartActiveOperationsMessageString), DefaultConfirmDialogRestartActiveOperationsMessageString);
+			ConfirmDialogActiveScanOperationString = GetOrDefault(translations, nameof(ConfirmDialogActiveScanOperationString), DefaultConfirmDialogActiveScanOperationString);
+			ConfirmDialogActiveInstallOperationString = GetOrDefault(translations, nameof(ConfirmDialogActiveInstallOperationString), DefaultConfirmDialogActiveInstallOperationString);
+
 			// Toast Messages
 			Toast_InstallInProgress = GetOrDefault(translations, nameof(Toast_InstallInProgress), DefaultToast_InstallInProgress);
 			Toast_InstallComplete = GetOrDefault(translations, nameof(Toast_InstallComplete), DefaultToast_InstallComplete);
@@ -576,6 +593,53 @@
 
 		public string Eula_AcceptButton { get; private set; } = DefaultEula_AcceptButton;
 		private const string DefaultEula_AcceptButton = "Accept";
+		#endregion
+
+		#region Confirmation Dialog
+		public string ConfirmDialogShutdownPrimaryButtonString { get; private set; } = DefaultConfirmDialogShutdownPrimaryButtonString;
+		private const string DefaultConfirmDialogShutdownPrimaryButtonString = "Shut Down";
+
+		public string ConfirmDialogRestartPrimaryButtonString { get; private set; } = DefaultConfirmDialogRestartPrimaryButtonString;
+		private const string DefaultConfirmDialogRestartPrimaryButtonString = "Restart";
+
+		public string ConfirmDialogSecondaryButtonString { get; private set; } = DefaultConfirmDialogSecondaryButtonString;
+		private const string DefaultConfirmDialogSecondaryButtonString = "Cancel";
+
+		public string ConfirmDialogDSPrimaryButtonString { get; private set; } = DefaultConfirmDialogDSPrimaryButtonString;
+		private const string DefaultConfirmDialogDSPrimaryButtonString = "Exit Anyway";
+
+		public string ConfirmDialogDSSecondaryButtonString { get; private set; } = DefaultConfirmDialogDSSecondaryButtonString;
+		private const string DefaultConfirmDialogDSSecondaryButtonString = "Keep Waiting";
+
+		public string ConfirmDialogShutdownTitleString { get; private set; } = DefaultConfirmDialogShutdownTitleString;
+		private const string DefaultConfirmDialogShutdownTitleString = "Shut Down CalradiaForge";
+
+		public string ConfirmDialogRestartTitleString { get; private set; } = DefaultConfirmDialogRestartTitleString;
+		private const string DefaultConfirmDialogRestartTitleString = "Restart CalradiaForge";
+
+		public string ConfirmDialogDSTitleString { get; private set; } = DefaultConfirmDialogDSTitleString;
+		private const string DefaultConfirmDialogDSTitleString = "CalradiaForge Is Still Shutting Down";
+
+		public string ConfirmDialogShutdownMessageString { get; private set; } = DefaultConfirmDialogShutdownMessageString;
+		private const string DefaultConfirmDialogShutdownMessageString = "Are you sure you want to shut down CalradiaForge?";
+
+		public string ConfirmDialogRestartMessageString { get; private set; } = DefaultConfirmDialogRestartMessageString;
+		private const string DefaultConfirmDialogRestartMessageString = "Restart CalradiaForge now to apply the requested changes?";
+
+		public string ConfirmDialogDSMessageString { get; private set; } = DefaultConfirmDialogDSMessageString;
+		private const string DefaultConfirmDialogDSMessageString = "Active work has not stopped yet. Exit anyway or keep waiting?";
+
+		public string ConfirmDialogShutdownActiveOperationsMessageString { get; private set; } = DefaultConfirmDialogShutdownActiveOperationsMessageString;
+		private const string DefaultConfirmDialogShutdownActiveOperationsMessageString = "An operation is still active. Shutting down now will cancel it.";
+
+		public string ConfirmDialogRestartActiveOperationsMessageString { get; private set; } = DefaultConfirmDialogRestartActiveOperationsMessageString;
+		private const string DefaultConfirmDialogRestartActiveOperationsMessageString = "An operation is still active. Restarting now will cancel it.";
+
+		public string ConfirmDialogActiveScanOperationString { get; private set; } = DefaultConfirmDialogActiveScanOperationString;
+		private const string DefaultConfirmDialogActiveScanOperationString = "A mod scan is currently running.";
+
+		public string ConfirmDialogActiveInstallOperationString { get; private set; } = DefaultConfirmDialogActiveInstallOperationString;
+		private const string DefaultConfirmDialogActiveInstallOperationString = "A mod installation is currently running.";
 		#endregion
 
 		#region Toast Messages
