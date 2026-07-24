@@ -6,7 +6,7 @@
 	/// <summary>
 	/// Provides thread-safe logging for application diagnostics and user-facing events.
 	/// This legacy compatibility path remains in place for existing Core and UI call sites for the time being.
-	/// Migration and retirement are deferred to Phase 5.B after DI and Serilog behavior are verified in the Full Refactor workstream.
+	/// Migration and retirement are deferred to Phase 6.C after provider-owned Serilog behavior is verified.
 	/// </summary>
 	[Obsolete("This class is now marked as Legacy and will be removed in a future version after the refactor to Serilog is in place.")]
 	public sealed class Logger {
@@ -55,7 +55,7 @@
 			_sessionId = DateTime.Now.ToString("yyyy-MM-dd HH-mm");
 			_sessionLogFilePath = Path.Combine(LogFolder, $"CalradiaForge_log_{_sessionId}.log");
 
-			CleanupOldLogs(maxAgeDays: 14);
+			CleanupOldLegacyLogs(maxAgeDays: 14);
 		}
 
 		#region Public API
@@ -140,10 +140,10 @@
 		/// <summary>
 		/// Deletes log files older than the specified retention period.
 		/// </summary>
-		private void CleanupOldLogs(int maxAgeDays) {
+		private void CleanupOldLegacyLogs(int maxAgeDays) {
 			try {
 				DateTime cutoff = DateTime.Now.AddDays(-maxAgeDays);
-				foreach (string file in Directory.GetFiles(LogFolder, "CalradiaForge_*.log")) {
+				foreach (string file in Directory.GetFiles(LogFolder, "CalradiaForge_log_*.log")) {
 					if (File.GetCreationTime(file) < cutoff) {
 						File.Delete(file);
 					}

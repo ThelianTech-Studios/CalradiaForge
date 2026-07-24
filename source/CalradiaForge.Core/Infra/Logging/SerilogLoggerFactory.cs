@@ -8,35 +8,53 @@ using Serilog.Events;
 using Serilog.Exceptions;
 
 /// <summary>
-/// Creates the future Serilog logging pipeline without initializing it during WPF startup.
-/// Callers may add source context with <c>ForContext&lt;T&gt;()</c> after composition is introduced.
+/// Creates the provider-owned Serilog logging pipeline used by application composition.
+/// Callers may add source context with <c>ForContext&lt;T&gt;()</c>.
 /// </summary>
 public sealed class SerilogLoggerFactory {
 
 	/// <summary>
-	/// Private Readonly fields to hold the AppConfig and Log Directory path.
+	/// Private readonly fields used to construct the process logger once.
 	/// </summary>
-	private readonly AppConfigSettings _configInstance;
-	private readonly string _logDirectory;
+	private readonly LoggingSettings _loggingSettings;
+	private readonly LogFileLifecycle _logFileLifecycle;
 	private readonly string _logFilePath;
-
+	private int _created;
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="SerilogLoggerFactory"/> class.
 	/// </summary>
-	/// <param name="configSettings"></param>
-	public SerilogLoggerFactory(AppConfigSettings configSettings) {
-		_configInstance = configSettings;
-		_logDirectory = AppPaths.LogsDirectory;
-		_logFilePath = AppPaths.LogsFilePath;
+	public SerilogLoggerFactory(LoggingSettings loggingSettings)
+		: this(
+			loggingSettings,
+			new LogFileLifecycle(AppPaths.LogsDirectory, AppPaths.LogsFilePath),
+			AppPaths.LogsFilePath) {
 	}
 
-	/// <summary>Creates an isolated logger for later DI composition or smoke testing.</summary>
+	internal SerilogLoggerFactory(
+		LoggingSettings loggingSettings,
+		LogFileLifecycle logFileLifecycle,
+		string logFilePath) {
+		_loggingSettings = loggingSettings ?? throw new ArgumentNullException(nameof(loggingSettings));
+		_logFileLifecycle = logFileLifecycle ?? throw new ArgumentNullException(nameof(logFileLifecycle));
+		ArgumentException.ThrowIfNullOrWhiteSpace(logFilePath);
+		_logFilePath = logFilePath;
+	}
+
+	/// <summary>Creates the single provider-owned Serilog logger for the current application graph.</summary>
 	public Serilog.ILogger Create() {
-		LogRetentionPolicy.Cleanup(_logDirectory, _configInstance.LogFileDaysToKeep);
+		if (Interlocked.Exchange(ref _created, 1) != 0) {
+			throw new InvalidOperationException("The Serilog logger factory can create only one logger instance.");
+		}
+
+		// Phase 6.C removes this compatibility assignment with the legacy logger callers.
+		Logger.Instance.MinimumLevel = _loggingSettings.DebugMode
+			? Logger.LogLevel.Debug
+			: Logger.LogLevel.Info;
+		_logFileLifecycle.PrepareForStartup();
 		var formatter = new SerilogTextFormatter();
 		var configuration = new LoggerConfiguration()
-			.MinimumLevel.Is(_configInstance.DebugMode ? LogEventLevel.Debug : LogEventLevel.Information)
+			.MinimumLevel.Is(_loggingSettings.DebugMode ? LogEventLevel.Debug : LogEventLevel.Information)
 			.Enrich.FromLogContext()
 			.Enrich.WithThreadId()
 			.Enrich.WithExceptionDetails()
@@ -44,7 +62,7 @@ public sealed class SerilogLoggerFactory {
 				formatter,
 				_logFilePath,
 				rollingInterval: RollingInterval.Infinite,
-				retainedFileCountLimit: default,
+				retainedFileCountLimit: null,
 				shared: false));
 
 #if DEBUG
