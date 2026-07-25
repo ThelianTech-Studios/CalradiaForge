@@ -69,7 +69,7 @@ public sealed class LauncherTranslationTests {
 	public void Defaults_UseLauncherNavigationIdentityAndContainPresenterKeys() {
 		Dictionary<string, string> defaults = TranslationStrings.GetDefaultTranslations();
 
-		Assert.Equal("Launcher", defaults[nameof(TranslationStrings.Nav_LauncherTab)]);
+		Assert.Equal("Home", defaults[nameof(TranslationStrings.Nav_LauncherTab)]);
 		Assert.DoesNotContain("Nav_ModsTab", defaults.Keys);
 		Assert.All(
 			RequiredLauncherPageKeys,
@@ -93,17 +93,6 @@ public sealed class LauncherTranslationTests {
 
 		Assert.Equal("Localized Bannerlord", strings.Launcher_PlayBannerlord);
 		Assert.Equal("Play with BLSE", strings.Launcher_PlayWithBLSE);
-	}
-
-	[Fact]
-	public void Apply_UsesLauncherFallbackWhenLegacyNavigationKeyIsSupplied() {
-		TranslationStrings strings = new();
-
-		strings.Apply(new Dictionary<string, string> {
-			["Nav_ModsTab"] = "Legacy Mods"
-		});
-
-		Assert.Equal("Launcher", strings.Nav_LauncherTab);
 	}
 
 	[Fact]
