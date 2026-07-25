@@ -23,6 +23,8 @@ public static class ServiceCollectionExtensions {
 
 		services.AddSingleton(dispatcher);
 		services.AddSingleton<ToastService>();
+		services.AddSingleton<IToastNotificationSink, ToastNotificationSink>();
+		services.AddSingleton<IInstallNotificationPresenter, InstallNotificationPresenter>();
 		services.AddSingleton<IStartupNotificationPresenter, ToastStartupNotificationPresenter>();
 		services.AddSingleton<StartupNotificationDrainCoordinator>();
 
@@ -35,7 +37,7 @@ public static class ServiceCollectionExtensions {
 		services.AddSingleton<ApplicationStartupCoordinator>();
 		services.AddSingleton<ApplicationShutdownCoordinator>();
 
-		services.AddSingleton<ModsPage>();
+		services.AddSingleton<LauncherPage>();
 		services.AddSingleton<ModpacksPage>();
 		services.AddSingleton<FaqPage>();
 		services.AddSingleton<SettingsPage>();

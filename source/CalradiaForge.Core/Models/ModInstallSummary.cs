@@ -34,9 +34,11 @@
 		public ModInstallResult? BLSEResult => Results.FirstOrDefault(r => IsBLSEResult(r));
 
 		/// <summary>
-		/// Returns a user-friendly summary string suitable for a toast notification.
-		/// Appends BLSE status separately from mod counts.
+		/// Returns the retained English diagnostic summary used by Core logging and
+		/// compatibility tests. This is not an authoritative user-notification
+		/// formatter; localized install presentation belongs to the UI presenter.
 		/// </summary>
+		[Obsolete("Install notification formatting belongs to the UI install notification presenter.")]
 		public string ToSummaryString() {
 			List<string> parts = [];
 			if (InstalledCount > 0)

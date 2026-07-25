@@ -114,6 +114,8 @@
 				dllFiles = Directory.GetFiles(directoryPath, "*.dll", SearchOption.AllDirectories);
 			} catch (Exception ex) {
 				Log.Error(ex, "DllUnblocker: Failed to enumerate DLL files in {DirectoryPath}.", directoryPath);
+				result.Succeeded = false;
+				result.TechnicalDiagnostic = ex.ToString();
 				return result;
 			}
 

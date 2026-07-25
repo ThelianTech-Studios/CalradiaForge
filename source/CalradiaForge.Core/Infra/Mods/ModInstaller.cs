@@ -151,12 +151,13 @@
 				// Keep archive enumeration, extraction orchestration, and filesystem
 				// continuations off the WPF caller context while retaining an awaitable
 				// service-owned operation lifetime.
-				summary = await Task.Run(() => InstallModsAsync(archivePaths, token), token)
+				await Task.Run(() => InstallModsAsync(archivePaths, summary, token), token)
 					.ConfigureAwait(false);
 			} catch (OperationCanceledException) when (token.IsCancellationRequested) {
 				Log.Information("ModInstaller: Install batch was cancelled.");
 			} catch (Exception ex) {
 				Log.Error(ex, "ModInstaller: Unhandled exception in install batch.");
+				throw;
 			} finally {
 				LastSummary = summary;
 				lock (_stateLock) {
@@ -204,11 +205,11 @@
 		/// <param name="archivePaths">Array of full paths to archive files selected by the user.</param>
 		/// <param name="token">Cancellation token.</param>
 		/// <returns>A summary of all install results.</returns>
-		private async Task<ModInstallSummary> InstallModsAsync(
+		private async Task InstallModsAsync(
 			string[] archivePaths,
+			ModInstallSummary summary,
 			CancellationToken token) {
 
-			ModInstallSummary summary = new();
 			string modulesPath = _appConfig.ModulesDirectoryPath;
 
 			// Build the processing queue
@@ -295,9 +296,14 @@
 				archiveIndex++;
 			}
 
-			Log.Information("ModInstaller: Batch complete. {Summary}", summary.ToSummaryString());
+			Log.Information(
+				"ModInstaller: Batch complete; installed: {InstalledCount}; upgraded: {UpgradedCount}; skipped: {SkippedCount}; failed: {FailedCount}; BLSE status: {BlseStatus}.",
+				summary.InstalledCount,
+				summary.UpgradedCount,
+				summary.SkippedCount,
+				summary.FailedCount,
+				summary.BLSEResult?.Status.ToString() ?? "NotProcessed");
 			Log.Debug("ModInstaller: Batch complete with {ResultCount} results.", summary.Results.Count);
-			return summary;
 		}
 
 		private void RaiseInstallProgressChanged(ModInstallSummary summary) {

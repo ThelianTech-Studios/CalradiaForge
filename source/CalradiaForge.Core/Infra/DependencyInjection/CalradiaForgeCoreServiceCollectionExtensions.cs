@@ -61,7 +61,10 @@ public static class CalradiaForgeCoreServiceCollectionExtensions {
 		});
 		services.AddSingleton<IModScanner, ModScanner>();
 		services.AddSingleton<ModInstaller>();
+		services.AddSingleton<IModuleUnblocker, ModuleUnblocker>();
 		services.AddSingleton<ModPipelineManager>();
+		services.AddSingleton<IModInstallOperationNotificationSource>(provider =>
+			provider.GetRequiredService<ModPipelineManager>());
 
 		services.AddSingleton(provider => {
 			CalradiaForgeCoreOptions paths = provider.GetRequiredService<CalradiaForgeCoreOptions>();

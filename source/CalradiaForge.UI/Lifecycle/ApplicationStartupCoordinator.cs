@@ -11,6 +11,7 @@ using CalradiaForge.Core.Infra.Mods;
 using CalradiaForge.Core.Models;
 using CalradiaForge.UI.Composition;
 using CalradiaForge.UI.Dialogs;
+using CalradiaForge.UI.Toasts;
 using CalradiaForge.UI.Views;
 
 using Serilog;
@@ -31,6 +32,7 @@ public sealed class ApplicationStartupCoordinator {
 	private readonly ModpackService _modpackService;
 	private readonly StartupNotificationQueue _startupNotifications;
 	private readonly StartupNotificationDrainCoordinator _notificationDrain;
+	private readonly IInstallNotificationPresenter _installNotifications;
 	private readonly IMainWindowProvider _mainWindowProvider;
 
 	public ApplicationStartupCoordinator(
@@ -46,6 +48,7 @@ public sealed class ApplicationStartupCoordinator {
 		ModpackService modpackService,
 		StartupNotificationQueue startupNotifications,
 		StartupNotificationDrainCoordinator notificationDrain,
+		IInstallNotificationPresenter installNotifications,
 		IMainWindowProvider mainWindowProvider) {
 		_logger = logger ?? throw new ArgumentNullException(nameof(logger));
 		_translationManager = translationManager ?? throw new ArgumentNullException(nameof(translationManager));
@@ -59,6 +62,8 @@ public sealed class ApplicationStartupCoordinator {
 		_modpackService = modpackService ?? throw new ArgumentNullException(nameof(modpackService));
 		_startupNotifications = startupNotifications ?? throw new ArgumentNullException(nameof(startupNotifications));
 		_notificationDrain = notificationDrain ?? throw new ArgumentNullException(nameof(notificationDrain));
+		_installNotifications = installNotifications
+			?? throw new ArgumentNullException(nameof(installNotifications));
 		_mainWindowProvider = mainWindowProvider ?? throw new ArgumentNullException(nameof(mainWindowProvider));
 	}
 
@@ -106,6 +111,7 @@ public sealed class ApplicationStartupCoordinator {
 		_modpackService.LoadAll();
 		ValidateStartupModpack();
 
+		_installNotifications.Activate();
 		await _notificationDrain.StartAsync(cancellationToken);
 		MainWindow mainWindow = _mainWindowProvider.GetMainWindow();
 		Application.Current.MainWindow = mainWindow;
