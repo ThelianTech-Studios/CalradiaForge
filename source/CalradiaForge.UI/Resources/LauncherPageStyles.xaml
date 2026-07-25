@@ -5,7 +5,7 @@
 	<!-- ══════════════════════════════════════════════════════
 	     ComboBox — Toggle Button (dropdown arrow area)
 	     ══════════════════════════════════════════════════════ -->
-	<ControlTemplate x:Key="ModsPage.ComboBoxToggleTemplate" TargetType="ToggleButton">
+	<ControlTemplate x:Key="LauncherPage.ComboBoxToggleTemplate" TargetType="ToggleButton">
 		<Grid>
 			<Grid.ColumnDefinitions>
 				<ColumnDefinition />
@@ -41,7 +41,7 @@
 	<!-- ══════════════════════════════════════════════════════
 	     ComboBox — Editable TextBox (for IsEditable=True)
 	     ══════════════════════════════════════════════════════ -->
-	<ControlTemplate x:Key="ModsPage.ComboBoxEditableTemplate" TargetType="TextBox">
+	<ControlTemplate x:Key="LauncherPage.ComboBoxEditableTemplate" TargetType="TextBox">
 		<Border x:Name="PART_ContentHost" Focusable="False"
 						Background="Transparent" />
 	</ControlTemplate>
@@ -51,7 +51,7 @@
 	     Dark background, gold border on hover, gold text on select.
 	     Matches the ModpacksMenuItem visual language.
 	     ══════════════════════════════════════════════════════ -->
-	<Style x:Key="ModsPageComboBoxItem" TargetType="ComboBoxItem">
+	<Style x:Key="LauncherPageComboBoxItem" TargetType="ComboBoxItem">
 		<Setter Property="Foreground" Value="{StaticResource TB.Txt.Bright}" />
 		<Setter Property="FontFamily" Value="{StaticResource Font.Secondary}" />
 		<Setter Property="FontSize" Value="14" />
@@ -98,7 +98,7 @@
 	<!-- ══════════════════════════════════════════════════════
 	     ComboBox — Full ControlTemplate
 	     ══════════════════════════════════════════════════════ -->
-	<Style x:Key="ModsPageComboBox" TargetType="ComboBox">
+	<Style x:Key="LauncherPageComboBox" TargetType="ComboBox">
 		<Setter Property="Foreground" Value="{StaticResource TB.Txt.Bright}" />
 		<Setter Property="FontFamily" Value="{StaticResource Font.Secondary}" />
 		<Setter Property="FontSize" Value="14" />
@@ -110,13 +110,13 @@
 		<Setter Property="VerticalContentAlignment" Value="Center" />
 		<Setter Property="Padding" Value="10,6" />
 		<Setter Property="Cursor" Value="Hand" />
-		<Setter Property="ItemContainerStyle" Value="{StaticResource ModsPageComboBoxItem}" />
+		<Setter Property="ItemContainerStyle" Value="{StaticResource LauncherPageComboBoxItem}" />
 		<Setter Property="Template">
 			<Setter.Value>
 				<ControlTemplate TargetType="ComboBox">
 					<Grid>
 						<ToggleButton x:Name="ToggleButton"
-													Template="{StaticResource ModsPage.ComboBoxToggleTemplate}"
+													Template="{StaticResource LauncherPage.ComboBoxToggleTemplate}"
 													Focusable="False" ClickMode="Press"
 													IsChecked="{Binding IsDropDownOpen, Mode=TwoWay,
 																	RelativeSource={RelativeSource TemplatedParent}}" />
@@ -127,7 +127,7 @@
 															Margin="10,3,28,3"
 															VerticalAlignment="Center" HorizontalAlignment="Left" />
 						<TextBox x:Name="PART_EditableTextBox"
-										 Template="{StaticResource ModsPage.ComboBoxEditableTemplate}"
+										 Template="{StaticResource LauncherPage.ComboBoxEditableTemplate}"
 										 HorizontalAlignment="Left" VerticalAlignment="Center"
 										 Margin="10,3,28,3" Focusable="True" Visibility="Hidden"
 										 Background="Transparent"
@@ -171,7 +171,7 @@
 	<!-- ══════════════════════════════════════════════════════
 	     SearchBox — Full ControlTemplate
 	     ══════════════════════════════════════════════════════ -->
-	<Style x:Key="ModsPageSearchBox" TargetType="TextBox">
+	<Style x:Key="LauncherPageSearchBox" TargetType="TextBox">
 		<Setter Property="Foreground" Value="{StaticResource TB.Txt.Bright}" />
 		<Setter Property="CaretBrush" Value="{StaticResource TB.Txt.Bright}" />
 		<Setter Property="FontFamily" Value="{StaticResource Font.Secondary}" />
@@ -242,7 +242,7 @@
 	<!-- ══════════════════════════════════════════════════════
 	     Action Button (Install Mods, Unblock DLLs)
 	     ══════════════════════════════════════════════════════ -->
-	<ControlTemplate x:Key="ModsPageActionButtonTemplate" TargetType="Button">
+	<ControlTemplate x:Key="LauncherPageActionButtonTemplate" TargetType="Button">
 		<Border x:Name="ButtonBorder"
 						Background="{StaticResource TB.Acc.Orange}"
 						BorderThickness="0" CornerRadius="6"
@@ -262,8 +262,8 @@
 		</ControlTemplate.Triggers>
 	</ControlTemplate>
 
-	<Style x:Key="ModsPageActionButton" TargetType="Button">
-		<Setter Property="Template" Value="{StaticResource ModsPageActionButtonTemplate}" />
+	<Style x:Key="LauncherPageActionButton" TargetType="Button">
+		<Setter Property="Template" Value="{StaticResource LauncherPageActionButtonTemplate}" />
 		<Setter Property="Foreground" Value="{StaticResource TB.Txt.Dark}" />
 		<Setter Property="FontFamily" Value="{StaticResource Font.Secondary}" />
 		<Setter Property="FontSize" Value="13" />
@@ -476,7 +476,7 @@
 	<!-- ══════════════════════════════════════════════════════
 	     ModList Label
 	     ══════════════════════════════════════════════════════ -->
-	<Style x:Key="ModsPageModListLabel" TargetType="TextBlock">
+	<Style x:Key="LauncherPageModListLabel" TargetType="TextBlock">
 		<Setter Property="Foreground" Value="{StaticResource TB.Txt.Bright}" />
 		<Setter Property="FontFamily" Value="{StaticResource Font.Secondary}" />
 		<Setter Property="FontSize" Value="15" />
@@ -485,5 +485,5 @@
 		<Setter Property="Margin" Value="0,0,8,0" />
 	</Style>
 
-	<!--End of ModsPage Resources-->
+	<!--End of LauncherPage Resources-->
 </ResourceDictionary>
