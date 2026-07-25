@@ -15,7 +15,7 @@
 				<ResourceDictionary Source="/Resources/LangSelectWindowStyles.xaml"/>
 				<ResourceDictionary Source="Resources/EulaWindowStyles.xaml"/>
 				<ResourceDictionary Source="Resources/ConfirmDialogWindowStyles.xaml"/>
-				<ResourceDictionary Source="Resources/ModsPageStyles.xaml"/>
+				<ResourceDictionary Source="Resources/LauncherPageStyles.xaml"/>
 				<ResourceDictionary Source="Resources/ModpacksPageStyles.xaml"/>
 				<ResourceDictionary Source="Resources/SettingsPageStyles.xaml"/>
 				<ResourceDictionary Source="Resources/ToastStyles.xaml"/>
