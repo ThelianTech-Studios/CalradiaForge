@@ -43,6 +43,7 @@ namespace CalradiaForge.UI.Toasts {
 		/// Shows a toast notification and returns its unique Id.
 		/// </summary>
 		public Guid Show(ToastRequest request) {
+			ArgumentNullException.ThrowIfNull(request);
 			ThrowIfDisposed();
 			return RunOnUiThread(() => {
 				ToastViewModel viewModel = CreateViewModel(request);
@@ -54,6 +55,34 @@ namespace CalradiaForge.UI.Toasts {
 				}
 
 				return viewModel.Id;
+			});
+		}
+
+		/// <summary>
+		/// Atomically replaces an existing toast with a new request and returns the
+		/// replacement Id. If the original toast is no longer visible, the request
+		/// is shown as a new toast.
+		/// </summary>
+		public Guid Replace(Guid toastId, ToastRequest request) {
+			ArgumentNullException.ThrowIfNull(request);
+			ThrowIfDisposed();
+			return RunOnUiThread(() => {
+				ToastViewModel replacement = CreateViewModel(request);
+				ToastViewModel? current = VisibleToasts.FirstOrDefault(t => t.Id == toastId);
+				if (current is null) {
+					InsertToast(replacement);
+				} else {
+					int index = VisibleToasts.IndexOf(current);
+					StopTimer(toastId);
+					VisibleToasts[index] = replacement;
+				}
+
+				if (!replacement.IsPersistent) {
+					TimeSpan duration = request.Duration ?? GetDefaultDuration(request.Severity);
+					StartTimer(replacement, duration);
+				}
+
+				return replacement.Id;
 			});
 		}
 
