@@ -12,6 +12,16 @@
 - `ModsData` atomically stores mod cache snapshots, validates rotation input, and can recover a corrupt current cache from its backup.
 - Current and backup mod-cache writes use the shared bounded-retry atomic replacement path.
 - Complete scans are deterministic: paths are scanned in stable order, module IDs compare case-insensitively, local modules win over Workshop duplicates, and the first stable entry wins within a root.
+- Install operations return one immutable, non-null `ModInstallOperationResult`
+  and relay immutable operation/archive-correlated progress through
+  `IModInstallOperationNotificationSource`.
+- The admitted install sequence is installer summary, Modules-directory DLL
+  unblocking, private authoritative scan/commit reconciliation, terminal result
+  publication, and exactly-once quiescence release. Cancellation performs
+  bounded consistency finalization and retains a partial summary when available.
+- The explicitly activated application-lifetime UI presenter maps manager
+  semantics to generic `ToastService`; pages do not subscribe directly to
+  installer notifications or own raw toast IDs.
 
 ## Architecture Guidance
 - `ModInstaller` and `ModExtractor` remain the authority for install flow.
@@ -27,6 +37,9 @@
 
 ## Key Files
 - `source/CalradiaForge.Core/Infra/Mods/ModPipelineManager.cs`
+- `source/CalradiaForge.Core/Infra/Mods/IModInstallOperationNotificationSource.cs`
+- `source/CalradiaForge.Core/Models/ModInstallOperationResult.cs`
+- `source/CalradiaForge.Core/Models/ModInstallProgress.cs`
 - `source/CalradiaForge.Core/Infra/Mods/IModScanner.cs`
 - `source/CalradiaForge.Core/Infra/Mods/ModScanner.cs`
 - `source/CalradiaForge.Core/Infra/Mods/ModParser.cs`
@@ -42,6 +55,6 @@
 - BLSE allowlist enforcement awaits an owner-approved file/folder manifest.
 - Normal-module backup, rollback, and confirmation behavior remains owner-gated.
 - Deterministic target naming versus blocking for flat archives with root-level `SubModule.xml` remains owner-gated; the current extraction-GUID target behavior is a known limitation.
-- Phase 7 is a locked, unimplemented install-outcome and notification plan, not generalized workflow work: `ModPipelineManager` will relay transient per-archive progress and return one immutable, non-null install-specific terminal result. It remains the sole admission/cancellation/reconciliation/quiescence owner; installer/extractor mechanics remain unchanged.
-- The planned manager sequence is installer summary, Modules-directory DLL unblocking, internal authoritative scan/commit reconciliation, terminal result, and release. Public refresh must not be recursively admitted from install.
-- The planned application-lifetime UI presenter maps manager semantics to generic `ToastService`; page-direct installer notification subscriptions and raw toast IDs are not the target design. See the [Phase 7 migration map](../../refactor/phase_7_migration_map.md).
+- Generic workflow results, schedulers, event buses, and detailed per-entry
+  progress remain excluded; Phase 7 implements only the install-specific
+  contract.

@@ -217,8 +217,8 @@ ModInstaller
 - That work is deferred until the core download and metadata model exists.
 
 ## Deferred Decisions
-- Phase 7/8 naming and notification preservation: the current `ModsPage` is
-  planned to become `LauncherPage`, reserving `ModsPage` for future management.
+- Phase 7/8 naming and notification preservation: the primary page is now
+  `LauncherPage`, reserving `ModsPage` for future management. Implemented
   Phase 7 correlation remains generic manual-archive identity; detailed
   per-entry UI progress and any broader typed coordinator are deferred to the
   Nexus cycle. See the [future mod-management context](../../refactor/nexus_future_mod_management_context.md).

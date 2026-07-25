@@ -14,6 +14,9 @@
 - `App` owns the renewable 15-second graceful-shutdown choice, disposes the provider once, starts a replacement process only after disposal, and then terminates WPF.
 - WPF dispatcher failures are fatal, use native WPF `MessageBox` presentation, and route to controlled shutdown. Unobserved task exceptions are logged and observed without automatically becoming fatal. AppDomain termination cleanup remains best effort.
 - Before the shared Serilog instance becomes operational, fatal provider/bootstrap/logger-construction and app-owned exception boundaries use the synchronous best-effort `EmergencyStartupLogWriter`. After activation they use the shared Serilog pipeline, and no Serilog call is made after provider disposal begins.
+- Ordered startup explicitly activates the singleton
+  `InstallNotificationPresenter` after localization initialization and before
+  shell resolution, so install observation never depends on page navigation.
 
 ## Ownership
 
@@ -35,11 +38,11 @@ ApplicationShutdownCoordinator
 
 Core registration contributes only Core services. UI registration contributes WPF windows, pages, dialogs, notification presentation, and application coordinators. No registration module builds a provider, and no global provider/service-locator property is exposed.
 
-## Planned Phase 7 Presenter Activation
+## Implemented Phase 7 Presenter Activation
 
-Phase 7 plans a UI install-notification presenter. DI registration alone is not
-activation: startup or shell construction must explicitly activate it before
-install work can begin. It observes only `ModPipelineManager` semantic
+Phase 7 implements a UI install-notification presenter. DI registration alone
+is not activation: ordered startup explicitly activates it before install work
+can begin. It observes only `ModPipelineManager` semantic
 progress/results and cannot admit, cancel, or schedule operations. This is
 distinct from the implemented startup-notification drain coordinator.
 

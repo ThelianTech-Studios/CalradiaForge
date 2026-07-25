@@ -1,17 +1,17 @@
 # UI Page Rename Review Checklist
 
-Status: owner-locked Phase 7 implementation checklist; not yet implemented.
+Status: implemented and automatically verified; owner visual inspection remains pending.
 
 ## Purpose
 
-Phase 7 must make the behavior-preserving `ModsPage` -> `LauncherPage` rename
+Phase 7 made the behavior-preserving `ModsPage` -> `LauncherPage` rename
 before Phase 8 MVVM extraction. The visible navigation label becomes
 **Launcher**. `ModsPage` is reserved for future mod management; this checklist
 does not authorize creation of that future page or renaming domain types.
 
-## Locked Rename Inventory
+## Implemented Rename Inventory
 
-| Current item | Phase 7 target | Required review/validation |
+| Pre-Phase 7 item | Implemented Phase 7 target | Required review/validation |
 |---|---|---|
 | `Pages/ModsPage.xaml` | `Pages/LauncherPage.xaml` | File name, XAML `x:Class`, generated partials, resource/style references, design-time tooling. |
 | `Pages/ModsPage.xaml.cs` | `Pages/LauncherPage.xaml.cs` | CLR type, constructor, retained DI registration, event ownership, comments. |
@@ -21,13 +21,13 @@ does not authorize creation of that future page or renaming domain types.
 
 ## Required Checks
 
-- Update CLR/XAML, DI, navigation, localization, tests, comments, and relevant
-  documentation as one behavior-preserving change.
-- Verify `MainWindow` navigation and global `ToastService` host behavior after
-  the rename.
-- Verify a clean build does not leave stale generated partial or resource links.
-- Verify stale `ModsPage` references are either corrected, deliberately
-  historical, or valid future-mod-management context.
+- CLR/XAML, DI, navigation, localization, tests, comments, and relevant
+  documentation were updated as one behavior-preserving change.
+- Automated verification covers `MainWindow` construction/navigation,
+  `ToastService` host composition, clean XAML generation, and stale authored
+  source/test page-identity references.
+- Owner runtime inspection must still confirm the visible Launcher label,
+  navigation away/back, and global toast-host behavior.
 - Do not use the rename to relocate the install button, redesign the page,
   implement MVVM, create a future ModsPage, or alter mod-domain naming.
 

@@ -262,17 +262,19 @@ Manual WPF smoke coverage includes valid/first-run startup, language, EULA accep
 
 Logger benchmarks may measure construction, disabled-level calls, neutral formatter rendering, structured properties, async sink behavior, startup archive/cleanup scaling, provider-owned flush/close, startup contribution, and allocations. These measurements do not authorize lifecycle or file-policy changes.
 
-## Planned Phase 7 Deterministic Validation
+## Implemented Phase 7 Deterministic Validation
 
-Phase 7 automated tests must cover manager sequencing and status precedence;
+Phase 7 automated tests cover manager sequencing and status precedence;
 busy versus admission-stopped rejection; validation failure, partial failure,
 cancellation, bounded finalization, exactly-once cleanup, and retained partial
 summary; DLL-unblock and internal scan/commit seams; operation/archive IDs and
 transient-progress/terminal-result separation; BLSE classification; presenter
 lifecycle, activation, stale-progress rejection, and no duplicate toast;
 DI/XAML/navigation/localization rename boundaries; and Core/UI dependency rules.
-The tests must prove `RefreshAsync` is not recursively admitted from install and
-that installer/extractor mechanics remain in their current owners.
+The tests prove `RefreshAsync` is not recursively admitted from install and that
+installer/extractor mechanics remain in their current owners. Debug and Release
+solution runs pass 194 tests at the Phase 7 implementation endpoint; owner WPF
+runtime inspection remains separate from automated verification.
 
 ## Phase 8 Human-Driven, Codex-Observed Runtime Acceptance
 

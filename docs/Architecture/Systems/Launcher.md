@@ -1,6 +1,10 @@
 # Launcher
 
 ## Currently Implemented
+- `LauncherPage` is the retained primary UI surface for installed-module
+  visibility, load-order preparation, modpack application, and launch controls.
+- The visible primary-navigation label and localization identity are
+  **Launcher**.
 - `GameLauncher` starts Bannerlord or BLSE with the active load order.
 - `GameDetectionService` coordinates startup, re-detection, and manual configuration through `GamePlatformDetectionResolver`; Steam library and Workshop resolution are described in [Platform and Path Detection](PlatformAndPathDetection.md).
 - `GamePathValidator` validates user-selected game folders and executables.
@@ -23,7 +27,7 @@
 
 ## Deferred / Future Work
 
-- **Planned Phase 7 terminology:** `LauncherPage` is the future name of the
-  current UI surface and is distinct from the implemented Core `GameLauncher`.
-  The rename is planned only; it does not create a future `ModsPage`.
+- `LauncherPage` remains distinct from the implemented Core `GameLauncher`.
+  Phase 8 moves its temporary presentation reconciliation to
+  `LauncherViewModel`; a future dedicated `ModsPage` is not implemented.
 - Epic/Game Pass launch backend and config-write support remain deferred.

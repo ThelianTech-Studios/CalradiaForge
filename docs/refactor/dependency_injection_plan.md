@@ -14,7 +14,10 @@ rationale, not as a claim that the baseline remains future work.
 - `App` builds and owns one validated provider, resolves `ApplicationStartupCoordinator`, and uses the implemented startup/shutdown coordinator contracts.
 - Core/UI registrations share that provider; Core has no WPF registrations and primary pages are retained singleton UI services.
 - Provider-owned Serilog is the normal runtime logger and `EmergencyStartupLogWriter` is the narrow pre-operational fallback.
-- `ModPipelineManager` is registered as the Core operation boundary; `ToastService` and the current `ModsPage` are registered in UI, while `MainWindow` is the global toast host.
+- `ModPipelineManager` is registered as the Core operation and install
+  notification-source boundary. `ToastService`, the application-lifetime
+  `InstallNotificationPresenter`, and retained `LauncherPage` are registered in
+  UI, while `MainWindow` remains the global toast host.
 - `CalradiaForge.Nexus` remains reserved until Nexus-owned services exist.
 
 ## Implemented Phase 6.B Composition Model
@@ -82,12 +85,11 @@ Resolve one singleton `MainWindow`, construct each primary page once through DI,
 
 Legitimate WPF framework statics remain allowed: `Application.Current.Dispatcher`, `Application.Current.Shutdown()`, `Application.Current.Resources`, and `Application.Current.MainWindow`. Do not add static compatibility service properties. The general legacy `Logger.Instance` was removed in implemented Phase 6.C.
 
-## Planned Phase 7 Notification Presenter
+## Implemented Phase 7 Notification Presenter
 
-Phase 7 plans a singleton application-lifetime UI install-notification presenter.
-UI registration may register it, but registration alone is insufficient: startup
-or shell construction must explicitly activate it before user-initiated install
-work can begin. It observes only manager-published, UI-neutral progress/results;
+Phase 7 registers a singleton application-lifetime UI install-notification
+presenter and explicitly activates it from ordered startup before shell
+resolution. It observes only manager-published, UI-neutral progress/results;
 it neither admits, schedules, cancels, nor awaits pipeline work. It owns no Core
 registration and does not change retained page lifetime. `ToastService` remains a
 generic renderer and `MainWindow` remains the host. A broader typed coordinator

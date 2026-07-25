@@ -46,6 +46,7 @@ Provide a separate place for Nexus networking, authentication, download orchestr
 
 ## Deferred Work
 - All Nexus runtime behavior is deferred until implementation exists.
-- The planned future `ModsPage` and Phase 7 naming/notification constraints are
-  preserved in [the refactor context note](../../refactor/nexus_future_mod_management_context.md);
+- The future `ModsPage` reservation and implemented Phase 7 Launcher
+  naming/notification boundary are preserved in
+  [the refactor context note](../../refactor/nexus_future_mod_management_context.md);
   that note does not authorize networking, credentials, or queue work.

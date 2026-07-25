@@ -4,7 +4,10 @@
 - `TranslationService` owns active language state.
 - `TranslationManager` reads the language manifest and language JSON files.
 - `TranslationStrings` provides bindable UI text defaults.
-- Lifecycle confirmation titles, messages, buttons, and authoritative scan/install summaries use strongly typed `TranslationStrings` values. A fresh display model is resolved from the currently active strings whenever a confirmation opens.
+- Lifecycle confirmation titles, messages, buttons, Launcher navigation
+  identity, and install notification progress/terminal presentation use
+  strongly typed `TranslationStrings` values. A fresh display model is
+  resolved from the currently active strings whenever a confirmation opens.
 - Startup performs first-run language selection before translation initialization and before the EULA gate. The provider-owned `TranslationService` instance is shared by all constructed pages and windows.
 - The console utility can regenerate the default English file from the translation defaults.
 
@@ -23,9 +26,7 @@
 
 ## Deferred / Future Work
 
-- Current install toast text still derives from `ModInstallSummary.ToSummaryString()`
-  in page code; it is not an authoritative localized workflow contract. Planned
-  Phase 7 presenter formatting maps semantic progress/results through
-  localization, after which that method is no longer the authoritative toast
-  path.
+- Phase 8 may move launcher status presentation into `LauncherViewModel`, while
+  the implemented application-lifetime presenter remains the authoritative
+  localized install-toast mapping path.
 - Additional languages and UI text are expected to grow over time, but only when backed by source changes.

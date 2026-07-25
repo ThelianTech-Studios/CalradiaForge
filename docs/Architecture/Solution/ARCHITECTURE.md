@@ -59,6 +59,10 @@ Currently implemented cross-cutting systems live mostly in Core:
 - EULA gating
 - Mod scanning and installation
 - Mod-pipeline completeness, accepted snapshots, cache commit gating, and quiescence
+- Install-specific terminal outcomes, correlated progress, required
+  Modules-directory unblocking, and authoritative post-install reconciliation
+- Application-lifetime install notification presentation through the global
+  toast host
 - Modpack persistence and templates
 - Game launch and platform detection
 
@@ -74,10 +78,10 @@ Currently implemented cross-cutting systems live mostly in Core:
 
 ## Deferred / Planned Systems
 
-- **Phase 7 planned handoff:** `ModPipelineManager` remains the Core operation
-  owner; an explicitly activated UI presenter will adapt semantic progress/results
-  to generic `ToastService`, and the current page will be renamed `LauncherPage`.
-  Phase 8 ViewModel migration remains deferred. See the
+- **Implemented Phase 7 handoff:** `ModPipelineManager` remains the Core
+  operation owner; the explicitly activated UI presenter adapts semantic
+  progress/results to generic `ToastService`, and the current page is
+  `LauncherPage`. Phase 8 ViewModel migration remains deferred. See the
   [Phase 7 reference](../../refactor/phase_7_locked_decisions_2026-07-24.md).
 - Nexus Mods authentication, download management, metadata caching, and NXM handling are planned in the Nexus boundary.
 - Epic Games and Game Pass support remains intentionally deferred in the launcher paths.

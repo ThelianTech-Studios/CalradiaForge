@@ -15,7 +15,12 @@ Provide the deterministic, UI-agnostic behavior that the WPF app consumes.
 - Persist and read configuration data.
 - Provide strongly typed configuration access.
 - Parse and scan Bannerlord modules.
-- Coordinate startup/refresh scans, per-root completeness, cache commit authorization, atomic accepted module snapshots, deterministic operation admission, cancellation, and quiescence.
+- Coordinate startup/refresh scans, per-root completeness, cache commit
+  authorization, atomic accepted module snapshots, deterministic operation
+  admission, cancellation, and quiescence.
+- Return non-null install-specific terminal results, relay correlated immutable
+  progress, run required Modules-directory unblocking, and reconcile the
+  authoritative accepted snapshot before releasing install quiescence.
 - Install mods and handle archive extraction.
 - Manage BLSE installation as a special-case archive flow.
 - Store mod cache and modpack data.
@@ -53,7 +58,11 @@ Provide the deterministic, UI-agnostic behavior that the WPF app consumes.
 - Paths and platform detection: `GamePlatformDetectionResolver`, `GameDetectionService`, `StartupNotificationQueue`, `GamePathValidator`, `GameProvider`, `ISteamClientRootProvider`, `ISteamInstallationResolver`, `SteamInstallationResolver`, `SteamResolutionResult`, `EpicDetector`, `EpicManifestReader`
 - Launch: `GameLauncher`, `LaunchTarget`
 - EULA: `EulaService`
-- Mods: `ModPipelineManager`, `IModScanner`, `ModScanner`, `ModParser`, `ModInstaller`, `ModExtractor`, `BLSEInstaller`, `ModsData`, `AcceptedModSnapshot`, `ModPipelineResult`, `ModScanResult`
+- Mods: `ModPipelineManager`, `IModInstallOperationNotificationSource`,
+  `IModuleUnblocker`, `IModScanner`, `ModScanner`, `ModParser`, `ModInstaller`,
+  `ModExtractor`, `BLSEInstaller`, `ModsData`, `AcceptedModSnapshot`,
+  `ModPipelineResult`, `ModScanResult`, `ModInstallProgress`,
+  `ModInstallOperationResult`
 - Modpacks: `ModpackService`, `ModpackData`, `ModpackFileHelper`, `VanillaModules`, `NovusPresetConverter`
 
 ## Design Constraints
@@ -72,9 +81,8 @@ Provide the deterministic, UI-agnostic behavior that the WPF app consumes.
 - New systems should follow the existing service/data-helper split.
 
 ## Deferred Work
-- **Planned Phase 7 only:** `ModInstallOperationResult` and transient
-  manager-relayed progress will be Core UI-neutral contracts. The manager remains
-  the sole application-operation owner, installer/extractor mechanics remain in
-  place, and no generic result framework or presentation fields enter Core.
+- Phase 8 may consume the implemented UI-neutral
+  `ModInstallOperationResult`/`ModInstallProgress` contracts through
+  `LauncherViewModel`; it must not duplicate manager or installer ownership.
 - Epic and Game Pass launcher support remains intentionally constrained by the current launcher behavior.
 - Nexus networking is intentionally not part of Core.

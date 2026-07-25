@@ -6,9 +6,13 @@ Move the WPF UI from page-heavy code-behind toward staged MVVM without breaking 
 
 ## Current Source Observations
 
-- `ModsPage.xaml.cs`, `ModpacksPage.xaml.cs`, and `SettingsPage.xaml.cs` implement `INotifyPropertyChanged` directly. The current page is planned to become `LauncherPage` in Phase 7 before extraction.
+- `LauncherPage.xaml.cs`, `ModpacksPage.xaml.cs`, and `SettingsPage.xaml.cs`
+  implement `INotifyPropertyChanged` directly. The current launcher page was
+  renamed behavior-preservingly in Phase 7 before extraction.
 - Pages currently own observable collections, selected state, status text, command handlers, dialog opening, toast calls, and service event subscriptions.
-- `ModsPage.xaml.cs` currently observes `ModInstaller` progress/completion events and updates UI through the dispatcher; Phase 7 plans manager-relayed observation and an application-lifetime presenter first.
+- `LauncherPage.xaml.cs` no longer observes `ModInstaller` events.
+  Manager-relayed install progress/results are owned by the explicitly activated
+  application-lifetime presenter.
 - `ModpacksPage.xaml.cs` uses `ModpackService.CurrentLoadOrderEntries` and keeps editable working-copy state in code-behind.
 - `SettingsPage.xaml.cs` follows "UI decides when, Core decides how" for path selection, validation, redetect, and unblock actions, but still owns page state directly.
 
@@ -21,9 +25,9 @@ Move the WPF UI from page-heavy code-behind toward staged MVVM without breaking 
 - Shared operation state consumes the settled Phase 7 result/progress contract and supports `IsBusy`, `StatusMessage`, `ErrorMessage`, `CanCancel`, `CurrentOperation`, and `LastOperationResult` where useful.
 - ViewModel tests are added as ViewModels stabilize.
 
-## Implemented-By-Phase-7 Page Rename Prerequisite
+## Implemented Phase 7 Page Rename Prerequisite
 
-Phase 7 has the owner-locked, behavior-preserving rename: `ModsPage` becomes
+Phase 7 completed the owner-locked, behavior-preserving rename: `ModsPage` became
 `LauncherPage` and the visible label becomes **Launcher**. The complete rename
 inventory is in [the Phase 7 checklist](ui_page_rename_review_checklist.md).
 `ModsPage` is reserved for future mod management; valid domain types are not

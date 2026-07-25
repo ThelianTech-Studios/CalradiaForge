@@ -9,8 +9,13 @@ Improve mod archive, overwrite, and BLSE install safety without bypassing the cu
 - `ModInstaller` owns install orchestration, background task lifetime, progress, cancellation, version checks, and install summaries.
 - `ModExtractor` owns archive opening, pre-extraction lexical entry-containment validation, extraction, managed-temp cleanup, and mod-root detection.
 - `BLSEInstaller` owns BLSE archive detection and game-bin file placement.
-- `ModsPage.xaml.cs` currently starts installs and displays status/toasts; it must not take over install mechanics. Phase 7 plans its behavior-preserving rename to `LauncherPage` and removes page-owned application notification observation.
-- `ModPipelineManager` already owns awaitable application admission/cancellation/quiescence. Phase 7 must build on that boundary rather than recreate it.
+- `LauncherPage.xaml.cs` starts manual installs and retains temporary
+  launcher-presentation reconciliation without taking over install mechanics.
+  Application-wide progress and terminal notification observation is owned by
+  the Phase 7 application-lifetime UI presenter.
+- `ModPipelineManager` owns awaitable application
+  admission/cancellation/quiescence plus Phase 7 terminal classification,
+  Modules-directory unblocking, and authoritative reconciliation.
 - Normal module installs now require exactly one `SubModule.xml`, a parseable module id, a contained target path, and a matching parseable identity when the target folder already exists.
 - Existing target folders with unknown or mismatched identities are blocked, and an upgrade copy does not proceed when recursive deletion fails.
 
@@ -33,9 +38,9 @@ Improve mod archive, overwrite, and BLSE install safety without bypassing the cu
 - `BLSEInstaller` currently copies all files from the detected source bin folder and overwrites existing files.
 - Normal-module backup, rollback, and user-confirmation behavior is not yet locked.
 
-## Planned Phase 7 Result And Reconciliation Boundary
+## Implemented Phase 7 Result And Reconciliation Boundary
 
-Phase 7 plans one manager-owned admitted sequence: validate/admit, run
+Phase 7 implements one manager-owned admitted sequence: validate/admit, run
 `ModInstaller`, retain its archive-level summary, run required Modules-directory
 DLL unblocking, reuse a private authoritative scan/commit path, construct the
 terminal Core result, then release/quiesce. Public `RefreshAsync` must not be

@@ -1,6 +1,6 @@
 # Phase 7 Locked Decisions Reference
 
-Status: owner-locked planning reference; Phase 7 is not implemented.
+Status: implemented decision reference; automated verification complete, pending owner inspection and approval.
 
 ## Purpose
 
@@ -24,13 +24,23 @@ documentation. The supplied full ledger remains the detailed decision record:
 | P7-D09 | Phase 7 requires deterministic automated validation. Phase 8 requires human-driven, Codex-observed runtime acceptance evidence. |
 | P7-D10 | Completion requires implementation, deterministic validation, reconciliation, an implementation map/report, and cross-document audit; the listed Phase 8 and Nexus work remains deferred. |
 
-## Current-source boundary
+## Implemented source boundary
 
-At `203464d`, none of the Phase 7 contracts in this reference are implemented.
-`ModsPage` still owns direct installer observation, toast identity, DLL unblocking,
-and post-install refresh/presentation reconciliation. The current source baseline
-is documented in the [Phase 7 reconciliation audit](../audits/calradiaforge_phase_7_documentation_reconciliation_2026-07-24.md).
+Phase 7 extends the existing `ModPipelineManager` rather than creating another
+coordinator. The manager now returns a non-null install-specific terminal
+result, relays correlated immutable progress, owns Modules-directory unblocking
+and internal authoritative scan/commit reconciliation, and holds admission and
+quiescence through required consistency finalization.
 
-See the [expected Phase 7 migration map](phase_7_migration_map.md) for the
-implementation inventory and [future mod-management context](nexus_future_mod_management_context.md)
+The explicitly activated application-lifetime UI presenter owns the correlated
+progress-to-terminal toast lifecycle. The behavior-preserving
+`ModsPage` -> `LauncherPage` rename is implemented, and `LauncherPage`
+temporarily retains accepted-snapshot, selected-modpack, and launch-state
+presentation reconciliation before reporting semantic completion. Phase 8
+remains responsible for moving that temporary presentation ownership to
+`LauncherViewModel` or another approved presentation owner.
+
+See the planning-only [expected Phase 7 migration map](phase_7_migration_map.md)
+for the pre-implementation inventory and
+[future mod-management context](nexus_future_mod_management_context.md)
 for the deliberately separate Nexus handoff.

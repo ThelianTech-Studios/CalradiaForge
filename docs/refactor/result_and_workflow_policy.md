@@ -8,7 +8,10 @@ Standardize how risky workflows report success, failure, warnings, progress, can
 
 - `ModInstaller` reports progress through events and stores `LastSummary`.
 - `ModInstallSummary`, `ModInstallResult`, and `BLSEInstallResult` already provide workflow-specific result shapes.
-- `ModsPage.xaml.cs` currently coordinates direct installer observation, install completion UI, refresh, DLL unblock, status text, and toasts; this is planned to move only through the Phase 7 boundary.
+- `LauncherPage.xaml.cs` starts manual installs and temporarily reconciles
+  accepted-snapshot presentation, selected-modpack state, and launch readiness.
+  It no longer observes `ModInstaller`, retains raw toast IDs, invokes DLL
+  unblocking, or recursively requests post-install refresh.
 - `ModpacksPage.xaml.cs` uses tuple-style service results for import and booleans for save/create.
 - `SettingsPage.xaml.cs` uses direct messages/toasts around validation and tool operations.
 
@@ -37,10 +40,11 @@ Only an approved complete result may rotate cache, save current state, and publi
 
 The active-work contract identifies current work, stops new admission, requests cooperative cancellation, exposes idempotently observable completion, and supports awaitable quiescence. It does not replace `ModInstaller`/`ModExtractor`, dispose the provider, close Serilog, terminate WPF, or create an unbounded job queue.
 
-## Locked Phase 7 Install Outcome And Progress Direction
+## Implemented Phase 7 Install Outcome And Progress Boundary
 
-Phase 7 plans a non-null, install-specific `ModInstallOperationResult`; it does
-not create another coordinator. `ModPipelineManager` remains the sole
+Phase 7 implements a non-null, install-specific
+`ModInstallOperationResult`; it does not create another coordinator.
+`ModPipelineManager` remains the sole
 application owner of admission, cancellation, operation identity, classification,
 reconciliation, and quiescence. `ModInstaller` and `ModExtractor` retain
 mechanics; Core remains UI-independent.
@@ -58,7 +62,7 @@ operation and archive identity, may be high-frequency, are not an unbounded
 history, and never expose a live mutable summary. The UI may throttle/coalesce
 them. One immutable terminal Core result concludes each admitted operation.
 
-## Locked Phase 7 Notification And Temporary Presentation Direction
+## Implemented Phase 7 Notification And Temporary Presentation Boundary
 
 Initial shared UI state should support:
 
@@ -152,7 +156,6 @@ Accepted result/warning decisions should later be migrated into future applicati
 
 ## Open Questions
 
-- Should install cancellation return a distinct status instead of failed?
 - Which result codes should be public/stable versus internal?
 - Should modpack import/save adopt shared results before MVVM extraction?
 - Which additional Phase 7 scanner diagnostic codes, beyond the locked Phase 6.A outcomes and fields, should become public without exposing unnecessary filesystem detail to the UI?

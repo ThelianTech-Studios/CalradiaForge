@@ -41,9 +41,9 @@ If this plan conflicts with source code or locked architecture docs, stop and do
 | DI | Use `Microsoft.Extensions.DependencyInjection`; defer Host Builder unless later justified. |
 | DI composition | Phase 6.B uses one collection and one validated provider built/owned by `App`; `App` resolves `ApplicationStartupCoordinator`, which preserves startup gates and uses deferred typed `MainWindow` resolution with retained singleton pages. |
 | Performance | Phase 4 establishes benchmark infrastructure and provisional baselines; Phase 9 audits without production edits; Phase 10 implements approved findings; Phase 11 performs bounded final verification; Phase 12 closes documentation/versioning. |
-| Results | Use workflow-specific result types. Phase 7 plans one install-specific result and explicitly excludes generic `Result<T>`. |
+| Results | Use workflow-specific result types. Phase 7 implements one install-specific result and explicitly excludes generic `Result<T>`. |
 | Mod-pipeline coordination | Implemented Phase 6.A baseline: Core `ModPipelineManager` owns completeness, commit gating, accepted snapshots, startup/refresh reuse, admission, cancellation, and quiescence. |
-| Phase 7 scope | Planned install outcomes, application notifications, and Phase 8 naming foundation; no new coordinator, scheduler, MVVM implementation, or Nexus implementation. |
+| Phase 7 scope | Implemented install outcomes, application notifications, and Phase 8 naming foundation; no new coordinator, scheduler, MVVM implementation, or Nexus implementation. |
 | UI state | Use shared `IsBusy`, `StatusMessage`, `ErrorMessage`, `CanCancel`, `CurrentOperation`, and result state patterns. |
 | Toasts | Preserve the existing Toast System for user-visible operation notifications. |
 | MVVM | Move toward a full shell/viewmodel rewrite, staged by dependency order and risk. |
@@ -217,7 +217,9 @@ flowchart TD
 - [ ] Phase 11: The full relevant test, benchmark, analyzer, architecture, and manual-smoke verification loop satisfies the practical stopping criteria.
 - [ ] Phase 12: Versioning, changelog, release documentation, performance report status, and documentation-alignment handoff match the final verified implementation.
 - [X] Steam Workshop detection/path issue: Phase 5 implemented and automatically verified the multi-library workflow; owner real-Steam/WPF smoke remains pending before release acceptance.
-- [ ] UI page rename review is completed only with an owner-approved rename map before any `.xaml` rename.
+- [X] UI page rename used the owner-approved Phase 7 rename map before the
+  behavior-preserving `.xaml` rename; automated checks pass and owner visual
+  inspection remains pending.
 - [ ] Documentation alignment report decisions are handed off without making refactor plans canonical architecture by default.
 
 ## Global Codex Guardrails
@@ -341,7 +343,7 @@ Phase 2 must preserve the old logger implementation as a compatibility path. Cod
 
 The Bug was Confirmed and will be implemented in phase 5 plan.
 
-The Phase 3 investigation confirmed the old single-library failure. Phase 5 later implemented and automatically verified the repair; see the [detailed Phase 5 record](game_platform_detection_and_path_workflow_plan.md). Phase 6.A owns the bounded scanner completeness/commit/snapshot foundation, while Phase 7 retains broader generalized workflow work.
+The Phase 3 investigation confirmed the old single-library failure. Phase 5 later implemented and automatically verified the repair; see the [detailed Phase 5 record](game_platform_detection_and_path_workflow_plan.md). Phase 6.A owns the bounded scanner completeness/commit/snapshot foundation. Phase 7 adds only the install-specific result, progress, reconciliation, and notification contract; it does not generalize scanner results.
 
 ## Phase 4 - Initial Tests And Performance Benchmark Infrastructure Around Changed Risky Areas
 
@@ -441,19 +443,20 @@ Phase 5 implemented the Steam-boundary integration. Implemented Phase 6.A consum
 
 | Work-order field | Detail |
 |---|---|
+| Status | Implemented and automatically verified; owner WPF runtime inspection and approval remain pending. |
 | Purpose | Implement the owner-locked install-specific outcome, application notification, manager reconciliation, and stable page-naming prerequisites for Phase 8. |
 | Included work | Non-null `ModInstallOperationResult`; manager-relayed transient progress and immutable terminal result; manager-owned DLL unblock and internal scan/commit reconciliation; explicitly activated UI presenter; `ModsPage` -> `LauncherPage` rename. |
 | Excluded work | Generic `Result<T>`, new workflow coordinator/scheduler/event bus, WPF in Core, duplicated installer/extractor mechanics, MVVM extraction, Nexus APIs/queues/future ModsPage. |
-| Affected areas | Install workflow, archive validation, BLSE validation/install, persistence save/load/recovery, generalized mod workflow extensions, modpack import/export, future Nexus auth/download workflows, and toast/status state. |
-| Implementation notes | Result objects should support success/failure, code, user-facing message, technical/log message, warnings, and affected path/mod where useful. Coordinator may initially wrap current installer/event flow. Build on—never replace—the 6.A completeness, commit, accepted-snapshot, startup/refresh, and quiescence contract. |
+| Affected areas | `ModPipelineManager`, install summary/error propagation, Modules DLL unblocking, accepted-snapshot reconciliation, app-lifetime install notifications, Launcher page identity/navigation/localization, DI, and focused tests. |
+| Implementation notes | `ModInstallOperationResult` carries one of eight terminal statuses, stable diagnostic codes, summary/unblock/reconciliation data, and the exact accepted snapshot. Immutable progress carries operation/archive correlation. The manager builds on—rather than replaces—the 6.A completeness, commit, accepted-snapshot, startup/refresh, and quiescence contract. |
 | Dependency ordering | Follows completed 6.A–6.C and safety/logging foundations. Precedes or coordinates with MVVM extraction. |
-| Do before | Identify current mixed result styles. Decide first workflows to standardize. |
+| Do before | Completed: the locked decision ledger narrowed standardization to the install workflow and preserved existing owners. |
 | Do after | Move temporary launcher presentation reconciliation and operation state to `LauncherViewModel` or an approved presentation owner in Phase 8. |
 | Exit criteria | High-risk workflows beyond the 6.A foundation have clearer result contracts; install completion/failure/cancellation paths are observable; UI can show busy/status/error/result state consistently without duplicating coordinator ownership. |
 | Risk notes | Over-standardizing too early can add ceremony. Coordinator may duplicate service responsibilities if boundaries are unclear. |
-| Verification | Build succeeds; tests cover result mapping where practical; manual install success/failure/cancel/cleanup paths; logs and toasts match outcomes. |
+| Verification | Debug and Release restore/build/test plus focused Core/UI/rename tests and static architecture checks are required. Owner manual install success/failure/cancel/navigation/toast inspection remains the acceptance gate for runtime presentation. |
 | Codex guardrails | Keep Core WPF-free. Keep installer/extractor mechanics in their owners. Do not add a second admission owner, a generic result abstraction, or a Nexus implementation. |
-| Documentation updates | Use [locked decisions](phase_7_locked_decisions_2026-07-24.md), [migration map](phase_7_migration_map.md), and the reconciliation audit. |
+| Documentation updates | Canonical and supporting Phase 7 documentation is reconciled to the implemented endpoint. The [Phase 7 migration map](phase_7_migration_map.md) remains a planning artifact and is not updated during the source implementation workflow. |
 
 ### Locked Phase 7 execution boundary
 

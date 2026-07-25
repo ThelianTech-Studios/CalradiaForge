@@ -47,5 +47,7 @@ These tests do not read a real registry or Steam installation and do not prove r
 ## Deferred / Future Work
 
 - The application composition root registers the resolver, detection workflow, notification queue, `ModPipelineManager`, and platform dependencies as one shared graph.
-- Phase 6.A implements the workflow-specific structured scan/completeness/cache contract. Broader generalized result conventions remain Phase 7 work.
+- Phase 6.A implements the workflow-specific structured scan/completeness/cache
+  contract. Phase 7 adds a separate install-specific result and does not
+  generalize path-detection or scanner results.
 - Epic, Game Pass, and GOG real-world automatic detection/support claims remain deferred. The existing Epic branch stays disabled by default.

@@ -10,13 +10,17 @@ Render the user interface and translate user intent into calls to Core services.
 ## Responsibilities
 ### Currently Implemented
 - Host the main window and page navigation.
-- Present mods, modpacks, settings, FAQ, EULA, language selection, and themed lifecycle-confirmation views.
+- Present the Launcher, modpacks, settings, FAQ, EULA, language selection, and
+  themed lifecycle-confirmation views.
 - Surface toast notifications.
 - Own one validated application provider through `App`; Core and UI registration modules extend the same collection.
 - Coordinate ordered startup through `ApplicationStartupCoordinator` and defer shell/page resolution until language, EULA, detection, pipeline, modpack, and notification gates pass.
 - Coordinate explicit shutdown/restart through `IApplicationLifetime` and `ApplicationShutdownCoordinator`.
 - Route startup, explicit refresh, install admission, cache clearing, and modpack module reads through the accepted mod-pipeline boundary.
 - Signal MainWindow readiness and map queued Core startup notifications into the existing toast surface.
+- Explicitly activate the application-lifetime install notification presenter,
+  which owns correlated progress-to-terminal toast presentation independently
+  of page navigation.
 - Invoke the Core game-detection workflow for Settings re-detection and bounded manual path configuration.
 - Bind translated strings into the UI.
 - Persist user-driven settings through Core services.
@@ -38,7 +42,7 @@ Render the user interface and translate user intent into calls to Core services.
 ## Major Systems
 - `App.xaml` startup wiring
 - `MainWindow`
-- `ModsPage`
+- `LauncherPage`
 - `ModpacksPage`
 - `SettingsPage`
 - `FaqPage`
@@ -63,11 +67,9 @@ Render the user interface and translate user intent into calls to Core services.
 - Future Nexus UI surfaces should call into the Nexus assembly rather than implementing network behavior in page code.
 
 ## Deferred Work
-- **Planned Phase 7 only:** behavior-preserving `ModsPage` -> `LauncherPage`
-  rename and **Launcher** label; an explicitly activated application-lifetime
-  presenter owns correlated progress/final toast lifecycle through generic
-  `ToastService`. The temporary page reconciles the accepted snapshot before
-  semantic completion; Phase 8 transfers this to `LauncherViewModel`. `ModsPage`
-  remains reserved for future mod management.
+- Phase 8 transfers the implemented temporary `LauncherPage`
+  accepted-snapshot, selected-modpack, and launch-state presentation
+  reconciliation to `LauncherViewModel` or another approved presentation
+  owner. The future `ModsPage` remains reserved for future mod management.
 - Any new Nexus UI is deferred until the Nexus assembly has implementation behind it.
 - Full MVVM extraction, transient page navigation, and navigation scopes remain deferred.
