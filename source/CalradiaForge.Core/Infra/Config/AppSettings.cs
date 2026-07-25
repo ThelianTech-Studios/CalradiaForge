@@ -165,7 +165,7 @@ namespace CalradiaForge.Core.Infra.Config {
 		}
 
 		/// <summary>
-		/// Persisted name of the last modpack selected in the ModsPage ComboBox.
+		/// Persisted name of the last modpack selected in the LauncherPage ComboBox.
 		/// On startup, the UI uses this to auto-select the modpack.
 		/// Defaults to "Last Used" if the referenced modpack file no longer exists.
 		/// </summary>
@@ -185,7 +185,7 @@ namespace CalradiaForge.Core.Infra.Config {
 		}
 
 		/// <summary>
-		/// Controls how the ModsPage ComboBox selects a modpack on application startup.
+		/// Controls how the LauncherPage ComboBox selects a modpack on application startup.
 		/// </summary>
 		public ModpackStartupMode ModpackStartupMode {
 			get => Enum.TryParse(_config["ModpackStartupMode"], out ModpackStartupMode m) ? m : ModpackStartupMode.LastUsed;
