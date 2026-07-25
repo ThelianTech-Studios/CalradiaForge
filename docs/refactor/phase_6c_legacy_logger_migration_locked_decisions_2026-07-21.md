@@ -2,6 +2,12 @@
 
 ## Status
 
+Historical pre-implementation locked-decision record. Phase 6.C is implemented:
+normal legacy callers migrated, the general logger was retired, and
+`EmergencyStartupLogWriter` is the narrow pre-operational fallback. Preserve the
+remaining ledger as rationale; do not read its future-state language as current
+source.
+
 Owner-approved planning direction for:
 
 ```text
@@ -12,7 +18,9 @@ Phase 6.C begins only after Phase 6.B has established the final provider-owned S
 
 ## Current Source State
 
-This is a future implementation contract; it does not claim Phase 6.C is implemented. Current Core and UI callers still use the general-purpose `Logger.Instance` path, including configuration/bootstrap-sensitive and application-lifecycle code. `EmergencyStartupLogWriter` does not exist yet, and the final provider-owned Serilog pipeline must be established by Phase 6.B before any migration batch begins.
+Historical snapshot only: Phase 6.C migrated normal legacy callers, retired the
+general logger, and added `EmergencyStartupLogWriter` as the narrow fallback.
+This paragraph's former future-state claims are superseded.
 
 ---
 

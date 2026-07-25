@@ -42,4 +42,6 @@
 - BLSE allowlist enforcement awaits an owner-approved file/folder manifest.
 - Normal-module backup, rollback, and confirmation behavior remains owner-gated.
 - Deterministic target naming versus blocking for flat archives with root-level `SubModule.xml` remains owner-gated; the current extraction-GUID target behavior is a known limitation.
-- Broader generalized workflow results, install progress/state coordination, and UI-state conventions remain deferred to Phase 7; the workflow-specific Phase 6.A scan result is implemented.
+- Phase 7 is a locked, unimplemented install-outcome and notification plan, not generalized workflow work: `ModPipelineManager` will relay transient per-archive progress and return one immutable, non-null install-specific terminal result. It remains the sole admission/cancellation/reconciliation/quiescence owner; installer/extractor mechanics remain unchanged.
+- The planned manager sequence is installer summary, Modules-directory DLL unblocking, internal authoritative scan/commit reconciliation, terminal result, and release. Public refresh must not be recursively admitted from install.
+- The planned application-lifetime UI presenter maps manager semantics to generic `ToastService`; page-direct installer notification subscriptions and raw toast IDs are not the target design. See the [Phase 7 migration map](../../refactor/phase_7_migration_map.md).

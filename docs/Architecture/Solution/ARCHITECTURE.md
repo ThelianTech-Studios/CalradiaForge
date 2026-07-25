@@ -73,6 +73,12 @@ Currently implemented cross-cutting systems live mostly in Core:
 - MainWindow and primary pages retain one-instance-per-application behavior until the later MVVM phase.
 
 ## Deferred / Planned Systems
+
+- **Phase 7 planned handoff:** `ModPipelineManager` remains the Core operation
+  owner; an explicitly activated UI presenter will adapt semantic progress/results
+  to generic `ToastService`, and the current page will be renamed `LauncherPage`.
+  Phase 8 ViewModel migration remains deferred. See the
+  [Phase 7 reference](../../refactor/phase_7_locked_decisions_2026-07-24.md).
 - Nexus Mods authentication, download management, metadata caching, and NXM handling are planned in the Nexus boundary.
 - Epic Games and Game Pass support remains intentionally deferred in the launcher paths.
 - Additional system-specific docs should be added only when the codebase grows enough to justify them.

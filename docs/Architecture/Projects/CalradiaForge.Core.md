@@ -72,5 +72,9 @@ Provide the deterministic, UI-agnostic behavior that the WPF app consumes.
 - New systems should follow the existing service/data-helper split.
 
 ## Deferred Work
+- **Planned Phase 7 only:** `ModInstallOperationResult` and transient
+  manager-relayed progress will be Core UI-neutral contracts. The manager remains
+  the sole application-operation owner, installer/extractor mechanics remain in
+  place, and no generic result framework or presentation fields enter Core.
 - Epic and Game Pass launcher support remains intentionally constrained by the current launcher behavior.
 - Nexus networking is intentionally not part of Core.

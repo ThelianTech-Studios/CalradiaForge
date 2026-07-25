@@ -12,7 +12,7 @@ This document defines the phased refactor plan for the next CalradiaForge beta c
 Use this priority when planning or implementing any phase:
 
 1. Existing source code
-2. The three locked Phase 6 decision ledgers for future Phase 6 requirements
+2. Current source/tests and canonical architecture; the Phase 6 ledgers are historical locked-decision records, not current-source descriptions
 3. Newest applicable source-state and completion audits
 4. Existing unrelated valid refactor content
 5. Architecture documents in `docs/Architecture`
@@ -41,9 +41,9 @@ If this plan conflicts with source code or locked architecture docs, stop and do
 | DI | Use `Microsoft.Extensions.DependencyInjection`; defer Host Builder unless later justified. |
 | DI composition | Phase 6.B uses one collection and one validated provider built/owned by `App`; `App` resolves `ApplicationStartupCoordinator`, which preserves startup gates and uses deferred typed `MainWindow` resolution with retained singleton pages. |
 | Performance | Phase 4 establishes benchmark infrastructure and provisional baselines; Phase 9 audits without production edits; Phase 10 implements approved findings; Phase 11 performs bounded final verification; Phase 12 closes documentation/versioning. |
-| Results | Start with workflow-specific result types; consider shared `Result<T>` only if repetition justifies it. |
-| Mod-pipeline coordination | Phase 6.A introduces one Core `ModPipelineCoordinator` for completeness, commit gating, accepted snapshots, startup/refresh reuse, and quiescence. |
-| Later workflow coordination | Phase 7 retains generalized/install workflow results, progress, cancellation, completion, failure, cleanup, and UI-facing state beyond the 6.A foundation. |
+| Results | Use workflow-specific result types. Phase 7 plans one install-specific result and explicitly excludes generic `Result<T>`. |
+| Mod-pipeline coordination | Implemented Phase 6.A baseline: Core `ModPipelineManager` owns completeness, commit gating, accepted snapshots, startup/refresh reuse, admission, cancellation, and quiescence. |
+| Phase 7 scope | Planned install outcomes, application notifications, and Phase 8 naming foundation; no new coordinator, scheduler, MVVM implementation, or Nexus implementation. |
 | UI state | Use shared `IsBusy`, `StatusMessage`, `ErrorMessage`, `CanCancel`, `CurrentOperation`, and result state patterns. |
 | Toasts | Preserve the existing Toast System for user-visible operation notifications. |
 | MVVM | Move toward a full shell/viewmodel rewrite, staged by dependency order and risk. |
@@ -101,11 +101,14 @@ These summaries make the master plan a sequence/navigation entry point. The thre
 
 ## Tracked Owner Additions
 
-### Deferred UI Page Rename Review
+### Phase 7 Page Rename Foundation
 
-Some current WPF page `.xaml` names may need to be renamed before broad MVVM extraction or future Nexus UI/API work. The exact rename targets are not approved yet. Before any page rename occurs, create an owner-review checklist that inventories current page names, code-behind classes, navigation references, proposed names, reasons, risks, and owner approval status. Do not rename UI pages without an explicit owner-approved rename map.
-
-XAML page renames are high-risk because they can affect code-behind partial classes, `x:Class`, navigation references, resource dictionaries, bindings, design-time tooling, generated files, and documentation references. This plan records the checkpoint only; it does not define a rename map or authorize renames.
+The owner locked a behavior-preserving `ModsPage` -> `LauncherPage` rename and
+the visible **Launcher** navigation label for Phase 7. It updates XAML/CLR,
+DI/navigation, localization, tests, comments, and documentation while reserving
+`ModsPage` for future mod management. It does not rename valid mod-domain types
+or create the future page. The detailed inventory is
+[the Phase 7 rename checklist](ui_page_rename_review_checklist.md).
 
 ### Documentation Alignment Report Integration
 
@@ -128,10 +131,10 @@ Phase 6.B constructs one DI-owned logger after `LoggingSettings.DebugMode`, assi
 | 3 | Small Safety Refactors | Harden compact high-risk areas: BLSE, archive preflight, persistence. |
 | 4 | Initial Tests And Performance Benchmark Infrastructure Around Changed Risky Areas | Add behavioral protection plus reusable benchmark and measurement infrastructure. |
 | 5 | Game Platform Detection And Path Workflow Rewrite | Implemented Core-owned detection workflow and multi-library Steam resolution; owner real-Steam/WPF smoke remains a release gate. |
-| 6.A | Mod Pipeline Coordinator Foundation | Establish the bounded Core workflow, accepted snapshot, commit policy, and quiescence contract required by later lifecycle management. |
-| 6.B | Dependency Injection And Application Lifecycle Foundation | Establish the one-provider composition root, target settings lifecycle, WPF startup/shutdown/restart, and shared Serilog lifecycle. |
-| 6.C | Legacy Logger Call-Site Migration | Migrate normal legacy callers in verified batches and retain only the narrow pre-Serilog emergency writer. |
-| 7 | Result Types And Workflow Coordinator | Standardize selected operation outcomes and long-running workflow state. |
+| 6.A | Mod Pipeline Manager Foundation | Implemented: bounded Core workflow, accepted snapshot, commit policy, admission, and quiescence. |
+| 6.B | Dependency Injection And Application Lifecycle Foundation | Implemented: one-provider composition, retained UI, WPF lifecycle, and shared Serilog lifecycle. |
+| 6.C | Legacy Logger Call-Site Migration | Implemented: normal callers migrated and the narrow pre-Serilog emergency writer retained. |
+| 7 | Install Outcomes, Application Notifications, And Phase 8 Naming Foundation | Planned: narrow install result/progress, notification presenter, manager reconciliation, and Launcher rename. |
 | 8 | Staged MVVM Shell/ViewModel Rewrite | Move WPF presentation toward consistent MVVM. |
 | 9 | Performance Audit And Report Generation | Produce an evidence-backed post-refactor performance report without production-code edits. |
 | 10 | Approved Performance Optimization Implementation | Implement only explicitly approved `PERF-NNN` findings and compare before/after evidence. |
@@ -150,7 +153,7 @@ Phase 6.B constructs one DI-owned logger after `LoggingSettings.DebugMode`, assi
 | 6.A | Phase 5 | Coordinator seam, structured scan result, completeness/commit policy, accepted snapshot, active-work quiescence | Core-owned pipeline foundation; existing low-level owners preserved | Focused Core scan/cache/snapshot/quiescence tests |
 | 6.B | Phases 2 and 6.A | One provider, registrations/lifetimes, target settings objects, logger bootstrap, startup/shutdown/restart | DI/lifecycle foundation; provider-owned logger lifecycle | Build; composition, archive, lifecycle, and WPF smoke tests |
 | 6.C | Phase 6.B | Legacy logger inventory/migration, structured Serilog calls, emergency bootstrap writer | Legacy logger retired after zero normal callers | Build; batch logging/bootstrap/regression tests |
-| 7 | Phases 2, 3, and 6.A-6.C | Generalized workflow result types, install coordinator, progress/cancel/failure state, broader UI workflow status | Consistent workflow outcomes and UI state path beyond the 6.A foundation | Build; workflow smoke tests; targeted tests |
+| 7 | Phases 2, 3, and 6.A-6.C | Install-specific terminal result, manager-relayed progress, Core reconciliation, UI presenter, Launcher rename | Narrow Phase 7 contract and stable Phase 8 handoff | Build; targeted deterministic tests; documentation audit |
 | 8 | Phases 6.B, 6.C, and 7; Phase 4 preferred | MVVM conventions, shell/navigation, page ViewModels, command/state patterns | Major UI workflows extracted to ViewModels | Build; ViewModel tests; UI smoke test |
 | 9 | Phases 4-8 settled | Release benchmarks, allocations, analyzers, architecture/performance inspection, classified findings, dated audit report | Authoritative post-Phase-8 baseline and pending developer decisions | Build; tests; Release benchmarks; analyzers; report review |
 | 10 | Phase 9 developer decisions | Approved finding IDs, small optimization batches, regression tests, comparable before/after benchmarks, report updates | Approved changes and finding dispositions | Build; tests; benchmarks; reviewer pass; manual inspection |
@@ -203,10 +206,10 @@ flowchart TD
 - [X] Phase 3: The implementation/reviewer pass completed the decision-safe archive and persistence slices; owner-gated BLSE, reserved-folder, named-modpack recovery, normal-upgrade policy, and flat-archive target naming/blocking remain explicitly deferred.
 - [X] Phase 4: Core tests and reusable performance benchmark infrastructure exist; correctness tests and benchmarks are separated; provisional baselines are labeled.
 - [X] Phase 5: Resolver/workflow integration, Steam split-library behavior, manual configuration, startup queue, scanner safety, test migration, and automated verification are complete; owner real-Steam/WPF smoke remains pending before release acceptance.
-- [X] Phase 6.A: A Core-owned `ModPipelineCoordinator` makes scan completeness/commit decisions, publishes an accepted snapshot, and exposes active-work quiescence.
+- [X] Phase 6.A: Core `ModPipelineManager` makes scan completeness/commit decisions, publishes an accepted snapshot, and exposes active-work quiescence.
 - [X] Phase 6.B: One validated provider owns composition, settings/bootstrap, the Serilog lifecycle, and controlled WPF startup/shutdown/restart.
 - [X] Phase 6.C: Legacy logger callers migrated in verified batches; the general logger retired and `EmergencyStartupLogWriter` is the only pre-Serilog fallback.
-- [ ] Phase 7: Workflow result contracts and coordinator state are implemented for selected high-risk workflows.
+- [ ] Phase 7: Locked install outcomes, application notifications, Core reconciliation, and Launcher naming foundation are implemented and verified.
 - [ ] Phase 8: Shell/navigation and major page workflows use consistent ViewModel patterns.
 - [ ] Phase 9: A post-refactor performance audit report exists with authoritative baselines, classified findings, and pending developer decisions; no production optimization was performed.
 - [ ] Phase 9 developer gate: Every proposed optimization is approved, modified, rejected, deferred, marked needs-more-evidence, or out of scope before Phase 10 begins.
@@ -376,20 +379,24 @@ Use fake temp directories to cover Steam client installed on one root while Bann
 
 ## Phase 6 - Mod Pipeline, Application Lifecycle, And Legacy Logging
 
+Phase 6.A, 6.B, and 6.C are implemented baselines. The detailed work-order text
+below is retained for historical sequencing/rationale and must not override
+current source, canonical architecture, or the historical-ledger status notes.
+
 Phase 6 is split in locked order: 6.A establishes only the mod-pipeline foundation; 6.B then owns DI, lifecycle, settings bootstrap, and final log-file ownership; 6.C migrates normal legacy logger callers. The detailed ledgers below are the implementation authority; current source remains pre-Phase-6.
 
 ### Phase 6.A - Mod Pipeline Coordinator Foundation
 
 | Work-order field | Detail |
 |---|---|
-| Purpose | Establish one Core-owned `ModPipelineCoordinator` before DI registers and lifecycle-manages it. |
+| Purpose | Historical Phase 6.A record: establish the now-implemented Core `ModPipelineManager` before DI registers and lifecycle-manages it. |
 | Dependencies | Implemented Phase 5 platform/path behavior; current scanner/cache/installer/modpack source; Phase 4 regression infrastructure. |
 | Included work | Workflow-specific structured result; local/Workshop completeness; commit authorization; cache-rotation gating; atomic accepted snapshot/version; startup and refresh reuse; deterministic admission/cancellation/completion/quiescence. |
 | Excluded work | DI/provider construction, WPF startup/static access, logger lifecycle/callers, broad result hierarchy, MVVM, installer/extractor/rollback redesign, Nexus, Phase 5 redesign, and unrelated optimization/UI work. |
 | Implementation order | Audit current owners; define result and completeness/commit policy; add coordinator seam; gate rotation/save; publish accepted snapshot; route startup and refresh; add active-work stop/cancel/quiescence; add focused tests; build/full tests; record deviations/later work. |
 | Exit criteria | One coordinator owns sequencing; startup/refresh use it; rejected work cannot replace accepted state; rotation is gated; accepted state is coherent; 6.B can stop/cancel/await work; Core remains WPF-free; no DI/logger scope leaks. |
 | Verification | Complete/incomplete root cases; invalid/cancel/failure no-commit; deterministic duplicates; previous snapshot/cache preservation; modpack accepted-snapshot use; single-operation admission; idempotent stop; cancellation/quiescence; Phase 5 regression; build/full tests. |
-| Documentation handoff | [Complete Phase 6.A contract](phase_6a_mod_pipeline_coordinator_locked_decisions_2026-07-21.md). Move only behavior proven by future source/tests into canonical architecture. |
+| Documentation handoff | [Historical Phase 6.A contract](phase_6a_mod_pipeline_coordinator_locked_decisions_2026-07-21.md). Move only behavior proven by source/tests into canonical architecture. |
 
 ### Phase 6.B - Dependency Injection And Application Lifecycle Foundation
 
@@ -402,7 +409,7 @@ Phase 6 is split in locked order: 6.A establishes only the mod-pipeline foundati
 | Implementation order | Finalize service/lifetime matrix; add DI package/modules; implement settings split/object flow; implement logger bootstrap/file lifecycle; add startup/dialog/drain coordinators; remove `StartupUri`; migrate approved static access while retaining pages; implement lifetime/shutdown/restart/exceptions; integrate 6.A quiescence; add tests and manual WPF smoke. |
 | Exit criteria | One validated provider owns the graph; startup is coordinator-driven; shell/pages retain one-instance behavior; target settings exist; one global logger closes only through provider disposal; startup archival/retention work; controlled shutdown/restart/exceptions work; 6.A quiescence integrates; legacy callers remain deferred to 6.C. |
 | Verification | Composition/root resolution; UI gates/retained pages/fresh dialogs/FIFO drain; settings recovery and DebugMode restart; startup archive/collision/failure/fixed retention; shutdown/restart/timeouts/quiescence/exceptions; build/full tests/Core boundary; complete manual WPF smoke matrix. |
-| Documentation handoff | [Complete Phase 6.B contract](phase_6b_di_and_lifecycle_locked_decisions_2026-07-21.md). Do not mark implemented until source, automated tests, and manual WPF evidence exist. |
+| Documentation handoff | [Historical Phase 6.B contract](phase_6b_di_and_lifecycle_locked_decisions_2026-07-21.md). Implemented source and automated validation establish the baseline; phase-appropriate runtime evidence remains separately scoped. |
 
 ### Phase 6.C - Legacy Logger Call-Site Migration
 
@@ -419,7 +426,7 @@ Phase 6 is split in locked order: 6.A establishes only the mod-pipeline foundati
 
 ### Steam Workshop Path Adapter Planning
 
-Phase 5 implemented the Steam-boundary integration. Phase 6.A consumes finalized configuration through `ModPipelineCoordinator`; Phase 6.B registers the finalized resolver, workflow, notification queue, and dependencies in the sole provider without redesigning Phase 5 behavior.
+Phase 5 implemented the Steam-boundary integration. Implemented Phase 6.A consumes finalized configuration through `ModPipelineManager`; Phase 6.B registers the finalized resolver, workflow, notification queue, and dependencies in the sole provider without redesigning Phase 5 behavior.
 
 ### Performance Planning Cross-References
 
@@ -430,33 +437,49 @@ Phase 5 implemented the Steam-boundary integration. Phase 6.A consumes finalized
 - Phase 7: Preserve progress, cancellation, result construction, cleanup, and coordinator semantics while allowing workflow overhead to be measured.
 - Phase 8: Include UI-thread responsiveness and startup/manual smoke observations in later audit scope; do not create fragile wall-clock UI unit tests.
 
-## Phase 7 - Result Types And Workflow Coordinator
+## Phase 7 - Install Outcomes, Application Notifications, And Phase 8 Naming Foundation
 
 | Work-order field | Detail |
 |---|---|
-| Purpose | Make important workflows report success, failure, warnings, and user-facing messages consistently, and give long-running install operations one clear coordination layer. |
-| Included work | Workflow-specific result types beyond the 6.A scan contract; install workflow coordinator; progress/cancellation/completion/failure/cleanup ownership; generalized warning conventions; UI-facing status/error messages; toast integration; future Nexus download-to-install handoff planning. |
-| Excluded work | App-wide generic `Result<T>` unless repetition justifies it; WPF dependencies in Core; duplicate installer logic; Nexus download implementation. |
+| Purpose | Implement the owner-locked install-specific outcome, application notification, manager reconciliation, and stable page-naming prerequisites for Phase 8. |
+| Included work | Non-null `ModInstallOperationResult`; manager-relayed transient progress and immutable terminal result; manager-owned DLL unblock and internal scan/commit reconciliation; explicitly activated UI presenter; `ModsPage` -> `LauncherPage` rename. |
+| Excluded work | Generic `Result<T>`, new workflow coordinator/scheduler/event bus, WPF in Core, duplicated installer/extractor mechanics, MVVM extraction, Nexus APIs/queues/future ModsPage. |
 | Affected areas | Install workflow, archive validation, BLSE validation/install, persistence save/load/recovery, generalized mod workflow extensions, modpack import/export, future Nexus auth/download workflows, and toast/status state. |
 | Implementation notes | Result objects should support success/failure, code, user-facing message, technical/log message, warnings, and affected path/mod where useful. Coordinator may initially wrap current installer/event flow. Build on—never replace—the 6.A completeness, commit, accepted-snapshot, startup/refresh, and quiescence contract. |
 | Dependency ordering | Follows completed 6.A–6.C and safety/logging foundations. Precedes or coordinates with MVVM extraction. |
 | Do before | Identify current mixed result styles. Decide first workflows to standardize. |
-| Do after | Use coordinator state in ViewModels during Phase 8. Add or update tests for result-producing workflows. |
+| Do after | Move temporary launcher presentation reconciliation and operation state to `LauncherViewModel` or an approved presentation owner in Phase 8. |
 | Exit criteria | High-risk workflows beyond the 6.A foundation have clearer result contracts; install completion/failure/cancellation paths are observable; UI can show busy/status/error/result state consistently without duplicating coordinator ownership. |
 | Risk notes | Over-standardizing too early can add ceremony. Coordinator may duplicate service responsibilities if boundaries are unclear. |
 | Verification | Build succeeds; tests cover result mapping where practical; manual install success/failure/cancel/cleanup paths; logs and toasts match outcomes. |
-| Codex guardrails | Keep Core WPF-free. Keep installer authority in Core services. Do not add broad generic result abstractions unless proven useful. |
-| Documentation updates | Update `result_and_workflow_policy.md` and architecture docs when coordinator behavior is implemented. |
+| Codex guardrails | Keep Core WPF-free. Keep installer/extractor mechanics in their owners. Do not add a second admission owner, a generic result abstraction, or a Nexus implementation. |
+| Documentation updates | Use [locked decisions](phase_7_locked_decisions_2026-07-24.md), [migration map](phase_7_migration_map.md), and the reconciliation audit. |
+
+### Locked Phase 7 execution boundary
+
+`ModPipelineManager` remains the single Core owner of admission, cancellation,
+operation identity, accepted snapshots, required reconciliation, and quiescence.
+The admitted pipeline is validate/admit, installer work, summary, Modules DLL
+unblocking, internal scan/commit reconciliation, terminal result, and release.
+Public `RefreshAsync` must not be recursively admitted from install. The
+installer semaphore is defensive only; manager-admitted installer refusal is an
+invariant failure. Cancellation retains a partial summary where applicable,
+performs bounded consistency finalization, and does not imply rollback.
+
+The presenter owns one opaque operation-notification handle and the correlated
+progress-to-terminal lifecycle. It rejects stale progress and owns standalone
+pre-admission notices. Final user notification waits until the temporary
+`LauncherPage` presentation reconciliation reports semantic completion.
 
 ## Phase 8 - Staged MVVM Shell/ViewModel Rewrite
 
 | Work-order field | Detail |
 |---|---|
 | Purpose | Move WPF presentation toward consistent MVVM across shell, navigation, pages, commands, workflow state, dialogs, and user-visible feedback. |
-| Included work | MVVM conventions; base ViewModel patterns; command patterns; shared UI operation state; shell/navigation refactor; high-risk workflow ViewModels for install, scan/refresh, BLSE, and modpacks; Steam Workshop scan warning surfacing; deferred UI page rename checkpoint before page extraction; remaining page ViewModels; ViewModel tests. |
+| Included work | MVVM conventions; `LauncherView`/`LauncherViewModel`; commands and busy/cancel state; collection synchronization, modpack reapply, launch-state recalculation, completion reporting; remaining page ViewModels and tests. |
 | Excluded work | One-pass full UI rewrite; unrelated visual redesign; unrelated new features; business logic in ViewModels that belongs in Core; Nexus networking in UI. |
-| Affected areas | `MainWindow`, `ModsPage`, `ModpacksPage`, `SettingsPage`, `FaqPage`, dialogs/windows, Toast/status state, and ViewModel registrations. |
-| Implementation notes | Start with conventions before extraction. Extract highest-risk workflows first. Keep code-behind for view-only behavior where appropriate. Before page ViewModel extraction, revisit the UI page rename review checklist and obtain an owner-approved rename map if any `.xaml` page rename is desired. |
+| Affected areas | `MainWindow`, `LauncherPage`, `ModpacksPage`, `SettingsPage`, `FaqPage`, dialogs/windows, Toast/status state, and ViewModel registrations. |
+| Implementation notes | Start after the Phase 7 result/progress/presenter contracts and behavior-preserving Launcher rename are implemented and tested. Keep code-behind only for view behavior; do not add a speculative ViewModel manager. |
 | Dependency ordering | Follows Phases 6.B, 6.C, and 7. Uses the retained page lifetime from 6.B and result/coordinator patterns from 6.A/7. |
 | Do before | Freeze expected behavior for target pages. Ensure high-risk Core workflows have tests where practical. Define command and state conventions. Complete the deferred UI page rename review checkpoint before broad page extraction or future Nexus UI work. |
 | Do after | Remove obsolete code-behind only after equivalent ViewModel behavior is verified. Add ViewModel tests for extracted workflows. |
@@ -466,9 +489,12 @@ Phase 5 implemented the Steam-boundary integration. Phase 6.A consumes finalized
 | Codex guardrails | Stage page rewrites individually. Do not mix visual redesign with architecture extraction. Do not move Core logic into ViewModels. Do not add unrelated Nexus UI in this phase slice. |
 | Documentation updates | Update `mvvm_refactor_plan.md` and `docs/Architecture/Projects/CalradiaForge.UI.md`. |
 
-### Deferred Owner Checkpoint - UI Page Rename Review
+### Phase 8 Runtime Acceptance Handoff
 
-Immediately before broad page ViewModel extraction, review `docs/refactor/ui_page_rename_review_checklist.md` with the owner. Do not rename any UI page `.xaml` file unless the owner approves an explicit rename map.
+Phase 8 runtime acceptance is human-driven under Visual Studio. Codex observes
+process/window/IDE/log evidence only where access genuinely exists; otherwise
+the user supplies labeled screenshots, recordings, copied output, logs, and
+checkpoints. A large WPF automation harness is not a prerequisite.
 
 ## Phase 9 - Performance Audit And Report Generation
 

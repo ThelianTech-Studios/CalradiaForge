@@ -12,7 +12,7 @@ CalradiaForge should move from manual/runtime verification toward phased automat
 - `ModpackData` owns modpack and last-used file I/O.
 - `ModpackService` owns modpack workflow behavior, validation, import/export, and default modpack creation.
 - `ModInstaller`, `ModExtractor`, and `BLSEInstaller` own install and extraction behavior that needs coverage before Nexus downloads.
-- `Logger` currently writes session logs directly. The future Serilog formatter is presentation-only and performs no automatic secret or path filtering.
+- Provider-owned Serilog is the implemented normal logger; `EmergencyStartupLogWriter` is the narrow pre-operational fallback. The formatter is presentation-only and performs no automatic secret or path filtering.
 - `source/CalradiaForge.Benchmarks` is the owner-approved BenchmarkDotNet project. Core benchmarks live under `Core.Benchmarks`; raw local results use the ignored `BenchmarkDotNet.Artifacts` directory.
 - Additional analyzer tools, retained baseline storage, minimum CI coverage, and CI blocking policy remain unselected.
 
@@ -262,6 +262,36 @@ Manual WPF smoke coverage includes valid/first-run startup, language, EULA accep
 
 Logger benchmarks may measure construction, disabled-level calls, neutral formatter rendering, structured properties, async sink behavior, startup archive/cleanup scaling, provider-owned flush/close, startup contribution, and allocations. These measurements do not authorize lifecycle or file-policy changes.
 
+## Planned Phase 7 Deterministic Validation
+
+Phase 7 automated tests must cover manager sequencing and status precedence;
+busy versus admission-stopped rejection; validation failure, partial failure,
+cancellation, bounded finalization, exactly-once cleanup, and retained partial
+summary; DLL-unblock and internal scan/commit seams; operation/archive IDs and
+transient-progress/terminal-result separation; BLSE classification; presenter
+lifecycle, activation, stale-progress rejection, and no duplicate toast;
+DI/XAML/navigation/localization rename boundaries; and Core/UI dependency rules.
+The tests must prove `RefreshAsync` is not recursively admitted from install and
+that installer/extractor mechanics remain in their current owners.
+
+## Phase 8 Human-Driven, Codex-Observed Runtime Acceptance
+
+The user runs the application under Visual Studio. Codex records direct
+process/window/IDE/log evidence only when the environment genuinely provides
+that access; otherwise it records clearly labeled user-provided screenshots,
+recordings, copied output, logs, and checkpoints. This is not a requirement for
+a large WPF automation harness.
+
+The required scenario matrix is: successful single- and multi-archive installs;
+skipped archives; partial failure; DLL-unblock warning/failure; authoritative
+refresh failure; navigation away/back during install; cancellation before and
+after filesystem changes including reconciliation; shutdown/restart during work;
+navigation-independent progress; terminal notification after launcher
+reconciliation; duplicate-toast prevention; stale-progress rejection; accurate
+busy/cancel/CanStart state; accepted-snapshot visible-list synchronization; and
+selected-modpack reapplication. The Phase 8 report records expected behavior,
+evidence type, pass/fail, deviations, defects, and recommendations.
+
 ## Phased Implementation
 
 | Phase | Scope | Notes |
@@ -272,7 +302,8 @@ Logger benchmarks may measure construction, disabled-level calls, neutral format
 | 6.A | Add coordinator completeness, commit, accepted-snapshot, startup/refresh, and quiescence tests. | Preserve Phase 5 and Core WPF-free behavior. |
 | 6.B | Add one-provider, retained UI, settings/bootstrap, startup-archive, shutdown/restart/exception, and manual WPF coverage. | Prove one provider-owned logger close path and retained `Latest`. |
 | 6.C | Add caller-inventory, structured output, emergency writer, and one-close-path regression tests. | Remove the general legacy logger only after zero normal callers. |
-| 7-8 | Expand generalized workflow and MVVM tests beyond the 6.A foundation. | Preserve coordinator ownership and use manual UI checks where required. |
+| 7 | Add locked install-result, progress, manager-reconciliation, presenter, and Launcher-rename deterministic tests. | Preserve manager ownership; Phase 7 does not implement MVVM. |
+| 8 | Add ViewModel tests and execute the human-driven, Codex-observed runtime matrix. | Preserve the Phase 7 contract and label evidence by observation source. |
 | 9 | Run the report-only performance audit and capture authoritative post-Phase-8 baselines. | Do not edit production code. Stop for developer decisions. |
 | 10 | Test and benchmark explicitly approved `PERF-NNN` findings. | Compare before/after under comparable conditions and record ineffective or harmful changes. |
 | 11 | Run the full bounded build/test/benchmark/analyzer/architecture/manual-smoke loop. | Update the same audit report and stop when practical criteria are met. |

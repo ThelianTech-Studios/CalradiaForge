@@ -4,22 +4,23 @@
 
 Replace static application service construction and access over time with explicit composition using `Microsoft.Extensions.DependencyInjection`, while preserving the UI/Core/Nexus boundaries and staging legacy logger call-site migration after the DI foundation is verified.
 
-This document defines the locked Phase 6.B composition and application-lifecycle model. Phase 6.A supplies the coordinator prerequisite, and Phase 6.C later migrates normal legacy logger callers. This is planned architecture and does not claim DI is implemented in current source.
+This document records the implemented Phase 6.B composition and lifecycle
+baseline. Phase 6.A supplied `ModPipelineManager`, and Phase 6.C migrated normal
+legacy logger callers. Historical phase design detail below is retained as
+rationale, not as a claim that the baseline remains future work.
 
 ## Current Source Observations
 
-- `App.xaml.cs` initializes services manually and exposes static properties such as `AppSettingsInstance`, `ModService`, `ModInstaller`, `ModpackService`, `GameLauncher`, `Toasts`, and `Translator`.
-- Core services already accept important dependencies explicitly, such as `ModService(AppConfigSettings, ModsData)` and `ModInstaller(AppConfigSettings)`.
-- Pages currently retrieve services through static `App.*` access.
-- `App.xaml` currently uses `StartupUri` for `MainWindow` construction.
-- `SerilogLoggerFactory` currently exposes `Create()`, not `Build()`. The current method performs cleanup, creates a logger, and returns it without retaining the instance; current startup does not resolve or assign this factory/logger through DI.
-- The current sink targets `CalradiaForge_Latest.log` with infinite rolling, `shared: false`, asynchronous output, and no explicit `fileSizeLimitBytes` or `rollOnFileSizeLimit` setting. Current cleanup is invoked per `Create()` call, not once at application startup.
-- Current `App.OnExit` requests installer cancellation but does not await fire-and-forget install work before shutdown. This plan must not describe current shutdown as quiescent.
-- `CalradiaForge.Nexus` is a reserved boundary and should gain registrations only when Nexus services exist.
+- `App` builds and owns one validated provider, resolves `ApplicationStartupCoordinator`, and uses the implemented startup/shutdown coordinator contracts.
+- Core/UI registrations share that provider; Core has no WPF registrations and primary pages are retained singleton UI services.
+- Provider-owned Serilog is the normal runtime logger and `EmergencyStartupLogWriter` is the narrow pre-operational fallback.
+- `ModPipelineManager` is registered as the Core operation boundary; `ToastService` and the current `ModsPage` are registered in UI, while `MainWindow` is the global toast host.
+- `CalradiaForge.Nexus` remains reserved until Nexus-owned services exist.
 
-## Phase 6.B Composition Model
+## Implemented Phase 6.B Composition Model
 
-Phase 6.A first establishes `ModPipelineCoordinator`; Phase 6.B then builds one application graph around that finalized boundary. The architectural rule is:
+Phase 6.A established `ModPipelineManager`; Phase 6.B built one application graph
+around that boundary. The architectural rule remains:
 
 ```text
 DI owns object construction and dependency delivery.
@@ -59,7 +60,7 @@ Core and UI never build or return another provider. Registration modules never r
 
 ### Core Registration Ownership
 
-Core registration contributes only Core services and infrastructure to the shared collection, including configuration/settings, Phase 5 services, `ModPipelineCoordinator`, persistence/data helpers, and the shared Serilog factory/instance. It must not register WPF windows, pages, dialogs, navigation, toast controls, or UI coordinators.
+Core registration contributes only Core services and infrastructure to the shared collection, including configuration/settings, Phase 5 services, `ModPipelineManager`, persistence/data helpers, and the shared Serilog factory/instance. It must not register WPF windows, pages, dialogs, navigation, toast controls, or UI coordinators.
 
 ### UI Registration Ownership
 
@@ -71,7 +72,7 @@ UI registration contributes WPF windows/pages, dialog services, toast/navigation
 
 ## Lifetime Policy
 
-Use singleton by default for application-wide state and infrastructure. Strong singleton defaults include `ConfigFileManager`, `AppSettings`, `LoggingSettings`, `ModPipelineCoordinator`, retained mod state, Phase 5 detection services, the startup notification queue, translation services, toast/navigation/shell services, `ApplicationStartupCoordinator`, `ApplicationShutdownCoordinator`, `StartupNotificationDrainCoordinator`, `MainWindow`, each retained primary page, and the shared Serilog logger.
+Use singleton by default for application-wide state and infrastructure. Strong singleton defaults include `ConfigFileManager`, `AppSettings`, `LoggingSettings`, `ModPipelineManager`, retained mod state, Phase 5 detection services, the startup notification queue, translation services, toast/navigation/shell services, `ApplicationStartupCoordinator`, `ApplicationShutdownCoordinator`, `StartupNotificationDrainCoordinator`, `MainWindow`, each retained primary page, and the shared Serilog logger.
 
 Use transients only for genuinely short-lived operation-local objects with no shared mutable state, event ownership, workflow ownership, or shutdown responsibility. Dialog-service contracts are singleton, but each invocation creates a fresh WPF dialog window. Do not add custom scopes.
 
@@ -79,7 +80,18 @@ Use transients only for genuinely short-lived operation-local objects with no sh
 
 Resolve one singleton `MainWindow`, construct each primary page once through DI, and retain/reuse those page instances. Constructor injection replaces static `App.*` service access while preserving current code-behind, page-owned state, `DataContext`, bindings, navigation refresh, and `Loaded`/`Unloaded` behavior. Do not add transient navigation pages, navigation scopes, a page catalog, or broad ViewModel extraction; those belong to Phase 8.
 
-Legitimate WPF framework statics remain allowed: `Application.Current.Dispatcher`, `Application.Current.Shutdown()`, `Application.Current.Resources`, and `Application.Current.MainWindow`. Do not add static compatibility service properties. The general `Logger.Instance` remains temporarily through Phase 6.B and is removed in 6.C.
+Legitimate WPF framework statics remain allowed: `Application.Current.Dispatcher`, `Application.Current.Shutdown()`, `Application.Current.Resources`, and `Application.Current.MainWindow`. Do not add static compatibility service properties. The general legacy `Logger.Instance` was removed in implemented Phase 6.C.
+
+## Planned Phase 7 Notification Presenter
+
+Phase 7 plans a singleton application-lifetime UI install-notification presenter.
+UI registration may register it, but registration alone is insufficient: startup
+or shell construction must explicitly activate it before user-initiated install
+work can begin. It observes only manager-published, UI-neutral progress/results;
+it neither admits, schedules, cancels, nor awaits pipeline work. It owns no Core
+registration and does not change retained page lifetime. `ToastService` remains a
+generic renderer and `MainWindow` remains the host. A broader typed coordinator
+is deferred to a future Nexus cycle.
 
 ## Settings Bootstrap And Naming
 
@@ -183,7 +195,7 @@ Do not broadly migrate `Logger.Instance` callers or create the final emergency w
 
 ## Steam And Bannerlord Path Adapter Planning
 
-Phase 5 production detection integrates `ISteamClientRootProvider`, `ISteamInstallationResolver`, `SteamInstallationResolver`, and related Steam metadata through `GamePlatformDetectionResolver` and `GameDetectionService`. Phase 6.A consumes that finalized behavior through `ModPipelineCoordinator`; Phase 6.B registers the finalized services and notification queue. Neither phase redesigns detection or creates competing adapters.
+Phase 5 production detection integrates `ISteamClientRootProvider`, `ISteamInstallationResolver`, `SteamInstallationResolver`, and related Steam metadata through `GamePlatformDetectionResolver` and `GameDetectionService`. Implemented Phase 6.A consumes that finalized behavior through `ModPipelineManager`; Phase 6.B registers the finalized services and notification queue. Neither phase redesigns detection or creates competing adapters.
 
 Adapter planning should support:
 
@@ -201,9 +213,9 @@ Adapter planning should support:
 
 | Phase | Work | Verification |
 |---|---|---|
-| 6.A | Implement the Core `ModPipelineCoordinator`, accepted snapshot, commit gating, and awaitable quiescence contract. | Focused Core pipeline/snapshot/quiescence tests; Phase 5 regression. |
-| 6.B | Add the DI package; create Core/UI registration modules; build one validated provider; implement settings bootstrap, startup coordinator/deferred shell, retained lifetimes, one Serilog pipeline, startup-only archive, fixed retention, notifications/dialogs, shutdown/restart, and global exception handling. | Composition, UI startup, settings/logging, file lifecycle, shutdown/restart, exception, full-suite, Core-boundary, and manual WPF verification. |
-| 6.C | Migrate normal legacy logger callers, retire the general logger after zero callers, and add `EmergencyStartupLogWriter`. | Batch builds/tests, caller inventory, output/bootstrap/lifecycle tests, full regression. |
+| 6.A | Implemented: Core `ModPipelineManager`, accepted snapshot, commit gating, and awaitable quiescence. | Focused Core pipeline/snapshot/quiescence tests; Phase 5 regression. |
+| 6.B | Implemented: one validated provider, settings/bootstrap, startup/shutdown, retained lifetimes, Serilog, dialogs, and exception handling. | Composition, UI startup, settings/logging, lifecycle, full-suite, Core-boundary, and manual WPF verification. |
+| 6.C | Implemented: normal legacy callers migrated, general logger retired, and `EmergencyStartupLogWriter` added. | Batch builds/tests, caller inventory, output/bootstrap/lifecycle tests, full regression. |
 
 ## Performance Verification Relationship
 

@@ -2,6 +2,11 @@
 
 ## Purpose
 
+This is a concise historical/conceptual companion to the canonical
+`NEXUS_INTEGRATION_ARCHITECTURE.md`. Phase 7 preserves only naming and
+notification context in [the refactor note](../../refactor/nexus_future_mod_management_context.md);
+it does not authorize Nexus implementation.
+
 This document defines the authoritative concept architecture for Nexus Mods integration within CalradiaForge.
 
 ## Locked Decisions
@@ -80,4 +85,3 @@ ModInstaller
 - Auto-register after authentication
 - Not registered before authentication
 - Immediate queueing when authenticated
-

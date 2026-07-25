@@ -6,13 +6,11 @@ Logging should provide useful local diagnostics, keep output compact, and avoid 
 
 ## Current Grounding
 
-- The live application still uses the legacy `Logger.Instance` session logger. Its existing cleanup behavior is separate from the unused Serilog factory path.
-- Phase 2 Serilog infrastructure exists under `source/CalradiaForge.Core/Infra/Logging/`, but WPF startup does not currently initialize it and Phase 2 did not migrate callers or establish lifecycle ownership.
-- `SerilogLoggerFactory` is an instance class constructed with `AppConfigSettings`; its current public method is `Create()`, not `Build()`. It creates and returns a logger but does not retain it.
-- The current Serilog path targets `AppPaths.LogsFilePath`, named `CalradiaForge_Latest.log`, with `RollingInterval.Infinite`, `shared: false`, and asynchronous file output. It does not create daily rolled files.
-- `Create()` currently invokes custom cleanup on every factory call. `LogRetentionPolicy.Cleanup(...)` interprets the setting as an age in days, while `AppConfigSettings.RetainedFileCount` is named and documented as a file count; this mismatch is unresolved.
-- `retainedFileCountLimit: default` passes null to the nullable Serilog option, so it does not impose the normal file-count limit. `fileSizeLimitBytes` and `rollOnFileSizeLimit` are not configured, so the active-file size policy remains an owner decision.
-- As of the 2026-07-12 audit of commit `1381dda6c30d159e0101699b729c10b4ece30f47`, the neutral `SerilogTextFormatter` is the custom `ITextFormatter`. It renders event values without inspecting, masking, redacting, sanitizing, or replacing them. The legacy `Logger.Instance` path remains live and separate from the future Serilog factory path.
+- Provider-owned Serilog is the live normal runtime logger; the general legacy `Logger.Instance` path was retired in Phase 6.C.
+- `EmergencyStartupLogWriter` is the narrow pre-operational fatal fallback; it is not a second normal logging pipeline.
+- `SerilogLoggerFactory` creates the provider-owned logger after settings bootstrap. The active path is `CalradiaForge_Latest.log`; shutdown leaves it available and the next startup performs the implemented archive/retention policy.
+- `SerilogTextFormatter` remains the neutral custom `ITextFormatter`: it renders event values without masking, redacting, sanitizing, or replacing them.
+- File-size/rolling strategy remains a bounded future owner decision; it is separate from the implemented lifecycle/retention baseline.
 
 ## Policy
 
@@ -64,19 +62,19 @@ Path logging should stay inside the app's trust boundary:
 | Async sink | Use `Serilog.Sinks.Async` where the logging pipeline benefits from buffered writes. |
 | Debug sink | Use `Serilog.Sinks.Debug` only in Debug builds via a conditional `PackageReference` with `PrivateAssets="all"` and `#if DEBUG` sink configuration; exclude it from Release/Public Release artifacts. |
 | Console sink | Do not add `Serilog.Sinks.Console`; CalradiaForge is a WPF app and CLI execution must not be treated as interactive runtime verification. |
-| File behavior | Current: one infinite-rolling active `CalradiaForge_Latest.log`, custom cleanup, and no time-based Serilog rolling. Planned Phase 6.B: archive the previous `Latest` only at next startup, use no collision suffix, apply fixed seven-day archive retention, and leave `Latest` available after shutdown. |
+| File behavior | Implemented: archive the previous `Latest` at next startup, use no collision suffix, apply fixed seven-day archive retention, and leave `Latest` available after shutdown. |
 | Structure | Message templates and structured properties. |
 | Context | `SourceContext` or class context where practical. |
 | Thread enrichment | Include thread enrichment where it helps session diagnostics. |
 | Exception enrichment | Use structured exception enrichment for richer failure context. |
-| Minimum level | Current behavior uses `AppConfigSettings.DebugMode`. Planned Phase 6.B loads `LoggingSettings.DebugMode` before logger construction; the selected Debug or Information level remains fixed for the process lifetime. |
+| Minimum level | Implemented: `LoggingSettings.DebugMode` is available before logger construction; the selected Debug or Information level remains fixed for the process lifetime. |
 | Debug level | Controlled by Serilog configuration/debug setting rather than repeated manual guards. |
 | Expensive diagnostics | Guard with level checks only when constructing the diagnostic payload is costly. |
 | Formatting | `SerilogTextFormatter` is a neutral presentation template connected to the file and Debug sinks. It renders timestamp, level, message, applicable source context, thread information, properties, and exception information without rewriting event values. |
 
 ## Retention And File-Size Policy
 
-Current source still has a configuration/cleanup naming mismatch. Phase 6.B resolves the future policy: remove the configurable retention setting and delete archived CalradiaForge logs older than seven days during startup, after previous-`Latest` archival handling and before opening the new active logger. Never include `CalradiaForge_Latest.log`; ignore missing files and individual deletion failures.
+The implemented policy deletes archived CalradiaForge logs older than seven days during startup, after previous-`Latest` archival handling and before opening the new active logger. It never includes `CalradiaForge_Latest.log` and ignores missing files and individual deletion failures.
 
 The active sink still has no locked explicit file-size strategy. That file-size/rolling choice remains genuinely unresolved and must not be confused with the resolved archive-retention policy.
 

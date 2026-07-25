@@ -22,4 +22,8 @@
 - `source/CalradiaForge.Core/Infra/GamePlatform/GameProvider.cs`
 
 ## Deferred / Future Work
+
+- **Planned Phase 7 terminology:** `LauncherPage` is the future name of the
+  current UI surface and is distinct from the implemented Core `GameLauncher`.
+  The rename is planned only; it does not create a future `ModsPage`.
 - Epic/Game Pass launch backend and config-write support remain deferred.

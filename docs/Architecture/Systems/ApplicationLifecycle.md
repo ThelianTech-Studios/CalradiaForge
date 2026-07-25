@@ -35,6 +35,14 @@ ApplicationShutdownCoordinator
 
 Core registration contributes only Core services. UI registration contributes WPF windows, pages, dialogs, notification presentation, and application coordinators. No registration module builds a provider, and no global provider/service-locator property is exposed.
 
+## Planned Phase 7 Presenter Activation
+
+Phase 7 plans a UI install-notification presenter. DI registration alone is not
+activation: startup or shell construction must explicitly activate it before
+install work can begin. It observes only `ModPipelineManager` semantic
+progress/results and cannot admit, cancel, or schedule operations. This is
+distinct from the implemented startup-notification drain coordinator.
+
 ## Shutdown and Restart Rules
 
 - Normal close commits immediately when the authoritative mod pipeline is idle. When tracked work is active, the themed shutdown dialog warns before commitment; cancellation leaves the application running.

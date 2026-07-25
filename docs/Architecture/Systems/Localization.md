@@ -22,4 +22,10 @@
 - `source/CalradiaForge.UI/Dialogs/ConfirmDialogModelResolver.cs`
 
 ## Deferred / Future Work
+
+- Current install toast text still derives from `ModInstallSummary.ToSummaryString()`
+  in page code; it is not an authoritative localized workflow contract. Planned
+  Phase 7 presenter formatting maps semantic progress/results through
+  localization, after which that method is no longer the authoritative toast
+  path.
 - Additional languages and UI text are expected to grow over time, but only when backed by source changes.

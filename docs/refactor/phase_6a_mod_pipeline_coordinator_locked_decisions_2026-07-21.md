@@ -2,6 +2,11 @@
 
 ## Status
 
+Historical pre-implementation locked-decision record. Phase 6.A is now
+implemented as `ModPipelineManager`, which owns admission, accepted snapshots,
+cache-commit authorization, cancellation, and quiescence. Preserve the remaining
+ledger as rationale; do not read its future-state language as current source.
+
 Owner-approved planning direction for:
 
 ```text
@@ -12,7 +17,9 @@ This phase is intentionally placed before dependency injection so Phase 6.B can 
 
 ## Current Source State
 
-This is a future implementation contract; it does not claim Phase 6.A is implemented. Phase 5 game-platform detection and path behavior is the implemented prerequisite. Current source still uses `ModService`, a list-returning `ModScanner`, existing cache helpers, and `ModInstaller` fire-and-forget work. It has no `ModPipelineCoordinator`, accepted-snapshot/version contract, structured completeness/commit result, or awaitable application-quiescence boundary.
+Historical snapshot only: Phase 6.A is now implemented as `ModPipelineManager`,
+with accepted snapshots, structured scan results, admission/cancellation, and
+awaitable quiescence. This paragraph's former future-state claims are superseded.
 
 ---
 

@@ -6,31 +6,28 @@ Move the WPF UI from page-heavy code-behind toward staged MVVM without breaking 
 
 ## Current Source Observations
 
-- `ModsPage.xaml.cs`, `ModpacksPage.xaml.cs`, and `SettingsPage.xaml.cs` implement `INotifyPropertyChanged` directly.
+- `ModsPage.xaml.cs`, `ModpacksPage.xaml.cs`, and `SettingsPage.xaml.cs` implement `INotifyPropertyChanged` directly. The current page is planned to become `LauncherPage` in Phase 7 before extraction.
 - Pages currently own observable collections, selected state, status text, command handlers, dialog opening, toast calls, and service event subscriptions.
-- `ModsPage.xaml.cs` observes `ModInstaller` progress/completion events and updates UI through the dispatcher.
+- `ModsPage.xaml.cs` currently observes `ModInstaller` progress/completion events and updates UI through the dispatcher; Phase 7 plans manager-relayed observation and an application-lifetime presenter first.
 - `ModpacksPage.xaml.cs` uses `ModpackService.CurrentLoadOrderEntries` and keeps editable working-copy state in code-behind.
 - `SettingsPage.xaml.cs` follows "UI decides when, Core decides how" for path selection, validation, redetect, and unblock actions, but still owns page state directly.
 
 ## Deferred Phase 8 Target Direction
 
-- Pages become thin views.
+- `LauncherPage` becomes `LauncherView` with `LauncherViewModel`; pages become thin views.
 - ViewModels own state, commands, validation messages, and workflow status.
 - Core services remain UI-independent.
 - Dialogs, file pickers, explorer opening, and toasts are accessed through UI/platform abstractions.
-- Shared operation state supports `IsBusy`, `StatusMessage`, `ErrorMessage`, `CanCancel`, `CurrentOperation`, and `LastOperationResult` where useful.
+- Shared operation state consumes the settled Phase 7 result/progress contract and supports `IsBusy`, `StatusMessage`, `ErrorMessage`, `CanCancel`, `CurrentOperation`, and `LastOperationResult` where useful.
 - ViewModel tests are added as ViewModels stabilize.
 
-## Deferred Owner Checkpoint - UI Page Rename Review
+## Implemented-By-Phase-7 Page Rename Prerequisite
 
-Some current WPF page `.xaml` names may need owner-approved rename/refactor planning before broad page ViewModel extraction or future Nexus-facing UI work. The purpose is to reduce confusing page naming before new Nexus UI concepts are added.
-
-This is a deferred decision checkpoint, not an implementation task:
-
-- Do not rename UI pages in this refactor plan.
-- Do not invent a rename map.
-- Before page ViewModel extraction begins, create a short owner-review document that inventories current UI page files, code-behind partial classes, `x:Class` values, navigation references, proposed rename candidates, reasons, and risks.
-- No rename may proceed until the owner approves an explicit rename map.
+Phase 7 has the owner-locked, behavior-preserving rename: `ModsPage` becomes
+`LauncherPage` and the visible label becomes **Launcher**. The complete rename
+inventory is in [the Phase 7 checklist](ui_page_rename_review_checklist.md).
+`ModsPage` is reserved for future mod management; valid domain types are not
+renamed.
 
 If a later owner-approved rename map exists, verification must include:
 
@@ -41,14 +38,15 @@ If a later owner-approved rename map exists, verification must include:
 - Generated files after clean build.
 - Documentation, screenshots, and smoke-test references.
 
-Renames should happen before the affected page is extracted into a ViewModel whenever the rename would otherwise churn bindings, navigation, or generated partial classes twice.
+The rename must complete before the affected page is extracted into a ViewModel
+so bindings, navigation, and generated partials do not churn twice.
 
 ## Local Implementation Steps
 
 | Step | Work | Verification |
 |---|---|---|
 | 1 | Define base ViewModel, command, UI state, and navigation conventions. | Existing pages still build and behave unchanged. |
-| 2 | Extract install/refresh state from `ModsPage` into a ViewModel. | Install progress, completion, toasts, refresh, and navigation-away behavior still work. |
+| 2 | Extract install/refresh state from `LauncherPage` into `LauncherViewModel`. | Manager progress/results, presenter ordering, navigation-away behavior, and completion reporting still work. |
 | 3 | Extract modpack management state from `ModpacksPage`. | Create/import/save/edit workflows still match current behavior. |
 | 4 | Extract settings state from `SettingsPage`. | Auto-save, validation, redetect, unblock, and version display still work. |
 | 5 | Move shell/navigation state into ViewModels. | Navigation refresh behavior remains correct. |
@@ -56,14 +54,21 @@ Renames should happen before the affected page is extracted into a ViewModel whe
 
 ## Scan Warning Presentation Planning
 
+Phase 7 leaves `LauncherPage` temporary ownership of accepted-snapshot visible
+collection synchronization, selected-modpack reapplication, launch/page-state
+recalculation, and semantic workflow-completion reporting. Phase 8 must migrate
+those responsibilities, plus commands and busy/cancel state, to
+`LauncherViewModel` or an explicitly approved presentation-layer owner. It must
+not create a speculative ViewModel manager.
+
 During page and ViewModel extraction, scan/refresh state should be able to surface Steam Workshop scan warnings without burying them only in logs. The relevant page/ViewModel should distinguish concise user-facing states such as local modules scanned, Workshop modules scanned, Workshop path detection skipped, no Workshop candidates found, no Workshop mods found, and Workshop scan failed. Technical path details belong in local logs and structured workflow results. The logger does not automatically redact or sanitize paths; callers must not intentionally pass credentials or authentication material.
 
 ## Dependency Rules
 
 - Phase 6.B preserves one singleton `MainWindow` and one retained instance of each primary page. Constructor injection replaces static `App.*` service access while existing code-behind, page-owned state, `DataContext`, bindings, navigation refresh, and `Loaded`/`Unloaded` behavior remain intact.
 - Phase 6.B does not add transient navigation pages, navigation scopes, a page catalog, or broad ViewModel extraction. Singleton dialog-service contracts create a fresh WPF window per invocation. The Core-safe startup queue remains separate from the UI `StartupNotificationDrainCoordinator`, and `MainWindow.Loaded` only signals readiness.
-- Phase 8 follows Phase 6.A coordinator completion, Phase 6.B DI/lifecycle, Phase 6.C logger migration, and the retained Phase 7 generalized workflow work.
-- Result/workflow coordination should be introduced before moving install completion logic deeply into ViewModels. ViewModels consume Core outcomes and do not recreate Phase 6.A completeness, commit, accepted-snapshot, or quiescence decisions.
+- Phase 8 follows implemented Phase 6.A/B/C and completed Phase 7 result/progress/presenter/rename contracts.
+- ViewModels consume Core outcomes and do not recreate manager admission, completeness, commit, accepted-snapshot, cancellation, or quiescence decisions.
 - Core workflow tests should exist where practical before high-risk page extractions.
 - ViewModel tests should grow with each stable ViewModel.
 
@@ -100,8 +105,7 @@ Accepted MVVM decisions should later be migrated into future UI/UX, navigation/p
 - Which MVVM helper pattern should be used: hand-written base classes or a toolkit?
 - Should file dialogs be abstracted immediately or during each page extraction?
 - Should navigation be refactored before or after the install workflow ViewModel?
-- Which UI page `.xaml` files should be considered for owner-approved rename review later?
-- Should the rename review happen during Phase 1 cleanup or immediately before Phase 8 MVVM extraction?
+- Whether a reusable presentation workflow service is justified after `LauncherViewModel` is implemented.
 
 ## Out Of Scope
 
@@ -109,4 +113,4 @@ Accepted MVVM decisions should later be migrated into future UI/UX, navigation/p
 - New Nexus UI.
 - Cross-platform UI migration.
 - Moving business logic from Core into ViewModels.
-- UI page renames without an explicit owner-approved rename map.
+- Reopening the Phase 7 `LauncherPage` rename or designing the future `ModsPage`.

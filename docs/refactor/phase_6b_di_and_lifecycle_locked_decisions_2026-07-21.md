@@ -2,6 +2,12 @@
 
 ## Status
 
+Historical pre-implementation locked-decision record. Phase 6.B is implemented:
+`App` owns one validated provider, coordinators establish lifecycle, retained
+pages are DI services, and provider-owned Serilog is the normal logger. Preserve
+the remaining ledger as rationale; do not read its future-state language as
+current source.
+
 Owner-approved planning direction for:
 
 ```text
@@ -14,7 +20,10 @@ A proposed later “Decision 31” that introduced separate DI default-initializ
 
 ## Current Source State
 
-This is a future implementation contract; it does not claim Phase 6.B is implemented. Current WPF startup still uses `StartupUri`, manual construction, static `App.*` access, retained pages constructed by `MainWindow`, a non-retaining `SerilogLoggerFactory.Create()`, and non-quiescent `OnExit` cleanup. Current `AppConfig` and `AppConfigSettings` remain live, and `Logger.Instance` remains the normal logger until Phase 6.C.
+Historical snapshot only: Phase 6.B is now implemented with one validated
+provider, coordinator-owned startup/shutdown, retained DI pages, and
+provider-owned Serilog. This paragraph's former future-state claims are
+superseded.
 
 ---
 

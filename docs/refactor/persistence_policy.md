@@ -45,7 +45,16 @@ Malformed JSON is discarded and regenerated from defaults; no backup/recovery co
 
 ## Phase 6.A Mod Snapshot Commit Boundary
 
-`ModPipelineCoordinator` decides when scan output is eligible for cache rotation and `SaveCurrent`; the existing persistence helper decides how those files are written. Only an approved complete result commits and publishes one atomic accepted module snapshot/version. Invalid configuration, partial or indeterminate scans, cancellation, and unexpected failure preserve the prior accepted snapshot and cache. The coordinator must not duplicate cache serialization or introduce a broad transaction framework.
+`ModPipelineManager` decides when scan output is eligible for cache rotation and `SaveCurrent`; the existing persistence helper decides how those files are written. Only an approved complete result commits and publishes one atomic accepted module snapshot/version. Invalid configuration, partial or indeterminate scans, cancellation, and unexpected failure preserve the prior accepted snapshot and cache. The manager must not duplicate cache serialization or introduce a broad transaction framework.
+
+## Planned Phase 7 Install Reconciliation Boundary
+
+After relevant admitted install changes, `ModPipelineManager` will run the same
+authoritative internal scan/commit path used by refresh and include the resulting
+accepted snapshot in the install terminal result. This is planned behavior, not
+current source. It preserves manager commit authorization and helper write
+ownership; it does not move observable collections, modpack reapplication, or
+other WPF state into Core.
 
 ## Phase 6.B Shutdown Persistence Boundary
 

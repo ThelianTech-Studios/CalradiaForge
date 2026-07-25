@@ -8,13 +8,14 @@ Standardize how risky workflows report success, failure, warnings, progress, can
 
 - `ModInstaller` reports progress through events and stores `LastSummary`.
 - `ModInstallSummary`, `ModInstallResult`, and `BLSEInstallResult` already provide workflow-specific result shapes.
-- `ModsPage.xaml.cs` currently coordinates install completion UI, refresh after install, DLL unblock, status text, and toasts.
+- `ModsPage.xaml.cs` currently coordinates direct installer observation, install completion UI, refresh, DLL unblock, status text, and toasts; this is planned to move only through the Phase 7 boundary.
 - `ModpacksPage.xaml.cs` uses tuple-style service results for import and booleans for save/create.
 - `SettingsPage.xaml.cs` uses direct messages/toasts around validation and tool operations.
 
 ## Policy
 
-Use workflow-specific result types first. Add a broader shared `Result` / `Result<T>` only if repetition justifies it.
+Use workflow-specific result types first. Phase 7 explicitly does not introduce a
+broader shared `Result` / `Result<T>` framework.
 
 Result objects should support:
 
@@ -26,9 +27,9 @@ Result objects should support:
 - Affected file, path, module, or operation where useful.
 - Cancellation state where useful.
 
-## Phase 6.A Mod-Pipeline Coordinator Foundation
+## Implemented Phase 6.A Mod-Pipeline Manager Foundation
 
-Phase 6.A creates one Core-owned `ModPipelineCoordinator`. It sequences configured Phase 5 paths, `ModScanner`, existing cache helpers, retained module state, and the applicable installer completion/cancellation boundary. `ModScanner` remains discovery-only and never owns detection, workflow sequencing, cache authorization, or accepted-state publication.
+Phase 6.A implemented one Core-owned `ModPipelineManager`. It sequences configured Phase 5 paths, `ModScanner`, existing cache helpers, retained module state, and the applicable installer completion/cancellation boundary. `ModScanner` remains discovery-only and never owns detection, workflow sequencing, cache authorization, or accepted-state publication.
 
 Startup initialization and explicit refresh use the same coordinator contract. The coordinator validates preconditions, controls deterministic operation admission and cancellation, evaluates per-root completeness, decides commit eligibility, publishes one coherent accepted snapshot/version, and returns a workflow-specific result. The result identifies success/failure/cancellation, completeness, commit status, local and Workshop outcomes/counts, warnings, duplicate/parse diagnostics, a compact localizable UI summary, and technical logging context. It is not an application-wide `Result<T>` hierarchy.
 
@@ -36,23 +37,28 @@ Only an approved complete result may rotate cache, save current state, and publi
 
 The active-work contract identifies current work, stops new admission, requests cooperative cancellation, exposes idempotently observable completion, and supports awaitable quiescence. It does not replace `ModInstaller`/`ModExtractor`, dispose the provider, close Serilog, terminate WPF, or create an unbounded job queue.
 
-## Deferred Phase 7 Install And General Workflow Coordinator Direction
+## Locked Phase 7 Install Outcome And Progress Direction
 
-An install workflow coordinator should eventually own:
+Phase 7 plans a non-null, install-specific `ModInstallOperationResult`; it does
+not create another coordinator. `ModPipelineManager` remains the sole
+application owner of admission, cancellation, operation identity, classification,
+reconciliation, and quiescence. `ModInstaller` and `ModExtractor` retain
+mechanics; Core remains UI-independent.
 
-- Active install state.
-- Progress updates.
-- Cancellation state.
-- Completion handling.
-- Failure handling.
-- Cleanup after install attempts.
-- UI-facing status/error messages.
-- Toast/status integration.
-- Future Nexus download-to-install handoff.
+The result statuses are `Succeeded`, `SucceededWithWarnings`,
+`PartiallyFailed`, `Cancelled`, `RejectedBusy`, `RejectedAdmissionStopped`,
+`ValidationFailed`, and `Failed`. It preserves the `ModInstallSummary`,
+applicable `UnblockResult`, authoritative scan/refresh result, accepted snapshot,
+and stable diagnostics without localized text, WPF types, toast data, or mutable
+UI state. `ModInstallSummary.ToSummaryString()` stops being the authoritative
+toast-formatting path after its callers migrate.
 
-Core install services must remain UI-independent.
+Progress is separate: manager-relayed, read-only per-archive messages correlate
+operation and archive identity, may be high-frequency, are not an unbounded
+history, and never expose a live mutable summary. The UI may throttle/coalesce
+them. One immutable terminal Core result concludes each admitted operation.
 
-## Deferred Phase 7 Shared UI State Direction
+## Locked Phase 7 Notification And Temporary Presentation Direction
 
 Initial shared UI state should support:
 
@@ -63,13 +69,24 @@ Initial shared UI state should support:
 - `CurrentOperation`
 - `LastOperationResult` where useful
 
-The Toast System remains the user-visible notification surface for operation started, operation completed, recoverable warning, operation failed, validation issue, and future Nexus/download/install status events.
+An explicitly activated application-lifetime UI presenter observes manager
+semantics and owns one opaque operation-notification handle, stale-progress
+rejection, progress-to-terminal transition, and standalone pre-admission
+notifications. `ToastService` remains the generic renderer and `MainWindow` the
+host; pages/ViewModels do not retain raw toast IDs or subscribe to installer
+events for application-wide notification. UI owns severity, localization, timing,
+persistence, and dismissal. Final notification waits for `LauncherPage`'s
+temporary presentation reconciliation; Phase 8 moves that reconciliation to
+`LauncherViewModel` or another approved presentation owner.
 
 ## Scanner Result And Warning Planning
 
 `SteamResolutionResult` describes resolver outcomes, and the Phase 5 production coordinator applies accepted results directly to `AppConfigSettings`. `GameDetectionService.InitializeForStartup(...)` is intentionally `void`, explicit re-detection returns `GameProvider`, and manual operations return `bool` rather than introducing a general game-detection result. A compact queued startup notification is a transient UI handoff, not a domain-result hierarchy.
 
-Current `ModScanner` still returns its existing module list. Planned Phase 6.A wraps discovery in a workflow-specific structured completeness/commit result without duplicating the Phase 5 detection workflow. Phase 7 may extend generalized warning/result conventions, but it does not reopen the required Phase 6.A fields.
+`ModPipelineManager` currently returns the implemented workflow-specific
+`ModPipelineResult` for scan/refresh; it wraps scanner discovery without
+duplicating the Phase 5 detection workflow. Phase 7 adds only the locked install
+contract and does not reopen scan-result fields.
 
 Scanner results should distinguish:
 
@@ -98,14 +115,14 @@ Phase 6.A supplies stop/cancel/awaitable quiescence so no workflow callback targ
 
 | Step | Work | Verification |
 |---|---|---|
-| 1 | Phase 6.A: audit scanner/cache/installer/startup/modpack consumers; define the workflow-specific result and per-root completeness/commit policy. | Current ownership and all no-commit cases are recorded. |
-| 2 | Phase 6.A: add `ModPipelineCoordinator`, gate rotation/save, publish the accepted snapshot, and route startup plus refresh through it. | Complete results commit once; rejected results preserve the prior snapshot. |
-| 3 | Phase 6.A: add deterministic admission, cancellation, idempotent completion, and awaitable quiescence. | Shutdown integration cannot outlive UI/provider/logger state. |
+| 1 | Completed Phase 6.A: audit scanner/cache/installer/startup/modpack consumers and define per-root completeness/commit policy. | Current ownership and all no-commit cases are recorded. |
+| 2 | Completed Phase 6.A: `ModPipelineManager` gates rotation/save, publishes the accepted snapshot, and routes startup plus refresh. | Complete results commit once; rejected results preserve the prior snapshot. |
+| 3 | Completed Phase 6.A: deterministic admission, cancellation, idempotent completion, and awaitable quiescence. | Shutdown integration cannot outlive UI/provider/logger state. |
 | 4 | Preserve the implemented Phase 5 detection workflow without adding a general detection-result hierarchy. | Provider/manual outcomes, queued feedback, and technical logs remain covered. |
-| 5 | Phase 7: document existing result shapes and normalize naming beyond the 6.A foundation. | No behavior change. |
-| 6 | Phase 7: add result types for archive preflight, BLSE validation, persistence recovery, and other high-risk workflows. | Unit tests assert success, warnings, failures, and cancellation where relevant. |
-| 7 | Phase 7: wrap current install event flow with an install workflow coordinator. | Navigation-away install behavior still works. |
-| 8 | Phase 7/8: move UI status fields into shared UI state and add ViewModel state-transition tests. | Busy/status/error/cancel and start/progress/success/failure/warning/cancel states update predictably. |
+| 5 | Phase 7: implement the locked non-null install result, manager-relayed progress, and manager reconciliation. | Status, cancellation/finalization, unblock, scan, and operation-ID tests pass. |
+| 6 | Phase 7: activate the UI presenter and remove page-owned global installer notification subscriptions. | Navigation-away observation, stale progress, and notification lifecycle tests pass. |
+| 7 | Phase 7: rename `ModsPage` to `LauncherPage` behavior-preservingly. | DI/XAML/navigation/localization/test references are reconciled. |
+| 8 | Phase 8: move temporary launcher presentation state into `LauncherViewModel`. | Busy/status/error/cancel and start/progress/terminal states update predictably. |
 
 ## Guardrails
 
@@ -146,4 +163,4 @@ Accepted result/warning decisions should later be migrated into future applicati
 - Nexus workflow implementation, except preserving future handoff shape.
 - Moving Core workflow logic into WPF ViewModels.
 
-The complete Phase 6.A contract is [Phase 6.A locked decisions](phase_6a_mod_pipeline_coordinator_locked_decisions_2026-07-21.md). Phase 7 retains generalized results, install coordination, broad progress/cancellation/UI state, and future Nexus handoff beyond that foundation.
+The historical [Phase 6.A locked decisions](phase_6a_mod_pipeline_coordinator_locked_decisions_2026-07-21.md) record the implemented baseline. Phase 7 is the narrow locked install outcome, application notification, and naming plan in [the Phase 7 reference](phase_7_locked_decisions_2026-07-24.md).

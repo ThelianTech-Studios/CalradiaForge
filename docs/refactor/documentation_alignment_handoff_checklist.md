@@ -20,9 +20,9 @@ Refactor documents are active planning artifacts. They are not canonical archite
 | Phase 1 | Warning cleanup was limited to low-risk nullable/name/comment cleanup and did not change UI/Core/Nexus ownership. | Changelog internal summary only. | Completed cleanup note; no architecture migration required. | No. |
 | Phase 2 | Serilog infrastructure is completed, but the legacy logger and callers remain live; active-file and package facts are historical implementation evidence, not lifecycle ownership. The original redaction infrastructure was superseded on 2026-07-12; the remaining custom formatter is neutral. | Logging architecture, security/trust-boundary, testing/QA, and configuration/retention docs after accepted decisions. | Historical phase boundary; do not claim startup wiring or caller migration. | Yes, for lifecycle ownership or future export/telemetry policy. |
 | Phase 5 | Game-platform detection/workflow, Steam split-library behavior, manual configuration, startup notifications, scanner safety, test migration, and the completion audit are accepted only after implementation and verification. | Platform/path detection, configuration, launcher, mod-management, testing/QA, and relevant architecture docs. | Automated verification complete; [detailed Phase 5 record](game_platform_detection_and_path_workflow_plan.md) remains the implementation contract and owner real-Steam/WPF smoke remains pending. | Yes, including owner Steam split-library smoke evidence. |
-| Phase 6.A | Coordinator completeness, accepted-snapshot, cache-commit, and quiescence behavior require implementation review. | Core workflow, persistence, modpack, and testing docs. | Planning gate; [detailed Phase 6.A ledger](phase_6a_mod_pipeline_coordinator_locked_decisions_2026-07-21.md) is authoritative. | Yes. |
-| Phase 6.B | One-provider composition, lifecycle, settings, logger/file policy, and UI lifetime require implementation review. | Lifecycle/startup/shutdown, logging, settings, UI, and testing docs. | Planning gate; [detailed Phase 6.B ledger](phase_6b_di_and_lifecycle_locked_decisions_2026-07-21.md) is authoritative. | Yes. |
-| Phase 6.C | Legacy caller migration and the emergency writer require implementation review. | Logging, security/trust-boundary, testing, and relevant Nexus docs. | Planning gate; [detailed Phase 6.C ledger](phase_6c_legacy_logger_migration_locked_decisions_2026-07-21.md) remains authoritative until zero normal legacy callers are verified. | Yes. |
+| Phase 6.A | `ModPipelineManager` completeness, accepted-snapshot, cache-commit, admission, and quiescence are implemented. | Core workflow, persistence, modpack, and testing docs. | Implemented baseline; [detailed Phase 6.A ledger](phase_6a_mod_pipeline_coordinator_locked_decisions_2026-07-21.md) is historical decision rationale. | No, except new changes. |
+| Phase 6.B | One-provider composition, lifecycle, settings, logger/file policy, and retained UI lifetime are implemented. | Lifecycle/startup/shutdown, logging, settings, UI, and testing docs. | Implemented baseline; [detailed Phase 6.B ledger](phase_6b_di_and_lifecycle_locked_decisions_2026-07-21.md) is historical decision rationale. | No, except new changes. |
+| Phase 6.C | Legacy caller migration and the emergency writer are implemented. | Logging, security/trust-boundary, testing, and relevant Nexus docs. | Implemented baseline; [detailed Phase 6.C ledger](phase_6c_legacy_logger_migration_locked_decisions_2026-07-21.md) remains historical rationale. | No, except new changes. |
 | Phase 4 | Test/benchmark framework, fixture, baseline, analyzer, and threshold decisions are recorded as approved or explicitly unresolved. | Future testing/QA and performance/diagnostics documentation after acceptance. | Planning artifact until choices are approved and infrastructure exists. | Yes, for new packages, fixtures, analyzers, or blocking thresholds. |
 | Phase 9 | Performance audit findings and authoritative baselines are recorded in the dated report, but remain review artifacts until the owner decides. | Future performance/diagnostics docs or ADRs for stable accepted decisions. | Pending developer review; no production optimization implied. | Yes, for every proposed finding. |
 | Phase 10 | Approved performance changes and their measured outcomes are documented by finding ID. | Relevant canonical system docs or ADRs after stable behavior is accepted. | Requires manual inspection and owner acceptance before changelog/commit workflow. | Yes. |
@@ -45,9 +45,22 @@ Refactor documents are active planning artifacts. They are not canonical archite
 
 ## Rule
 
-The Phase 6 ledgers are authoritative future implementation contracts, but they are not proof that their behavior is implemented. Only migrate stable behavior proven by source/tests into canonical architecture. Phase 6.A hands off proven coordinator/completeness/accepted-snapshot/quiescence behavior; Phase 6.B hands off proven one-provider, lifecycle, target settings, and logger file-lifecycle behavior; Phase 6.C hands off proven caller migration and emergency-writer behavior.
+The Phase 6 ledgers are historical locked-decision records, not current-source
+contracts. Stable behavior proven by source/tests is already represented in
+canonical architecture. Phase 6.A established manager completeness,
+accepted-snapshot, and quiescence behavior; Phase 6.B established one-provider
+lifecycle/settings/logger behavior; and Phase 6.C established caller migration
+and the emergency writer.
 
-## Phase 6 Documentation Reconciliation Gate
+## Phase 7 Documentation And Phase 8 Handoff Gate
+
+- Preserve Phase 6 ledgers as historical records while linking their implemented baseline; do not present pre-implementation snapshots as current contracts.
+- Before Phase 7 implementation, reconcile P7-D01 through P7-D10 in refactor planning, canonical planned references, the migration map, and the future Nexus context note.
+- Phase 7 completion requires implementation, deterministic validation, documentation reconciliation, migration map, implementation/validation report, and final cross-document audit.
+- Current implemented behavior, locked Phase 7 plan, mandatory Phase 8 handoff, and future Nexus context are explicitly distinguishable.
+- Phase 8 must migrate temporary Launcher presentation reconciliation to `LauncherViewModel` or approved presentation ownership and complete human-driven, Codex-observed runtime acceptance evidence.
+
+## Historical Phase 6 Reconciliation Record
 
 - Every source-ledger heading is transferred to a canonical phase document without condensing away workflows, exclusions, test cases, exit criteria, or handoff rules.
 - Supporting policies are reconciled in their natural sections; no appended “alignment” or “supersedes above” block is used to override contradictory text.

@@ -63,5 +63,11 @@ Render the user interface and translate user intent into calls to Core services.
 - Future Nexus UI surfaces should call into the Nexus assembly rather than implementing network behavior in page code.
 
 ## Deferred Work
+- **Planned Phase 7 only:** behavior-preserving `ModsPage` -> `LauncherPage`
+  rename and **Launcher** label; an explicitly activated application-lifetime
+  presenter owns correlated progress/final toast lifecycle through generic
+  `ToastService`. The temporary page reconciles the accepted snapshot before
+  semantic completion; Phase 8 transfers this to `LauncherViewModel`. `ModsPage`
+  remains reserved for future mod management.
 - Any new Nexus UI is deferred until the Nexus assembly has implementation behind it.
 - Full MVVM extraction, transient page navigation, and navigation scopes remain deferred.

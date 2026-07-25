@@ -1,47 +1,40 @@
 # UI Page Rename Review Checklist
 
-Status: planning template
-Scope: owner-review support only. This checklist does not authorize UI page renames.
+Status: owner-locked Phase 7 implementation checklist; not yet implemented.
 
 ## Purpose
 
-Prepare an owner-approved rename map for current WPF page `.xaml` files before broad MVVM extraction or future Nexus UI work.
+Phase 7 must make the behavior-preserving `ModsPage` -> `LauncherPage` rename
+before Phase 8 MVVM extraction. The visible navigation label becomes
+**Launcher**. `ModsPage` is reserved for future mod management; this checklist
+does not authorize creation of that future page or renaming domain types.
 
-## Do Not Rename Yet
+## Locked Rename Inventory
 
-This checklist does not authorize renames. It exists to gather candidates and risks for owner approval.
+| Current item | Phase 7 target | Required review/validation |
+|---|---|---|
+| `Pages/ModsPage.xaml` | `Pages/LauncherPage.xaml` | File name, XAML `x:Class`, generated partials, resource/style references, design-time tooling. |
+| `Pages/ModsPage.xaml.cs` | `Pages/LauncherPage.xaml.cs` | CLR type, constructor, retained DI registration, event ownership, comments. |
+| `MainWindow` page construction/navigation | `LauncherPage` references and **Launcher** label | Navigation indices, construction, page cache/retained lifetime, visible selection and test fixtures. |
+| `TranslationStrings.Nav_ModsTab` and manifest value | Approved Launcher identity/key migration | Localization key/value usage, fallback behavior, English manifest, UI assertions. |
+| Documentation/tests/comments | Launcher terminology where it means the current page | Search stale page-identity references; preserve valid `ModInstaller`, `ModPipelineManager`, `ModScanner`, `ModModel`, and modpack names. |
 
-No UI page `.xaml` file may be renamed until the owner fills or approves an explicit rename map.
+## Required Checks
 
-## Inventory Table
+- Update CLR/XAML, DI, navigation, localization, tests, comments, and relevant
+  documentation as one behavior-preserving change.
+- Verify `MainWindow` navigation and global `ToastService` host behavior after
+  the rename.
+- Verify a clean build does not leave stale generated partial or resource links.
+- Verify stale `ModsPage` references are either corrected, deliberately
+  historical, or valid future-mod-management context.
+- Do not use the rename to relocate the install button, redesign the page,
+  implement MVVM, create a future ModsPage, or alter mod-domain naming.
 
-| Current XAML file | Code-behind class | Current navigation key/reference | Proposed name | Reason | Risk | Owner approved? |
-|---|---|---|---|---|---|---|
-| `source/CalradiaForge.UI/Views/MainWindow.xaml` | `CalradiaForge.UI.Views.MainWindow` | `None` | Deferred - owner map required | Inventory only for future MVVM/Nexus UI review. | `Add Risk` | No |
-| `source/CalradiaForge.UI/Pages/ModsPage.xaml` | `CalradiaForge.UI.Pages.ModsPage` | `MainWindow._pages[0]`; main nav item index 0 | Deferred - owner map required | Inventory only for future MVVM/Nexus UI review. | Medium: navigation labels, resource styles, localized bindings, and generated partial class references. | No |
-| `source/CalradiaForge.UI/Pages/ModpacksPage.xaml` | `CalradiaForge.UI.Pages.ModpacksPage` | `MainWindow._pages[1]`; main nav item index 1 | Deferred - owner map required | Inventory only for future MVVM/Nexus UI review. | High: modpack workflow bindings, resource styles, active load-order sync, and generated partial class references. | No |
-| `source/CalradiaForge.UI/Pages/FaqPage.xaml` | `CalradiaForge.UI.Pages.FaqPage` | `MainWindow._pages[2]`; main nav item index 2 | Deferred - owner map required | Inventory only for future MVVM/Nexus UI review. | Medium: navigation labels, resource styles, localized bindings, and generated partial class references. | No |
-| `source/CalradiaForge.UI/Pages/SettingsPage.xaml` | `CalradiaForge.UI.Pages.SettingsPage` | `MainWindow._settingsPage`; `NavBarControler.OptionsItemClick`; options nav item | Deferred - owner map required | Inventory only for future MVVM/Nexus UI review. | High: settings bindings, dialogs, path validation, tool actions, options navigation, resource styles, and generated partial class references. | No |
+## Phase 8 Handoff
 
-## Phase 1 Inventory Notes
-
-- This table is an inventory checkpoint only.
-- No proposed rename targets are approved or implied.
-- `MainWindow` uses index-based navigation for the main pages and a separate options-item click path for Settings.
-- Resource dictionaries tied to current page naming include `ModsPageStyles.xaml`, `ModpacksPageStyles.xaml`, and `SettingsPageStyles.xaml`.
-- Any future rename review must include XAML `x:Class`, code-behind partial classes, generated files, navigation indices, options navigation, bindings, resource dictionary references, screenshots, and documentation references.
-
-## Review Areas
-
-- `x:Class` names.
-- Code-behind partial class names.
-- Navigation registration and page construction.
-- Resource dictionaries and styles.
-- Bindings and commands.
-- Tests or smoke-test references.
-- Documentation and screenshots.
-- Future Nexus UI naming conflicts.
-
-## Approval Rule
-
-No rename may proceed until the owner fills or approves the rename map.
+Phase 8 begins with stable `LauncherPage`, `LauncherView`, and
+`LauncherViewModel` terminology. The future dedicated `ModsPage` remains a
+separate Nexus/mod-management decision. See the
+[Phase 7 migration map](phase_7_migration_map.md) and
+[future mod-management context](nexus_future_mod_management_context.md).
