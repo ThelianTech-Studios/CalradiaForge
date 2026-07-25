@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## 0.13.90 - Internal | 2026-07-24
+
+> Refactor Phase 7: added install-specific terminal outcomes and correlated application notifications, moved required post-install consistency work into the authoritative pipeline, and completed the retained Launcher page naming foundation.
+
+### Added
+
+- Added immutable `ModInstallOperationResult` and `ModInstallProgress` contracts, stable terminal statuses/diagnostic codes, operation and archive correlation, and notification-source interfaces for install progress and completion.
+- Added an application-lifetime `InstallNotificationPresenter` and toast sink that translate correlated Core progress and terminal outcomes into one notification lifecycle, including stale-progress rejection and launcher-completion ordering.
+- Added manager-owned module DLL-unblocking and install reconciliation seams, plus focused Core/UI tests for terminal classification, cancellation/finalization, progress correlation, presenter behavior, DI activation, startup, and localization.
+
+### Changed
+
+- Changed `ModPipelineManager.InstallAsync` to return a non-null terminal result and to own validation/admission, installer execution, bounded consistency finalization, DLL unblocking, accepted-snapshot reconciliation, terminal publication, and quiescence release without replacing `ModInstaller` or `ModExtractor`.
+- Renamed the retained primary surface from `ModsPage` to `LauncherPage`, including navigation, styles, DI references, localization bindings, configuration comments, and launcher-specific translation identifiers; `ModsPage` remains reserved for future dedicated mod management.
+- Updated launcher, modpack, settings, main-window, language-selection, toast, and startup-composition integration for the new presenter and retained Launcher identity. Shared ComboBox styling now comes from the Launcher resource dictionary.
+
+### Verification
+
+- The accepted source endpoint recorded successful Debug and Release solution builds and 195 passing tests in each configuration, including Phase 7 manager/result/presenter/rename coverage. Owner approval occurred before this documentation-only closeout; no runtime validation is newly claimed here.
+- No Nexus implementation, credential persistence, automatic update check, polling, generic result abstraction, MVVM extraction, or Steam Workshop/path-resolution fix is represented by this build.
+
+---
+
 ## 0.13.83 - Internal | 2026-07-23
 
 > Refactor Phase 6.C: completed the application-wide migration from the retired legacy logger to the provider-owned Serilog pipeline, added the narrow pre-Serilog startup-failure fallback, and preserved the single provider-disposal close path.

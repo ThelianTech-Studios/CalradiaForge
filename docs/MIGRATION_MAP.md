@@ -4,10 +4,10 @@
 
 ```text
 <Metadata>
-Last Changelog Version: v0.13.83
-Last Git Commit ID: 3759bf0d8231bd9616c3b1a63f6542a934bcd442
+Last Changelog Version: v0.13.90
+Last Git Commit ID: 03856f5e56725fd22d5c41fd38b2ec277196ab5f
 Last Git Branch Used: dev-V0-14-CodeRefactor(HEAD)
-Last Map Compile Date: 2026-07-23
+Last Map Compile Date: 2026-07-24
 </Metadata>
 ```
 
@@ -40,6 +40,7 @@ Workflow rules for when and how to update this file are owned by `docs/refactor/
 
 | Version | Migration scope | Source comparison | Status |
 |---|---|---|---|
+| `v0.13.90` | Phase 7 install outcomes, correlated notifications, manager-owned finalization/reconciliation, retained Launcher naming, and supporting tests | `3759bf0...03856f5` | Mapped from committed accepted source diff |
 | `v0.13.83` | Phase 6.C application-wide legacy logger migration, structured Serilog callers, emergency startup-failure fallback, logger retirement, lifecycle guards, runtime language artifact, and supporting tests | `29ae996...3759bf0` | Mapped from committed accepted source diff |
 | `v0.13.73` | Phase 6.B single-provider dependency injection, configuration/logging ownership, coordinated application lifecycle, themed XAML lifecycle dialogs, retained UI injection, and supporting tests | `11c0cd1...29ae996` | Mapped from committed accepted source diff |
 | `v0.13.49` | Phase 6.A mod-pipeline manager, structured scan/commit/snapshot lifecycle, awaitable installation, UI integration, archive-progress cleanup, and first-startup atomic JSON persistence hardening | `1889e47...11c0cd1` | Mapped from committed accepted source diff |
@@ -48,6 +49,69 @@ Workflow rules for when and how to update this file are owned by `docs/refactor/
 | `v0.13.22` | Atomic persistence, mod-cache recovery, archive/install preflight guardrails, and UI configuration-reference repair | `1b23045...710881c` | Mapped from committed build diff |
 | `v0.13.14` | Serilog infrastructure foundation, log-retention configuration, data-helper cleanup, application configuration-property rename, and neutral formatter/redaction-removal follow-up | `37c322e...HEAD` | Mapped from committed build diff |
 | `v0.13.6` | Cleanup/nullability/path/logging-message migration rows listed in this document | `dev-release...HEAD` | Mapped from current committed branch diff |
+
+<details open>
+<summary><strong>v0.13.90</strong> - Internal build: Phase 7 install outcomes, application notifications, manager-owned consistency finalization, and Launcher naming.</summary>
+
+**Source comparison:** `3759bf0...03856f5`
+
+**Status:** Mapped from the committed and pushed owner-approved source endpoint. The implementation evidence records successful Debug and Release builds and 195 passing tests in each configuration. This documentation-only closeout performs no additional runtime validation.
+
+**Changed implementation/test files:** 36 (`+2925/-442` source-range aggregate, including renamed paths)
+
+**Scope rule:** Includes every committed `source/` path in the comparison range. Documentation and `.gitignore` changes are excluded. No project/package/reference, Nexus, credential, polling, or application-version implementation change is represented.
+
+| Area | Files | Summary |
+|---|---:|---|
+| Core install contracts and pipeline | 14 | Added non-null terminal outcomes/progress and moved admitted install finalization, DLL maintenance, reconciliation, and notification publication into `ModPipelineManager`. |
+| Retained UI and notifications | 15 | Added application-lifetime install presentation, renamed the primary page/resources to Launcher, and integrated lifecycle, navigation, styles, and toast ownership. |
+| Tests | 7 | Added/extended Core and UI coverage for outcomes, presenter lifetime, startup/DI, localization, and rename boundaries. |
+
+<details>
+<summary><strong>Detailed file map</strong></summary>
+
+| File | Change | Key identifiers | Summary |
+|---|---|---|---|
+| `source/CalradiaForge.Core/Infra/Config/AppEnums.cs` | Modified | `ModpackStartupMode` documentation | Updated retained-page terminology to `LauncherPage`. |
+| `source/CalradiaForge.Core/Infra/Config/AppSettings.cs` | Modified | selected-modpack/startup-mode documentation | Updated persisted launcher-selection terminology only. |
+| `source/CalradiaForge.Core/Infra/DependencyInjection/CalradiaForgeCoreServiceCollectionExtensions.cs` | Modified | `AddCalradiaForgeCore` | Registers the module-unblock seam with Core composition. |
+| `source/CalradiaForge.Core/Infra/Localization/TranslationStrings.cs` | Modified | `Launcher_*`; install toast strings | Renamed Launcher-owned text keys and added outcome/presentation fallback strings. |
+| `source/CalradiaForge.Core/Infra/Modpacks/ModpackService.cs` | Modified | launcher terminology | Updated retained-page terminology. |
+| `source/CalradiaForge.Core/Infra/Mods/DLLUnblocker.cs` | Modified | `ModuleUnblocker` | Exposes the manager-owned module-unblocking implementation. |
+| `source/CalradiaForge.Core/Infra/Mods/IModInstallOperationNotificationSource.cs` | Added | progress/completion events | Defines the Core-to-UI correlated install-notification boundary. |
+| `source/CalradiaForge.Core/Infra/Mods/IModuleUnblocker.cs` | Added | `UnblockModulesAsync` | Defines the required post-install module-unblock seam. |
+| `source/CalradiaForge.Core/Infra/Mods/ModInstaller.cs` | Modified | progress events; summary | Supports manager correlation and terminal-result construction without changing installer ownership. |
+| `source/CalradiaForge.Core/Infra/Mods/ModPipelineManager.cs` | Modified | `InstallAsync`; admission; reconciliation; progress/terminal events | Owns validation, single-operation admission, installer execution, bounded finalization, unblock/reconciliation, result classification, immutable publication, and release. |
+| `source/CalradiaForge.Core/Models/ModInstallOperationResult.cs` | Added | status; diagnostics; snapshots | Adds immutable install terminal-result and diagnostic contracts. |
+| `source/CalradiaForge.Core/Models/ModInstallProgress.cs` | Added | operation/archive IDs; stages | Adds correlated immutable progress contract. |
+| `source/CalradiaForge.Core/Models/ModInstallSummary.cs` | Modified | summary snapshot helpers | Supports defensive terminal-result snapshots. |
+| `source/CalradiaForge.Core/Models/UnblockResult.cs` | Modified | unblock diagnostic/result data | Carries finalization outcome information. |
+| `source/CalradiaForge.Tests/Core.Tests/Localization/LauncherTranslationTests.cs` | Added | `Launcher_*` defaults/fallbacks | Guards Launcher identity and translation-key migration. |
+| `source/CalradiaForge.Tests/Core.Tests/Mods/ModPipelineManagerTests.cs` | Modified | sequencing/status/cancellation | Covers admission, progress, finalization, reconciliation, and quiescence behavior. |
+| `source/CalradiaForge.Tests/Core.Tests/Results/ModInstallOperationResultTests.cs` | Added | terminal contract facts | Verifies result immutability and classification data. |
+| `source/CalradiaForge.Tests/Core.Tests/Results/ModInstallSummaryTests.cs` | Modified | summary snapshots | Covers result-facing summary behavior. |
+| `source/CalradiaForge.Tests/UI.Tests/Composition/UiServiceCollectionExtensionsTests.cs` | Modified | presenter composition | Verifies UI composition activation. |
+| `source/CalradiaForge.Tests/UI.Tests/Lifecycle/ApplicationStartupCoordinatorTests.cs` | Added | startup presenter activation | Covers startup integration. |
+| `source/CalradiaForge.Tests/UI.Tests/Toasts/InstallNotificationPresenterTests.cs` | Added | correlation; stale progress; completion | Covers application notification lifecycle and launcher-completion ordering. |
+| `source/CalradiaForge.UI/App.xaml` | Modified | resources | Uses the retained Launcher resource identity. |
+| `source/CalradiaForge.UI/Composition/ServiceCollectionExtensions.cs` | Modified | `InstallNotificationPresenter`; toast sink | Registers and activates application-lifetime notification services. |
+| `source/CalradiaForge.UI/Lifecycle/ApplicationStartupCoordinator.cs` | Modified | presenter activation | Activates install notification observation after localization startup. |
+| `source/CalradiaForge.UI/Pages/ModsPage.xaml` -> `source/CalradiaForge.UI/Pages/LauncherPage.xaml` | Renamed/modified | `LauncherPage`; bindings | Renames the retained primary XAML page and its localization/style references. |
+| `source/CalradiaForge.UI/Pages/ModsPage.xaml.cs` -> `source/CalradiaForge.UI/Pages/LauncherPage.xaml.cs` | Renamed/modified | install reconciliation; launcher completion | Renames the retained page and reports presentation completion after accepted-snapshot reconciliation. |
+| `source/CalradiaForge.UI/Pages/ModpacksPage.xaml` | Modified | Launcher resource references | Uses the renamed shared Launcher styles. |
+| `source/CalradiaForge.UI/Pages/ModpacksPage.xaml.cs` | Modified | Launcher terminology | Updates retained-page references. |
+| `source/CalradiaForge.UI/Pages/SettingsPage.xaml` | Modified | Launcher resource references | Uses the renamed shared Launcher styles. |
+| `source/CalradiaForge.UI/Resources/ModsPageStyles.xaml` -> `source/CalradiaForge.UI/Resources/LauncherPageStyles.xaml` | Renamed/modified | shared ComboBox/list styles | Renames and consolidates retained Launcher styling. |
+| `source/CalradiaForge.UI/Toasts/InstallNotificationPresenter.cs` | Added | `InstallNotificationPresenter` | Maps correlated Core progress/results to localized toast requests. |
+| `source/CalradiaForge.UI/Toasts/ToastNotificationSink.cs` | Added | toast adapter | Supplies presenter-owned toast operations. |
+| `source/CalradiaForge.UI/Toasts/ToastService.cs` | Modified | notification lifecycle | Supports presenter-owned progress/terminal toast handling. |
+| `source/CalradiaForge.UI/Views/LanguageSelectWindow.xaml` | Modified | Launcher resources | Uses the renamed resource dictionary. |
+| `source/CalradiaForge.UI/Views/MainWindow.xaml` | Modified | Launcher navigation label/resources | Displays and references the Launcher identity. |
+| `source/CalradiaForge.UI/Views/MainWindow.xaml.cs` | Modified | `LauncherPage` | Constructs/navigates the retained Launcher page. |
+
+</details>
+
+</details>
 
 <details open>
 <summary><strong>v0.13.83</strong> - Internal build: Phase 6.C structured Serilog caller migration, emergency startup diagnostics, legacy logger retirement, and the full accepted committed source range.</summary>
