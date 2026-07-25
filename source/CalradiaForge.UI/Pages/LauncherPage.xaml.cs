@@ -3,7 +3,6 @@
 	using System.Collections.Generic;
 	using System.Collections.ObjectModel;
 	using System.ComponentModel;
-	using System.IO;
 	using System.Linq;
 	using System.Runtime.CompilerServices;
 	using System.Threading.Tasks;
@@ -27,19 +26,19 @@
 	using Serilog;
 
 	/// <summary>
-	/// Mods dashboard page. Manages active load order, available mods,
+	/// Launcher dashboard page. Manages active load order, available mods,
 	/// modpack selection, search filtering, and game launch readiness.
 	/// Implements <see cref="IDropTarget"/> for GongSolutions drag-and-drop
 	/// between the LoadOrder and AvailableMods lists.
 	/// </summary>
-	public partial class ModsPage : Page, INotifyPropertyChanged, IDropTarget {
+	public partial class LauncherPage : Page, INotifyPropertyChanged, IDropTarget {
 		#region Fields
 		private readonly AppSettings _appSettings;
 		private readonly ModPipelineManager _modPipeline;
-		private readonly ModInstaller _modInstaller;
 		private readonly ModpackService _modpackService;
 		private readonly GameLauncher _gameLauncher;
 		private readonly ToastService _toasts;
+		private readonly IInstallNotificationPresenter _installNotifications;
 		private bool _canStart;
 		private bool _isRefreshing;
 		private bool _isInstalling;
@@ -48,16 +47,6 @@
 		private int _selectedModpackIndex = -1;
 		private ModpackModel? _selectedModpack;
 		private LaunchTarget _activeLaunchTarget;
-		private Guid _installToastId;
-		private DateTime _lastExtractionProgressUpdate = DateTime.MinValue;
-
-		/// <summary>
-		/// Minimum interval between extraction progress UI updates.
-		/// Prevents dispatcher flooding on fast SSDs where hundreds of
-		/// per-file events fire before the UI can render a single frame.
-		/// </summary>
-		private static readonly TimeSpan _extractionThrottleInterval = TimeSpan.FromMilliseconds(150);
-
 		/// <summary>
 		/// Shorthand accessor for the active translation strings.
 		/// Avoids repeating <c>Translator.Strings</c> throughout the file.
@@ -149,8 +138,8 @@
 		/// Uses translated strings from <see cref="TranslationStrings"/>.
 		/// </summary>
 		public string PlayButtonText => _activeLaunchTarget == LaunchTarget.BLSE
-			? T.Mods_PlayWithBLSE
-			: T.Mods_PlayBannerlord;
+			? T.Launcher_PlayWithBLSE
+			: T.Launcher_PlayBannerlord;
 		#endregion
 
 		#region INotifyPropertyChanged
@@ -166,29 +155,29 @@
 
 		#region Constructor
 		/// <summary>
-		/// Initializes the mods page and wires UI bindings and services.
+		/// Initializes the Launcher page and wires UI bindings and services.
 		/// The application startup coordinator completes the authoritative startup
 		/// scan before constructing this retained page.
 		/// </summary>
-		public ModsPage(
+		public LauncherPage(
 			AppSettings appSettings,
 			ModPipelineManager modPipeline,
-			ModInstaller modInstaller,
 			ModpackService modpackService,
 			GameLauncher gameLauncher,
 			ToastService toasts,
+			IInstallNotificationPresenter installNotifications,
 			TranslationService translator) {
 			_appSettings = appSettings ?? throw new ArgumentNullException(nameof(appSettings));
 			_modPipeline = modPipeline ?? throw new ArgumentNullException(nameof(modPipeline));
-			_modInstaller = modInstaller ?? throw new ArgumentNullException(nameof(modInstaller));
 			_modpackService = modpackService ?? throw new ArgumentNullException(nameof(modpackService));
 			_gameLauncher = gameLauncher ?? throw new ArgumentNullException(nameof(gameLauncher));
 			_toasts = toasts ?? throw new ArgumentNullException(nameof(toasts));
+			_installNotifications = installNotifications ?? throw new ArgumentNullException(nameof(installNotifications));
 			Translator = translator ?? throw new ArgumentNullException(nameof(translator));
 			InitializeComponent();
 			DataContext = this;
 
-			Log.Debug("ModsPage: Initializing.");
+			Log.Debug("LauncherPage: Initializing.");
 			LoadOrderView = CollectionViewSource.GetDefaultView(CurrentLoadOrder);
 			LoadOrderView.Filter = ModSearchFilter;
 
@@ -205,181 +194,12 @@
 			PopulateModpackList(suppressToast: true);
 			UpdateCanStart();
 
-			// If an install was already running when the user navigated back,
-			// re-sync the UI state from the service
-			if (_modInstaller.IsInstalling) {
+			// Re-sync page-local state if the application-owned manager is still
+			// completing an install when this retained page is constructed.
+			if (_modPipeline.IsInstalling) {
 				IsInstalling = true;
-				DependencyWarningText = T.Mods_InstallInProgress;
+				DependencyWarningText = T.Launcher_InstallInProgress;
 			}
-
-			// Subscribe/unsubscribe in Loaded/Unloaded to survive WPF's
-			// extra layout cycles that can fire Unloaded on cold start.
-			Loaded += ModsPage_Loaded;
-			Unloaded += ModsPage_Unloaded;
-		}
-
-		/// <summary>
-		/// Handles the Loaded event and subscribes to install service events.
-		/// Using Loaded ensures handlers are always wired even after WPF
-		/// re-layout Unloaded/Loaded cycles.
-		/// </summary>
-		private void ModsPage_Loaded(object sender, RoutedEventArgs e) {
-			// Guard against duplicate subscriptions from repeated Loaded fires
-			_modInstaller.InstallProgressChanged -= OnInstallProgressChanged;
-			_modInstaller.ExtractionProgressChanged -= OnExtractionProgressChanged;
-
-			_modInstaller.InstallProgressChanged += OnInstallProgressChanged;
-			_modInstaller.ExtractionProgressChanged += OnExtractionProgressChanged;
-
-			// Re-sync install state in case Unloaded fired mid-install
-			if (_modInstaller.IsInstalling && _installToastId == Guid.Empty) {
-				IsInstalling = true;
-				DependencyWarningText = T.Mods_InstallInProgress;
-			}
-
-		}
-
-		/// <summary>
-		/// Handles the Unloaded event — unsubscribes from install service events.
-		/// </summary>
-		private void ModsPage_Unloaded(object sender, RoutedEventArgs e) {
-			_modInstaller.InstallProgressChanged -= OnInstallProgressChanged;
-			_modInstaller.ExtractionProgressChanged -= OnExtractionProgressChanged;
-		}
-		#endregion
-
-		#region Install Event Handlers
-
-		/// <summary>
-		/// Handles progress updates from the <see cref="ModInstaller"/> service.
-		/// Dispatches to the UI thread to update both the status text and the
-		/// persistent progress toast.
-		/// </summary>
-		private void OnInstallProgressChanged(ModInstallSummary summary) {
-			Dispatcher.BeginInvoke(() => {
-				string progressMsg = $"Processed {summary.TotalCount} archive(s)... " +
-					$"({summary.InstalledCount} installed, {summary.SkippedCount} skipped, {summary.FailedCount} failed)";
-				DependencyWarningText = progressMsg;
-
-				if (_installToastId != Guid.Empty) {
-					_toasts.UpdateProgress(_installToastId, summary.TotalCount, summary.TotalCount + 1, progressMsg);
-				}
-			});
-		}
-
-		/// <summary>
-		/// Handles install batch completion from the <see cref="ModInstaller"/> service.
-		/// Updates status, closes the progress toast, refreshes the mod list, runs DLL unblocking,
-		/// and re-evaluate <see cref="CanStart"/>.
-		/// </summary>
-		private async Task HandleInstallCompletedAsync(ModInstallSummary summary) {
-			if (_installToastId != Guid.Empty) {
-				_toasts.Close(_installToastId);
-				_installToastId = Guid.Empty;
-			}
-
-			DependencyWarningText = summary.ToSummaryString();
-
-			ToastSeverity severity = summary.FailedCount > 0
-				? ToastSeverity.Warning
-				: ToastSeverity.Success;
-
-			_toasts.Show(new ToastRequest {
-				Title = summary.FailedCount > 0 ? T.Toast_InstallCompleteWithErrors : T.Toast_InstallComplete,
-				Message = summary.ToSummaryString(),
-				Severity = severity
-			});
-
-			string modulesPath = _appSettings.ModulesDirectoryPath;
-			if (!string.IsNullOrWhiteSpace(modulesPath) && Directory.Exists(modulesPath)) {
-				UnblockResult unblockResult = await DLLUnblocker.UnblockAllAsync(modulesPath);
-				DependencyWarningText += $" | DLLs: {unblockResult.ToSummaryString()}";
-			}
-
-			if (summary.InstalledCount > 0 || summary.UpgradedCount > 0) {
-				ModPipelineResult refresh = await _modPipeline.RefreshAsync();
-				UpdateAvailableModsList();
-				ApplySelectedModpack();
-				if (!refresh.Success) {
-					DependencyWarningText += $" | {refresh.UserSummary}";
-					ShowPipelineWarning(refresh);
-				}
-			}
-
-			IsInstalling = false;
-			UpdateCanStart();
-		}
-
-		/// <summary>
-		/// Handles per-entry extraction progress from the <see cref="ModInstaller"/> service.
-		/// Computes a batch-level ETA based on cumulative files extracted across all
-		/// archives, using <see cref="ExtractionProgress.BatchStartUtc"/> as the stable
-		/// reference point. The progress bar represents the entire batch, not individual
-		/// archives, so it never resets mid-install.
-		/// Uses <see cref="ExtractionProgress.TimestampUtc"/> captured on the extraction
-		/// thread to avoid dispatcher-queue delay inflating the elapsed time.
-		/// Throttled to prevent dispatcher flooding on fast SSDs — only dispatches
-		/// a UI update when at least 150 ms have elapsed since the last one.
-		/// </summary>
-		private void OnExtractionProgressChanged(ExtractionProgress progress) {
-			// Throttle: skip this event if we updated the UI too recently.
-			// This runs on the extraction thread so use the event's own timestamp
-			// to avoid clock skew with dispatcher-queued DateTime.UtcNow calls.
-			DateTime now = progress.TimestampUtc;
-			bool isFinalUpdate = progress.BatchFilesExtracted >= progress.EstimatedTotalFiles;
-			if (!isFinalUpdate && (now - _lastExtractionProgressUpdate) < _extractionThrottleInterval) {
-				return;
-			}
-			_lastExtractionProgressUpdate = now;
-
-			Dispatcher.BeginInvoke(() => {
-				// Build the progress message
-				string archiveName = Path.GetFileNameWithoutExtension(progress.ArchiveFileName);
-				string batchPosition = $"[{progress.ArchiveIndex}/{progress.TotalArchives}]";
-				string filesText = $"{progress.BatchFilesExtracted} {T.Common_FilesExtracted}";
-
-				// Calculate batch-level ETA using extraction-thread timestamps
-				string eta = string.Empty;
-				if (progress.BatchFilesExtracted > 5 && progress.EstimatedTotalFiles > 0) {
-					TimeSpan elapsed = progress.TimestampUtc - progress.BatchStartUtc;
-					if (elapsed.TotalMilliseconds > 250) {
-						double filesPerSec = progress.BatchFilesExtracted / elapsed.TotalSeconds;
-						if (filesPerSec > 0) {
-							int remaining = progress.EstimatedTotalFiles - progress.BatchFilesExtracted;
-							if (remaining > 0) {
-								TimeSpan timeLeft = TimeSpan.FromSeconds(remaining / filesPerSec);
-								eta = timeLeft.TotalSeconds < 5
-									? $" — {T.Common_AlmostDone}"
-									: $" — ~{FormatTimeRemaining(timeLeft)} {T.Common_Remaining}";
-							} else {
-								eta = $" — {T.Common_AlmostDone}";
-							}
-						}
-					}
-				}
-
-				string message = $"{batchPosition} {T.Common_Extracting}: {archiveName}\n{filesText}{eta}";
-				DependencyWarningText = message;
-
-				// Update the persistent progress toast with batch-level values
-				if (_installToastId != Guid.Empty) {
-					_toasts.UpdateProgress(
-						_installToastId,
-						progress.BatchFilesExtracted,
-						progress.EstimatedTotalFiles,
-						message);
-				}
-			});
-		}
-
-		/// <summary>
-		/// Formats a <see cref="TimeSpan"/> as a short human-readable ETA string.
-		/// </summary>
-		private static string FormatTimeRemaining(TimeSpan time) {
-			if (time.TotalMinutes >= 1) {
-				return $"{(int)time.TotalMinutes}m {time.Seconds}s";
-			}
-			return $"{time.Seconds}s";
 		}
 		#endregion
 
@@ -396,7 +216,7 @@
 				AvailableModsList.Add(mod);
 			}
 			Log.Debug(
-				"ModsPage: Populated {Count} cached mods from snapshot version {SnapshotVersion}.",
+				"LauncherPage: Populated {Count} cached mods from snapshot version {SnapshotVersion}.",
 				snapshot.Modules.Count,
 				snapshot.Version);
 		}
@@ -405,15 +225,15 @@
 		/// Replaces the contents of <see cref="AvailableModsList"/> with fresh data
 		/// from the accepted pipeline snapshot. Must be called on the UI thread.
 		/// </summary>
-		private void UpdateAvailableModsList() {
+		private void UpdateAvailableModsList(AcceptedModSnapshot? acceptedSnapshot = null) {
 			AvailableModsList.Clear();
-			AcceptedModSnapshot snapshot = _modPipeline.AcceptedSnapshot;
+			AcceptedModSnapshot snapshot = acceptedSnapshot ?? _modPipeline.AcceptedSnapshot;
 			foreach (ModuleModel mod in snapshot.Modules) {
 				AvailableModsList.Add(mod);
 			}
 			AvailableModsView.Refresh();
 			Log.Debug(
-				"ModsPage: Updated available mods list with {Count} mods from snapshot version {SnapshotVersion}.",
+				"LauncherPage: Updated available mods list with {Count} mods from snapshot version {SnapshotVersion}.",
 				snapshot.Modules.Count,
 				snapshot.Version);
 		}
@@ -455,7 +275,7 @@
 
 			ApplySelectedModpack(showToast: !suppressToast);
 			Log.Debug(
-				"ModsPage: Populated {ModpackCount} modpacks with startup index {StartupIndex}; always ask: {AlwaysAsk}; suppress toast: {SuppressToast}.",
+				"LauncherPage: Populated {ModpackCount} modpacks with startup index {StartupIndex}; always ask: {AlwaysAsk}; suppress toast: {SuppressToast}.",
 				ModpackList.Count,
 				SelectedModpackIndex,
 				isAlwaysAsk,
@@ -528,7 +348,7 @@
 
 		/// <summary>
 		/// Refreshes the modpack ComboBox from the service. Called when navigating
-		/// back to ModsPage after creating modpacks on the ModpacksPage.
+		/// back to LauncherPage after creating modpacks on the ModpacksPage.
 		/// Reloads modpacks from disk first to pick up external changes
 		/// (added, deleted, or modified modpack files).
 		/// Preserves the ghost sentinel at index 0 if AlwaysAsk mode is active
@@ -599,8 +419,10 @@
 		/// (user-driven ComboBox changes, manual refresh, install completion) always
 		/// show the toast without needing to pass a flag.
 		/// </param>
-		private void ApplySelectedModpack(bool showToast = true) {
-			AcceptedModSnapshot snapshot = _modPipeline.AcceptedSnapshot;
+		private void ApplySelectedModpack(
+			bool showToast = true,
+			AcceptedModSnapshot? acceptedSnapshot = null) {
+			AcceptedModSnapshot snapshot = acceptedSnapshot ?? _modPipeline.AcceptedSnapshot;
 			CurrentLoadOrder.Clear();
 			AvailableModsList.Clear();
 			DependencyWarningText = string.Empty;
@@ -615,7 +437,7 @@
 				AvailableModsView.Refresh();
 				UpdateCanStart();
 				Log.Debug(
-					"ModsPage: No modpack selected; {AvailableCount} mods are available.",
+					"LauncherPage: No modpack selected; {AvailableCount} mods are available.",
 					AvailableModsList.Count);
 				return;
 			}
@@ -627,11 +449,11 @@
 				foreach (ModuleModel mod in snapshot.Modules) {
 					AvailableModsList.Add(mod);
 				}
-				DependencyWarningText = T.Mods_SelectModpackPrompt;
+				DependencyWarningText = T.Launcher_SelectModpackPrompt;
 				LoadOrderView.Refresh();
 				AvailableModsView.Refresh();
 				UpdateCanStart();
-				Log.Debug("ModsPage: Ghost modpack selected.");
+				Log.Debug("LauncherPage: Ghost modpack selected.");
 				return;
 			}
 
@@ -688,7 +510,7 @@
 			SyncLoadOrderToService();
 			UpdateCanStart();
 			Log.Debug(
-				"ModsPage: Applied modpack {ModpackName} with {LoadOrderCount} load-order entries, {AvailableCount} available mods, and {MissingCount} missing mods.",
+				"LauncherPage: Applied modpack {ModpackName} with {LoadOrderCount} load-order entries, {AvailableCount} available mods, and {MissingCount} missing mods.",
 				_selectedModpack.ModpackName,
 				CurrentLoadOrder.Count,
 				AvailableModsList.Count,
@@ -851,7 +673,7 @@
 
 			ApplySelectedModpack();
 			Log.Debug(
-				"ModsPage: Modpack selection changed to index {SelectedIndex} ({SelectedName}).",
+				"LauncherPage: Modpack selection changed to index {SelectedIndex} ({SelectedName}).",
 				SelectedModpackIndex,
 				_selectedModpack?.ModpackName);
 		}
@@ -860,36 +682,14 @@
 		#region Mod Actions
 
 		/// <summary>
-		/// Validates the game directory, opens a file dialog for archive selection,
-		/// and delegates the install through <see cref="ModPipelineManager"/>.
-		/// The install runs on the service layer — surviving page navigation.
-		/// Progress and completion are observed via service events.
-		/// Shows a persistent progress toast for the duration of the install.
+		/// Opens a file dialog for archive selection and delegates the authoritative
+		/// install, validation, and reconciliation pipeline to
+		/// <see cref="ModPipelineManager"/>. Application-wide progress and terminal
+		/// presentation remain owned by <see cref="IInstallNotificationPresenter"/>.
 		/// </summary>
 		private async void InstallModsButton_Click(object sender, RoutedEventArgs e) {
-			// Guard — service rejects duplicates, but skip the dialog too
-			if (_modInstaller.IsInstalling) {
-				_toasts.Show(new ToastRequest {
-					Title = T.Toast_InstallInProgress,
-					Message = T.Mods_InstallInProgress,
-					Severity = ToastSeverity.Warning
-				});
-				return;
-			}
-
-			// Step 1: Validate game directory
-			if (!_modPipeline.ValidateInstallGameDirectory(out string validationError)) {
-				_toasts.Show(new ToastRequest {
-					Title = "Invalid Game Directory",
-					Message = validationError,
-					Severity = ToastSeverity.Error
-				});
-				return;
-			}
-
-			// Step 2: Open multi-select file dialog
 			OpenFileDialog dialog = new() {
-				Title = T.Mods_InstallDialogTitle,
+				Title = T.Launcher_InstallDialogTitle,
 				Filter = ModInstaller.FileDialogFilter,
 				Multiselect = true,
 				CheckFileExists = true
@@ -899,34 +699,49 @@
 				return;
 			}
 
-			Log.Debug("ModsPage: Installing mods from {ArchiveCount} archives.", dialog.FileNames.Length);
-			// Step 3: Show persistent progress toast with progress bar
-			_installToastId = _toasts.Show(new ToastRequest {
-				Title = T.Toast_InstallingMods,
-				Message = $"Processing {dialog.FileNames.Length} archive(s)...",
-				Severity = ToastSeverity.Info,
-				TemplateKey = ToastTemplateKeys.InstallProgress,
-				IsPersistent = true,
-				AllowClickDismiss = false,
-				ShowCloseButton = false,
-				ProgressValue = 0,
-				ProgressMax = 100
-			});
-
-			// Step 4: await the coordinator-owned operation lifetime.
+			Log.Debug("LauncherPage: Installing mods from {ArchiveCount} archives.", dialog.FileNames.Length);
 			IsInstalling = true;
-			DependencyWarningText = $"Installing {dialog.FileNames.Length} archive(s)...";
-			ModInstallSummary? summary = await _modPipeline.InstallAsync(dialog.FileNames);
-			if (summary is null) {
+			DependencyWarningText = T.Launcher_InstallInProgress;
+			ModInstallOperationResult result = await _modPipeline.InstallAsync(dialog.FileNames);
+			if (!result.WasAdmitted) {
 				IsInstalling = false;
-				DependencyWarningText = "Another mod operation is already active.";
-				if (_installToastId != Guid.Empty) {
-					_toasts.Close(_installToastId);
-					_installToastId = Guid.Empty;
-				}
+				DependencyWarningText = result.Status switch {
+					ModInstallOperationStatus.RejectedBusy => T.Toast_InstallRejectedBusy,
+					ModInstallOperationStatus.RejectedAdmissionStopped => T.Toast_InstallRejectedAdmissionStopped,
+					_ => T.Toast_InstallValidationFailed
+				};
 				return;
 			}
-			await HandleInstallCompletedAsync(summary);
+
+			try {
+				UpdateAvailableModsList(result.AcceptedSnapshot);
+				ApplySelectedModpack(acceptedSnapshot: result.AcceptedSnapshot);
+				UpdateCanStart();
+				string installStatus = string.Format(
+					T.Toast_InstallSummaryFormat,
+					result.Summary.InstalledCount,
+					result.Summary.UpgradedCount,
+					result.Summary.SkippedCount,
+					result.Summary.FailedCount);
+				DependencyWarningText = string.IsNullOrWhiteSpace(DependencyWarningText)
+					? installStatus
+					: $"{DependencyWarningText} | {installStatus}";
+				_installNotifications.ReportLauncherCompletion(
+					new LauncherInstallPresentationCompletion(result.OperationId, true));
+			} catch (Exception ex) {
+				Log.Error(
+					ex,
+					"LauncherPage: Presentation reconciliation failed for install {OperationId}.",
+					result.OperationId);
+				DependencyWarningText = T.Toast_InstallReconciliationFailed;
+				_installNotifications.ReportLauncherCompletion(
+					new LauncherInstallPresentationCompletion(
+						result.OperationId,
+						false,
+						ex.ToString()));
+			} finally {
+				IsInstalling = false;
+			}
 		}
 
 		/// <summary>
@@ -1003,7 +818,7 @@
 
 			// Launch the game with the active target (auto-starts Steam if needed)
 			CanStart = false;
-			DependencyWarningText = T.Mods_Launching;
+			DependencyWarningText = T.Launcher_Launching;
 
 			GameLaunchResult result = await _gameLauncher.LaunchAsync(CurrentLoadOrder.ToList(), _activeLaunchTarget);
 			DependencyWarningText = result.Message;
@@ -1016,7 +831,7 @@
 
 			UpdateCanStart();
 			Log.Debug(
-				"ModsPage: Launch target {LaunchTarget} completed with success {Success}: {ResultMessage}",
+				"LauncherPage: Launch target {LaunchTarget} completed with success {Success}: {ResultMessage}",
 				_activeLaunchTarget,
 				result.Success,
 				result.Message);
@@ -1061,7 +876,7 @@
 			UpdateLaunchTargetCheckmarks();
 			OnPropertyChanged(nameof(PlayButtonText));
 			UpdateCanStart();
-			Log.Debug("ModsPage: Launch target set to {LaunchTarget}.", target);
+			Log.Debug("LauncherPage: Launch target set to {LaunchTarget}.", target);
 		}
 
 		/// <summary>
@@ -1101,7 +916,7 @@
 				CanStart = hasLoadOrder && canLaunchBase;
 			}
 			Log.Debug(
-				"ModsPage: CanStart evaluated to {CanStart}; has load order: {HasLoadOrder}; can launch base game: {CanLaunchBase}; target: {LaunchTarget}.",
+				"LauncherPage: CanStart evaluated to {CanStart}; has load order: {HasLoadOrder}; can launch base game: {CanLaunchBase}; target: {LaunchTarget}.",
 				CanStart,
 				hasLoadOrder,
 				canLaunchBase,
@@ -1120,7 +935,7 @@
 			_modpackService.CurrentLoadOrderEntries =
 				ModpackService.BuildEntryListFromModules(CurrentLoadOrder.ToList());
 			Log.Debug(
-				"ModsPage: Synced {EntryCount} load-order entries.",
+				"LauncherPage: Synced {EntryCount} load-order entries.",
 				_modpackService.CurrentLoadOrderEntries.Count);
 		}
 		#endregion
@@ -1129,7 +944,7 @@
 
 		/// <summary>
 		/// Refreshes the available mods list by performing a live directory scan.
-		/// Called when navigating back to ModsPage to pick up any changes
+		/// Called when navigating back to LauncherPage to pick up any changes
 		/// from mod installations, deletions, cache clears, or rescans
 		/// performed elsewhere (e.g. mods removed from the game directory).
 		/// </summary>
@@ -1139,7 +954,7 @@
 			}
 			try {
 				IsRefreshing = true;
-				Log.Debug("ModsPage: Refreshing available mods.");
+				Log.Debug("LauncherPage: Refreshing available mods.");
 				ModPipelineResult result = await _modPipeline.RefreshAsync();
 				UpdateAvailableModsList();
 				ApplySelectedModpack();
@@ -1159,7 +974,7 @@
 			} finally {
 				IsRefreshing = false;
 				Log.Debug(
-					"ModsPage: Available-mod refresh completed with {ModCount} accepted mods.",
+					"LauncherPage: Available-mod refresh completed with {ModCount} accepted mods.",
 					_modPipeline.AcceptedSnapshot.Modules.Count);
 			}
 		}

@@ -1,4 +1,4 @@
-<Page x:Class="CalradiaForge.UI.Pages.ModsPage"
+<Page x:Class="CalradiaForge.UI.Pages.LauncherPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -7,7 +7,7 @@
 			xmlns:mahIcons="http://metro.mahapps.com/winfx/xaml/iconpacks"
 			xmlns:dd="urn:gong-wpf-dragdrop"
 			mc:Ignorable="d"
-			Title="Mods"
+			Title="Launcher"
 			Background="Transparent">
 
 	<Grid Margin="20,10,20,10">
@@ -27,19 +27,19 @@
 				<ColumnDefinition Width="Auto" />
 			</Grid.ColumnDefinitions>
 			<TextBlock Grid.Column="0"
-								 Text="{Binding Translator.Strings.Mods_ModpacksLabel}"
-								 Style="{StaticResource ModsPageModListLabel}" />
+								 Text="{Binding Translator.Strings.Launcher_ModpacksLabel}"
+								 Style="{StaticResource LauncherPageModListLabel}" />
 			<ComboBox x:Name="ModPackComboBox" Grid.Column="1" MinWidth="120"
-								Style="{StaticResource ModsPageComboBox}"
+								Style="{StaticResource LauncherPageComboBox}"
 								DisplayMemberPath="ModpackName"
 								ItemsSource="{Binding ModpackList}"
 								SelectedIndex="{Binding SelectedModpackIndex}"
 								SelectionChanged="ModPack_SelectionChanged" />
 			<StackPanel Grid.Column="2" Orientation="Horizontal">
-				<Button Content="{Binding Translator.Strings.Mods_InstallButton}"
+				<Button Content="{Binding Translator.Strings.Launcher_InstallButton}"
 								Margin="8,0,0,0"
-								Style="{StaticResource ModsPageActionButton}"
-								ToolTip="{Binding Translator.Strings.Mods_InstallButton}"
+								Style="{StaticResource LauncherPageActionButton}"
+								ToolTip="{Binding Translator.Strings.Launcher_InstallButton}"
 								Click="InstallModsButton_Click" />
 			</StackPanel>
 		</Grid>
@@ -51,7 +51,7 @@
 				<ColumnDefinition Width="*" />
 			</Grid.ColumnDefinitions>
 			<TextBlock Grid.Column="0"
-								 Text="{Binding Translator.Strings.Mods_LoadOrderHeader}"
+								 Text="{Binding Translator.Strings.Launcher_LoadOrderHeader}"
 								 Style="{StaticResource ModsListHeader}" />
 			<Grid Grid.Column="1">
 				<Grid.ColumnDefinitions>
@@ -60,17 +60,17 @@
 					<ColumnDefinition Width="Auto" />
 				</Grid.ColumnDefinitions>
 				<TextBlock Grid.Column="0"
-									 Text="{Binding Translator.Strings.Mods_AvailableModsHeader}"
+									 Text="{Binding Translator.Strings.Launcher_AvailableModsHeader}"
 									 Style="{StaticResource ModsListHeader}" />
 				<TextBox x:Name="SearchBox" Grid.Column="1"
-								 Style="{StaticResource ModsPageSearchBox}"
+								 Style="{StaticResource LauncherPageSearchBox}"
 								 Margin="0,0,10,0"
 								 TextChanged="SearchBox_TextChanged"
 								 GotFocus="SearchBox_GotFocus" />
 				<Button Grid.Column="2" Width="35" Height="35"
 								Background="Transparent" BorderThickness="0"
 								Cursor="Hand"
-								ToolTip="{Binding Translator.Strings.Mods_RefreshTooltip}"
+								ToolTip="{Binding Translator.Strings.Launcher_RefreshTooltip}"
 								Click="RefreshModsButton_Click">
 					<mahIcons:PackIconMaterial Kind="Refresh" Width="20" Height="20"
 																		 Foreground="{StaticResource TB.Txt.Bright}" />
@@ -107,11 +107,11 @@
 							Content="{Binding PlayButtonText}"
 							Style="{StaticResource PlaySplitButtonLeft}"
 							IsEnabled="{Binding CanStart}"
-							ToolTip="{Binding Translator.Strings.Mods_LaunchTargetTooltip}"
+							ToolTip="{Binding Translator.Strings.Launcher_LaunchTargetTooltip}"
 							Click="PlayButton_Click" />
 			<Button x:Name="PlayTargetDropdown"
 							Style="{StaticResource PlaySplitButtonRight}"
-							ToolTip="{Binding Translator.Strings.Mods_LaunchTargetTooltip}"
+							ToolTip="{Binding Translator.Strings.Launcher_LaunchTargetTooltip}"
 							Click="PlayTargetDropdown_Click">
 				<mahIcons:PackIconMaterial Kind="ChevronDown" Width="10" Height="10" />
 				<Button.ContextMenu>
@@ -128,7 +128,7 @@
 																						 VerticalAlignment="Center"
 																						 Margin="0,0,8,0"
 																						 Visibility="Visible" />
-									<TextBlock Text="{Binding Translator.Strings.Mods_LaunchTargetBannerlord}"
+									<TextBlock Text="{Binding Translator.Strings.Launcher_LaunchTargetBannerlord}"
 														 VerticalAlignment="Center" />
 								</StackPanel>
 							</MenuItem.Header>
@@ -144,7 +144,7 @@
 																						 VerticalAlignment="Center"
 																						 Margin="0,0,8,0"
 																						 Visibility="Collapsed" />
-									<TextBlock Text="{Binding Translator.Strings.Mods_LaunchTargetBLSE}"
+									<TextBlock Text="{Binding Translator.Strings.Launcher_LaunchTargetBLSE}"
 														 VerticalAlignment="Center" />
 								</StackPanel>
 							</MenuItem.Header>
