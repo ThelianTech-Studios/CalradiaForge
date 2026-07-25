@@ -291,7 +291,7 @@
 
 		#region Navigation
 		public string Nav_LauncherTab { get; private set; } = DefaultNav_LauncherTab;
-		private const string DefaultNav_LauncherTab = "Launcher";
+		private const string DefaultNav_LauncherTab = "Home";
 		public string Nav_ModpacksTab { get; private set; } = DefaultNav_ModpacksTab;
 		private const string DefaultNav_ModpacksTab = "Mod Packs";
 		public string Nav_FaqTab { get; private set; } = DefaultNav_FaqTab;
