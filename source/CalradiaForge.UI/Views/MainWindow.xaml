@@ -73,7 +73,7 @@
 												Background="Transparent">
 				<ma:HamburgerMenu.ItemsSource>
 					<ma:HamburgerMenuItemCollection>
-						<ma:HamburgerMenuIconItem Label="Mods"
+						<ma:HamburgerMenuIconItem Label="Launcher"
 																			h:NavMenuProperties.TextMargin="0,5,0,0">
 							<ma:HamburgerMenuIconItem.Icon>
 								<maIcons:PackIconMaterial Kind="Home" Width="35" Height="35" />

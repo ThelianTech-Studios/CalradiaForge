@@ -83,7 +83,7 @@
 
 					<ComboBox x:Name="LanguageComboBox"
 										Grid.Column="2"
-										Style="{StaticResource ModsPageComboBox}"
+										Style="{StaticResource LauncherPageComboBox}"
 										DisplayMemberPath="DisplayName"
 										SelectionChanged="LanguageComboBox_SelectionChanged" />
 				</Grid>

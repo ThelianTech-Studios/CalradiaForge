@@ -28,7 +28,7 @@
 		/// Initializes the main window and navigation pages.
 		/// </summary>
 		public MainWindow(
-			ModsPage modsPage,
+			LauncherPage launcherPage,
 			ModpacksPage modpacksPage,
 			FaqPage faqPage,
 			SettingsPage settingsPage,
@@ -45,7 +45,7 @@
 			_applicationLifetime = applicationLifetime
 				?? throw new ArgumentNullException(nameof(applicationLifetime));
 			_pages = [
-				modsPage ?? throw new ArgumentNullException(nameof(modsPage)),
+				launcherPage ?? throw new ArgumentNullException(nameof(launcherPage)),
 				modpacksPage ?? throw new ArgumentNullException(nameof(modpacksPage)),
 				faqPage ?? throw new ArgumentNullException(nameof(faqPage)),
 			];
@@ -105,8 +105,8 @@
 
 			// Main nav items (indices 0–2)
 			if (NavBarControler.ItemsSource is HamburgerMenuItemCollection mainItems) {
-				if (mainItems.Count > 0 && mainItems[0] is HamburgerMenuIconItem mods) {
-					mods.Label = s.Nav_ModsTab;
+				if (mainItems.Count > 0 && mainItems[0] is HamburgerMenuIconItem launcher) {
+					launcher.Label = s.Nav_LauncherTab;
 				}
 				if (mainItems.Count > 1 && mainItems[1] is HamburgerMenuIconItem packs) {
 					packs.Label = s.Nav_ModpacksTab;
@@ -157,13 +157,13 @@
 			int index = NavBarControler.SelectedIndex;
 			if (index >= 0 && index < _pages.Length) {
 				Page targetPage = _pages[index];
-				// Sync modpack and mod data when navigating back to ModsPage.
+				// Sync modpack and mod data when navigating back to LauncherPage.
 				// RefreshModpackList rebuilds the ComboBox only (suppressApply)
 				// because RefreshAvailableMods will scan, rebuild, and apply
 				// the modpack with a single authoritative toast.
-				if (targetPage is ModsPage modspage) {
-					modspage.RefreshModpackList(suppressApply: true);
-					modspage.RefreshAvailableMods();
+				if (targetPage is LauncherPage launcherPage) {
+					launcherPage.RefreshModpackList(suppressApply: true);
+					launcherPage.RefreshAvailableMods();
 				}
 				MainContentFrame.Navigate(_pages[index]);
 				Log.Debug(
