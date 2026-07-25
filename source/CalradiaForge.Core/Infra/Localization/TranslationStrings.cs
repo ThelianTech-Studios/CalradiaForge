@@ -55,32 +55,32 @@
 			translations ??= new Dictionary<string, string>(StringComparer.Ordinal);
 
 			// Navigation
-			Nav_ModsTab = GetOrDefault(translations, nameof(Nav_ModsTab), DefaultNav_ModsTab);
+			Nav_LauncherTab = GetOrDefault(translations, nameof(Nav_LauncherTab), DefaultNav_LauncherTab);
 			Nav_ModpacksTab = GetOrDefault(translations, nameof(Nav_ModpacksTab), DefaultNav_ModpacksTab);
 			Nav_FaqTab = GetOrDefault(translations, nameof(Nav_FaqTab), DefaultNav_FaqTab);
 			Nav_SettingsTab = GetOrDefault(translations, nameof(Nav_SettingsTab), DefaultNav_SettingsTab);
 
-			// ModsPage — Header
-			Mods_ModpacksLabel = GetOrDefault(translations, nameof(Mods_ModpacksLabel), DefaultMods_ModpacksLabel);
-			Mods_InstallButton = GetOrDefault(translations, nameof(Mods_InstallButton), DefaultMods_InstallButton);
-			Mods_LoadOrderHeader = GetOrDefault(translations, nameof(Mods_LoadOrderHeader), DefaultMods_LoadOrderHeader);
-			Mods_AvailableModsHeader = GetOrDefault(translations, nameof(Mods_AvailableModsHeader), DefaultMods_AvailableModsHeader);
-			Mods_RefreshTooltip = GetOrDefault(translations, nameof(Mods_RefreshTooltip), DefaultMods_RefreshTooltip);
+			// LauncherPage — Header
+			Launcher_ModpacksLabel = GetOrDefault(translations, nameof(Launcher_ModpacksLabel), DefaultLauncher_ModpacksLabel);
+			Launcher_InstallButton = GetOrDefault(translations, nameof(Launcher_InstallButton), DefaultLauncher_InstallButton);
+			Launcher_LoadOrderHeader = GetOrDefault(translations, nameof(Launcher_LoadOrderHeader), DefaultLauncher_LoadOrderHeader);
+			Launcher_AvailableModsHeader = GetOrDefault(translations, nameof(Launcher_AvailableModsHeader), DefaultLauncher_AvailableModsHeader);
+			Launcher_RefreshTooltip = GetOrDefault(translations, nameof(Launcher_RefreshTooltip), DefaultLauncher_RefreshTooltip);
 
-			// ModsPage — Play Button
-			Mods_PlayBannerlord = GetOrDefault(translations, nameof(Mods_PlayBannerlord), DefaultMods_PlayBannerlord);
-			Mods_PlayWithBLSE = GetOrDefault(translations, nameof(Mods_PlayWithBLSE), DefaultMods_PlayWithBLSE);
-			Mods_LaunchTargetTooltip = GetOrDefault(translations, nameof(Mods_LaunchTargetTooltip), DefaultMods_LaunchTargetTooltip);
-			Mods_LaunchTargetBannerlord = GetOrDefault(translations, nameof(Mods_LaunchTargetBannerlord), DefaultMods_LaunchTargetBannerlord);
-			Mods_LaunchTargetBLSE = GetOrDefault(translations, nameof(Mods_LaunchTargetBLSE), DefaultMods_LaunchTargetBLSE);
+			// LauncherPage — Play Button
+			Launcher_PlayBannerlord = GetOrDefault(translations, nameof(Launcher_PlayBannerlord), DefaultLauncher_PlayBannerlord);
+			Launcher_PlayWithBLSE = GetOrDefault(translations, nameof(Launcher_PlayWithBLSE), DefaultLauncher_PlayWithBLSE);
+			Launcher_LaunchTargetTooltip = GetOrDefault(translations, nameof(Launcher_LaunchTargetTooltip), DefaultLauncher_LaunchTargetTooltip);
+			Launcher_LaunchTargetBannerlord = GetOrDefault(translations, nameof(Launcher_LaunchTargetBannerlord), DefaultLauncher_LaunchTargetBannerlord);
+			Launcher_LaunchTargetBLSE = GetOrDefault(translations, nameof(Launcher_LaunchTargetBLSE), DefaultLauncher_LaunchTargetBLSE);
 
-			// ModsPage — Status Messages
-			Mods_SelectModpackPrompt = GetOrDefault(translations, nameof(Mods_SelectModpackPrompt), DefaultMods_SelectModpackPrompt);
-			Mods_InstallInProgress = GetOrDefault(translations, nameof(Mods_InstallInProgress), DefaultMods_InstallInProgress);
-			Mods_Launching = GetOrDefault(translations, nameof(Mods_Launching), DefaultMods_Launching);
-			Mods_ScanningForMods = GetOrDefault(translations, nameof(Mods_ScanningForMods), DefaultMods_ScanningForMods);
-			Mods_NoModsFound = GetOrDefault(translations, nameof(Mods_NoModsFound), DefaultMods_NoModsFound);
-			Mods_InstallDialogTitle = GetOrDefault(translations, nameof(Mods_InstallDialogTitle), DefaultMods_InstallDialogTitle);
+			// LauncherPage — Status Messages
+			Launcher_SelectModpackPrompt = GetOrDefault(translations, nameof(Launcher_SelectModpackPrompt), DefaultLauncher_SelectModpackPrompt);
+			Launcher_InstallInProgress = GetOrDefault(translations, nameof(Launcher_InstallInProgress), DefaultLauncher_InstallInProgress);
+			Launcher_Launching = GetOrDefault(translations, nameof(Launcher_Launching), DefaultLauncher_Launching);
+			Launcher_ScanningForMods = GetOrDefault(translations, nameof(Launcher_ScanningForMods), DefaultLauncher_ScanningForMods);
+			Launcher_NoModsFound = GetOrDefault(translations, nameof(Launcher_NoModsFound), DefaultLauncher_NoModsFound);
+			Launcher_InstallDialogTitle = GetOrDefault(translations, nameof(Launcher_InstallDialogTitle), DefaultLauncher_InstallDialogTitle);
 
 			// ModpacksPage — Header
 			Modpacks_HeaderLabel = GetOrDefault(translations, nameof(Modpacks_HeaderLabel), DefaultModpacks_HeaderLabel);
@@ -242,6 +242,27 @@
 			Toast_InstallComplete = GetOrDefault(translations, nameof(Toast_InstallComplete), DefaultToast_InstallComplete);
 			Toast_InstallCompleteWithErrors = GetOrDefault(translations, nameof(Toast_InstallCompleteWithErrors), DefaultToast_InstallCompleteWithErrors);
 			Toast_InstallingMods = GetOrDefault(translations, nameof(Toast_InstallingMods), DefaultToast_InstallingMods);
+			Toast_InstallSucceededWithWarnings = GetOrDefault(translations, nameof(Toast_InstallSucceededWithWarnings), DefaultToast_InstallSucceededWithWarnings);
+			Toast_InstallCancelled = GetOrDefault(translations, nameof(Toast_InstallCancelled), DefaultToast_InstallCancelled);
+			Toast_InstallRejectedBusy = GetOrDefault(translations, nameof(Toast_InstallRejectedBusy), DefaultToast_InstallRejectedBusy);
+			Toast_InstallRejectedAdmissionStopped = GetOrDefault(translations, nameof(Toast_InstallRejectedAdmissionStopped), DefaultToast_InstallRejectedAdmissionStopped);
+			Toast_InstallValidationFailed = GetOrDefault(translations, nameof(Toast_InstallValidationFailed), DefaultToast_InstallValidationFailed);
+			Toast_InstallValidationArchiveSelectionEmpty = GetOrDefault(translations, nameof(Toast_InstallValidationArchiveSelectionEmpty), DefaultToast_InstallValidationArchiveSelectionEmpty);
+			Toast_InstallValidationGameDirectoryNotConfigured = GetOrDefault(translations, nameof(Toast_InstallValidationGameDirectoryNotConfigured), DefaultToast_InstallValidationGameDirectoryNotConfigured);
+			Toast_InstallValidationGameDirectoryMissing = GetOrDefault(translations, nameof(Toast_InstallValidationGameDirectoryMissing), DefaultToast_InstallValidationGameDirectoryMissing);
+			Toast_InstallValidationModulesDirectoryMissing = GetOrDefault(translations, nameof(Toast_InstallValidationModulesDirectoryMissing), DefaultToast_InstallValidationModulesDirectoryMissing);
+			Toast_InstallDiagnosticGeneric = GetOrDefault(translations, nameof(Toast_InstallDiagnosticGeneric), DefaultToast_InstallDiagnosticGeneric);
+			Toast_InstallFailed = GetOrDefault(translations, nameof(Toast_InstallFailed), DefaultToast_InstallFailed);
+			Toast_InstallProgressFormat = GetOrDefault(translations, nameof(Toast_InstallProgressFormat), DefaultToast_InstallProgressFormat);
+			Toast_InstallSummaryFormat = GetOrDefault(translations, nameof(Toast_InstallSummaryFormat), DefaultToast_InstallSummaryFormat);
+			Toast_InstallCancelledWithChanges = GetOrDefault(translations, nameof(Toast_InstallCancelledWithChanges), DefaultToast_InstallCancelledWithChanges);
+			Toast_InstallCancelledWithoutChanges = GetOrDefault(translations, nameof(Toast_InstallCancelledWithoutChanges), DefaultToast_InstallCancelledWithoutChanges);
+			Toast_InstallReconciliationFailed = GetOrDefault(translations, nameof(Toast_InstallReconciliationFailed), DefaultToast_InstallReconciliationFailed);
+			Toast_InstallBlseSucceeded = GetOrDefault(translations, nameof(Toast_InstallBlseSucceeded), DefaultToast_InstallBlseSucceeded);
+			Toast_InstallBlseFailed = GetOrDefault(translations, nameof(Toast_InstallBlseFailed), DefaultToast_InstallBlseFailed);
+			Toast_InstallUnblockWarningFormat = GetOrDefault(translations, nameof(Toast_InstallUnblockWarningFormat), DefaultToast_InstallUnblockWarningFormat);
+			Toast_InstallUnblockFailed = GetOrDefault(translations, nameof(Toast_InstallUnblockFailed), DefaultToast_InstallUnblockFailed);
+			Toast_InstallReconciliationWarnings = GetOrDefault(translations, nameof(Toast_InstallReconciliationWarnings), DefaultToast_InstallReconciliationWarnings);
 			Toast_GameLaunched = GetOrDefault(translations, nameof(Toast_GameLaunched), DefaultToast_GameLaunched);
 			Toast_LaunchFailed = GetOrDefault(translations, nameof(Toast_LaunchFailed), DefaultToast_LaunchFailed);
 			Toast_MissingMods = GetOrDefault(translations, nameof(Toast_MissingMods), DefaultToast_MissingMods);
@@ -269,8 +290,8 @@
 
 
 		#region Navigation
-		public string Nav_ModsTab { get; private set; } = DefaultNav_ModsTab;
-		private const string DefaultNav_ModsTab = "Mods";
+		public string Nav_LauncherTab { get; private set; } = DefaultNav_LauncherTab;
+		private const string DefaultNav_LauncherTab = "Launcher";
 		public string Nav_ModpacksTab { get; private set; } = DefaultNav_ModpacksTab;
 		private const string DefaultNav_ModpacksTab = "Mod Packs";
 		public string Nav_FaqTab { get; private set; } = DefaultNav_FaqTab;
@@ -279,45 +300,45 @@
 		private const string DefaultNav_SettingsTab = "Settings";
 		#endregion
 
-		#region ModsPage — Header
-		public string Mods_ModpacksLabel { get; private set; } = DefaultMods_ModpacksLabel;
-		private const string DefaultMods_ModpacksLabel = "Mod Packs:";
-		public string Mods_InstallButton { get; private set; } = DefaultMods_InstallButton;
-		private const string DefaultMods_InstallButton = "Install Mods";
-		public string Mods_LoadOrderHeader { get; private set; } = DefaultMods_LoadOrderHeader;
-		private const string DefaultMods_LoadOrderHeader = "Load Order";
-		public string Mods_AvailableModsHeader { get; private set; } = DefaultMods_AvailableModsHeader;
-		private const string DefaultMods_AvailableModsHeader = "Available Mods";
-		public string Mods_RefreshTooltip { get; private set; } = DefaultMods_RefreshTooltip;
-		private const string DefaultMods_RefreshTooltip = "Refresh Mods";
+		#region LauncherPage — Header
+		public string Launcher_ModpacksLabel { get; private set; } = DefaultLauncher_ModpacksLabel;
+		private const string DefaultLauncher_ModpacksLabel = "Mod Packs:";
+		public string Launcher_InstallButton { get; private set; } = DefaultLauncher_InstallButton;
+		private const string DefaultLauncher_InstallButton = "Install Mods";
+		public string Launcher_LoadOrderHeader { get; private set; } = DefaultLauncher_LoadOrderHeader;
+		private const string DefaultLauncher_LoadOrderHeader = "Load Order";
+		public string Launcher_AvailableModsHeader { get; private set; } = DefaultLauncher_AvailableModsHeader;
+		private const string DefaultLauncher_AvailableModsHeader = "Available Mods";
+		public string Launcher_RefreshTooltip { get; private set; } = DefaultLauncher_RefreshTooltip;
+		private const string DefaultLauncher_RefreshTooltip = "Refresh Mods";
 		#endregion
 
-		#region ModsPage — Play Button
-		public string Mods_PlayBannerlord { get; private set; } = DefaultMods_PlayBannerlord;
-		private const string DefaultMods_PlayBannerlord = "Play Bannerlord";
-		public string Mods_PlayWithBLSE { get; private set; } = DefaultMods_PlayWithBLSE;
-		private const string DefaultMods_PlayWithBLSE = "Play with BLSE";
-		public string Mods_LaunchTargetTooltip { get; private set; } = DefaultMods_LaunchTargetTooltip;
-		private const string DefaultMods_LaunchTargetTooltip = "Choose launch target";
-		public string Mods_LaunchTargetBannerlord { get; private set; } = DefaultMods_LaunchTargetBannerlord;
-		private const string DefaultMods_LaunchTargetBannerlord = "Bannerlord";
-		public string Mods_LaunchTargetBLSE { get; private set; } = DefaultMods_LaunchTargetBLSE;
-		private const string DefaultMods_LaunchTargetBLSE = "BLSE";
+		#region LauncherPage — Play Button
+		public string Launcher_PlayBannerlord { get; private set; } = DefaultLauncher_PlayBannerlord;
+		private const string DefaultLauncher_PlayBannerlord = "Play Bannerlord";
+		public string Launcher_PlayWithBLSE { get; private set; } = DefaultLauncher_PlayWithBLSE;
+		private const string DefaultLauncher_PlayWithBLSE = "Play with BLSE";
+		public string Launcher_LaunchTargetTooltip { get; private set; } = DefaultLauncher_LaunchTargetTooltip;
+		private const string DefaultLauncher_LaunchTargetTooltip = "Choose launch target";
+		public string Launcher_LaunchTargetBannerlord { get; private set; } = DefaultLauncher_LaunchTargetBannerlord;
+		private const string DefaultLauncher_LaunchTargetBannerlord = "Bannerlord";
+		public string Launcher_LaunchTargetBLSE { get; private set; } = DefaultLauncher_LaunchTargetBLSE;
+		private const string DefaultLauncher_LaunchTargetBLSE = "BLSE";
 		#endregion
 
-		#region ModsPage — Status Messages
-		public string Mods_SelectModpackPrompt { get; private set; } = DefaultMods_SelectModpackPrompt;
-		private const string DefaultMods_SelectModpackPrompt = "No modpack selected. Choose one from the dropdown above.";
-		public string Mods_InstallInProgress { get; private set; } = DefaultMods_InstallInProgress;
-		private const string DefaultMods_InstallInProgress = "Installation in progress...";
-		public string Mods_Launching { get; private set; } = DefaultMods_Launching;
-		private const string DefaultMods_Launching = "Launching...";
-		public string Mods_ScanningForMods { get; private set; } = DefaultMods_ScanningForMods;
-		private const string DefaultMods_ScanningForMods = "Scanning for mods...";
-		public string Mods_NoModsFound { get; private set; } = DefaultMods_NoModsFound;
-		private const string DefaultMods_NoModsFound = "No mods found. Install mods or check your game path in Settings.";
-		public string Mods_InstallDialogTitle { get; private set; } = DefaultMods_InstallDialogTitle;
-		private const string DefaultMods_InstallDialogTitle = "Select Mod Archives to Install";
+		#region LauncherPage — Status Messages
+		public string Launcher_SelectModpackPrompt { get; private set; } = DefaultLauncher_SelectModpackPrompt;
+		private const string DefaultLauncher_SelectModpackPrompt = "No modpack selected. Choose one from the dropdown above.";
+		public string Launcher_InstallInProgress { get; private set; } = DefaultLauncher_InstallInProgress;
+		private const string DefaultLauncher_InstallInProgress = "Installation in progress...";
+		public string Launcher_Launching { get; private set; } = DefaultLauncher_Launching;
+		private const string DefaultLauncher_Launching = "Launching...";
+		public string Launcher_ScanningForMods { get; private set; } = DefaultLauncher_ScanningForMods;
+		private const string DefaultLauncher_ScanningForMods = "Scanning for mods...";
+		public string Launcher_NoModsFound { get; private set; } = DefaultLauncher_NoModsFound;
+		private const string DefaultLauncher_NoModsFound = "No mods found. Install mods or check your game path in Settings.";
+		public string Launcher_InstallDialogTitle { get; private set; } = DefaultLauncher_InstallDialogTitle;
+		private const string DefaultLauncher_InstallDialogTitle = "Select Mod Archives to Install";
 		#endregion
 
 		#region ModpacksPage — Header
@@ -507,7 +528,7 @@
 		public string Faq_Q1_Title { get; private set; } = DefaultFaq_Q1_Title;
 		private const string DefaultFaq_Q1_Title = "Why isn't the game detecting my mods?";
 		public string Faq_Q1_Answer1 { get; private set; } = DefaultFaq_Q1_Answer1;
-		private const string DefaultFaq_Q1_Answer1 = "Make sure your mods are in the Active load order on the Mods page. Only mods listed in the Load Order panel are passed to the game at launch.";
+		private const string DefaultFaq_Q1_Answer1 = "Make sure your mods are in the Active load order on the Launcher page. Only mods listed in the Load Order panel are passed to the game at launch.";
 		public string Faq_Q1_Answer2 { get; private set; } = DefaultFaq_Q1_Answer2;
 		private const string DefaultFaq_Q1_Answer2 = "Verify that your game installation path is set correctly under Settings \u2192 Game Config. Use the Re-detect button if you're unsure.";
 		public string Faq_Q1_Hint { get; private set; } = DefaultFaq_Q1_Hint;
@@ -531,11 +552,11 @@
 		public string Faq_Q4_Answer1 { get; private set; } = DefaultFaq_Q4_Answer1;
 		private const string DefaultFaq_Q4_Answer1 = "A modpack is a saved snapshot of your active mods and their load order. You can create multiple modpacks for different playstyles (e.g., Vanilla+, Overhaul, Hardcore).";
 		public string Faq_Q4_Answer2 { get; private set; } = DefaultFaq_Q4_Answer2;
-		private const string DefaultFaq_Q4_Answer2 = "Switch between modpacks using the dropdown on the Mods page. The selected modpack's load order is applied immediately.";
+		private const string DefaultFaq_Q4_Answer2 = "Switch between modpacks using the dropdown on the Launcher page. The selected modpack's load order is applied immediately.";
 		public string Faq_Q4_Answer3 { get; private set; } = DefaultFaq_Q4_Answer3;
 		private const string DefaultFaq_Q4_Answer3 = "To save changes to a modpack, go to the Mod Packs page and click 'Save to Modpack'. This overwrites the saved data with your current active load order.";
 		public string Faq_Q4_Hint { get; private set; } = DefaultFaq_Q4_Hint;
-		private const string DefaultFaq_Q4_Hint = "Make sure you have selected the correct modpack on the Mods Page before you add/remove mods to your load order there, before you go and save any changes in the Modpacks Page else any changes will be lost.";
+		private const string DefaultFaq_Q4_Hint = "Make sure you have selected the correct modpack on the Launcher page before you add/remove mods to your load order there, before you go and save any changes in the Modpacks Page else any changes will be lost.";
 		public string Faq_Q5_Title { get; private set; } = DefaultFaq_Q5_Title;
 		private const string DefaultFaq_Q5_Title = "Why can't I launch the game from CalradiaForge on Epic or GamePass?";
 		public string Faq_Q5_Answer1 { get; private set; } = DefaultFaq_Q5_Answer1;
@@ -651,6 +672,48 @@
 		private const string DefaultToast_InstallCompleteWithErrors = "Install Completed with Errors";
 		public string Toast_InstallingMods { get; private set; } = DefaultToast_InstallingMods;
 		private const string DefaultToast_InstallingMods = "Installing Mods";
+		public string Toast_InstallSucceededWithWarnings { get; private set; } = DefaultToast_InstallSucceededWithWarnings;
+		private const string DefaultToast_InstallSucceededWithWarnings = "Install Completed with Warnings";
+		public string Toast_InstallCancelled { get; private set; } = DefaultToast_InstallCancelled;
+		private const string DefaultToast_InstallCancelled = "Installation Cancelled";
+		public string Toast_InstallRejectedBusy { get; private set; } = DefaultToast_InstallRejectedBusy;
+		private const string DefaultToast_InstallRejectedBusy = "Another Mod Operation Is Active";
+		public string Toast_InstallRejectedAdmissionStopped { get; private set; } = DefaultToast_InstallRejectedAdmissionStopped;
+		private const string DefaultToast_InstallRejectedAdmissionStopped = "Mod Operations Are Stopping";
+		public string Toast_InstallValidationFailed { get; private set; } = DefaultToast_InstallValidationFailed;
+		private const string DefaultToast_InstallValidationFailed = "Installation Cannot Start";
+		public string Toast_InstallValidationArchiveSelectionEmpty { get; private set; } = DefaultToast_InstallValidationArchiveSelectionEmpty;
+		private const string DefaultToast_InstallValidationArchiveSelectionEmpty = "Select at least one supported mod archive to install.";
+		public string Toast_InstallValidationGameDirectoryNotConfigured { get; private set; } = DefaultToast_InstallValidationGameDirectoryNotConfigured;
+		private const string DefaultToast_InstallValidationGameDirectoryNotConfigured = "Set the Bannerlord game folder in Settings before installing mods.";
+		public string Toast_InstallValidationGameDirectoryMissing { get; private set; } = DefaultToast_InstallValidationGameDirectoryMissing;
+		private const string DefaultToast_InstallValidationGameDirectoryMissing = "The configured Bannerlord game folder could not be found. Update it in Settings.";
+		public string Toast_InstallValidationModulesDirectoryMissing { get; private set; } = DefaultToast_InstallValidationModulesDirectoryMissing;
+		private const string DefaultToast_InstallValidationModulesDirectoryMissing = "The Bannerlord Modules folder could not be found. Verify the game folder in Settings.";
+		public string Toast_InstallDiagnosticGeneric { get; private set; } = DefaultToast_InstallDiagnosticGeneric;
+		private const string DefaultToast_InstallDiagnosticGeneric = "The installation could not complete normally. Review the selected archives and game folder, then try again.";
+		public string Toast_InstallFailed { get; private set; } = DefaultToast_InstallFailed;
+		private const string DefaultToast_InstallFailed = "Installation Failed";
+		public string Toast_InstallProgressFormat { get; private set; } = DefaultToast_InstallProgressFormat;
+		private const string DefaultToast_InstallProgressFormat = "[{0}/{1}] {2}: {3}/{4} files";
+		public string Toast_InstallSummaryFormat { get; private set; } = DefaultToast_InstallSummaryFormat;
+		private const string DefaultToast_InstallSummaryFormat = "{0} installed, {1} upgraded, {2} skipped, {3} failed.";
+		public string Toast_InstallCancelledWithChanges { get; private set; } = DefaultToast_InstallCancelledWithChanges;
+		private const string DefaultToast_InstallCancelledWithChanges = "Installation was cancelled after some changes completed.";
+		public string Toast_InstallCancelledWithoutChanges { get; private set; } = DefaultToast_InstallCancelledWithoutChanges;
+		private const string DefaultToast_InstallCancelledWithoutChanges = "Installation was cancelled before any completed changes.";
+		public string Toast_InstallReconciliationFailed { get; private set; } = DefaultToast_InstallReconciliationFailed;
+		private const string DefaultToast_InstallReconciliationFailed = "Installed files changed, but the module list could not be fully reconciled.";
+		public string Toast_InstallBlseSucceeded { get; private set; } = DefaultToast_InstallBlseSucceeded;
+		private const string DefaultToast_InstallBlseSucceeded = "BLSE installed.";
+		public string Toast_InstallBlseFailed { get; private set; } = DefaultToast_InstallBlseFailed;
+		private const string DefaultToast_InstallBlseFailed = "BLSE installation failed.";
+		public string Toast_InstallUnblockWarningFormat { get; private set; } = DefaultToast_InstallUnblockWarningFormat;
+		private const string DefaultToast_InstallUnblockWarningFormat = "{0} file(s) could not be unblocked.";
+		public string Toast_InstallUnblockFailed { get; private set; } = DefaultToast_InstallUnblockFailed;
+		private const string DefaultToast_InstallUnblockFailed = "Installed files could not be unblocked. Use Settings > Tools > Unblock DLLs before launching.";
+		public string Toast_InstallReconciliationWarnings { get; private set; } = DefaultToast_InstallReconciliationWarnings;
+		private const string DefaultToast_InstallReconciliationWarnings = "The module list was updated with warnings. Review the log if something looks incorrect.";
 		public string Toast_GameLaunched { get; private set; } = DefaultToast_GameLaunched;
 		private const string DefaultToast_GameLaunched = "Game Launched";
 		public string Toast_LaunchFailed { get; private set; } = DefaultToast_LaunchFailed;
