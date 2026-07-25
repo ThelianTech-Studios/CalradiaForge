@@ -16,7 +16,7 @@ does not authorize creation of that future page or renaming domain types.
 | `Pages/ModsPage.xaml` | `Pages/LauncherPage.xaml` | File name, XAML `x:Class`, generated partials, resource/style references, design-time tooling. |
 | `Pages/ModsPage.xaml.cs` | `Pages/LauncherPage.xaml.cs` | CLR type, constructor, retained DI registration, event ownership, comments. |
 | `MainWindow` page construction/navigation | `LauncherPage` references and **Launcher** label | Navigation indices, construction, page cache/retained lifetime, visible selection and test fixtures. |
-| `TranslationStrings.Nav_ModsTab` and manifest value | Approved Launcher identity/key migration | Localization key/value usage, fallback behavior, English manifest, UI assertions. |
+| `TranslationStrings.Nav_ModsTab` and Launcher-page `Mods_*` text keys | Approved `Nav_LauncherTab` and `Launcher_*` identity/key migration | Strongly typed key usage, fallback behavior, UI assertions, and the separate ConsoleUtils language-file regeneration workflow. |
 | Documentation/tests/comments | Launcher terminology where it means the current page | Search stale page-identity references; preserve valid `ModInstaller`, `ModPipelineManager`, `ModScanner`, `ModModel`, and modpack names. |
 
 ## Required Checks
@@ -29,7 +29,12 @@ does not authorize creation of that future page or renaming domain types.
 - Owner runtime inspection must still confirm the visible Launcher label,
   navigation away/back, and global toast-host behavior.
 - Do not use the rename to relocate the install button, redesign the page,
-  implement MVVM, create a future ModsPage, or alter mod-domain naming.
+  implement MVVM, create a future ModsPage, or alter genuine mod-domain naming.
+  The owner-approved `Mods_*` -> `Launcher_*` translation-key migration applies
+  only to the 16 values owned by the `LauncherPage` sections of
+  `TranslationStrings`. Generated language files are not edited during this
+  source pass; the owner regenerates them separately with
+  `CalradiaForge.ConsoleUtils`.
 
 ## Phase 8 Handoff
 

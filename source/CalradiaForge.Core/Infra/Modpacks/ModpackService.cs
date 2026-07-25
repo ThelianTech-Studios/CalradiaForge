@@ -55,7 +55,7 @@
 
 		/// <summary>
 		/// The current working load order as modpack entries.
-		/// Updated by the UI (ModsPage) whenever the load order changes.
+		/// Updated by the UI (LauncherPage) whenever the load order changes.
 		/// Read by ModpacksPage when saving.
 		/// </summary>
 		public List<ModpackEntryModel> CurrentLoadOrderEntries { get; set; } = [];
@@ -125,11 +125,11 @@
 		#region Save
 
 		/// <summary>
-		/// Saves (overwrites) an existing modpack with the current working load order from ModsPage.
+		/// Saves (overwrites) an existing modpack with the current working load order from LauncherPage.
 		/// Updates the <see cref="ModpackModel.LastUpdated"/> timestamp.
 		/// </summary>
 		/// <param name="modpack">The modpack to overwrite.</param>
-		/// <param name="currentLoadOrder">The current load order entries from ModsPage.</param>
+		/// <param name="currentLoadOrder">The current load order entries from LauncherPage.</param>
 		/// <returns><c>true</c> when saved successfully.</returns>
 		public bool Save(ModpackModel modpack, List<ModpackEntryModel> currentLoadOrder) {
 			modpack.LoadOrder = currentLoadOrder.Select(e => e.Clone()).ToList();
@@ -151,7 +151,7 @@
 		/// </summary>
 		/// <param name="modpackName">Display name for the new modpack.</param>
 		/// <param name="createdBy">Author name.</param>
-		/// <param name="currentLoadOrder">The current load order entries from ModsPage.</param>
+		/// <param name="currentLoadOrder">The current load order entries from LauncherPage.</param>
 		/// <returns><c>true</c> when saved successfully; <c>false</c> if the name already exists or save fails.</returns>
 		public bool SaveAs(string modpackName, string createdBy, List<ModpackEntryModel> currentLoadOrder) {
 			if (_modpackData.ModpackExists(modpackName)) {
@@ -300,7 +300,7 @@
 		/// Saves the current working load order as the "Last Used" data.
 		/// Called before game launch and on application shutdown.
 		/// </summary>
-		/// <param name="currentLoadOrder">The current load order entries from ModsPage.</param>
+		/// <param name="currentLoadOrder">The current load order entries from LauncherPage.</param>
 		/// <returns><c>true</c> when saved successfully.</returns>
 		public bool SaveLastUsed(List<ModpackEntryModel> currentLoadOrder) {
 			ModpackModel lastUsed = new() {
@@ -378,7 +378,7 @@
 		#region Conversion Helpers
 
 		/// <summary>
-		/// Converts a list of <see cref="ModuleModel"/> (from ModsPage load order) into
+		/// Converts a list of <see cref="ModuleModel"/> (from LauncherPage load order) into
 		/// <see cref="ModpackEntryModel"/> entries suitable for saving in a modpack.
 		/// </summary>
 		/// <param name="modules">The module models from the active load order.</param>

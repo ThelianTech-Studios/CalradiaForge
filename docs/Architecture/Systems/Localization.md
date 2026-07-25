@@ -5,9 +5,10 @@
 - `TranslationManager` reads the language manifest and language JSON files.
 - `TranslationStrings` provides bindable UI text defaults.
 - Lifecycle confirmation titles, messages, buttons, Launcher navigation
-  identity, and install notification progress/terminal presentation use
-  strongly typed `TranslationStrings` values. A fresh display model is
-  resolved from the currently active strings whenever a confirmation opens.
+  identity, Launcher-page text through the `Launcher_*` key family, and install
+  notification progress/terminal presentation use strongly typed
+  `TranslationStrings` values. A fresh display model is resolved from the
+  currently active strings whenever a confirmation opens.
 - Startup performs first-run language selection before translation initialization and before the EULA gate. The provider-owned `TranslationService` instance is shared by all constructed pages and windows.
 - The console utility can regenerate the default English file from the translation defaults.
 
