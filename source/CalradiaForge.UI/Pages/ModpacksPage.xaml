@@ -30,7 +30,7 @@
 								 Style="{StaticResource ModpacksPageHeader}"
 								 Margin="0,0,10,0" />
 			<ComboBox x:Name="ModpackComboBox" Grid.Column="1" MinWidth="160"
-								Style="{StaticResource ModsPageComboBox}"
+								Style="{StaticResource LauncherPageComboBox}"
 								DisplayMemberPath="ModpackName"
 								ItemsSource="{Binding ModpackList}"
 								SelectedIndex="{Binding SelectedModpackIndex}"
@@ -122,7 +122,7 @@
 								Click="ImportButton_Click" />
 				<Button Content="{Binding Translator.Strings.Modpacks_SaveButton}"
 								Style="{StaticResource ModpacksActionButton}"
-								ToolTip="Overwrite the selected modpack's saved data with the current active load order from the Mods page"
+								ToolTip="Overwrite the selected modpack's saved data with the current active load order from the Launcher page"
 								IsEnabled="{Binding HasSelection}"
 								Click="SaveButton_Click" />
 			</StackPanel>
@@ -167,7 +167,7 @@
 				<ColumnDefinition Width="*" />
 				<ColumnDefinition Width="*" />
 			</Grid.ColumnDefinitions>
-			<!--Left: Active load order from Mods page (read-only preview)-->
+			<!--Left: Active load order from Launcher page (read-only preview)-->
 			<ListBox x:Name="ActiveLoadOrderListBox" Grid.Column="0" Margin="0,0,5,0"
 							 Style="{StaticResource ModpacksListBox}"
 							 ItemTemplate="{StaticResource ModpackActiveLoadOrderItemTemplate}"

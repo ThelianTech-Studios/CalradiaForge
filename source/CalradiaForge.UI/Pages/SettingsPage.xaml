@@ -85,7 +85,7 @@
 													 Text="{Binding Translator.Strings.Settings_LanguageLabel}"
 													 Style="{StaticResource SettingsLabel}" />
 								<ComboBox x:Name="LanguageComboBox" Grid.Column="1"
-													Style="{StaticResource ModsPageComboBox}"
+													Style="{StaticResource LauncherPageComboBox}"
 													DisplayMemberPath="DisplayName"
 													SelectionChanged="LanguageComboBox_SelectionChanged" />
 							</Grid>

@@ -26,7 +26,7 @@
 	/// Modpacks management page. Handles creating, saving, importing modpacks,
 	/// viewing and editing their load order entries.
 	/// Shows a side-by-side comparison of the saved modpack data (right, editable)
-	/// and the active load order from the Mods page (left, read-only).
+	/// and the active load order from the Launcher page (left, read-only).
 	/// </summary>
 	public partial class ModpacksPage : Page, INotifyPropertyChanged {
 		#region Fields
@@ -66,7 +66,7 @@
 		public ObservableCollection<ModpackEntryModel> EditableLoadOrder { get; set; } = [];
 
 		/// <summary>
-		/// Read-only snapshot of the active load order from the Mods page.
+		/// Read-only snapshot of the active load order from the Launcher page.
 		/// Populated from <see cref="ModpackService.CurrentLoadOrderEntries"/>.
 		/// Displayed in the left list for visual comparison.
 		/// </summary>
@@ -193,7 +193,7 @@
 
 		/// <summary>
 		/// Refreshes the active load order and modpack list whenever the page becomes visible.
-		/// This ensures both lists always reflect the latest state from ModsPage and disk,
+		/// This ensures both lists always reflect the latest state from LauncherPage and disk,
 		/// even if the user switched modpacks, reordered mods, or created new modpacks
 		/// before navigating here.
 		/// Triggers a live mod rescan so the accepted pipeline snapshot is current
@@ -314,7 +314,7 @@
 		/// <summary>
 		/// Populates the left list with the current active load order
 		/// from <see cref="ModpackService.CurrentLoadOrderEntries"/>.
-		/// This reflects what the Mods page has in memory right now.
+		/// This reflects what the Launcher page has in memory right now.
 		/// </summary>
 		private void PopulateActiveLoadOrder() {
 			ActiveLoadOrder.Clear();
@@ -566,7 +566,7 @@
 		/// <summary>
 		/// Toggles the checkmark icon visibility in the template dropdown.
 		/// Only the currently selected template shows its checkmark.
-		/// Mirrors the pattern used by <c>UpdateLaunchTargetCheckmarks</c> on ModsPage.
+		/// Mirrors the pattern used by <c>UpdateLaunchTargetCheckmarks</c> on LauncherPage.
 		/// </summary>
 		private void UpdateTemplateCheckmarks() {
 			CheckVanilla.Visibility = _pendingTemplate == ModpackTemplate.Vanilla
@@ -678,9 +678,9 @@
 
 		/// <summary>
 		/// Overwrites the selected modpack's saved data on disk with the current
-		/// active load order from the Mods page. Reads from
+		/// active load order from the Launcher page. Reads from
 		/// <see cref="ModpackService.CurrentLoadOrderEntries"/> which is kept
-		/// in sync by ModsPage whenever the user drags or reorders mods.
+		/// in sync by LauncherPage whenever the user drags or reorders mods.
 		/// After saving, refreshes both lists so the right side reflects the new disk state.
 		/// </summary>
 		private void SaveButton_Click(object sender, RoutedEventArgs e) {
@@ -690,10 +690,10 @@
 			}
 
 			if (_modpackService.CurrentLoadOrderEntries.Count == 0) {
-				StatusText = "No active load order found. Arrange mods on the Mods page first.";
+				StatusText = "No active load order found. Arrange mods on the Launcher page first.";
 				_toasts.Show(new ToastRequest {
 					Title = "Nothing to Save",
-					Message = "Arrange mods on the Mods page first.",
+					Message = "Arrange mods on the Launcher page first.",
 					Severity = ToastSeverity.Warning
 				});
 				return;
