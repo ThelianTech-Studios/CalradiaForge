@@ -13,12 +13,11 @@ public sealed class ModInstallSummaryTests {
 		};
 
 		Assert.Equal(1, summary.InstalledCount);
-		Assert.NotNull(summary.BLSEResult);
-		Assert.Contains("BLSE installed", summary.ToSummaryString());
+		Assert.Equal(ModInstallStatus.Installed, Assert.IsType<ModInstallResult>(summary.BLSEResult).Status);
 	}
 
 	[Fact]
-	public void ToSummaryString_SurfacesFirstNormalFailureReason() {
+	public void FailedArchive_RemainsAvailableForUiOwnedFormatting() {
 		ModInstallSummary summary = new() {
 			Results = [new ModInstallResult {
 				ArchiveFileName = "unsafe.zip",
@@ -27,6 +26,9 @@ public sealed class ModInstallSummaryTests {
 			}]
 		};
 
-		Assert.Contains("unsafe.zip: Unsafe archive blocked", summary.ToSummaryString());
+		ModInstallResult failure = Assert.Single(summary.Results);
+		Assert.Equal("unsafe.zip", failure.ArchiveFileName);
+		Assert.Equal("Unsafe archive blocked", failure.Message);
+		Assert.Equal(ModInstallStatus.Failed, failure.Status);
 	}
 }

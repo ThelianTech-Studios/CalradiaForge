@@ -7,6 +7,7 @@ using CalradiaForge.UI.Composition;
 using CalradiaForge.UI.Dialogs;
 using CalradiaForge.UI.Lifecycle;
 using CalradiaForge.UI.Pages;
+using CalradiaForge.UI.Toasts;
 using CalradiaForge.UI.Views;
 
 using Microsoft.Extensions.DependencyInjection;
@@ -24,7 +25,7 @@ public sealed class UiServiceCollectionExtensionsTests {
 			typeof(ApplicationStartupCoordinator),
 			typeof(ApplicationShutdownCoordinator),
 			typeof(StartupNotificationDrainCoordinator),
-			typeof(ModsPage),
+			typeof(LauncherPage),
 			typeof(ModpacksPage),
 			typeof(FaqPage),
 			typeof(SettingsPage),
@@ -93,6 +94,8 @@ public sealed class UiServiceCollectionExtensionsTests {
 		AssertSingleton<ILanguageSelectionDialogService, LanguageSelectionDialogService>(services);
 		AssertSingleton<IEulaDialogService, EulaDialogService>(services);
 		AssertSingleton<IApplicationDialogService, ApplicationDialogService>(services);
+		AssertSingleton<IToastNotificationSink, ToastNotificationSink>(services);
+		AssertSingleton<IInstallNotificationPresenter, InstallNotificationPresenter>(services);
 		AssertSingleton<IMainWindowProvider, MainWindowProvider>(services);
 		Assert.DoesNotContain(services, descriptor => descriptor.ServiceType == typeof(IServiceProvider));
 	}
