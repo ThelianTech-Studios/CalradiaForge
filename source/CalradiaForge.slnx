@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/Solution Items/">
+    <File Path="../.gitignore" />
     <File Path="../AGENTS.md" />
     <File Path="../docs/CHANGELOG.md" />
     <File Path="../docs/CONTRIBUTIONS.md" />
