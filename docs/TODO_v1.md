@@ -5,12 +5,11 @@
 | # | Feature | Scope | Notes |
 |---|---------|-------|-------|
 | 1 | Modpack Saving Changes| Core + UI | Implement saving changes to modpacks, ensuring data integrity and proper UI updates and setting to set auto saving modpack on game launching.|
-| 2 | Implement some Ideas from Wanning Launcher | Core + UI | Look over certain feauture they provide and implement them.  |
-| 3 | NexusModsAPI | Core + UI | Implement API integration for NexusMods functionality. |
-| 4 | Epic Games and GamePass Support Backend | Core + UI | Add Functionality and Ship Beta Test Releases for users who have Epic or GamePass to test. |
-| 5 | Create post-v1.0 roadmap | App | Outline future features and improvements for post-v1.0 releases |
+| 2 | NexusModsAPI | Core + UI | Implement API integration for NexusMods functionality. |
+| 3 | Epic Games and GamePass Support Backend | Core + UI | Add Functionality and Ship Beta Test Releases for users who have Epic or GamePass to test. |
+| 4 | Create post-v1.0 roadmap | App | Outline future features and improvements for post-v1.0 releases |
 
-> Check over Wanning Launcher ultility features to check for things we can add.
+> Eventually look into Mod Sorting and Mod load order resolver at some point.
 > NexusModsAPI Feature is in concept planning phase, and will be implemented for the 1.0 release.
 
 ## POST V1.0 Deployment
