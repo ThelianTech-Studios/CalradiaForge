@@ -663,10 +663,6 @@ Before editing:
 - Read the existing source files named by the phase and supporting documentation.
 - Treat the current source codebase as the implementation source of truth where it conflicts with stale assumptions in planning documents.
 - Use the phase requirements, accepted architecture rules, and current implementation together to determine the exact required source changes.
-- For an applicable Phase 2, 6.B, or 6.C logging slice:
-  - inspect the current logger source under `source/CalradiaForge.Core/Infra/Logging/` before editing,
-  - inspect all existing logger initialization and call sites that could be affected,
-  - read the applicable Phase 6 ledger when the slice is 6.B or 6.C.
 
 Scope determination:
 - Build a concrete implementation checklist from the Phase x section, applicable supporting documents, architecture constraints, and current source.
@@ -748,19 +744,6 @@ Implementation constraints:
 - Update supporting documentation only when the implemented behavior or architecture changes require it.
 - Do not update `docs/CHANGELOG.md` during this implementation workflow.
 - Do not update `docs/MIGRATION_MAP.md` during this implementation workflow.
-
-Conditional Phase 2 logging constraints (apply only when Phase X is Phase 2):
-- Create new Serilog infrastructure only under:
-  - `source/CalradiaForge.Core/Infra/Logging/`
-- Preserve the existing `Logger` file unless the phase explicitly identifies an owner-approved modification.
-- Preserve all existing logger call sites.
-- Do not perform a broad logger-call-site migration as part of this phase unless explicitly required.
-- Do not initialize the new Serilog service through WPF singleton startup before the dependency-injection composition phase.
-- Use only the approved Serilog package set listed in `docs/refactor/logging_policy.md`.
-- Keep `Serilog.Sinks.Debug` limited to Debug builds.
-- Do not add `Serilog.Sinks.Console`.
-- Do not introduce secret-redaction or sanitization infrastructure unless a current owner instruction explicitly restores that requirement.
-- Keep any approved logger text-format template isolated and manually editable as required by the current logging documentation.
 
 Source-editing discipline:
 - Preserve unrelated owner changes already present in the working tree.
