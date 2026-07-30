@@ -65,6 +65,9 @@ Benchmarks should report results and variance. They should not become blocking c
 
 Phase 4 measurements must be labeled `Infrastructure validation`, `Provisional pre-refactor baseline`, `Fixture calibration`, or `Not comparable to final post-refactor baseline` as appropriate. The authoritative baseline for optimization decisions is captured in Phase 9 against the settled Phase 8 implementation.
 
+Phase 8 may record implementation/runtime observations that inform Phase 9, but
+it does not create `PERF-NNN` findings or perform speculative optimization.
+
 ## Benchmark Infrastructure Requirements
 
 Phase 4 should establish, after framework and package approval:

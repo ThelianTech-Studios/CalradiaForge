@@ -81,7 +81,25 @@ host; pages/ViewModels do not retain raw toast IDs or subscribe to installer
 events for application-wide notification. UI owns severity, localization, timing,
 persistence, and dismissal. Final notification waits for `LauncherPage`'s
 temporary presentation reconciliation; Phase 8 moves that reconciliation to
-`LauncherViewModel` or another approved presentation owner.
+`LauncherViewModel`. The presenter remains the sole raw-toast and correlated
+progress-to-terminal notification owner.
+
+## Approved, Unimplemented Phase 8 Consumption Rules
+
+Phase 8 ViewModels consume existing workflow-specific manager results; they do
+not recreate admission, operation identity, authoritative cancellation,
+reconciliation, terminal classification, quiescence, installer/extractor
+mechanics, or a generic `Result<T>` hierarchy. For every accepted Launcher
+correlation, `LauncherViewModel` applies the accepted snapshot through the UI
+dispatcher, reapplies the selected modpack, recalculates derived launch state,
+updates status/warning/error/current/last-result state, and reports semantic
+completion exactly once before the presenter finalizes its terminal toast.
+
+The consumption matrix distinguishes success, warnings, partial/validation
+failure, busy/admission-stopped rejection, cancellation before/after changes,
+unblock warning/failure, refresh/reconciliation failure, presentation
+reconciliation failure, unexpected failure, and navigation away/return. See the
+[Phase 8 locked decisions](phase_8_locked_decisions_2026-07-29.md).
 
 ## Scanner Result And Warning Planning
 

@@ -53,7 +53,30 @@ accepted-snapshot, and quiescence behavior; Phase 6.B established one-provider
 lifecycle/settings/logger behavior; and Phase 6.C established caller migration
 and the emergency writer.
 
-## Phase 7 Documentation And Phase 8 Handoff Gate
+## Phase 8 Planning, Implementation, And Verification Gates
+
+Phase 7 is complete; this checklist does not create a Phase 7 closeout gate.
+
+### Preimplementation
+
+- The [Phase 8 locked decisions](phase_8_locked_decisions_2026-07-29.md) record is present.
+- Refactor planning, policy, testing, DI, workflow, rename, performance, and version-boundary documents are reconciled.
+- Phase 8 implementation prompts are prepared; no regular/canonical document claims unimplemented behavior.
+
+### Implementation
+
+- Records exist for 8.A foundation, unified 8.B workflow extraction, and 8.C shell/cleanup.
+- Focused tests and temporary-seam tracking are complete for each required stage.
+
+### Verification
+
+- 8.D records clean Debug/Release verification, log review, and evidence-graded runtime observation.
+- 8.E has an explicit required/not-required disposition; any required fix is revalidated.
+
+### Postverification
+
+- Canonical/regular docs are reconciled against verified source, then sitemap/changelog/migration closeout and consistency review occur.
+- The Phase 9 handoff records its authoritative performance-baseline ownership; Phase 12 retains version/release ownership.
 
 - Preserve Phase 6 ledgers as historical records while linking their implemented baseline; do not present pre-implementation snapshots as current contracts.
 - P7-D01 through P7-D10 are reconciled across implementation, refactor

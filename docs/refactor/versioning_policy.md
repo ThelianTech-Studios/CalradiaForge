@@ -112,6 +112,12 @@ Acceptable example progression:
 | Docs/internal only | Usually no app version bump | Usually no app version bump |
 | Nexus SSO/API experimental work | Prerelease label | MINOR |
 
+## Phase 8 Boundary
+
+Phase 12 owns version-source and release-metadata alignment. Phase 8 does not
+resolve version drift or perform release closeout; its verified implementation
+evidence may inform Phase 12 later.
+
 ## Performance Work And Versioning
 
 Documentation-only Phase 9 audit/report work usually does not require an application version bump. Implemented performance changes follow the existing before-v1.0 patch/milestone rules and require owner approval.

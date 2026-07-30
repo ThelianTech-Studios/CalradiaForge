@@ -85,6 +85,22 @@ Resolve one singleton `MainWindow`, construct each primary page once through DI,
 
 Legitimate WPF framework statics remain allowed: `Application.Current.Dispatcher`, `Application.Current.Shutdown()`, `Application.Current.Resources`, and `Application.Current.MainWindow`. Do not add static compatibility service properties. The general legacy `Logger.Instance` was removed in implemented Phase 6.C.
 
+## Approved, Unimplemented Phase 8 DI And Lifetime Target
+
+Phase 8 will add singleton `LauncherViewModel`, `ModpacksViewModel`, and
+`SettingsViewModel` alongside the retained singleton pages. Each page will
+constructor-inject exactly one ViewModel and assign it as `DataContext` once
+after `InitializeComponent()`; navigation will not recreate pages/ViewModels or
+swap DataContexts. This is approved future design, not current behavior.
+
+There will be no `IServiceProvider` lookup, ViewModel locator, page factory,
+transient navigation scope, page catalog, navigation framework, second provider,
+or duplicate presenter/notification lifecycle. A narrow UI dispatcher may be
+registered only for awaited presentation-state application; Core remains
+dispatcher-free. Picker/folder/shell interfaces are added only when a concrete
+workflow requires one, while ViewModels retain validation, persistence, and
+sequencing. See the [Phase 8 locked decisions](phase_8_locked_decisions_2026-07-29.md).
+
 ## Implemented Phase 7 Notification Presenter
 
 Phase 7 registers a singleton application-lifetime UI install-notification

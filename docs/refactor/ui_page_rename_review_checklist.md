@@ -1,12 +1,12 @@
 # UI Page Rename Review Checklist
 
-Status: implemented and automatically verified; owner visual inspection remains pending.
+Status: implemented and automatically verified; any owner visual inspection is historical evidence and not a Phase 7 closeout gate.
 
 ## Purpose
 
 Phase 7 made the behavior-preserving `ModsPage` -> `LauncherPage` rename
-before Phase 8 MVVM extraction. The visible navigation label becomes
-**Launcher**. `ModsPage` is reserved for future mod management; this checklist
+before Phase 8 MVVM extraction. The current visible navigation label is
+**Home**. `ModsPage` is reserved for future mod management; this checklist
 does not authorize creation of that future page or renaming domain types.
 
 ## Implemented Rename Inventory
@@ -15,7 +15,7 @@ does not authorize creation of that future page or renaming domain types.
 |---|---|---|
 | `Pages/ModsPage.xaml` | `Pages/LauncherPage.xaml` | File name, XAML `x:Class`, generated partials, resource/style references, design-time tooling. |
 | `Pages/ModsPage.xaml.cs` | `Pages/LauncherPage.xaml.cs` | CLR type, constructor, retained DI registration, event ownership, comments. |
-| `MainWindow` page construction/navigation | `LauncherPage` references and **Launcher** label | Navigation indices, construction, page cache/retained lifetime, visible selection and test fixtures. |
+| `MainWindow` page construction/navigation | `LauncherPage` references and historical Phase 7 label migration | Navigation indices, construction, page cache/retained lifetime, visible selection and test fixtures. |
 | `TranslationStrings.Nav_ModsTab` and Launcher-page `Mods_*` text keys | Approved `Nav_LauncherTab` and `Launcher_*` identity/key migration | Strongly typed key usage, fallback behavior, UI assertions, and the separate ConsoleUtils language-file regeneration workflow. |
 | Documentation/tests/comments | Launcher terminology where it means the current page | Search stale page-identity references; preserve valid `ModInstaller`, `ModPipelineManager`, `ModScanner`, `ModModel`, and modpack names. |
 
@@ -26,7 +26,7 @@ does not authorize creation of that future page or renaming domain types.
 - Automated verification covers `MainWindow` construction/navigation,
   `ToastService` host composition, clean XAML generation, and stale authored
   source/test page-identity references.
-- Owner runtime inspection must still confirm the visible Launcher label,
+- Owner runtime inspection must still confirm the visible Home label,
   navigation away/back, and global toast-host behavior.
 - Do not use the rename to relocate the install button, redesign the page,
   implement MVVM, create a future ModsPage, or alter genuine mod-domain naming.
@@ -38,8 +38,10 @@ does not authorize creation of that future page or renaming domain types.
 
 ## Phase 8 Handoff
 
-Phase 8 begins with stable `LauncherPage`, `LauncherView`, and
-`LauncherViewModel` terminology. The future dedicated `ModsPage` remains a
+Historical Phase 7 rename evidence is retained above. The approved Phase 8
+amendment retains `LauncherPage`, adds `LauncherViewModel`, keeps Launcher-based
+internal identity, and retains **Home** as the visible navigation label. Do not
+create `LauncherView` or perform a second Phase 8 rename. The future dedicated `ModsPage` remains a
 separate Nexus/mod-management decision. See the
 [Phase 7 migration map](phase_7_migration_map.md) and
 [future mod-management context](nexus_future_mod_management_context.md).

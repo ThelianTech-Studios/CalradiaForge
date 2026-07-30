@@ -276,23 +276,26 @@ installer/extractor mechanics remain in their current owners. Debug and Release
 solution runs pass 194 tests at the Phase 7 implementation endpoint; owner WPF
 runtime inspection remains separate from automated verification.
 
-## Phase 8 Human-Driven, Codex-Observed Runtime Acceptance
+## Approved, Unimplemented Phase 8 Verification Strategy
 
-The user runs the application under Visual Studio. Codex records direct
-process/window/IDE/log evidence only when the environment genuinely provides
-that access; otherwise it records clearly labeled user-provided screenshots,
-recordings, copied output, logs, and checkpoints. This is not a requirement for
-a large WPF automation harness.
+Phase 8.A uses focused property, command, lifecycle, dispatcher, and
+cancellation-boundary tests. Unified Phase 8.B uses focused Launcher, Modpacks,
+and Settings ownership-transfer tests in that internal order; it has no B
+subphases. Phase 8.C uses focused shell/navigation/lifecycle/cleanup tests.
 
-The required scenario matrix is: successful single- and multi-archive installs;
-skipped archives; partial failure; DLL-unblock warning/failure; authoritative
-refresh failure; navigation away/back during install; cancellation before and
-after filesystem changes including reconciliation; shutdown/restart during work;
-navigation-independent progress; terminal notification after launcher
-reconciliation; duplicate-toast prevention; stale-progress rejection; accurate
-busy/cancel/CanStart state; accepted-snapshot visible-list synchronization; and
-selected-modpack reapplication. The Phase 8 report records expected behavior,
-evidence type, pass/fail, deviations, defects, and recommendations.
+Phase 8.D owns comprehensive terminal-result matrices, collection
+identity/ordering, activation/subscription idempotence, navigation concurrency,
+architecture-boundary checks, clean Debug and Release builds/tests, and the
+owner-driven Visual Studio runtime workflow. Tests are deterministic and
+task-driven: do not use arbitrary `Task.Delay`, wall-clock assumptions, sleeps,
+or live windows for ordinary unit tests. Automated tests do not prove interactive
+WPF behavior.
+
+Runtime evidence is classified as **Pass - Directly Observed**, **Pass -
+Corroborated**, **Inconclusive**, **Blocked**, or **Fail**. Codex records only
+what it directly observes and labels supplied screenshots, recordings, logs, or
+checkpoints accurately. Phase 8.E corrects and revalidates only a validated
+Phase 8.D production defect. See the [Phase 8 locked decisions](phase_8_locked_decisions_2026-07-29.md).
 
 ## Phased Implementation
 
@@ -305,7 +308,7 @@ evidence type, pass/fail, deviations, defects, and recommendations.
 | 6.B | Add one-provider, retained UI, settings/bootstrap, startup-archive, shutdown/restart/exception, and manual WPF coverage. | Prove one provider-owned logger close path and retained `Latest`. |
 | 6.C | Add caller-inventory, structured output, emergency writer, and one-close-path regression tests. | Remove the general legacy logger only after zero normal callers. |
 | 7 | Add locked install-result, progress, manager-reconciliation, presenter, and Launcher-rename deterministic tests. | Preserve manager ownership; Phase 7 does not implement MVVM. |
-| 8 | Add ViewModel tests and execute the human-driven, Codex-observed runtime matrix. | Preserve the Phase 7 contract and label evidence by observation source. |
+| 8 | 8.A focused foundation, unified 8.B workflow, 8.C shell, 8.D comprehensive/runtime verification, and conditional 8.E revalidation. | Preserve manager/presenter ownership; do not describe Phase 8 as implemented before verified source exists. |
 | 9 | Run the report-only performance audit and capture authoritative post-Phase-8 baselines. | Do not edit production code. Stop for developer decisions. |
 | 10 | Test and benchmark explicitly approved `PERF-NNN` findings. | Compare before/after under comparable conditions and record ineffective or harmful changes. |
 | 11 | Run the full bounded build/test/benchmark/analyzer/architecture/manual-smoke loop. | Update the same audit report and stop when practical criteria are met. |
