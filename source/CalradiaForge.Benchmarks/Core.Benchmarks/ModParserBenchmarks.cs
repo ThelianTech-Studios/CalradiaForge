@@ -9,7 +9,7 @@ using CalradiaForge.Core.Models;
 
 [MemoryDiagnoser]
 [ShortRunJob(RuntimeMoniker.Net10_0)]
-[BenchmarkCategory("Phase4", "ProvisionalPreRefactorBaseline", "Component")]
+[BenchmarkCategory("Phase9", "AuthoritativePostPhase8Baseline", "Component")]
 public class ModParserBenchmarks {
 	private BenchmarkFixtureDirectory _fixture = null!;
 	private string _xmlPath = null!;

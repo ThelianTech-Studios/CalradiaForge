@@ -8,7 +8,7 @@ using CalradiaForge.Core.Models;
 
 [MemoryDiagnoser]
 [ShortRunJob(RuntimeMoniker.Net10_0)]
-[BenchmarkCategory("Phase4", "ProvisionalPreRefactorBaseline", "Component")]
+[BenchmarkCategory("Phase9", "AuthoritativePostPhase8Baseline", "Component")]
 public class ModpackValidationBenchmarks {
 	private ModpackModel _modpack = null!;
 	private List<ModuleModel> _installedMods = null!;
@@ -24,7 +24,7 @@ public class ModpackValidationBenchmarks {
 				$"Fixture Module {index:D4}",
 				"v1.0.0"))
 			.ToList();
-		_modpack = new ModpackModel("Benchmark", "Phase 4", entries);
+		_modpack = new ModpackModel("Benchmark", "Phase 9", entries);
 		_installedMods = Enumerable.Range(0, ModuleCount)
 			.Where(index => index % 2 == 0)
 			.Select(index => new ModuleModel {

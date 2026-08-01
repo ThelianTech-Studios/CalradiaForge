@@ -43,6 +43,13 @@ internal sealed class BenchmarkFixtureDirectory : IDisposable {
 	}
 
 	public void Dispose() {
+		string expectedRoot = Path.GetFullPath(Path.Combine(Path.GetTempPath(), "CalradiaForge.Benchmarks"))
+			.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+			+ Path.DirectorySeparatorChar;
+		string resolvedRoot = Path.GetFullPath(RootPath);
+		if (!resolvedRoot.StartsWith(expectedRoot, StringComparison.OrdinalIgnoreCase)) {
+			throw new InvalidOperationException("Benchmark cleanup refused a directory outside the benchmark-owned temporary root.");
+		}
 		if (Directory.Exists(RootPath)) {
 			Directory.Delete(RootPath, recursive: true);
 		}

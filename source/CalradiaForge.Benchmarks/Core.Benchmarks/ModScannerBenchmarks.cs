@@ -11,7 +11,7 @@ using CalradiaForge.Core.Models;
 
 [MemoryDiagnoser]
 [ShortRunJob(RuntimeMoniker.Net10_0)]
-[BenchmarkCategory("Phase4", "ProvisionalPreRefactorBaseline", "EndToEndFilesystem")]
+[BenchmarkCategory("Phase9", "AuthoritativePostPhase8Baseline", "EndToEndFilesystem")]
 public class ModScannerBenchmarks {
 	private BenchmarkFixtureDirectory _fixture = null!;
 	private AppSettings _settings = null!;
