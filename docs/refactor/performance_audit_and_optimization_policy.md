@@ -101,6 +101,16 @@ Where applicable, fixtures should cover:
 
 Fixtures must not require real user configuration, Steam directories, Bannerlord installations, Nexus credentials, or network access.
 
+### Owner-Approved Real-Installation Supplemental Evidence
+
+The deterministic generated-fixture suite remains the authoritative, reproducible Phase 9 baseline. A separate local-only benchmark may read an installed game and Workshop corpus only when the owner explicitly approves that run and the runner requires a deliberate consent switch. This is supplemental evidence, not a conventional test fixture, CI input, universal baseline, or blocking threshold.
+
+The supplemental runner may discover Steam through local registry and Steam metadata when the owner explicitly requests discovery. It must not load or mutate the live CalradiaForge configuration, contact the network, access credentials, launch WPF or the game, invoke cache-committing pipeline workflows, or write to the supplied installation roots. Benchmark configuration and generated harness files must use benchmark-owned temporary or ignored artifact locations. No proprietary game or mod content may be copied into the repository.
+
+Real-installation inputs must stay out of BenchmarkDotNet parameters, benchmark names, committed reports, and unsanitized promoted artifacts. Retained evidence may contain only neutral dataset labels, aggregate counts and sizes, environment and storage classifications, benchmark distributions, allocations, and explicitly documented limitations. Exact input, repository, and user-profile literals must be checked and redacted from local text artifacts before review. A before/after content inventory must invalidate the run when the measured corpus changes.
+
+Real-installation results are machine-, storage-, installation-, module-mix-, cache-, antivirus-, and background-activity-specific. They do not establish WPF startup, navigation responsiveness, UI-thread blocked time, or live application performance. Generated-fixture results and real-installation results must remain in separate tables and raw artifact directories, with the canonical dated audit providing the combined interpretation.
+
 ## Performance Regression Thresholds
 
 Any threshold must document:

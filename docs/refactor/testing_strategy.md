@@ -63,8 +63,10 @@ The current xUnit and BenchmarkDotNet package sets were selected by the owner be
 - Reserved future folders: `Nexus.Tests`, `UI.Tests`, `Nexus.Benchmarks`, and `UI.Benchmarks`.
 - Full correctness command: `dotnet test source/CalradiaForge.slnx`.
 - Built-in analyzer/compiler-warning command: `dotnet build source/CalradiaForge.slnx -c Release`.
-- Full benchmark command on Windows: `powershell -NoProfile -ExecutionPolicy Bypass -File source/CalradiaForge.Benchmarks/run-phase4-benchmarks.ps1`.
-- Targeted benchmark command: add `-Filter '*ModpackValidationBenchmarks*'` or another BenchmarkDotNet filter.
+- Authoritative Phase 9 benchmark command on Windows: `powershell -NoProfile -ExecutionPolicy Bypass -File source/CalradiaForge.Benchmarks/run-phase9-benchmarks.ps1`.
+- Targeted Phase 9 benchmark command: add `-Filter '*ModpackValidationBenchmarks*'` or another BenchmarkDotNet filter.
+- Owner-approved supplemental real-installation command: `powershell -NoProfile -ExecutionPolicy Bypass -File source/CalradiaForge.Benchmarks/run-phase9-real-installation-benchmarks.ps1 -ConsentToReadRealInstallation`.
+- The historical `run-phase4-benchmarks.ps1` marker refuses to run the current benchmark project because current output cannot reproduce or inherit the provisional Phase 4 labels. Original Phase 4 artifacts belong to commit `580f3a4e19e383fd701a86b75953a39b69832aad` and are not the Phase 9 decision baseline.
 - Raw local results and environment metadata: `source/CalradiaForge.Benchmarks/BenchmarkDotNet.Artifacts`.
 
 The Phase 4 Core suite covers typed configuration and corrupt JSON fallback, atomic mod-cache round trips and backup recovery, named and last-used modpack persistence, modpack workflow validation, parser behavior, manual Workshop-root scanning with fake multi-library roots, archive containment and extraction, authoritative installer preflight, BLSE detection/install behavior, formatter output, and install-summary result mapping. Benchmarks cover parser dependency scaling, load-order validation scaling, mod-cache filesystem persistence, and fake-root module scanning.
@@ -75,7 +77,7 @@ The Steam resolver and workflow suites cover fake main/alternate libraries, repr
 
 Phase 5 automated evidence now covers resolver/workflow integration, split-root and no-Workshop behavior, scanner safety, startup queue behavior, and the Novus regression. This evidence does not replace owner smoke testing against a real Steam registry and WPF session.
 
-The benchmark artifact directory is ignored because its output is machine- and working-tree-specific. The runner records branch, commit, working-tree state, .NET details, and explicit `Infrastructure validation / Provisional pre-refactor baseline` and non-comparability labels. Evidence intentionally promoted into Phase 9 must be reviewed and stored with that audit rather than treated as a universal checked-in baseline.
+The benchmark artifact directory is ignored because its output is machine- and working-tree-specific. The standard Phase 9 runner selects only deterministic `AuthoritativePostPhase8Baseline` categories and never executes real-installation cases. The separate consent-gated runner selects only `OwnerRealInstallation`, records sanitized dataset and stability metadata, and redacts exact input/repository/user-profile literals from local text artifacts. Reviewed synthetic and real-installation summaries belong in separate tables in the dated Phase 9 audit and remain informational rather than universal thresholds.
 
 ### Phase 4 Boundaries Confirmed During Implementation
 
@@ -100,7 +102,7 @@ Where applicable, use fixtures for:
 - Logging payloads with active and inactive levels.
 - Cache-hit and cache-miss paths.
 
-Fixtures must use fake roots or isolated temporary directories. They must not read or write real user configuration, Steam directories, Bannerlord installations, real logs, Nexus credentials, or network services.
+Conventional tests, CI, and deterministic reusable benchmark fixtures must use fake roots or isolated temporary directories. They must not read or write real user configuration, Steam directories, Bannerlord installations, real logs, Nexus credentials, or network services. The separately invoked, owner-approved Phase 9 real-installation benchmark is the only exception: it may read game and Workshop module metadata in place under the consent, no-write, redaction, stability, and non-CI controls in the performance audit policy.
 
 ## Benchmark Execution Rules
 
@@ -318,7 +320,7 @@ Phase 8.D production defect. See the [Phase 8 locked decisions](phase_8_locked_d
 
 - `dotnet build source/CalradiaForge.slnx` succeeds when the relevant phase is implemented.
 - `dotnet test source/CalradiaForge.slnx` runs meaningful deterministic tests once a test project exists.
-- Tests use isolated temporary paths and do not touch real installations or user data.
+- Tests and CI use isolated temporary paths and do not touch real installations or user data; only the separately consented local Phase 9 supplemental benchmark may read installed module metadata under the documented no-write controls.
 - Timing-sensitive claims remain in benchmarks rather than normal tests.
 - Relevant Release benchmarks run with documented environment and fixture metadata.
 - Allocation results are captured where supported and interpreted with environment limitations.
@@ -329,7 +331,7 @@ Phase 8.D production defect. See the [Phase 8 locked decisions](phase_8_locked_d
 ## Guardrails
 
 - Keep Core tests free of WPF references.
-- Do not require Nexus credentials, network access, real user paths, Steam, or Bannerlord.
+- Do not require Nexus credentials, network access, real user paths, Steam, or Bannerlord for tests, CI, or the deterministic benchmark baseline. The opt-in real-installation supplement remains local-only and must fail closed without consent and valid discovered roots.
 - Do not bypass `ModInstaller`, `ModExtractor`, `ModsData`, or `ModpackData` to make tests easier.
 - Preserve observable behavior, safety, caller credential boundaries, cancellation, cleanup, and ownership boundaries.
 - Do not add timing assertions to ordinary unit tests.

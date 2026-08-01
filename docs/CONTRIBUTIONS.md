@@ -102,13 +102,13 @@ dotnet build source/CalradiaForge.slnx
 dotnet test source/CalradiaForge.slnx
 ```
 
-Performance benchmarks are developer-only, informational, and must run in Release configuration. The Phase 4 runner records environment metadata and writes ignored machine-specific artifacts:
+Performance benchmarks are developer-only, informational, and must run in Release configuration. The standard Phase 9 runner records environment metadata and writes ignored machine-specific artifacts:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File source/CalradiaForge.Benchmarks/run-phase4-benchmarks.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File source/CalradiaForge.Benchmarks/run-phase9-benchmarks.ps1
 ```
 
-Do not use real Steam, Bannerlord, Nexus, credential, or user-configuration data in tests or benchmarks.
+Do not use real Steam, Bannerlord, Nexus, credential, or user-configuration data in tests, CI, or deterministic benchmarks. An owner may explicitly authorize the separate local real-installation supplement documented by the benchmark project; it is consent-gated, read-only, path-redacted, non-CI, and never accesses Nexus credentials or network services.
 
 ---
 
