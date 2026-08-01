@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## 0.13.105 - Internal | 2026-08-01
+
+> Refactor Phase 8: moved the retained Launcher, Mod Packs, and Settings presentation workflows into lifecycle-aware ViewModels, completed the approved Settings path feedback and toast-duration follow-up, and retained existing Core workflow ownership.
+
+### Added
+
+- Added retained singleton `LauncherViewModel`, `ModpacksViewModel`, and `SettingsViewModel` presentation owners on a shared awaitable lifecycle foundation, backed by CommunityToolkit.Mvvm commands and observable state.
+- Added an awaitable WPF UI-dispatch boundary and narrow UI interaction contracts/adapters for mod-archive selection, modpack import, Settings folder/executable selection, DLL unblocking, and shell folder opening without moving the underlying Core workflows into UI.
+- Added focused ViewModel, dispatcher, lifecycle/navigation, composition, toast, and localization coverage, including serialized navigation, accepted-snapshot reconciliation, command availability, manual Workshop selection, language refresh, and dated log-archive behavior.
+- Added localized English fallback and generated runtime-language entries for the Launcher ghost-modpack prompt and Steam Workshop valid/invalid indicators.
+
+### Changed
+
+- Moved Launcher install, refresh, launch, filtering, drag/drop, launch-target, and modpack-selection presentation orchestration from `LauncherPage` code-behind into `LauncherViewModel`; moved modpack editing/import/create/save presentation into `ModpacksViewModel`; and moved Settings state, validation, redetection, maintenance, and restart presentation into `SettingsViewModel`.
+- Reduced the three retained page code-behind files to one-time `DataContext` wiring and WPF-specific gesture/layout adapters. Their existing `.xaml` filenames and page identities remain unchanged.
+- Changed `MainWindow` navigation to serialize initialization, deactivation, display, and activation of retained ViewModels, including deterministic failure handling and one-time startup-ready signaling after successful initial navigation.
+- Standardized the fallback duration for non-persistent toasts without an explicit duration to eight seconds. Install terminal notifications now use that shared default, while active install-progress notifications remain persistent until their terminal transition.
+- Kept visible Bannerlord and Steam Workshop folder-selection buttons disabled when their configured paths are valid. Steam installations without a valid Workshop folder retain the manual Workshop recovery action, and successful manual selection refreshes the localized validation indicator and command state.
+- Changed the visible navigation label and related FAQ text from Launcher to Home, added a localized ghost-modpack label, and regenerated `source/Languages/en-US.json` with the current Launcher, Phase 7 install-notification, and Phase 8 Settings translation keys.
+- Changed the ConsoleUtils English-language generator to move the generated file directly into `source/Languages` with overwrite support. The test project now explicitly excludes the reserved `Nexus.Tests` tree, and the solution lists `.gitignore` as a solution item.
+
+### Fixed
+
+- Fixed the successful manual Steam Workshop selection path so it immediately displays the valid green Workshop indicator and continues to use translated validation text after a language change.
+- Fixed unnecessary manual path reselection after valid detection by binding button availability to the Settings validation state without hiding the controls.
+- Fixed the dated log-lifecycle test so its fixed archive timestamp is evaluated with a matching injected clock instead of the machine's current date.
+
+### Verification
+
+- The accepted implementation record reports zero-error Debug and Release solution builds, all 272 tests passing in each configuration, and all 53 focused Phase 8.E tests passing. It also records successful Core WPF-boundary, toast-duration, affected `async void`, and diff checks; this documentation-only closeout did not rerun runtime behavior.
+- The owner manually inspected and approved the accepted source state before this closeout. The underlying Core automatic game-platform-detection and Steam Workshop scanner/path-resolution algorithms, the inherited DLL-unblock result mapping, performance optimization, Nexus functionality, credentials, polling, and application major/minor version metadata were not changed by this build.
+
+---
+
 ## 0.13.90 - Internal | 2026-07-24
 
 > Refactor Phase 7: added install-specific terminal outcomes and correlated application notifications, moved required post-install consistency work into the authoritative pipeline, and completed the retained Launcher page naming foundation.

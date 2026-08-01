@@ -4,10 +4,10 @@
 
 ```text
 <Metadata>
-Last Changelog Version: v0.13.90
-Last Git Commit ID: 03856f5e56725fd22d5c41fd38b2ec277196ab5f
+Last Changelog Version: v0.13.105
+Last Git Commit ID: 45ee44bd5291e92b9f92818d53210e77874f36ae
 Last Git Branch Used: dev-V0-14-CodeRefactor(HEAD)
-Last Map Compile Date: 2026-07-24
+Last Map Compile Date: 2026-08-01
 </Metadata>
 ```
 
@@ -40,6 +40,7 @@ Workflow rules for when and how to update this file are owned by `docs/refactor/
 
 | Version | Migration scope | Source comparison | Status |
 |---|---|---|---|
+| `v0.13.105` | Phase 8 retained-page MVVM extraction, lifecycle-aware navigation, UI interaction seams, eight-second toast defaults, Settings path feedback, localization/tooling synchronization, and supporting tests | `03856f5...45ee44b` | Mapped from committed accepted upstream source diff |
 | `v0.13.90` | Phase 7 install outcomes, correlated notifications, manager-owned finalization/reconciliation, retained Launcher naming, and supporting tests | `3759bf0...03856f5` | Mapped from committed accepted source diff |
 | `v0.13.83` | Phase 6.C application-wide legacy logger migration, structured Serilog callers, emergency startup-failure fallback, logger retirement, lifecycle guards, runtime language artifact, and supporting tests | `29ae996...3759bf0` | Mapped from committed accepted source diff |
 | `v0.13.73` | Phase 6.B single-provider dependency injection, configuration/logging ownership, coordinated application lifecycle, themed XAML lifecycle dialogs, retained UI injection, and supporting tests | `11c0cd1...29ae996` | Mapped from committed accepted source diff |
@@ -49,6 +50,83 @@ Workflow rules for when and how to update this file are owned by `docs/refactor/
 | `v0.13.22` | Atomic persistence, mod-cache recovery, archive/install preflight guardrails, and UI configuration-reference repair | `1b23045...710881c` | Mapped from committed build diff |
 | `v0.13.14` | Serilog infrastructure foundation, log-retention configuration, data-helper cleanup, application configuration-property rename, and neutral formatter/redaction-removal follow-up | `37c322e...HEAD` | Mapped from committed build diff |
 | `v0.13.6` | Cleanup/nullability/path/logging-message migration rows listed in this document | `dev-release...HEAD` | Mapped from current committed branch diff |
+
+<details open>
+<summary><strong>v0.13.105</strong> - Internal build: Phase 8 retained-page MVVM extraction, lifecycle-aware navigation, Settings path feedback, and accepted supporting source changes.</summary>
+
+**Source comparison:** `03856f5...45ee44b`
+
+**Status:** Mapped from the committed and pushed owner-approved endpoint `45ee44bd5291e92b9f92818d53210e77874f36ae` on `origin/dev-V0-14-CodeRefactor`. The implementation evidence records zero-error Debug and Release builds, 272 passing tests in each configuration, and 53 passing focused Phase 8.E tests. This documentation-only closeout did not rerun WPF behavior.
+
+**Changed implementation/test/resource files:** 48 (`+4993/-2471` source-range aggregate)
+
+**Scope rule:** Includes every committed `source/` path in `03856f5e56725fd22d5c41fd38b2ec277196ab5f...45ee44bd5291e92b9f92818d53210e77874f36ae`. Seventeen documentation paths and `.gitignore` are excluded. The later local region-only commit `55b064d5bef7d7fb4e75f8729cad07d34aac23c5` is outside the owner-selected upstream endpoint and is not represented. No Core detection/resolver/scanner algorithm, Nexus behavior, credential storage, polling, page filename, or application-version implementation changed.
+
+| Area | Files | Summary |
+|---|---:|---|
+| Retained ViewModels and page bindings | 10 | Moved Launcher, Mod Packs, and Settings presentation state/workflows from page code-behind into lifecycle-aware singleton ViewModels while retaining WPF-only page mechanics. |
+| UI composition, lifecycle, interactions, and toasts | 19 | Added explicit ViewModel lifecycle/dispatch and narrow WPF adapters, serialized shell navigation, and standardized non-persistent fallback toast duration. |
+| Localization generation and runtime catalog | 3 | Added Home/ghost/Workshop strings, updated the repository locale generator, and regenerated the English runtime catalog. |
+| Project and solution organization | 3 | Added the MVVM package, excluded the reserved Nexus test tree, and exposed `.gitignore` as a solution item. |
+| Tests | 13 | Added and extended deterministic coverage for ViewModels, navigation, dispatch, composition, toasts, localization, and date/global-logger isolation. |
+
+<details>
+<summary><strong>Detailed file map</strong></summary>
+
+| File | Change | Key identifiers | Summary |
+|---|---|---|---|
+| `source/CalradiaForge.ConsoleUtils/Program.cs` | Modified (`+24/-2`) | `Program.Main`; `CreateDefaultLanguageFile`; `File.Move(..., overwrite: true)` | Moves generated default English JSON into the repository `source/Languages` directory, overwrites the prior artifact, and reports the final destination. This changes developer tooling output, not application runtime behavior. |
+| `source/CalradiaForge.Core/Infra/Localization/TranslationStrings.cs` | Modified (`+13/-4`) | `Nav_LauncherTab`; `Launcher_GhostModpackLabel`; `Settings_WorkshopFolderValid`; `Settings_WorkshopFolderInvalid`; FAQ fallbacks | Changes the visible Launcher tab fallback to Home, adds strongly typed ghost-modpack and Workshop-validity fallbacks/application mapping, and aligns FAQ wording. Core remains WPF-free. |
+| `source/CalradiaForge.Tests/CalradiaForge.Tests.csproj` | Modified (`+7/-1`) | default-item removals for `Nexus.Tests/**` | Explicitly excludes the reserved Nexus test tree from compile, resource, none, and WPF page items and removes its placeholder folder entry; package and project references are unchanged. |
+| `source/CalradiaForge.Tests/Core.Tests/Localization/LauncherTranslationTests.cs` | Modified (`+7/-12`) | `RequiredLauncherPageKeys`; Home and ghost-label facts | Updates Launcher localization coverage for the Home label, ghost prompt, applied values, fallback behavior, and rejection of legacy Mods presenter keys. |
+| `source/CalradiaForge.Tests/Core.Tests/Localization/SettingsTranslationTests.cs` | Added (`+36/-0`) | Workshop validation translation facts | Verifies default and applied localized Steam Workshop valid/invalid strings. |
+| `source/CalradiaForge.Tests/Core.Tests/Logging/LogFileLifecycleTests.cs` | Modified (`+4/-1`) | `PrepareForStartup_ArchivesLatestFromLastWriteTimeAtMinutePrecision` | Injects a fixture-relative UTC clock so the fixed archive timestamp is not deleted by retention based on the real current date; production log lifecycle is unchanged. |
+| `source/CalradiaForge.Tests/UI.Tests/Composition/UiServiceCollectionExtensionsTests.cs` | Modified (`+15/-0`) | singleton ViewModels; dispatcher and interaction registrations | Extends composition coverage for retained ViewModel identity and all new UI boundary mappings, under serialized global-Serilog execution. |
+| `source/CalradiaForge.Tests/UI.Tests/Lifecycle/ApplicationStartupCoordinatorTests.cs` | Modified (`+2/-0`) | global Serilog collection | Serializes startup-composition tests that replace the process-wide logger. |
+| `source/CalradiaForge.Tests/UI.Tests/Support/GlobalSerilogCollection.cs` | Added (`+10/-0`) | `Global Serilog composition`; `DisableParallelization` | Defines the xUnit collection used to prevent process-global logger races. |
+| `source/CalradiaForge.Tests/UI.Tests/Threading/WpfUiDispatcherTests.cs` | Added (`+108/-0`) | inline/queued invocation; cancellation; exception propagation | Covers dispatcher access, awaited STA execution, cancellation, and error propagation. |
+| `source/CalradiaForge.Tests/UI.Tests/Toasts/ToastServiceTests.cs` | Added (`+15/-0`) | `GetDefaultDuration` theory | Verifies the eight-second fallback for Information, Success, Warning, and Error while leaving persistent and explicit-duration requests outside that default. |
+| `source/CalradiaForge.Tests/UI.Tests/ViewModels/LauncherViewModelTests.cs` | Added (`+575/-0`) | launcher lifecycle, commands, snapshots, install completion | Covers ghost localization, launch-target persistence, stable collections, drag/drop synchronization, activation refresh, install outcomes, UI-dispatched reconciliation, cancellation, and admission conflicts. |
+| `source/CalradiaForge.Tests/UI.Tests/ViewModels/ModpacksViewModelTests.cs` | Added (`+432/-0`) | edit/import/create/save/activation facts | Covers cloned working state, import and creation validation, selection preservation, active-load-order saving, repeated activation, and persistence failures. |
+| `source/CalradiaForge.Tests/UI.Tests/ViewModels/SettingsViewModelTests.cs` | Added (`+610/-0`) | path commands; validation; redetection; language refresh; maintenance | Covers persisted Settings state, valid-path command disabling, manual Steam/Workshop recovery, localized Workshop feedback, restart, unblock/cache/shell boundaries, and activation resynchronization. |
+| `source/CalradiaForge.Tests/UI.Tests/ViewModels/ViewModelFoundationTests.cs` | Added (`+238/-0`) | `SetProperty`; commands; lifecycle concurrency/retry | Covers observable state, explicit command invalidation, awaited-command failure/reentry behavior, one-time initialization, serialized activation, cancellation retry, and absence of lifecycle `async void`. |
+| `source/CalradiaForge.Tests/UI.Tests/Views/MainWindowLifecycleTests.cs` | Added (`+290/-0`) | navigation ordering/serialization/failure policies | Covers overlapping and same-target navigation, initialization/deactivation/activation failures, selection rollback, and one-time successful startup readiness. |
+| `source/CalradiaForge.UI/CalradiaForge.UI.csproj` | Modified (`+1/-0`) | `CommunityToolkit.Mvvm` 8.4.2 | Adds the observable-object and command dependency used by the Phase 8 presentation layer; application version metadata is unchanged. |
+| `source/CalradiaForge.UI/Composition/ServiceCollectionExtensions.cs` | Modified (`+13/-0`) | `AddCalradiaForgeUi`; singleton ViewModels and adapters | Registers the UI dispatcher, six interaction implementations, and three retained ViewModels while preserving one-provider singleton page/window composition. |
+| `source/CalradiaForge.UI/Interactions/IModArchiveFilePicker.cs` | Added (`+8/-0`) | `PickArchives` | Defines the UI archive-selection seam without taking ownership from the Core installer pipeline. |
+| `source/CalradiaForge.UI/Interactions/IModpackImportFilePicker.cs` | Added (`+8/-0`) | `PickImportFile` | Defines the nullable single-file selection seam for modpack/Novus import. |
+| `source/CalradiaForge.UI/Interactions/ISettingsDllUnblocker.cs` | Added (`+10/-0`) | `UnblockAllAsync`; `UnblockResult` | Defines an awaitable, testable UI boundary over Core DLL-unblock behavior. |
+| `source/CalradiaForge.UI/Interactions/ISettingsFilePicker.cs` | Added (`+7/-0`) | game and BLSE executable pickers | Defines Settings executable-selection intent independently of WPF dialogs. |
+| `source/CalradiaForge.UI/Interactions/ISettingsFolderPicker.cs` | Added (`+7/-0`) | game and Workshop folder pickers | Defines Settings folder-selection intent independently of WPF dialogs. |
+| `source/CalradiaForge.UI/Interactions/ISettingsShellLauncher.cs` | Added (`+6/-0`) | `OpenFolder` | Defines the Settings shell-launch boundary. |
+| `source/CalradiaForge.UI/Interactions/ModArchiveFilePicker.cs` | Added (`+26/-0`) | `OpenFileDialog`; `ModInstaller.FileDialogFilter` | Implements localized, multiselect archive picking while preserving `ModInstaller` as the file-format authority. |
+| `source/CalradiaForge.UI/Interactions/ModpackImportFilePicker.cs` | Added (`+21/-0`) | JSON/XML `OpenFileDialog` | Implements cancellable modpack/Novus file selection. |
+| `source/CalradiaForge.UI/Interactions/SettingsDllUnblocker.cs` | Added (`+12/-0`) | `DLLUnblocker.UnblockAllAsync` | Delegates Settings unblock requests to the existing Core implementation without changing its result mapping. |
+| `source/CalradiaForge.UI/Interactions/SettingsFilePicker.cs` | Added (`+23/-0`) | game/BLSE executable dialogs | Implements cancellable WPF executable selection with file-existence checking. |
+| `source/CalradiaForge.UI/Interactions/SettingsFolderPicker.cs` | Added (`+19/-0`) | game/Workshop `OpenFolderDialog` | Implements cancellable WPF folder selection. |
+| `source/CalradiaForge.UI/Interactions/SettingsShellLauncher.cs` | Added (`+8/-0`) | `ExplorerHelper.OpenFolder` | Delegates folder opening to the existing Core helper. |
+| `source/CalradiaForge.UI/Lifecycle/IViewModelLifecycle.cs` | Added (`+13/-0`) | `IsInitialized`; `IsActive`; initialize/activate/deactivate methods | Defines the retained ViewModel lifecycle contract consumed by `MainWindow`. |
+| `source/CalradiaForge.UI/Pages/LauncherPage.xaml` | Modified (`+23/-13`) | command bindings; typed `LaunchTarget`; drag/drop owner | Routes Launcher intent through ViewModel commands and bound state while retaining WPF drag/drop and context-menu mechanics. |
+| `source/CalradiaForge.UI/Pages/LauncherPage.xaml.cs` | Modified (`+54/-975`) | `LauncherPage(LauncherViewModel)`; `IDropTarget` adapters | Removes page-owned install/refresh/launch/modpack/filter state and workflows, leaving DataContext setup and WPF gesture forwarding. |
+| `source/CalradiaForge.UI/Pages/ModpacksPage.xaml` | Modified (`+23/-19`) | command/selection/template bindings | Routes modpack import, create, edit, save, remove, and template intent through `ModpacksViewModel`. |
+| `source/CalradiaForge.UI/Pages/ModpacksPage.xaml.cs` | Modified (`+62/-711`) | `ModpacksPage(ModpacksViewModel)`; view-only handlers | Removes page-owned modpack workflow/persistence state, retaining DataContext setup and WPF focus/context-menu adapters. |
+| `source/CalradiaForge.UI/Pages/SettingsPage.xaml` | Modified (`+64/-23`) | Settings commands; validation bindings; Workshop indicator | Binds settings actions and path state to `SettingsViewModel`, keeps folder controls visible with command-controlled disabled state, and adds green/red Workshop validity presentation. |
+| `source/CalradiaForge.UI/Pages/SettingsPage.xaml.cs` | Modified (`+41/-654`) | `SettingsPage(SettingsViewModel)`; view-only navigation/link handlers | Removes page-owned settings persistence, detection, validation, unblock/cache, restart, and shell workflows while retaining view mechanics. |
+| `source/CalradiaForge.UI/Threading/IUiDispatcher.cs` | Added (`+12/-0`) | `CheckAccess`; `InvokeAsync` | Defines an awaitable presentation dispatch seam without leaking WPF types into ViewModels or Core. |
+| `source/CalradiaForge.UI/Threading/WpfUiDispatcher.cs` | Added (`+30/-0`) | `Dispatcher`; inline/queued invocation | Implements inline UI-thread execution or awaited normal-priority WPF dispatch with cancellation and exception propagation. |
+| `source/CalradiaForge.UI/Toasts/InstallNotificationPresenter.cs` | Modified (`+0/-6`) | `TerminalRequest` duration | Removes severity-specific terminal durations so install terminal messages use the shared eight-second fallback; persistent install progress remains unchanged. |
+| `source/CalradiaForge.UI/Toasts/ToastService.cs` | Modified (`+3/-7`) | `GetDefaultDuration` | Replaces severity-specific fallback values with a uniform eight-second default and exposes the helper internally for tests; explicit request durations remain authoritative. |
+| `source/CalradiaForge.UI/ViewModels/LauncherViewModel.cs` | Added (`+702/-0`) | `LauncherViewModel`; `LauncherModuleCollection`; commands and result state | Owns Launcher presentation state, filtering, drag/drop semantics, launch-target persistence, pipeline invocation/result presentation, modpack selection, accepted-snapshot reconciliation, cancellation, and activation refresh. Core retains pipeline/install/launch mechanics. |
+| `source/CalradiaForge.UI/ViewModels/ModpacksViewModel.cs` | Added (`+498/-0`) | `ModpacksViewModel`; import/create/edit/save commands | Owns retained modpack presentation collections, working-copy edits, import/create/save flows, template selection, activation refresh, and user-facing result state while Core retains persistence and pipeline ownership. |
+| `source/CalradiaForge.UI/ViewModels/SettingsViewModel.cs` | Added (`+654/-0`) | `SettingsViewModel`; path/maintenance commands; validation properties | Owns Settings presentation synchronization and commands. Valid game/Workshop paths disable their visible selectors; Steam without Workshop remains manually recoverable; successful manual Workshop selection and language changes refresh localized validity state. Detection and validation algorithms remain Core-owned. |
+| `source/CalradiaForge.UI/ViewModels/ViewModelBase.cs` | Added (`+73/-0`) | `ObservableObject`; `IViewModelLifecycle`; semaphore gates | Supplies observable state plus idempotent initialization and serialized, repeatable activation/deactivation extension points. |
+| `source/CalradiaForge.UI/Views/MainWindow.xaml.cs` | Modified (`+141/-23`) | `_pageLifecycles`; `NavigateAsync`; navigation gate; readiness | Serializes retained-page lifecycle navigation, defines display/selection behavior for lifecycle failures and same-target reactivation, and signals initial toast readiness once after successful navigation. |
+| `source/CalradiaForge.slnx` | Modified (`+1/-0`) | Solution Items | Adds repository `.gitignore` to the solution view; build membership is unchanged. |
+| `source/Languages/en-US.json` | Modified (`+44/-20`) | Launcher/Home, Workshop validity, install-result keys | Regenerates the English runtime catalog: replaces legacy Mods keys with Launcher keys, adds ghost/Workshop validity and accepted install-presentation strings, and aligns FAQ Home terminology. Other language files are unchanged. |
+
+</details>
+
+</details>
 
 <details open>
 <summary><strong>v0.13.90</strong> - Internal build: Phase 7 install outcomes, application notifications, manager-owned consistency finalization, and Launcher naming.</summary>
