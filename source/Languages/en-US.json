@@ -64,6 +64,8 @@
   "Settings_GameExeLabel": "Game Executable",
   "Settings_SelectFileButton": "Select File",
   "Settings_WorkshopFolderLabel": "Steam Workshop Folder",
+  "Settings_WorkshopFolderValid": "✓ Valid Steam Workshop folder found.",
+  "Settings_WorkshopFolderInvalid": "✗ Steam Workshop folder not found.",
   "Settings_BLSEHeader": "Script Extender (BLSE)",
   "Settings_BLSEExeLabel": "BLSE Standalone Executable",
   "Settings_BLSEHint": "The Bannerlord Software Extender enables advanced script mods. If installed, CalradiaForge auto-detects it in the game's bin folder. You can also select it manually.",
