@@ -25,7 +25,10 @@ public sealed class LogFileLifecycleTests {
 		DateTime timestamp = new(2026, 7, 23, 14, 35, 48, DateTimeKind.Local);
 		File.SetLastWriteTime(latest, timestamp);
 
-		new LogFileLifecycle(logsDirectory, latest).PrepareForStartup();
+		new LogFileLifecycle(
+			logsDirectory,
+			latest,
+			() => timestamp.ToUniversalTime().AddDays(1)).PrepareForStartup();
 
 		string archive = Path.Combine(logsDirectory, "CalradiaForge_2026-07-23_14-35.log");
 		Assert.False(File.Exists(latest));

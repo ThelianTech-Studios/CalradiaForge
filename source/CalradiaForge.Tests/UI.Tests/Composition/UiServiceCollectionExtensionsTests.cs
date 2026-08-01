@@ -5,15 +5,20 @@ using System.Windows.Threading;
 using CalradiaForge.Core.Infra.DependencyInjection;
 using CalradiaForge.UI.Composition;
 using CalradiaForge.UI.Dialogs;
+using CalradiaForge.UI.Interactions;
 using CalradiaForge.UI.Lifecycle;
 using CalradiaForge.UI.Pages;
+using CalradiaForge.UI.Threading;
 using CalradiaForge.UI.Toasts;
 using CalradiaForge.UI.Views;
+using CalradiaForge.UI.ViewModels;
+using CalradiaForge.Tests.UI.Support;
 
 using Microsoft.Extensions.DependencyInjection;
 
 using Serilog;
 
+[Collection(GlobalSerilogCollection.Name)]
 public sealed class UiServiceCollectionExtensionsTests {
 	[Fact]
 	public void AddCalradiaForgeUi_RegistersRetainedUiGraphAsSingletons() {
@@ -25,6 +30,9 @@ public sealed class UiServiceCollectionExtensionsTests {
 			typeof(ApplicationStartupCoordinator),
 			typeof(ApplicationShutdownCoordinator),
 			typeof(StartupNotificationDrainCoordinator),
+			typeof(LauncherViewModel),
+			typeof(ModpacksViewModel),
+			typeof(SettingsViewModel),
 			typeof(LauncherPage),
 			typeof(ModpacksPage),
 			typeof(FaqPage),
@@ -94,6 +102,13 @@ public sealed class UiServiceCollectionExtensionsTests {
 		AssertSingleton<ILanguageSelectionDialogService, LanguageSelectionDialogService>(services);
 		AssertSingleton<IEulaDialogService, EulaDialogService>(services);
 		AssertSingleton<IApplicationDialogService, ApplicationDialogService>(services);
+		AssertSingleton<IUiDispatcher, WpfUiDispatcher>(services);
+		AssertSingleton<IModArchiveFilePicker, ModArchiveFilePicker>(services);
+		AssertSingleton<IModpackImportFilePicker, ModpackImportFilePicker>(services);
+		AssertSingleton<ISettingsFilePicker, SettingsFilePicker>(services);
+		AssertSingleton<ISettingsFolderPicker, SettingsFolderPicker>(services);
+		AssertSingleton<ISettingsShellLauncher, SettingsShellLauncher>(services);
+		AssertSingleton<ISettingsDllUnblocker, SettingsDllUnblocker>(services);
 		AssertSingleton<IToastNotificationSink, ToastNotificationSink>(services);
 		AssertSingleton<IInstallNotificationPresenter, InstallNotificationPresenter>(services);
 		AssertSingleton<IMainWindowProvider, MainWindowProvider>(services);

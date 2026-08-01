@@ -9,6 +9,7 @@ using CalradiaForge.Core.Infra.Modpacks;
 using CalradiaForge.Core.Infra.Mods;
 using CalradiaForge.Core.Models;
 using CalradiaForge.Tests.Core.Support;
+using CalradiaForge.Tests.UI.Support;
 using CalradiaForge.UI.Composition;
 using CalradiaForge.UI.Dialogs;
 using CalradiaForge.UI.Lifecycle;
@@ -17,6 +18,7 @@ using CalradiaForge.UI.Views;
 
 using Microsoft.Extensions.DependencyInjection;
 
+[Collection(GlobalSerilogCollection.Name)]
 public sealed class ApplicationStartupCoordinatorTests {
 	[Fact]
 	public async Task StartAsync_ActivatesInstallPresenterBeforeShellResolution() {

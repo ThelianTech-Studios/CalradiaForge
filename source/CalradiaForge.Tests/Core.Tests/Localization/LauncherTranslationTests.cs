@@ -5,6 +5,7 @@ using CalradiaForge.Core.Infra.Localization;
 public sealed class LauncherTranslationTests {
 	private static readonly string[] RequiredLauncherPageKeys = [
 		nameof(TranslationStrings.Launcher_ModpacksLabel),
+		nameof(TranslationStrings.Launcher_GhostModpackLabel),
 		nameof(TranslationStrings.Launcher_InstallButton),
 		nameof(TranslationStrings.Launcher_LoadOrderHeader),
 		nameof(TranslationStrings.Launcher_AvailableModsHeader),
@@ -70,6 +71,9 @@ public sealed class LauncherTranslationTests {
 		Dictionary<string, string> defaults = TranslationStrings.GetDefaultTranslations();
 
 		Assert.Equal("Home", defaults[nameof(TranslationStrings.Nav_LauncherTab)]);
+		Assert.Equal(
+			"— Select a modpack —",
+			defaults[nameof(TranslationStrings.Launcher_GhostModpackLabel)]);
 		Assert.DoesNotContain("Nav_ModsTab", defaults.Keys);
 		Assert.All(
 			RequiredLauncherPageKeys,
@@ -87,10 +91,12 @@ public sealed class LauncherTranslationTests {
 		TranslationStrings strings = new();
 
 		strings.Apply(new Dictionary<string, string> {
+			[nameof(TranslationStrings.Launcher_GhostModpackLabel)] = "Localized modpack choice",
 			[nameof(TranslationStrings.Launcher_PlayBannerlord)] = "Localized Bannerlord",
 			["Mods_PlayWithBLSE"] = "Legacy BLSE"
 		});
 
+		Assert.Equal("Localized modpack choice", strings.Launcher_GhostModpackLabel);
 		Assert.Equal("Localized Bannerlord", strings.Launcher_PlayBannerlord);
 		Assert.Equal("Play with BLSE", strings.Launcher_PlayWithBLSE);
 	}
