@@ -1,6 +1,6 @@
 # CalradiaForge Phase 8.D Runtime Verification Audit
 
-Status: runtime evidence recorded; deterministic verification is not yet clean
+Status: runtime evidence recorded; Phase 8.E deterministic revalidation is clean; owner WPF inspection remains required
 
 Audit date: 2026-08-01
 
@@ -213,23 +213,54 @@ the two owner discussion items listed above.
 
 ## Phase 8.E Disposition And Required Owner Actions
 
-Phase 8.E is **not required at this time**: no production defect has been
-validated by Phase 8.D. The test fixture needs deterministic correction, but
-that is Phase 8.D verification hardening rather than a production-defect
-correction.
+The owner authorized a bounded Phase 8.E follow-up for the two discussion
+items and the deterministic verification blockers. The accepted scope did not
+reopen automatic platform detection: the owner confirmed that automatic
+detection works and identified Settings presentation behavior around valid
+manual/automatic paths.
+
+The follow-up completed these corrections:
+
+- restored the production `LoggingSettings` behavior, including the `false`
+  Debug default/fallback and obsolete `LogFileDaysToKeep` removal;
+- injected a fixture-period UTC clock into the dated archive test so the fixed
+  archive timestamp is not evaluated against the real current date;
+- standardized every non-persistent toast default to eight seconds while
+  preserving the persistent install-progress toast until terminal transition;
+- disabled the Bannerlord folder command outside uninitialized/manual
+  configuration and disabled the Steam Workshop folder command after a valid
+  Workshop path is configured;
+- preserved the Phase 5 Steam-without-Workshop recovery contract by leaving
+  Workshop selection enabled when Steam is valid but Workshop is absent; and
+- added localized Workshop valid/invalid presentation state and a bound
+  validation indicator that refreshes after manual selection and language
+  changes.
+
+Focused verification passed 53/53 tests. The required network-enabled solution
+restore passed after the sandboxed attempt reproduced the recorded NuGet
+TLS/authentication failure. Debug and Release solution builds passed with zero
+errors and the same existing warning categories. Complete Debug and Release
+test suites each passed 272/272. `git diff --check`, the Core WPF-boundary scan,
+the toast-duration inventory, and the affected UI `async void` scan passed.
+
+Two read-only analysis assignments independently reviewed the deterministic
+blockers/toast policy and the manual path-presentation boundary. The independent
+implementation reviewer found one missing regression sequence: successful
+manual Workshop selection followed by a language change. That focused test was
+added, all verification was repeated, and the follow-up reviewer reported no
+remaining required findings.
+
+No Core resolver, provider ordering, Steam metadata, scanner, cache, launcher,
+Nexus, page identity, version, changelog, or migration-map behavior changed.
+The earlier DLL-unblock result-mapping concern remains outside this correction
+because this Phase 8.D runtime report did not validate it as a production
+defect.
 
 Before accepting or publishing a source endpoint, the owner must:
 
-1. Restore the temporary logging default and obsolete-key cleanup in
-   `LoggingSettings`.
-2. Correct the dated log-archive test to control its retention clock, then rerun
-   the complete Debug and Release test suites.
-3. Provide a concise real-Steam reproduction for the automatic re-detection or
-   manual-folder concern before authorizing any fix.
-4. Decide whether the observed toast duration warrants a UX change, including
-   the desired durations and affected toast types, before authorizing a scoped
-   implementation.
-5. Manually inspect and approve the existing Phase 8 source diff.
+1. Manually inspect and approve the complete Phase 8 source diff.
+2. Revalidate the disabled folder controls, localized Workshop indicator, and
+   eight-second auto-dismiss behavior in Visual Studio/WPF.
 
 After owner approval and clean verification, the owner commits and pushes the
 accepted source endpoint. Only then may the combined changelog and migration-map
@@ -238,8 +269,7 @@ push.
 
 ## Explicit Exclusions
 
-- No production source correction was made.
 - No Visual Studio UI automation or performance benchmark was claimed.
-- No canonical architecture or localization-content update was made.
+- No generated locale JSON or canonical architecture document was updated.
 - `docs/CHANGELOG.md` was not updated.
 - `docs/MIGRATION_MAP.md` was not updated.
