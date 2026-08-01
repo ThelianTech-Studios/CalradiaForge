@@ -40,4 +40,4 @@ BenchmarkDotNet.Artifacts/
 /docs/refactor_*.zip
 /docs/TEMP_Codex_Instructions
 /docs/docs_*.zip
-/source/Languages/en-US.zip
+/source/Languages/*.zip
