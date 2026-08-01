@@ -62,6 +62,7 @@
 
 			// LauncherPage — Header
 			Launcher_ModpacksLabel = GetOrDefault(translations, nameof(Launcher_ModpacksLabel), DefaultLauncher_ModpacksLabel);
+			Launcher_GhostModpackLabel = GetOrDefault(translations, nameof(Launcher_GhostModpackLabel), DefaultLauncher_GhostModpackLabel);
 			Launcher_InstallButton = GetOrDefault(translations, nameof(Launcher_InstallButton), DefaultLauncher_InstallButton);
 			Launcher_LoadOrderHeader = GetOrDefault(translations, nameof(Launcher_LoadOrderHeader), DefaultLauncher_LoadOrderHeader);
 			Launcher_AvailableModsHeader = GetOrDefault(translations, nameof(Launcher_AvailableModsHeader), DefaultLauncher_AvailableModsHeader);
@@ -140,6 +141,8 @@
 			Settings_GameExeLabel = GetOrDefault(translations, nameof(Settings_GameExeLabel), DefaultSettings_GameExeLabel);
 			Settings_SelectFileButton = GetOrDefault(translations, nameof(Settings_SelectFileButton), DefaultSettings_SelectFileButton);
 			Settings_WorkshopFolderLabel = GetOrDefault(translations, nameof(Settings_WorkshopFolderLabel), DefaultSettings_WorkshopFolderLabel);
+			Settings_WorkshopFolderValid = GetOrDefault(translations, nameof(Settings_WorkshopFolderValid), DefaultSettings_WorkshopFolderValid);
+			Settings_WorkshopFolderInvalid = GetOrDefault(translations, nameof(Settings_WorkshopFolderInvalid), DefaultSettings_WorkshopFolderInvalid);
 			Settings_BLSEHeader = GetOrDefault(translations, nameof(Settings_BLSEHeader), DefaultSettings_BLSEHeader);
 			Settings_BLSEExeLabel = GetOrDefault(translations, nameof(Settings_BLSEExeLabel), DefaultSettings_BLSEExeLabel);
 			Settings_BLSEHint = GetOrDefault(translations, nameof(Settings_BLSEHint), DefaultSettings_BLSEHint);
@@ -303,6 +306,8 @@
 		#region LauncherPage — Header
 		public string Launcher_ModpacksLabel { get; private set; } = DefaultLauncher_ModpacksLabel;
 		private const string DefaultLauncher_ModpacksLabel = "Mod Packs:";
+		public string Launcher_GhostModpackLabel { get; private set; } = DefaultLauncher_GhostModpackLabel;
+		private const string DefaultLauncher_GhostModpackLabel = "— Select a modpack —";
 		public string Launcher_InstallButton { get; private set; } = DefaultLauncher_InstallButton;
 		private const string DefaultLauncher_InstallButton = "Install Mods";
 		public string Launcher_LoadOrderHeader { get; private set; } = DefaultLauncher_LoadOrderHeader;
@@ -451,6 +456,10 @@
 		private const string DefaultSettings_SelectFileButton = "Select File";
 		public string Settings_WorkshopFolderLabel { get; private set; } = DefaultSettings_WorkshopFolderLabel;
 		private const string DefaultSettings_WorkshopFolderLabel = "Steam Workshop Folder";
+		public string Settings_WorkshopFolderValid { get; private set; } = DefaultSettings_WorkshopFolderValid;
+		private const string DefaultSettings_WorkshopFolderValid = "✓ Valid Steam Workshop folder found.";
+		public string Settings_WorkshopFolderInvalid { get; private set; } = DefaultSettings_WorkshopFolderInvalid;
+		private const string DefaultSettings_WorkshopFolderInvalid = "✗ Steam Workshop folder not found.";
 		public string Settings_BLSEHeader { get; private set; } = DefaultSettings_BLSEHeader;
 		private const string DefaultSettings_BLSEHeader = "Script Extender (BLSE)";
 		public string Settings_BLSEExeLabel { get; private set; } = DefaultSettings_BLSEExeLabel;
@@ -528,7 +537,7 @@
 		public string Faq_Q1_Title { get; private set; } = DefaultFaq_Q1_Title;
 		private const string DefaultFaq_Q1_Title = "Why isn't the game detecting my mods?";
 		public string Faq_Q1_Answer1 { get; private set; } = DefaultFaq_Q1_Answer1;
-		private const string DefaultFaq_Q1_Answer1 = "Make sure your mods are in the Active load order on the Launcher page. Only mods listed in the Load Order panel are passed to the game at launch.";
+		private const string DefaultFaq_Q1_Answer1 = "Make sure your mods are in the Active load order on the Home page. Only mods listed in the Load Order panel are passed to the game at launch.";
 		public string Faq_Q1_Answer2 { get; private set; } = DefaultFaq_Q1_Answer2;
 		private const string DefaultFaq_Q1_Answer2 = "Verify that your game installation path is set correctly under Settings \u2192 Game Config. Use the Re-detect button if you're unsure.";
 		public string Faq_Q1_Hint { get; private set; } = DefaultFaq_Q1_Hint;
@@ -552,11 +561,11 @@
 		public string Faq_Q4_Answer1 { get; private set; } = DefaultFaq_Q4_Answer1;
 		private const string DefaultFaq_Q4_Answer1 = "A modpack is a saved snapshot of your active mods and their load order. You can create multiple modpacks for different playstyles (e.g., Vanilla+, Overhaul, Hardcore).";
 		public string Faq_Q4_Answer2 { get; private set; } = DefaultFaq_Q4_Answer2;
-		private const string DefaultFaq_Q4_Answer2 = "Switch between modpacks using the dropdown on the Launcher page. The selected modpack's load order is applied immediately.";
+		private const string DefaultFaq_Q4_Answer2 = "Switch between modpacks using the dropdown on the Home page. The selected modpack's load order is applied immediately.";
 		public string Faq_Q4_Answer3 { get; private set; } = DefaultFaq_Q4_Answer3;
 		private const string DefaultFaq_Q4_Answer3 = "To save changes to a modpack, go to the Mod Packs page and click 'Save to Modpack'. This overwrites the saved data with your current active load order.";
 		public string Faq_Q4_Hint { get; private set; } = DefaultFaq_Q4_Hint;
-		private const string DefaultFaq_Q4_Hint = "Make sure you have selected the correct modpack on the Launcher page before you add/remove mods to your load order there, before you go and save any changes in the Modpacks Page else any changes will be lost.";
+		private const string DefaultFaq_Q4_Hint = "Make sure you have selected the correct modpack on the Home page before you add/remove mods to your load order there, before you go and save any changes in the Modpacks Page else any changes will be lost.";
 		public string Faq_Q5_Title { get; private set; } = DefaultFaq_Q5_Title;
 		private const string DefaultFaq_Q5_Title = "Why can't I launch the game from CalradiaForge on Epic or GamePass?";
 		public string Faq_Q5_Answer1 { get; private set; } = DefaultFaq_Q5_Answer1;

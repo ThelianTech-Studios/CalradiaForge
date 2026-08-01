@@ -3,6 +3,7 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+			xmlns:launch="clr-namespace:CalradiaForge.Core.Infra.Launch;assembly=CalradiaForge.Core"
 			xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
 			xmlns:mahIcons="http://metro.mahapps.com/winfx/xaml/iconpacks"
 			xmlns:dd="urn:gong-wpf-dragdrop"
@@ -33,14 +34,13 @@
 								Style="{StaticResource LauncherPageComboBox}"
 								DisplayMemberPath="ModpackName"
 								ItemsSource="{Binding ModpackList}"
-								SelectedIndex="{Binding SelectedModpackIndex}"
-								SelectionChanged="ModPack_SelectionChanged" />
+								SelectedIndex="{Binding SelectedModpackIndex, Mode=TwoWay}" />
 			<StackPanel Grid.Column="2" Orientation="Horizontal">
 				<Button Content="{Binding Translator.Strings.Launcher_InstallButton}"
 								Margin="8,0,0,0"
 								Style="{StaticResource LauncherPageActionButton}"
 								ToolTip="{Binding Translator.Strings.Launcher_InstallButton}"
-								Click="InstallModsButton_Click" />
+								Command="{Binding InstallModsCommand}" />
 			</StackPanel>
 		</Grid>
 
@@ -65,13 +65,13 @@
 				<TextBox x:Name="SearchBox" Grid.Column="1"
 								 Style="{StaticResource LauncherPageSearchBox}"
 								 Margin="0,0,10,0"
-								 TextChanged="SearchBox_TextChanged"
+								 Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged}"
 								 GotFocus="SearchBox_GotFocus" />
 				<Button Grid.Column="2" Width="35" Height="35"
 								Background="Transparent" BorderThickness="0"
 								Cursor="Hand"
 								ToolTip="{Binding Translator.Strings.Launcher_RefreshTooltip}"
-								Click="RefreshModsButton_Click">
+								Command="{Binding RefreshModsCommand}">
 					<mahIcons:PackIconMaterial Kind="Refresh" Width="20" Height="20"
 																		 Foreground="{StaticResource TB.Txt.Bright}" />
 				</Button>
@@ -87,14 +87,14 @@
 			<ListBox x:Name="LoadOrderListBox" Grid.Column="0" Margin="0,0,10,0"
 							 dd:DragDrop.IsDragSource="True"
 							 dd:DragDrop.IsDropTarget="True"
-							 dd:DragDrop.DropHandler="{Binding}"
+							 dd:DragDrop.DropHandler="{Binding RelativeSource={RelativeSource AncestorType={x:Type Page}}}"
 							 Style="{StaticResource ModsListBox}"
 							 ItemTemplate="{StaticResource ModsModItemTemplate}"
 							 ItemsSource="{Binding LoadOrderView}" />
 			<ListBox x:Name="AvailableModsListBox" Grid.Column="1" Margin="10,0,0,0"
 							 dd:DragDrop.IsDragSource="True"
 							 dd:DragDrop.IsDropTarget="True"
-							 dd:DragDrop.DropHandler="{Binding}"
+							 dd:DragDrop.DropHandler="{Binding RelativeSource={RelativeSource AncestorType={x:Type Page}}}"
 							 Style="{StaticResource ModsListBox}"
 							 ItemTemplate="{StaticResource ModsModItemTemplate}"
 							 ItemsSource="{Binding AvailableModsView}" />
@@ -108,7 +108,7 @@
 							Style="{StaticResource PlaySplitButtonLeft}"
 							IsEnabled="{Binding CanStart}"
 							ToolTip="{Binding Translator.Strings.Launcher_LaunchTargetTooltip}"
-							Click="PlayButton_Click" />
+							Command="{Binding LaunchCommand}" />
 			<Button x:Name="PlayTargetDropdown"
 							Style="{StaticResource PlaySplitButtonRight}"
 							ToolTip="{Binding Translator.Strings.Launcher_LaunchTargetTooltip}"
@@ -116,10 +116,14 @@
 				<mahIcons:PackIconMaterial Kind="ChevronDown" Width="10" Height="10" />
 				<Button.ContextMenu>
 					<ContextMenu x:Name="LaunchTargetMenu"
-											 Style="{StaticResource ModpacksContextMenu}">
+											 Style="{StaticResource ModpacksContextMenu}"
+											 DataContext="{Binding PlacementTarget.DataContext,
+												RelativeSource={RelativeSource Self}}">
 						<MenuItem x:Name="MenuItemBannerlord"
 											Style="{StaticResource ModpacksMenuItem}"
-											Click="LaunchTarget_Bannerlord_Click">
+											Command="{Binding PlacementTarget.DataContext.SetLaunchTargetCommand,
+												RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+											CommandParameter="{x:Static launch:LaunchTarget.Bannerlord}">
 							<MenuItem.Header>
 								<StackPanel Orientation="Horizontal">
 									<mahIcons:PackIconMaterial x:Name="CheckBannerlord"
@@ -127,7 +131,9 @@
 																						 Foreground="{StaticResource TB.Acc.Gold}"
 																						 VerticalAlignment="Center"
 																						 Margin="0,0,8,0"
-																						 Visibility="Visible" />
+																						 Visibility="{Binding PlacementTarget.DataContext.IsBannerlordTarget,
+																							 RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}},
+																							 Converter={StaticResource BoolToVis}}" />
 									<TextBlock Text="{Binding Translator.Strings.Launcher_LaunchTargetBannerlord}"
 														 VerticalAlignment="Center" />
 								</StackPanel>
@@ -135,7 +141,9 @@
 						</MenuItem>
 						<MenuItem x:Name="MenuItemBLSE"
 											Style="{StaticResource ModpacksMenuItem}"
-											Click="LaunchTarget_BLSE_Click">
+											Command="{Binding PlacementTarget.DataContext.SetLaunchTargetCommand,
+												RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+											CommandParameter="{x:Static launch:LaunchTarget.BLSE}">
 							<MenuItem.Header>
 								<StackPanel Orientation="Horizontal">
 									<mahIcons:PackIconMaterial x:Name="CheckBLSE"
@@ -143,7 +151,9 @@
 																						 Foreground="{StaticResource TB.Acc.Gold}"
 																						 VerticalAlignment="Center"
 																						 Margin="0,0,8,0"
-																						 Visibility="Collapsed" />
+																						 Visibility="{Binding PlacementTarget.DataContext.IsBlseTarget,
+																							 RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}},
+																							 Converter={StaticResource BoolToVis}}" />
 									<TextBlock Text="{Binding Translator.Strings.Launcher_LaunchTargetBLSE}"
 														 VerticalAlignment="Center" />
 								</StackPanel>

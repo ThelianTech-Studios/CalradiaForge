@@ -9,6 +9,7 @@
 	using CalradiaForge.UI.Lifecycle;
 	using CalradiaForge.UI.Pages;
 	using CalradiaForge.UI.Toasts;
+	using CalradiaForge.UI.ViewModels;
 
 	using MahApps.Metro.Controls;
 	using Serilog;
@@ -18,10 +19,17 @@
 	/// </summary>
 	public partial class MainWindow : Window {
 		private readonly Page[] _pages;
+		private readonly IViewModelLifecycle?[] _pageLifecycles;
 		private readonly SettingsPage _settingsPage;
+		private readonly SettingsViewModel _settingsViewModel;
 		private readonly TranslationService _translator;
 		private readonly StartupNotificationDrainCoordinator _startupNotificationDrain;
 		private readonly IApplicationLifetime _applicationLifetime;
+		private readonly SemaphoreSlim _navigationGate = new(1, 1);
+		private Page? _currentPage;
+		private IViewModelLifecycle? _currentLifecycle;
+		private int _committedMainNavigationIndex;
+		private bool _initialNavigationCompleted;
 		private bool _applicationShutdownPrepared;
 		private bool _shutdownRequestInProgress;
 		/// <summary>
@@ -29,9 +37,12 @@
 		/// </summary>
 		public MainWindow(
 			LauncherPage launcherPage,
+			LauncherViewModel launcherViewModel,
 			ModpacksPage modpacksPage,
+			ModpacksViewModel modpacksViewModel,
 			FaqPage faqPage,
 			SettingsPage settingsPage,
+			SettingsViewModel settingsViewModel,
 			ToastService toastService,
 			TranslationService translator,
 			StartupNotificationDrainCoordinator startupNotificationDrain,
@@ -49,8 +60,14 @@
 				modpacksPage ?? throw new ArgumentNullException(nameof(modpacksPage)),
 				faqPage ?? throw new ArgumentNullException(nameof(faqPage)),
 			];
+			_pageLifecycles = [
+				launcherViewModel ?? throw new ArgumentNullException(nameof(launcherViewModel)),
+				modpacksViewModel ?? throw new ArgumentNullException(nameof(modpacksViewModel)),
+				null
+			];
 			_settingsPage = settingsPage ?? throw new ArgumentNullException(nameof(settingsPage));
-			MainContentFrame.Navigate(_pages[0]);
+			_settingsViewModel = settingsViewModel
+				?? throw new ArgumentNullException(nameof(settingsViewModel));
 
 			Log.Debug("MainWindow: Initialized {PageCount} pages.", _pages.Length);
 			// Wire the Options item (Settings) — separate from ItemsSource
@@ -64,8 +81,19 @@
 			_translator.Strings.PropertyChanged += (_, _) => Dispatcher.BeginInvoke(ApplyNavTranslations);
 		}
 
-		private void MainWindow_Loaded(object sender, RoutedEventArgs e) {
-			_startupNotificationDrain.SignalReady();
+		private async void MainWindow_Loaded(object sender, RoutedEventArgs e) {
+			if (_initialNavigationCompleted) {
+				return;
+			}
+			bool succeeded = await NavigateAsync(
+				_pages[0],
+				_pageLifecycles[0],
+				mainNavigationIndex: 0,
+				isSettings: false);
+			CompleteInitialNavigation(
+				ref _initialNavigationCompleted,
+				succeeded,
+				_startupNotificationDrain.SignalReady);
 		}
 
 		private async void MainWindow_Closing(object? sender, CancelEventArgs e) {
@@ -153,35 +181,125 @@
 		/// <summary>
 		/// Handles navigation item selection in the main menu.
 		/// </summary>
-		private void NavBarControler_OnItemInvoked(object sender, HamburgerMenuItemInvokedEventArgs e) {
+		private async void NavBarControler_OnItemInvoked(
+			object sender,
+			HamburgerMenuItemInvokedEventArgs e) {
 			int index = NavBarControler.SelectedIndex;
 			if (index >= 0 && index < _pages.Length) {
-				Page targetPage = _pages[index];
-				// Sync modpack and mod data when navigating back to LauncherPage.
-				// RefreshModpackList rebuilds the ComboBox only (suppressApply)
-				// because RefreshAvailableMods will scan, rebuild, and apply
-				// the modpack with a single authoritative toast.
-				if (targetPage is LauncherPage launcherPage) {
-					launcherPage.RefreshModpackList(suppressApply: true);
-					launcherPage.RefreshAvailableMods();
-				}
-				MainContentFrame.Navigate(_pages[index]);
-				Log.Debug(
-					"MainWindow: Navigated to page {PageIndex} of type {PageType}.",
+				bool succeeded = await NavigateAsync(
+					_pages[index],
+					_pageLifecycles[index],
 					index,
-					targetPage.GetType().Name);
+					isSettings: false);
+				CompleteInitialNavigation(
+					ref _initialNavigationCompleted,
+					succeeded,
+					_startupNotificationDrain.SignalReady);
 			}
-
 		}
 
 		/// <summary>
 		/// Handles navigation to the settings page from the options menu.
 		/// </summary>
-		private void NavBarControler_OnOptionsItemClick(object sender, ItemClickEventArgs e) {
-			// Deselect the main nav so Settings appears as the active context
-			NavBarControler.SelectedIndex = -1;
-			MainContentFrame.Navigate(_settingsPage);
-			Log.Debug("MainWindow: Navigated to settings.");
+		private async void NavBarControler_OnOptionsItemClick(object sender, ItemClickEventArgs e) {
+			bool succeeded = await NavigateAsync(
+				_settingsPage,
+				_settingsViewModel,
+				mainNavigationIndex: -1,
+				isSettings: true);
+			CompleteInitialNavigation(
+				ref _initialNavigationCompleted,
+				succeeded,
+				_startupNotificationDrain.SignalReady);
+		}
+
+		private async Task<bool> NavigateAsync(
+			Page targetPage,
+			IViewModelLifecycle? targetLifecycle,
+			int mainNavigationIndex,
+			bool isSettings) {
+			ArgumentNullException.ThrowIfNull(targetPage);
+			bool targetDisplayed = false;
+			try {
+				await ExecuteNavigationLifecycleAsync(
+					_navigationGate,
+					() => _currentLifecycle,
+					targetLifecycle,
+					() => {
+						MainContentFrame.Navigate(targetPage);
+						_currentPage = targetPage;
+						_currentLifecycle = targetLifecycle;
+						_committedMainNavigationIndex =
+							isSettings ? -1 : mainNavigationIndex;
+						NavBarControler.SelectedIndex = _committedMainNavigationIndex;
+						targetDisplayed = true;
+					});
+				Log.Debug(
+					"MainWindow: Navigated to {PageType}.",
+					targetPage.GetType().Name);
+				return true;
+			} catch (Exception ex) {
+				if (!targetDisplayed) {
+					NavBarControler.SelectedIndex = SelectionAfterNavigationFailure(
+						targetDisplayed,
+						_committedMainNavigationIndex,
+						mainNavigationIndex);
+				}
+				Log.Error(
+					ex,
+					"MainWindow: Lifecycle navigation to {PageType} failed; displayed page is {CurrentPageType}.",
+					targetPage.GetType().Name,
+					_currentPage?.GetType().Name ?? "none");
+				return false;
+			}
+		}
+
+		internal static int SelectionAfterNavigationFailure(
+			bool targetDisplayed,
+			int committedSelection,
+			int requestedSelection) =>
+			targetDisplayed ? requestedSelection : committedSelection;
+
+		internal static void CompleteInitialNavigation(
+			ref bool initialNavigationCompleted,
+			bool navigationSucceeded,
+			Action signalReady) {
+			ArgumentNullException.ThrowIfNull(signalReady);
+			if (initialNavigationCompleted || !navigationSucceeded) {
+				return;
+			}
+			signalReady();
+			initialNavigationCompleted = true;
+		}
+
+		internal static async Task ExecuteNavigationLifecycleAsync(
+			SemaphoreSlim navigationGate,
+			Func<IViewModelLifecycle?> currentLifecycle,
+			IViewModelLifecycle? targetLifecycle,
+			Action displayTarget,
+			CancellationToken cancellationToken = default) {
+			ArgumentNullException.ThrowIfNull(navigationGate);
+			ArgumentNullException.ThrowIfNull(currentLifecycle);
+			ArgumentNullException.ThrowIfNull(displayTarget);
+			await navigationGate.WaitAsync(cancellationToken);
+			try {
+				// Re-selecting the current target deliberately performs a full
+				// deactivate/display/activate cycle so repeatable activation can
+				// reconcile navigation-return state deterministically.
+				if (targetLifecycle is not null) {
+					await targetLifecycle.InitializeAsync(cancellationToken);
+				}
+				IViewModelLifecycle? current = currentLifecycle();
+				if (current is { IsInitialized: true }) {
+					await current.DeactivateAsync(cancellationToken);
+				}
+				displayTarget();
+				if (targetLifecycle is not null) {
+					await targetLifecycle.ActivateAsync(cancellationToken);
+				}
+			} finally {
+				navigationGate.Release();
+			}
 		}
 	}
 }

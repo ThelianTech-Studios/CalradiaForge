@@ -265,13 +265,9 @@ namespace CalradiaForge.UI.Toasts {
 		/// <summary>
 		/// Returns a default display duration for the specified severity.
 		/// </summary>
-		private static TimeSpan GetDefaultDuration(ToastSeverity severity) {
-			return severity switch {
-				ToastSeverity.Success => TimeSpan.FromSeconds(5),
-				ToastSeverity.Warning => TimeSpan.FromSeconds(3),
-				ToastSeverity.Error => TimeSpan.FromSeconds(8),
-				_ => TimeSpan.FromSeconds(5)
-			};
+		internal static TimeSpan GetDefaultDuration(ToastSeverity severity) {
+			_ = severity;
+			return TimeSpan.FromSeconds(8);
 		}
 
 		/// <summary>

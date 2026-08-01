@@ -3,6 +3,7 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+			xmlns:modpacks="clr-namespace:CalradiaForge.Core.Infra.Modpacks;assembly=CalradiaForge.Core"
 			xmlns:mahIcons="http://metro.mahapps.com/winfx/xaml/iconpacks"
 			mc:Ignorable="d"
 			Title="Mod Packs"
@@ -33,8 +34,7 @@
 								Style="{StaticResource LauncherPageComboBox}"
 								DisplayMemberPath="ModpackName"
 								ItemsSource="{Binding ModpackList}"
-								SelectedIndex="{Binding SelectedModpackIndex}"
-								SelectionChanged="ModpackComboBox_SelectionChanged" />
+								SelectedIndex="{Binding SelectedModpackIndex, Mode=TwoWay}" />
 			<StackPanel Grid.Column="2" Orientation="Horizontal">
 				<!--Conjoined Split Button: Create New (left) + Template Dropdown (right)-->
 				<StackPanel Orientation="Horizontal" Margin="8,0,8,0">
@@ -50,9 +50,11 @@
 						<mahIcons:PackIconMaterial Kind="ChevronDown" Width="10" Height="10" />
 						<Button.ContextMenu>
 							<ContextMenu x:Name="TemplateMenu"
+													 DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}"
 													 Style="{StaticResource ModpacksContextMenu}">
 								<MenuItem Style="{StaticResource ModpacksMenuItem}"
-													Click="CreateFromVanilla_Click">
+													Command="{Binding SelectTemplateCommand}"
+													CommandParameter="{x:Static modpacks:ModpackTemplate.Vanilla}">
 									<MenuItem.Header>
 										<StackPanel Orientation="Horizontal">
 											<mahIcons:PackIconMaterial x:Name="CheckVanilla"
@@ -60,14 +62,15 @@
 																								 Foreground="{StaticResource TB.Acc.Gold}"
 																								 VerticalAlignment="Center"
 																								 Margin="0,0,8,0"
-																								 Visibility="Visible" />
+																								 Visibility="{Binding IsVanillaTemplate, Converter={StaticResource BoolToVis}}" />
 											<TextBlock Text="{Binding Translator.Strings.Modpacks_TemplateVanilla}"
 																 VerticalAlignment="Center" />
 										</StackPanel>
 									</MenuItem.Header>
 								</MenuItem>
 								<MenuItem Style="{StaticResource ModpacksMenuItem}"
-													Click="CreateFromButterLib_Click">
+													Command="{Binding SelectTemplateCommand}"
+													CommandParameter="{x:Static modpacks:ModpackTemplate.ButterLib}">
 									<MenuItem.Header>
 										<StackPanel Orientation="Horizontal">
 											<mahIcons:PackIconMaterial x:Name="CheckButterLib"
@@ -75,14 +78,15 @@
 																								 Foreground="{StaticResource TB.Acc.Gold}"
 																								 VerticalAlignment="Center"
 																								 Margin="0,0,8,0"
-																								 Visibility="Collapsed" />
+																								 Visibility="{Binding IsButterLibTemplate, Converter={StaticResource BoolToVis}}" />
 											<TextBlock Text="{Binding Translator.Strings.Modpacks_TemplateButterLib}"
 																 VerticalAlignment="Center" />
 										</StackPanel>
 									</MenuItem.Header>
 								</MenuItem>
 								<MenuItem Style="{StaticResource ModpacksMenuItem}"
-													Click="CreateFromVanillaWarSails_Click">
+													Command="{Binding SelectTemplateCommand}"
+													CommandParameter="{x:Static modpacks:ModpackTemplate.VanillaWarSails}">
 									<MenuItem.Header>
 										<StackPanel Orientation="Horizontal">
 											<mahIcons:PackIconMaterial x:Name="CheckVanillaWarSails"
@@ -90,14 +94,15 @@
 																								 Foreground="{StaticResource TB.Acc.Gold}"
 																								 VerticalAlignment="Center"
 																								 Margin="0,0,8,0"
-																								 Visibility="Collapsed" />
+																								 Visibility="{Binding IsVanillaWarSailsTemplate, Converter={StaticResource BoolToVis}}" />
 											<TextBlock Text="{Binding Translator.Strings.Modpacks_TemplateVanillaWarSails}"
 																 VerticalAlignment="Center" />
 										</StackPanel>
 									</MenuItem.Header>
 								</MenuItem>
 								<MenuItem Style="{StaticResource ModpacksMenuItem}"
-													Click="CreateFromButterLibWarSails_Click">
+													Command="{Binding SelectTemplateCommand}"
+													CommandParameter="{x:Static modpacks:ModpackTemplate.ButterLibWarSails}">
 									<MenuItem.Header>
 										<StackPanel Orientation="Horizontal">
 											<mahIcons:PackIconMaterial x:Name="CheckButterLibWarSails"
@@ -105,7 +110,7 @@
 																								 Foreground="{StaticResource TB.Acc.Gold}"
 																								 VerticalAlignment="Center"
 																								 Margin="0,0,8,0"
-																								 Visibility="Collapsed" />
+																								 Visibility="{Binding IsButterLibWarSailsTemplate, Converter={StaticResource BoolToVis}}" />
 											<TextBlock Text="{Binding Translator.Strings.Modpacks_TemplateButterLibWarSails}"
 																 VerticalAlignment="Center" />
 										</StackPanel>
@@ -119,12 +124,12 @@
 								Style="{StaticResource ModpacksActionButton}"
 								ToolTip="Import a CalradiaForge modpack (.json) or Novus Launcher preset (.xml)"
 								Margin="0,0,8,0"
-								Click="ImportButton_Click" />
+								Command="{Binding ImportCommand}" />
 				<Button Content="{Binding Translator.Strings.Modpacks_SaveButton}"
 								Style="{StaticResource ModpacksActionButton}"
 								ToolTip="Overwrite the selected modpack's saved data with the current active load order from the Launcher page"
 								IsEnabled="{Binding HasSelection}"
-								Click="SaveButton_Click" />
+								Command="{Binding SaveModpackCommand}" />
 			</StackPanel>
 		</Grid>
 
@@ -178,8 +183,7 @@
 							 Style="{StaticResource ModpacksListBox}"
 							 ItemTemplate="{StaticResource ModpackLoadOrderItemTemplate}"
 							 ItemsSource="{Binding EditableLoadOrder}"
-							 SelectedIndex="{Binding SelectedEntryIndex}"
-							 SelectionChanged="LoadOrderListBox_SelectionChanged" />
+							 SelectedIndex="{Binding SelectedEntryIndex, Mode=TwoWay}" />
 		</Grid>
 
 		<!--Row 3: Selected Entry Edit Panel-->
@@ -188,7 +192,7 @@
 						BorderBrush="{StaticResource TB.Sfc.MedDark.50}"
 						BorderThickness="1" CornerRadius="8"
 						Padding="16,10"
-						Visibility="{Binding IsEditPanelVisible}">
+						Visibility="{Binding IsEditPanelVisible, Converter={StaticResource BoolToVis}}">
 			<Grid>
 				<Grid.RowDefinitions>
 					<RowDefinition Height="Auto" />
@@ -240,7 +244,7 @@
 								Content="{Binding Translator.Strings.Modpacks_SaveEntryButton}"
 								Style="{StaticResource ModpacksActionButton}"
 								HorizontalAlignment="Right"
-								Click="SaveEntryButton_Click" />
+								Command="{Binding SaveEntryCommand}" />
 			</Grid>
 		</Border>
 
@@ -250,7 +254,7 @@
 						BorderBrush="{StaticResource TB.Sfc.MedDark.50}"
 						BorderThickness="1" CornerRadius="8"
 						Padding="16,12"
-						Visibility="{Binding IsCreatePanelVisible}">
+						Visibility="{Binding IsCreatePanelVisible, Converter={StaticResource BoolToVis}}">
 			<Grid>
 				<Grid.RowDefinitions>
 					<RowDefinition Height="Auto" />
@@ -281,10 +285,10 @@
 					<Button Content="{Binding Translator.Strings.Modpacks_ConfirmButton}"
 									Style="{StaticResource ModpacksActionButton}"
 									Margin="0,0,8,0"
-									Click="CreateConfirmButton_Click" />
+									Command="{Binding ConfirmCreateCommand}" />
 					<Button Content="{Binding Translator.Strings.Modpacks_CancelButton}"
 									Style="{StaticResource ModpacksCancelButton}"
-									Click="CreateCancelButton_Click" />
+									Command="{Binding CancelCreateCommand}" />
 				</StackPanel>
 			</Grid>
 		</Border>

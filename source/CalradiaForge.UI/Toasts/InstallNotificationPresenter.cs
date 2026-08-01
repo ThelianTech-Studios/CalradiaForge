@@ -355,16 +355,10 @@ public sealed class InstallNotificationPresenter : IInstallNotificationPresenter
 	}
 
 	private ToastRequest TerminalRequest(string title, string message, ToastSeverity severity) {
-		TimeSpan duration = severity switch {
-			ToastSeverity.Warning => TimeSpan.FromSeconds(10),
-			ToastSeverity.Error => TimeSpan.FromSeconds(15),
-			_ => TimeSpan.FromSeconds(5)
-		};
 		return new ToastRequest {
 			Title = title,
 			Message = message,
 			Severity = severity,
-			Duration = duration,
 			AllowClickDismiss = true,
 			ShowCloseButton = true
 		};
