@@ -45,7 +45,7 @@
 			}
 			return englishTranslations;
 		}
-
+		#region Apply Translation Dictionary Method
 		/// <summary>
 		/// Applies the given translation dictionary to all properties.
 		/// Keys not present in the dictionary retain their hardcoded English defaults.
@@ -290,7 +290,7 @@
 		private static string GetOrDefault(Dictionary<string, string> translations, string key, string fallback) {
 			return translations.TryGetValue(key, out string? value) && !string.IsNullOrWhiteSpace(value) ? value : fallback;
 		}
-
+		#endregion
 
 		#region Navigation
 		public string Nav_LauncherTab { get; private set; } = DefaultNav_LauncherTab;
