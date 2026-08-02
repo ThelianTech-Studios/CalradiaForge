@@ -1,6 +1,7 @@
 namespace CalradiaForge.UI.Lifecycle;
 
 using CalradiaForge.Core.Infra.GamePlatform;
+using CalradiaForge.Core.Models;
 
 using Serilog;
 
@@ -43,6 +44,21 @@ public sealed class StartupNotificationDrainCoordinator {
 	/// Signals that the MainWindow toast host has loaded.
 	/// </summary>
 	public void SignalReady() => _queue.SignalReady();
+
+	/// <summary>Presents a lifecycle notification after the startup queue has drained.</summary>
+	public async Task PresentAsync(
+		StartupNotification notification,
+		CancellationToken cancellationToken = default) {
+		ArgumentNullException.ThrowIfNull(notification);
+		try {
+			await _presenter.PresentAsync(notification, cancellationToken);
+		} catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
+			throw;
+		} catch (Exception ex) {
+			_logger.Error(ex, "Lifecycle notification presentation failed.");
+			throw;
+		}
+	}
 
 	/// <summary>
 	/// Cancels and awaits the drain task. Repeated calls are harmless.

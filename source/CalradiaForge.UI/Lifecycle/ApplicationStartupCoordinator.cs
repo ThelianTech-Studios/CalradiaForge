@@ -23,6 +23,7 @@ public sealed class ApplicationStartupCoordinator {
 	private readonly ILogger _logger;
 	private readonly TranslationManager _translationManager;
 	private readonly TranslationService _translationService;
+	private readonly ConfigFileManager _configFileManager;
 	private readonly AppSettings _appSettings;
 	private readonly EulaService _eulaService;
 	private readonly ILanguageSelectionDialogService _languageDialog;
@@ -34,11 +35,14 @@ public sealed class ApplicationStartupCoordinator {
 	private readonly StartupNotificationDrainCoordinator _notificationDrain;
 	private readonly IInstallNotificationPresenter _installNotifications;
 	private readonly IMainWindowProvider _mainWindowProvider;
+	private bool _configurationWarningPublished;
+	private bool _shellDisplayed;
 
 	public ApplicationStartupCoordinator(
 		ILogger logger,
 		TranslationManager translationManager,
 		TranslationService translationService,
+		ConfigFileManager configFileManager,
 		AppSettings appSettings,
 		EulaService eulaService,
 		ILanguageSelectionDialogService languageDialog,
@@ -53,6 +57,7 @@ public sealed class ApplicationStartupCoordinator {
 		_logger = logger ?? throw new ArgumentNullException(nameof(logger));
 		_translationManager = translationManager ?? throw new ArgumentNullException(nameof(translationManager));
 		_translationService = translationService ?? throw new ArgumentNullException(nameof(translationService));
+		_configFileManager = configFileManager ?? throw new ArgumentNullException(nameof(configFileManager));
 		_appSettings = appSettings ?? throw new ArgumentNullException(nameof(appSettings));
 		_eulaService = eulaService ?? throw new ArgumentNullException(nameof(eulaService));
 		_languageDialog = languageDialog ?? throw new ArgumentNullException(nameof(languageDialog));
@@ -65,6 +70,7 @@ public sealed class ApplicationStartupCoordinator {
 		_installNotifications = installNotifications
 			?? throw new ArgumentNullException(nameof(installNotifications));
 		_mainWindowProvider = mainWindowProvider ?? throw new ArgumentNullException(nameof(mainWindowProvider));
+		_configFileManager.PersistenceBecameUnavailable += OnPersistenceBecameUnavailable;
 	}
 
 	/// <summary>
@@ -89,6 +95,8 @@ public sealed class ApplicationStartupCoordinator {
 			}
 			_eulaService.RecordAcceptance(_appSettings);
 		}
+
+		PublishConfigurationWarningOnce();
 
 		_gameDetectionService.InitializeForStartup(_appSettings);
 
@@ -116,8 +124,46 @@ public sealed class ApplicationStartupCoordinator {
 		MainWindow mainWindow = _mainWindowProvider.GetMainWindow();
 		Application.Current.MainWindow = mainWindow;
 		mainWindow.Show();
+		_shellDisplayed = true;
 		_logger.Information("CalradiaForge main window displayed.");
 		return true;
+	}
+
+	private void PublishConfigurationWarningOnce() {
+		if (_configurationWarningPublished
+			|| _configFileManager.PersistenceStatus == ConfigPersistenceStatus.Available) {
+			return;
+		}
+
+		_configurationWarningPublished = true;
+		const string message =
+			"CalradiaForge can continue for this session, but configuration changes may not survive restart.";
+		_logger.Warning(
+			"Configuration persistence is unavailable. LoadStatus={LoadStatus} SaveStatus={SaveStatus}. {Message}",
+			_configFileManager.LastLoadResult.Status,
+			_configFileManager.LastSaveResult.Status,
+			message);
+		StartupNotification notification = new(
+			"Configuration",
+			message,
+			StartupNotificationSeverity.Warning);
+		if (_shellDisplayed) {
+			_ = PresentConfigurationWarningAsync(notification);
+		} else {
+			_startupNotifications.Enqueue(notification);
+		}
+	}
+
+	private void OnPersistenceBecameUnavailable(
+		object? sender,
+		ConfigPersistenceUnavailableEventArgs e) => PublishConfigurationWarningOnce();
+
+	private async Task PresentConfigurationWarningAsync(StartupNotification notification) {
+		try {
+			await _notificationDrain.PresentAsync(notification);
+		} catch (Exception ex) {
+			_logger.Error(ex, "Configuration persistence warning could not be presented.");
+		}
 	}
 
 	private void ValidateStartupModpack() {
