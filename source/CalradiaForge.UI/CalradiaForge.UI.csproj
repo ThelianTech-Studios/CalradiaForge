@@ -21,8 +21,7 @@
     <IncludeSymbols>False</IncludeSymbols>
     <PackageProjectUrl>https://github.com/ThelianTech/CalradiaForge</PackageProjectUrl>
     <RepositoryUrl>https://github.com/ThelianTech/CalradiaForge</RepositoryUrl>
-    <PackageReleaseNotes>Beta v0.12.15</PackageReleaseNotes>
-    <Version>0.12.15</Version>
+    <PackageReleaseNotes>Beta v$(Version)</PackageReleaseNotes>
     <PackageLicenseFile>EULA.txt</PackageLicenseFile>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
     <ProduceReferenceAssembly>False</ProduceReferenceAssembly>
