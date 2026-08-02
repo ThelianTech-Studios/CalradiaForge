@@ -71,6 +71,9 @@ public static class CalradiaForgeCoreServiceCollectionExtensions {
 			return new ModpackData(paths.ModpacksDirectory, paths.LastUsedModsFilePath);
 		});
 		services.AddSingleton<ModpackService>();
+		services.AddSingleton<ISteamProcessInspector, SteamProcessInspector>();
+		services.AddSingleton<ILaunchProcessStarter, LaunchProcessStarter>();
+		services.AddSingleton<ILaunchDelay, LaunchDelay>();
 		services.AddSingleton<GameLauncher>();
 		services.AddSingleton<EulaService>();
 
