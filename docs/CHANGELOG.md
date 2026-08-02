@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## 0.14.0 (Prerelease Build) - Internal | 2026-08-02
+
+> Pre-release stabilization: added defaults-first configuration recovery, fail-closed Steam process inspection, centralized beta version metadata, accepted Phase 9 benchmark infrastructure, and updated third-party software notices.
+
+### Added
+
+- Added one canonical configuration-defaults source, typed load/save/persistence outcomes, and a narrow persistence seam for deterministic recovery testing. Configuration durability loss now produces one actionable startup or runtime warning through the existing notification lifecycle.
+- Added explicit Steam process states (`Running`, `NotRunning`, and `Unknown`) with injectable process-inspection, process-start, and delay boundaries. Added deterministic coverage for inspection failures, process disposal, bounded startup polling, Bannerlord/BLSE launch blocking, initialization delay, and unchanged Standalone/GOG launching.
+- Added `source/Directory.Build.props` as the shared version source for all projects, with application version `0.14.0-beta`, assembly/file version `0.14.0.0`, and informational version `0.14.0-beta` without a source-revision suffix. Added testable Settings/About formatting that preserves prerelease labels and removes build metadata from display.
+- Added the authoritative Phase 9 generated-fixture benchmark categories and runners, plus an explicit-consent, offline, read-only real-installation parser/scanner suite with corpus-stability checks and path-redaction controls.
+- Added focused configuration, startup-notification, Steam-launch, and application-version tests.
+
+### Changed
+
+- Changed configuration loading to construct a complete in-memory defaults map before overlaying persisted values. Valid and unknown settings survive; missing, null, or invalid recognized values are repaired; obsolete retention data is removed; and malformed JSON is preserved to a collision-safe sibling backup before replacement.
+- Changed expected configuration read/write failure handling so inaccessible files remain untouched, startup can continue with in-memory defaults, current-session setting changes survive failed saves, repeated writes stop after persistence becomes unavailable, and failed EULA persistence does not terminate the current session.
+- Changed Steam launch readiness so process-enumeration or disposal failures are warning-logged as `Unknown` instead of being treated as success. Steam is started once when appropriate, polling remains bounded, and Steam installations cannot launch Bannerlord or BLSE without a positive `Running` result.
+- Changed Core and UI project metadata to inherit the shared beta version and changed Settings/About to read the entry assembly informational version with a numeric fallback. The prior hardcoded `0.12.15` project versions and misleading `1.0.0` display fallback were removed.
+- Renamed the current benchmark runner for the Phase 9 baseline, categorized existing benchmark cases accordingly, and added fixture, input-discovery, consent, redaction, and artifact-validation controls for the supplemental owner-installation measurements. No production performance optimization was implemented.
+- Organized `TranslationStrings.ApplyTranslationDictionary` under an explicit source region without changing localization behavior.
+- Updated the CalradiaForge software license to version 1.3 for 2026 and added individually formatted third-party notices for the previously unlisted Core/UI runtime dependencies. Test and benchmark package notices remain excluded because those packages are not distributed with the application.
+
+### Fixed
+
+- Prevented malformed, unreadable, locked, access-denied, or unwritable configuration storage from turning recoverable persistence failures into fatal startup or typed-setting exceptions.
+- Prevented Steam inspection failures from falsely authorizing a game launch or producing an inaccurate Steam-detected claim.
+- Fixed application-version drift between Core, UI, inherited project metadata, and the Settings/About display.
+
+### Verification
+
+- The Phase 9 implementation evidence records successful Debug and Release correctness runs with 272 tests passing in each configuration, 14/14 generated-fixture benchmark cases, and 6/6 consent-gated real-installation parser/scanner cases. Those measurements are offline, warm-cache evidence and are not WPF responsiveness or universal performance baselines.
+- The accepted stabilization implementation record reports zero-error Debug and Release solution builds and all 300 tests passing in each configuration, including 18 focused configuration/lifecycle tests, 12 focused Steam-launch tests, and application-version display coverage. It also records `0.14.0-beta` informational metadata across the project set and preservation of the Core WPF boundary.
+- The owner manually inspected and approved the accepted source endpoint before this documentation-only closeout. This closeout did not rerun application runtime behavior and does not claim live Steam/Bannerlord, manual WPF, packaged-runtime, or release-candidate validation.
+- The existing publish profile's `Any CPU` platform and machine-specific output path were not changed in the accepted source range. This build does not claim versioned repository-relative publish-profile alignment.
+- Destructive mod-upgrade recovery, archive resource limits, all pending Phase 10 performance findings, Nexus functionality, credentials, polling, and the broader documentation overhaul remain deferred or excluded.
+
+---
+
 ## 0.13.105 - Internal | 2026-08-01
 
 > Refactor Phase 8: moved the retained Launcher, Mod Packs, and Settings presentation workflows into lifecycle-aware ViewModels, completed the approved Settings path feedback and toast-duration follow-up, and retained existing Core workflow ownership.
