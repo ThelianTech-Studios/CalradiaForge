@@ -18,9 +18,7 @@ namespace CalradiaForge.Core.Infra.Config {
 		/// Initializes a new settings wrapper around the provided configuration store.
 		/// </summary>
 		public AppSettings(ConfigFileManager config) {
-			_config = config;
-			Log.Debug("AppSettings: Initializing defaults.");
-			InitDefaults();
+			_config = config ?? throw new ArgumentNullException(nameof(config));
 		}
 		#region INotifyPropertyChanged Implementation
 		/// <summary>
@@ -32,33 +30,6 @@ namespace CalradiaForge.Core.Infra.Config {
 		/// </summary>
 		private void OnPropertyChanged(string configValueChanged) {
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(configValueChanged));
-		}
-		#endregion
-		#region Config Defaults
-		/// <summary>
-		/// Seeds required configuration keys with defaults when missing.
-		/// </summary>
-		internal void InitDefaults() {
-			KeyValuePair<string, string>[] defaults = [
-				new("Language", "en-US"),
-				new("GameFolderPath", string.Empty),
-				new("GameLauncherFilePath", string.Empty),
-				new("SteamWorkshopFolderPath", string.Empty),
-				new("GamePlatform", GameProvider.NotInitialized.ToString()),
-				new("LastSelectedModpack", "Last Used"),
-				new("ModpackStartupMode", ModpackStartupMode.AlwaysAsk.ToString()),
-				new("LastUnblockRunDate", string.Empty),
-				new("LastUnblockRunResult", string.Empty),
-				new("BLSEExePath", string.Empty),
-				new("DefaultLaunchTarget", LaunchTarget.Bannerlord.ToString()),
-				new("EulaAccepted", "False")
-			];
-
-			IReadOnlyList<string> appliedKeys = _config.ApplyDefaults(defaults);
-			Log.Debug(
-				"AppSettings: Default initialization complete. AppliedCount={AppliedCount}, AppliedKeys={AppliedKeys}.",
-				appliedKeys.Count,
-				string.Join(", ", appliedKeys));
 		}
 		#endregion
 		#region Internal Config Settings
@@ -78,7 +49,10 @@ namespace CalradiaForge.Core.Infra.Config {
 		/// Gets or sets the configured game platform provider.
 		/// </summary>
 		public GameProvider GameProvider {
-			get => Enum.TryParse(_config["GamePlatform"], out GameProvider p) ? p : GameProvider.NotInitialized;
+			get => Enum.TryParse(_config["GamePlatform"], out GameProvider p)
+				&& Enum.IsDefined(p)
+				? p
+				: ConfigDefaults.GetEnum<GameProvider>("GamePlatform");
 			set {
 				if (_config["GamePlatform"] != value.ToString()) {
 					string oldValue = _config["GamePlatform"];
@@ -188,7 +162,10 @@ namespace CalradiaForge.Core.Infra.Config {
 		/// Controls how the LauncherPage ComboBox selects a modpack on application startup.
 		/// </summary>
 		public ModpackStartupMode ModpackStartupMode {
-			get => Enum.TryParse(_config["ModpackStartupMode"], out ModpackStartupMode m) ? m : ModpackStartupMode.LastUsed;
+			get => Enum.TryParse(_config["ModpackStartupMode"], out ModpackStartupMode m)
+				&& Enum.IsDefined(m)
+				? m
+				: ConfigDefaults.GetEnum<ModpackStartupMode>("ModpackStartupMode");
 			set {
 				if (_config["ModpackStartupMode"] != value.ToString()) {
 					string oldValue = _config["ModpackStartupMode"];
@@ -261,7 +238,10 @@ namespace CalradiaForge.Core.Infra.Config {
 		/// Gets or sets the default launch target used by the UI.
 		/// </summary>
 		public LaunchTarget DefaultLaunchTarget {
-			get => Enum.TryParse(_config["DefaultLaunchTarget"], out LaunchTarget t) ? t : LaunchTarget.Bannerlord;
+			get => Enum.TryParse(_config["DefaultLaunchTarget"], out LaunchTarget t)
+				&& Enum.IsDefined(t)
+				? t
+				: ConfigDefaults.GetEnum<LaunchTarget>("DefaultLaunchTarget");
 			set {
 				if (_config["DefaultLaunchTarget"] != value.ToString()) {
 					string oldValue = _config["DefaultLaunchTarget"];
@@ -281,7 +261,7 @@ namespace CalradiaForge.Core.Infra.Config {
 		/// No <see cref="PropertyChanged"/> notification — this value is never bound to live UI.
 		/// </summary>
 		public bool EulaAccepted {
-			get => _config.GetBool("EulaAccepted", false);
+			get => _config.GetBool("EulaAccepted", ConfigDefaults.GetBool("EulaAccepted"));
 			set {
 				string stringValue = value.ToString();
 				if (_config["EulaAccepted"] != stringValue) {

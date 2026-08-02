@@ -8,17 +8,13 @@ public sealed class LoggingSettings : INotifyPropertyChanged {
 
 	public LoggingSettings(ConfigFileManager config) {
 		_config = config ?? throw new ArgumentNullException(nameof(config));
-		_config.Remove("LogFileDaysToKeep");
-		_config.ApplyDefaults([
-			new KeyValuePair<string, string>("DebugMode", "False")
-		]);
 	}
 
 	public event PropertyChangedEventHandler? PropertyChanged;
 
 	/// <summary>Gets or sets whether the next application process uses Debug-level logging.</summary>
 	public bool DebugMode {
-		get => _config.GetBool("DebugMode", false);
+		get => _config.GetBool("DebugMode", ConfigDefaults.GetBool("DebugMode"));
 		set {
 			string stringValue = value.ToString();
 			if (_config["DebugMode"] == stringValue) {
