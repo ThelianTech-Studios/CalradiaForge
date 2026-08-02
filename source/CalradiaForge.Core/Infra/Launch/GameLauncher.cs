@@ -29,18 +29,33 @@
 	/// </summary>
 	public sealed class GameLauncher {
 		private const string _steamAppId = "261550";
-		private const string _steamProcessName = "steam";
 		private const string _steamProtocolUri = "steam://open/main";
-		private const int _steamStartupDelayMs = 8000;
-		private const int _steamPollIntervalMs = 1000;
-		private const int _steamMaxWaitMs = 60000;
+		private static readonly TimeSpan _steamStartupDelay = TimeSpan.FromSeconds(8);
+		private static readonly TimeSpan _steamPollInterval = TimeSpan.FromSeconds(1);
+		private static readonly TimeSpan _steamMaxWait = TimeSpan.FromSeconds(60);
 		private readonly AppSettings _config;
+		private readonly ISteamProcessInspector _steamProcessInspector;
+		private readonly ILaunchProcessStarter _processStarter;
+		private readonly ILaunchDelay _delay;
 
 		/// <summary>
 		/// Initializes a new launcher using the provided configuration.
 		/// </summary>
-		public GameLauncher(AppSettings config) {
+		public GameLauncher(AppSettings config)
+			: this(config, new SteamProcessInspector(), new LaunchProcessStarter(), new LaunchDelay()) {
+		}
+
+		/// <summary>Initializes a launcher with explicit process and timing dependencies.</summary>
+		public GameLauncher(
+			AppSettings config,
+			ISteamProcessInspector steamProcessInspector,
+			ILaunchProcessStarter processStarter,
+			ILaunchDelay delay) {
 			_config = config ?? throw new ArgumentNullException(nameof(config));
+			_steamProcessInspector = steamProcessInspector
+				?? throw new ArgumentNullException(nameof(steamProcessInspector));
+			_processStarter = processStarter ?? throw new ArgumentNullException(nameof(processStarter));
+			_delay = delay ?? throw new ArgumentNullException(nameof(delay));
 		}
 
 		/// <summary>
@@ -251,7 +266,7 @@
 				startInfo.Environment["SteamAppId"] = _steamAppId;
 			}
 
-			Process.Start(startInfo);
+			_processStarter.Start(startInfo);
 			Log.Information(
 				"GameLauncher: Launched {ExePath} as {Target} (Platform: {GameProvider}).",
 				exePath,
@@ -264,25 +279,32 @@
 		/// Ensures the Steam client is running before launching a Steam game.
 		/// If Steam is already running, returns immediately.
 		/// If not, launches Steam via the <c>steam://</c> protocol URI and polls
-		/// for the process to appear, waiting up to <see cref="_steamMaxWaitMs"/>.
-		/// After the process appears, waits an additional <see cref="_steamStartupDelayMs"/>
+		/// for the process to appear, waiting up to <see cref="_steamMaxWait"/>.
+		/// After the process appears, waits an additional <see cref="_steamStartupDelay"/>
 		/// for Steam to fully initialize its API (login, overlay, etc.).
 		/// </summary>
 		/// <returns>
 		/// <see cref="GameLaunchResult.Ok"/> when Steam is confirmed running;
-		/// <see cref="GameLaunchResult.Fail"/> if Steam could not be started within the timeout.
+		/// <see cref="GameLaunchResult.Fail"/> if Steam cannot be positively confirmed within the timeout.
 		/// </returns>
 		private async Task<GameLaunchResult> EnsureSteamRunningAsync() {
-			if (IsSteamRunning()) {
+			SteamProcessStatus inspection = _steamProcessInspector.Inspect();
+			if (inspection == SteamProcessStatus.Running) {
 				Log.Information("GameLauncher: Steam is already running.");
 				Log.Debug("GameLauncher: Steam check passed.");
 				return GameLaunchResult.Ok("Steam is running.");
 			}
 
-			Log.Information("GameLauncher: Steam is not running. Attempting to start Steam...");
+			bool inspectionFailed = inspection == SteamProcessStatus.Unknown;
+			if (inspection == SteamProcessStatus.NotRunning) {
+				Log.Information("GameLauncher: Steam is not running. Attempting to start Steam...");
+			} else {
+				Log.Warning(
+					"GameLauncher: Steam state could not be verified. Attempting to start Steam once before retrying inspection.");
+			}
 
 			try {
-				Process.Start(new ProcessStartInfo {
+				_processStarter.Start(new ProcessStartInfo {
 					FileName = _steamProtocolUri,
 					UseShellExecute = true
 				});
@@ -291,53 +313,32 @@
 				return GameLaunchResult.Fail("Failed to start Steam. Please launch Steam manually and try again.");
 			}
 
-			// Poll until the Steam process appears or timeout
-			int elapsed = 0;
-			while (!IsSteamRunning() && elapsed < _steamMaxWaitMs) {
-				await Task.Delay(_steamPollIntervalMs);
-				elapsed += _steamPollIntervalMs;
-			}
+			TimeSpan elapsed = TimeSpan.Zero;
+			while (elapsed < _steamMaxWait) {
+				await _delay.DelayAsync(_steamPollInterval);
+				elapsed += _steamPollInterval;
+				inspection = _steamProcessInspector.Inspect();
+				if (inspection == SteamProcessStatus.Running) {
+					Log.Information(
+						"GameLauncher: Steam process detected. Waiting {StartupDelayMs}ms for full initialization...",
+						_steamStartupDelay.TotalMilliseconds);
+					await _delay.DelayAsync(_steamStartupDelay);
 
-			if (!IsSteamRunning()) {
-				Log.Warning("GameLauncher: Steam did not start within the timeout period.");
-				return GameLaunchResult.Fail("Steam did not start in time. Please launch Steam manually and try again.");
-			}
-
-			// Wait for Steam to fully initialize (login, overlay, API)
-			Log.Information(
-				"GameLauncher: Steam process detected. Waiting {StartupDelayMs}ms for full initialization...",
-				_steamStartupDelayMs);
-			await Task.Delay(_steamStartupDelayMs);
-
-			Log.Information("GameLauncher: Steam is ready.");
-			return GameLaunchResult.Ok("Steam started successfully.");
-		}
-
-		/// <summary>
-		/// Checks whether the Steam client process is currently running.
-		/// Looks for the <c>steam</c> process by name. This is required for
-		/// Steam game installs because the Steam API DLL expects a running
-		/// client to initialize — without it the game crashes on startup.
-		/// </summary>
-		/// <returns><c>true</c> if a Steam client process is detected.</returns>
-		private static bool IsSteamRunning() {
-			try {
-				Process[] steamProcesses = Process.GetProcessesByName(_steamProcessName);
-				bool running = steamProcesses.Length > 0;
-
-				foreach (Process process in steamProcesses) {
-					process.Dispose();
+					Log.Information("GameLauncher: Steam is ready.");
+					return GameLaunchResult.Ok("Steam started successfully.");
 				}
 
-				Log.Debug(
-					"GameLauncher: Steam process check. Running={Running} Count={Count}",
-					running,
-					steamProcesses.Length);
-				return running;
-			} catch {
-				// If we can't check, assume it's running to avoid blocking launch
-				return true;
+				inspectionFailed |= inspection == SteamProcessStatus.Unknown;
 			}
+
+			if (inspectionFailed) {
+				Log.Warning("GameLauncher: Steam could not be verified before the launch timeout expired.");
+				return GameLaunchResult.Fail(
+					"CalradiaForge could not verify that Steam is running. Please start Steam manually and try again.");
+			}
+
+			Log.Warning("GameLauncher: Steam did not start within the timeout period.");
+			return GameLaunchResult.Fail("Steam did not start in time. Please launch Steam manually and try again.");
 		}
 	}
 
