@@ -1,7 +1,5 @@
 namespace CalradiaForge.UI.ViewModels;
 
-using System.Reflection;
-
 using CalradiaForge.Core.Infra.Config;
 using CalradiaForge.Core.Infra.GamePlatform;
 using CalradiaForge.Core.Infra.Localization;
@@ -107,7 +105,7 @@ public sealed class SettingsViewModel : ViewModelBase {
 
 	public TranslationService Translator { get; }
 	public IReadOnlyList<LanguageOption> AvailableLanguages => Translator.AvailableLanguages;
-	public string VersionText { get; } = BuildVersionText();
+	public string VersionText { get; } = ApplicationVersionText.FromEntryAssembly();
 
 	public NullableBoolAsyncRelayCommand SetDebugModeCommand { get; }
 	public ToolkitRelayCommand SelectGameFolderCommand { get; }
@@ -644,11 +642,4 @@ public sealed class SettingsViewModel : ViewModelBase {
 	}
 
 	private void ShowToast(ToastRequest request) => _notifications.Open(request);
-
-	private static string BuildVersionText() {
-		Version? version = Assembly.GetExecutingAssembly().GetName().Version;
-		return version is not null
-			? $"Version {version.Major}.{version.Minor}.{version.Build}"
-			: "Version 1.0.0";
-	}
 }
