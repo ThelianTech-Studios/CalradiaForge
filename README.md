@@ -1,10 +1,10 @@
 # CalradiaForge
 
-A modern mod launcher for **Mount & Blade II: Bannerlord**.
+A modern game launcher and mod manager for **Mount & Blade II: Bannerlord**.
 
 CalradiaForge streamlines mod installation, load order management, modpacks, and game launching into a single, purpose-built desktop application.
 
- ```
+ ```text
  CalradiaForge was built by players, for players.
  ```
 
@@ -16,20 +16,33 @@ CalradiaForge streamlines mod installation, load order management, modpacks, and
 
 ## 🎯 What is CalradiaForge?
 
-CalradiaForge is a standalone WPF launcher focused on **stable, repeatable mod setups** for Bannerlord. 
-It helps you install mods from archives, arrange and toggle them quickly, and save your setups as **modpacks** that you can re-use or share.
+CalradiaForge is a standalone portable desktop application focused on **stable, repeatable mod setups** for Bannerlord.
+It helps you install downloaded mods, arrange and manager load orders, and save your setups as **modpacks** that you can re-use or share.
 
 If you maintain more than one loadout (e.g., vanilla+, hardcore, overhaul), CalradiaForge is designed to keep each setup organized and launchable with minimal friction.
 
-> 🧪 **Open Beta:** CalradiaForge is currently in an open beta phase. Core workflows (mod install, modpacks, launching) are mostly feature-complete and stable enough for everyday use, but you may still encounter UI rough edges or missing quality-of-life improvements.
+> 🧪 **Open Beta:** CalradiaForge **v0.14.0** is the latest stable releasse. Core workflows (mod install, modpacks, launching) are mostly feature-complete, but potentially there are still bugss and mising quality of life features.
 >
-> ⚠️ **BetaNotice — EULA Prompt on First Launch (v0.11.5):**
-> Starting with **Beta v0.11.5**, CalradiaForge displays a **EULA (End-User License Agreement) window** on first launch. You must read and accept the agreement before the main application window loads. If declined, the application will close immediately. This prompt only appears once — your acceptance is saved and will not be shown again on subsequent launches.
-> Starting with **Beta v0.11.5**, we migrated from SharpCompress to SevenZipWrapper in the backend code for mod archive extraction. This change was made to improve performance and reliability, especially for larger mod archives. If you encounter any issues with mod installation or archive extraction after this update, please refer to the bug reporting instructions below.
+> ⚠️ **BetaNotice — v0.14.0 Refactor Release:**
+> Version **0.14.0-beta** completes a major application-wide rewrite of all components using Microsoft dependency injection, CommunityToolkit.MVVM, provider-owned Serilog logging, coordinated startup and shutdown handling, and defaults-first configuration recovery.
+> Mod installation now runs through an application-owned pipeline with correlated progress, explicit completion outcomes, DLL unblocking, and accepted module-list reconciliation. Steam detection and launch readiness also use stricter validation and fail closed when Steam process state cannot be confirmed.
 >
-> If you experience any issues with mod installation or archive extraction, please:
-> 1. **File a bug report** on the [GitHub Issues page][CalradiaForge-Repo] with a description of the problem, the archive format used, and any relevant log files from the `Logs` directory.
-> 2. **Revert to the last stable release** — **Beta v0.9.22** — available from the [Releases page][CalradiaForge-Repo] until the issue is resolved.
+> If you experience any issues with mod installation, startup, configuration, or game launching, please:
+>
+>
+>
+>
+
+> 1. **File a bug report** on the [GitHub Issues page][CalradiaForge-Repo] with a description of the problem, the archive format or workflow used, and any relevant log files from the `Logs` directory.
+
+>
+>
+>
+>
+>
+>
+>
+> 2. Include your CalradiaForge version, Windows version, game platform, reproduction steps, and the most recent log file.
 
 ---
 
@@ -39,32 +52,37 @@ CalradiaForge is distributed as a **portable desktop application** — no tradit
 
 ### Operating System
 
-- ✅ **Supported:** Windows 10 (64-bit) and Windows 11  
-- ⚠️ **Not tested / not supported:** Windows versions earlier than 10
+- ✅ **Supported:** Windows 11+  
+- ⚠️ **Not tested / not supported:** Windows versions earlier than 1
 
 ### Install & Run
 
 1. **Download the latest release**
+
   - From GitHub:  
     [![GitHub Repo][CalradiaForge-Github-Shield]][CalradiaForge-Repo]
   - From NexusMods:  
     [![Nexus][CalradiaForge-Nexus-Shield]][CalradiaForge-Nexus]
 
 2. **Extract the archive**
+
   - Extract the downloaded `.zip` to any folder you control (e.g., `C:\Games\CalradiaForge` or another data drive).
   - Avoid protected locations such as `C:\Program Files` when possible to reduce permission issues.
 
 3. **Run the launcher**
+
   - Double-click `CalradiaForge.exe`.
   - On first run, Windows SmartScreen may warn you because this is a new, unsigned executable. Choose **More info → Run anyway**
 
 4. **Accept the EULA**
+
   - On first launch, CalradiaForge will display a **EULA window** before the main application loads.
   - Read the End-User License Agreement carefully, then click **Accept** to continue.
   - If you click **Decline** or close the EULA window, the application will shut down.
   - This prompt only appears once — your acceptance is persisted in the app configuration and will not be shown again on future launches.
 
 5. **Portable behavior**
+
   - CalradiaForge stores its configuration, logs, and modpack definitions alongside the app in dedicated subfolders (see [Directories & Data Locations](#-directories--data-locations)).
    - You can move the app folder or keep multiple copies without breaking your existing configuration.
 
@@ -72,15 +90,15 @@ CalradiaForge is distributed as a **portable desktop application** — no tradit
 
 CalradiaForge targets **.NET 10 Windows Desktop** and is published as a **framework-dependent** app for **Windows x64**:
 
-- **Target framework:** `net10.0-windows7.0`
+- **Target framework:** `.net10`
 - **Runtime identifier:** `win-x64`
-- **Deployment mode:** Framework-dependent (`SelfContained = false`)
 
 This means you must have the **.NET 10 Desktop Runtime (x64)** installed on your system.
 
 > **Install the required runtime:**
-> - Download and run the official **".NET 10 Desktop Runtime 10.0.3 (x64)"** installer from Microsoft:  
->   https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/runtime-desktop-10.0.3-windows-x64-installer
+>
+> - Download and run the official **" Latest.NET 10 Desktop Runtime (x64)"** installer from Microsoft:  
+> <https://builds.dotnet.microsoft.com/dotnet/Sdk/10.0.302/dotnet-sdk-10.0.302-win-x64.exe>
 > - Follow the installer steps, then restart CalradiaForge.
 
 If the required runtime is missing, CalradiaForge will fail to start and Windows will display a message indicating that a compatible .NET Desktop Runtime is required.
@@ -174,41 +192,49 @@ A dedicated **Settings** page provides:
 ## 🚀 Quick Start
 
 1. **Download & Extract**
+
   - Grab the latest official release from:
     - [![GitHub Repo][CalradiaForge-Github-Shield]][CalradiaForge-Repo]
     - [![Nexus][CalradiaForge-Nexus-Shield]][CalradiaForge-Nexus]
   - Extract the `.zip` to a folder of your choice.
 
 2. **Run CalradiaForge**
+
   - Launch `CalradiaForge.exe`.
   - On first run, grant any necessary SmartScreen permission.
 
 3. **Accept the EULA**
+
   - On the very first launch, a **EULA window** will appear before the main application loads.
   - Read the agreement and click **Accept** to proceed. Declining or closing the window will exit the application.
   - You will only see this prompt once.
 
 4. **Point CalradiaForge at your game**
+
   - Open **Settings → Game Config**
   - Select your Bannerlord installation folder (and executable if requested)
   - Use the **Detect Game** option if you installed Bannerlord via other *Game Platforms* and need to re-detect the game
 
 5. **Install your mods**
+
   - Go to the **Mods** page
   - Use the mod installation control to select downloaded archives (`.zip` or `.rar`)
    - CalradiaForge will extract to the `Modules` folder and automatically unblock DLLs
 
 6. **Organize and enable mods**
+
   - Drag mods between **Active** and **Inactive** lists
   - Drag within the active list to adjust load order
   - Use the search box to quickly find specific mods
 
 7. **Create a modpack**
+
   - Save your current selection and ordering as a **modpack**
   - Name it (e.g., "Vanilla+ QoL", "Overhaul Build") and save
   - Use the modpack selector on the Mods page to switch between setups
 
 8. **Launch the game**
+
   - Verify your desired modpack is selected
   - Click **Play** to start Bannerlord with the chosen active mods and order
 
@@ -391,12 +417,16 @@ For the complete coding standards, patterns, and contribution rules, see:
 
 Contributions are welcome as long as they respect the project's architecture and license.
 
-- Read the contributor rules and patterns in: 
+- Read the contributor rules and patterns in:
+
  [`CONTRIBUTIONS.md`](docs/CONTRIBUTIONS.md)
+
 - Fork the repository and create a feature branch:
+
  ```git
  git checkout -b feature/my-feature
  ```
+
 - Implement your changes and add tests where it makes sense.
 - Open a pull request with:
   - A short summary of the change
@@ -420,9 +450,9 @@ A copy of the software license can be found here:
 
 ---
 
-[CalradiaForge-Repo]: https://github.com/ThelianTech-Studios/CalradiaForge
-[CalradiaForge-Github-Shield]: https://img.shields.io/badge/CalradiaForge-Repo?style=plastic&logo=github&logoColor=%23181717&label=GitHub&color=blue
-[CalradiaForge-Nexus]: https://www.nexusmods.com/mountandblade2bannerlord/mods/10332
-[CalradiaForge-Nexus-Shield]: https://img.shields.io/badge/CalradiaForge-Nexus?style=plastic&label=NexusMods&labelColor=Black&color=orange
-[CalradiaForge-License]: https://github.com/ThelianTech-Studios/CalradiaForge/blob/master_docs/LICENSE.md
-[CalradiaForge-License-Shield]: https://img.shields.io/badge/CalradiaForge-License?style=plastic&label=LICENSE&labelColor=blue&color=green
+[CalradiaForge-Repo]: <https://github.com/ThelianTech-Studios/CalradiaForge>
+[CalradiaForge-Github-Shield]: <https://img.shields.io/badge/CalradiaForge-Repo?style=plastic&logo=github&logoColor=%23181717&label=GitHub&color=blue>
+[CalradiaForge-Nexus]: <https://www.nexusmods.com/mountandblade2bannerlord/mods/10332>
+[CalradiaForge-Nexus-Shield]: <https://img.shields.io/badge/CalradiaForge-Nexus?style=plastic&label=NexusMods&labelColor=Black&color=orange>
+[CalradiaForge-License]: <https://github.com/ThelianTech-Studios/CalradiaForge/blob/master_docs/LICENSE.md>
+[CalradiaForge-License-Shield]: <https://img.shields.io/badge/CalradiaForge-License?style=plastic&label=LICENSE&labelColor=blue&color=green>
