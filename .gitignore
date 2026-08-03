@@ -33,3 +33,4 @@ BenchmarkDotNet.Artifacts/
 /sourcecode.zip
 /source/releases
 /source/Languages/*.zip
+/source/CalradiaForge.UI/Properties/PublishProfiles/FolderProfile.pubxml

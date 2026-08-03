@@ -2,12 +2,12 @@
   <Folder Name="/Solution Items/">
     <File Path="../.gitignore" />
     <File Path="../AGENTS.md" />
-    <File Path="../docs/CHANGELOG.md" />
-    <File Path="../docs/CONTRIBUTIONS.md" />
-    <File Path="../docs/DOCUMENT_SITEMAP.md" />
-    <File Path="../docs/MIGRATION_MAP.md" />
+    <File Path="../docs/06_Development/Engineering/Contribution_Workflow/MIGRATION_MAP.md" />
+    <File Path="../docs/08_Releases/CHANGELOG.md" />
     <File Path="../LICENSE.md" />
     <File Path="../README.md" />
+    <File Path="Directory.Build.props" />
+    <File Path="EULA.txt" />
   </Folder>
   <Project Path="CalradiaForge.Benchmarks/CalradiaForge.Benchmarks.csproj" Id="e3e35a78-1508-477e-8543-815b2a075fb6" />
   <Project Path="CalradiaForge.ConsoleUtils/CalradiaForge.ConsoleUtils.csproj" Id="1ee13e60-ecfe-40b4-ac5e-2c0dca7cc37e" />
