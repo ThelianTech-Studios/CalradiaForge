@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## 0.14.0 (Prerelease Build) - Internal | 2026-08-02
+## 0.14.0 - Public Release | 2026-08-02
 
 > Pre-release stabilization: added defaults-first configuration recovery, fail-closed Steam process inspection, centralized beta version metadata, accepted Phase 9 benchmark infrastructure, and updated third-party software notices.
 
@@ -481,5 +481,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial commit — solution and project structure
 - `.gitignore`
-
 
