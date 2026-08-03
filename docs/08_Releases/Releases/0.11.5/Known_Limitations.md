@@ -1,0 +1,5 @@
+# 0.11.5 Known Limitations
+
+Use the historical [CHANGELOG](../../CHANGELOG.md) entry for the version's
+limitations. This record is historical and subordinate to current canonical
+compatibility documentation.
