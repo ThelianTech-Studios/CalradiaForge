@@ -1,279 +1,371 @@
-﻿namespace CalradiaForge.UI {
-	using System.Windows;
-	using System.Windows.Threading;
+namespace CalradiaForge.UI;
 
-	using CalradiaForge.Core.Infra.Config;
-	using CalradiaForge.Core.Infra.Eula;
-	using CalradiaForge.Core.Infra.Launch;
-	using CalradiaForge.Core.Infra.Localization;
-	using CalradiaForge.Core.Infra.Logging;
-	using CalradiaForge.Core.Infra.Modpacks;
-	using CalradiaForge.Core.Infra.Mods;
-	using CalradiaForge.Core.Infra.Paths;
+using System.Diagnostics;
+using System.Windows;
+using System.Windows.Threading;
 
-	using CalradiaForge.UI.Toasts;
-	using CalradiaForge.UI.Views;
+using CalradiaForge.Core.Infra.DependencyInjection;
+using CalradiaForge.Core.Infra.Localization;
+using CalradiaForge.Core.Infra.Logging;
+using CalradiaForge.UI.Composition;
+using CalradiaForge.UI.Dialogs;
+using CalradiaForge.UI.Lifecycle;
+using CalradiaForge.UI.Views;
 
-	/// <summary>
-	/// Interaction logic for App.xaml
-	/// </summary>
-	public partial class App : Application {
-		private static Logger _logger = Logger.Instance;
-		public static AppConfigSettings AppConfig { get; private set; } = null!;
-		public static ModService ModService { get; private set; } = null!;
-		public static ModInstaller ModInstaller { get; private set; } = null!;
-		public static ModpackService ModpackService { get; private set; } = null!;
-		public static GameLauncher GameLauncher { get; private set; } = null!;
-		public static ToastService Toasts { get; private set; } = null!;
-		public static TranslationService Translator { get; private set; } = null!;
-		/// <summary>
-		/// Initializes the WPF application instance.
-		/// </summary>
-		public App() {
-			InitializeComponent();
-		}
+using Microsoft.Extensions.DependencyInjection;
 
-		/// <summary>
-		/// Handles application startup and initializes services.
-		/// </summary>
-		protected override void OnStartup(StartupEventArgs e) {
-			base.OnStartup(e);
-			_logger.Info("Application Starting");
-			SetupExceptionHandeling();
-			InitializeConfiguration();
-			InitializeTranslatorService();
-			if (!EulaAcceptance()) {
-				_logger.Info("App: EULA declined. Shutting down.");
-				Shutdown();
-				return;
+using Serilog;
+
+/// <summary>
+/// WPF application host and sole owner of the root provider and process lifecycle.
+/// </summary>
+public partial class App : Application, IApplicationLifetime {
+	private static readonly TimeSpan ShutdownInterval = TimeSpan.FromSeconds(15);
+	private readonly SemaphoreSlim _lifecycleGate = new(1, 1);
+	private ServiceProvider? _provider;
+	private Task? _committedLifecycleTask;
+	private int _providerDisposed;
+	private int _serilogOperational;
+
+	public App() {
+		InitializeComponent();
+	}
+
+	protected override async void OnStartup(StartupEventArgs e) {
+		base.OnStartup(e);
+		SubscribeGlobalExceptionHandlers();
+
+		try {
+			ServiceCollection services = new();
+			services.AddSingleton<IApplicationLifetime>(this);
+			services.AddCalradiaForgeCore();
+			services.AddCalradiaForgeUi(Dispatcher);
+
+			_provider = services.BuildServiceProvider(new ServiceProviderOptions {
+				ValidateOnBuild = true,
+				ValidateScopes = true
+			});
+
+			ApplicationStartupCoordinator startup =
+				_provider.GetRequiredService<ApplicationStartupCoordinator>();
+			Volatile.Write(ref _serilogOperational, 1);
+			bool shellStarted = await startup.StartAsync();
+			if (!shellStarted) {
+				await StartCommittedLifecycleAsync(
+					ShutdownReason.UserRequest,
+					restartReason: null,
+					interactive: false);
 			}
-			InitializeModServices();
-			InitializeModpackServices();
-			InitializeLauncherService();
-			InitializeToastService();
-
-
-			// Apply saved debug mode to logger verbosity
-			if (AppConfig.DebugMode) {
-				_logger.MinimumLevel = Logger.LogLevel.Debug;
-				_logger.Info("App: Debug mode enabled — logging verbose diagnostic messages.");
-			}
-		}
-
-		/// <summary>
-		/// Handles application shutdown and performs cleanup.
-		/// </summary>
-		protected override void OnExit(ExitEventArgs e) {
-			if (AppConfig.DebugMode) {
-				_logger.Debug("App: OnExit begin.");
-			}
-			try {
-				if (ModInstaller?.IsInstalling == true) {
-					_logger.Info("App: Cancelling in-progress mod installation on exit.");
-					ModInstaller.CancelInstall();
-				}
-				if (ModpackService?.CurrentLoadOrderEntries is { Count: > 0 } entries) {
-					ModpackService.SaveLastUsed(entries);
-					_logger.Info("App: Saved last-used load order on exit.");
-				}
-			} catch (Exception ex) {
-				_logger.Error(ex, "App: Failed to clean up on exit.");
-			}
-			base.OnExit(e);
-		}
-		/// <summary>
-		/// Loads configuration from disk and initializes settings.
-		/// </summary>
-		private void InitializeConfiguration() {
-			var appConfig = new AppConfig(AppPaths.ConfigFilePath);
-			appConfig.Load();
-			AppConfig = new AppConfigSettings(appConfig);
-			if (AppConfig.DebugMode) {
-				_logger.MinimumLevel = Logger.LogLevel.Debug;
-				_logger.Info("App: Debug mode enabled — logging verbose diagnostic messages.");
-			}
-			if (AppConfig.DebugMode) {
-				_logger.Debug("App: Initializing configuration.", new { AppPaths.ConfigFilePath });
-			}
-			if ((AppConfig.GameProvider == GameProvider.NotInitialized) || string.IsNullOrWhiteSpace(AppConfig.GameFolderPath)) {
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("App: Game paths not initialized. Running auto-detection.");
-				}
-				GamePathsHelper.TryAutoDetectGameFolder(AppConfig);
-			}
-
-			if (AppConfig.DebugMode) {
-				_logger.Debug("App: Configuration initialized.", new {
-					AppConfig.DebugMode,
-					AppConfig.Language,
-					AppConfig.GameProvider
-				});
-			}
-		}
-		/// <summary>
-		/// Shows the first-run language selection window before translator initialization.
-		/// The selected language is persisted to config and then used by Translator.Initialize().
-		/// </summary>
-		private void InitializeLangSelection(TranslationManager translationManager) {
-			var availableLanguages = translationManager.LoadManifest();
-			if (availableLanguages.Count == 0) {
-				_logger.Warning("App: No languages found in manifest; skipping language selection window.");
-				return;
-			}
-
-			// Prevent app shutdown when the modal language window closes.
-			ShutdownMode previousMode = ShutdownMode;
-			ShutdownMode = ShutdownMode.OnExplicitShutdown;
-
-			try {
-				LanguageSelectWindow languageWindow = new(availableLanguages, AppConfig.Language);
-				bool? result = languageWindow.ShowDialog();
-
-				if (result == true && !string.IsNullOrWhiteSpace(languageWindow.SelectedLanguageCode)) {
-					AppConfig.Language = languageWindow.SelectedLanguageCode;
-					_logger.Info($"App: First-run language selected '{languageWindow.SelectedLanguageCode}'.");
-				} else {
-					_logger.Info("App: Language selection window closed without confirmation. Keeping configured default language.");
-				}
-			} finally {
-				ShutdownMode = previousMode;
-			}
-		}
-		/// <summary>
-		/// Checks EULA acceptance state and shows the EULA window if the user has not yet accepted.
-		/// Returns <c>true</c> when the user has accepted (or was already accepted).
-		/// Returns <c>false</c> when the user declined — the caller is responsible for shutting down.
-		/// </summary>
-		private bool EulaAcceptance() {
-			EulaService eulaService = new();
-			eulaService.Load();
-
-			if (!eulaService.RequiresAcceptance(AppConfig)) {
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("App: EULA already accepted. Skipping prompt.");
-				}
-				return true;
-			}
-
-			// Temporarily prevent shutdown when the EULA dialog closes.
-			// WPF auto-assigns the first window as MainWindow, so closing
-			// the EulaWindow would trigger OnMainWindowClose before the
-			// real MainWindow (from StartupUri) is ever created.
-			ShutdownMode previousMode = ShutdownMode;
-			ShutdownMode = ShutdownMode.OnExplicitShutdown;
-
-			EulaWindow eulaWindow = new(eulaService.EulaText);
-			bool? result = eulaWindow.ShowDialog();
-
-			// Restore the normal shutdown mode so MainWindow controls lifetime.
-			ShutdownMode = previousMode;
-
-			if (result != true || !eulaWindow.Accepted) {
-				return false;
-			}
-
-			eulaService.RecordAcceptance(AppConfig);
-			_logger.Info("App: EULA accepted.");
-			return true;
-		}
-
-		/// <summary>
-		/// Initializes mod services and loads cached data.
-		/// </summary>
-		private void InitializeModServices() {
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("App: Initializing mod services.", new { AppPaths.ModsCurrentFilePath, AppPaths.ModsBackupFilePath });
-			}
-			var modsData = new ModsData(AppPaths.ModsCurrentFilePath, AppPaths.ModsBackupFilePath);
-			ModService = new ModService(AppConfig, modsData);
-			ModService.LoadFromCache();
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("App: Mod cache loaded.", new { Count = ModService.CurrentMods.Count });
-			}
-			ModInstaller = new ModInstaller(AppConfig);
-		}
-
-		/// <summary>
-		/// Initializes the modpack service and loads modpack data.
-		/// </summary>
-		private void InitializeModpackServices() {
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("App: Initializing modpack services.", new { AppPaths.ModpacksDirectory });
-			}
-			var modpackData = new ModpackData(AppPaths.ModpacksDirectory, AppPaths.LastUsedModsFilePath);
-			ModpackService = new ModpackService(modpackData);
-			ModpackService.LoadAll();
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("App: Modpacks loaded.", new { Count = ModpackService.AllModpacks.Count });
-			}
-		}
-		/// <summary>
-		/// Initializes the game launcher service.
-		/// </summary>
-		private void InitializeLauncherService() {
-			GameLauncher = new GameLauncher(AppConfig);
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("App: GameLauncher initialized.");
-			}
-		}
-
-		/// <summary>
-		/// Initializes the toast notification service.
-		/// </summary>
-		private void InitializeToastService() {
-			Toasts = new ToastService(Dispatcher);
-		}
-		/// <summary>
-		/// Initializes the translation service and loads language data.
-		/// </summary>
-		private void InitializeTranslatorService() {
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("App: Initializing translator service.", new { AppPaths.LanguagesDirectory });
-			}
-			var loader = new TranslationManager(AppPaths.LanguagesDirectory, AppPaths.LanguagesManifestFilePath, AppPaths.DefaultLanguageFilePath);
-			Translator = new TranslationService(loader, AppConfig);
-			if (!AppConfig.EulaAccepted) {
-				InitializeLangSelection(loader);
-			}
-			Translator.Initialize();
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("App: Translator initialized.", new {
-					Count = Translator.AvailableLanguages.Count,
-					Translator.ActiveLanguageCode
-				});
-			}
-		}
-
-		/// <summary>
-		/// Wires global exception handlers for application-level errors.
-		/// </summary>
-		private void SetupExceptionHandeling() {
-			AppDomain.CurrentDomain.UnhandledException += delegate (object s, UnhandledExceptionEventArgs e) {
-				LogUnhadledException((Exception)e.ExceptionObject, "AppDomain.CurrentDomain.UnhandledException");
-			};
-			base.DispatcherUnhandledException += delegate (object s, DispatcherUnhandledExceptionEventArgs e) {
-				LogUnhadledException(e.Exception, "Application.Current.DispatcherUnhandledException");
-				e.Handled = true;
-			};
-			TaskScheduler.UnobservedTaskException += delegate (object? s, UnobservedTaskExceptionEventArgs e) {
-				LogUnhadledException(e.Exception, "TaskScheduler.UnobservedTaskException");
-				e.SetObserved();
-			};
-		}
-		/// <summary>
-		/// Logs unhandled exceptions with context information.
-		/// </summary>
-		public void LogUnhadledException(Exception ex0, string source) {
-			string text = $"Unhandled exception from {source}";
-			try {
-				var name = System.Reflection.Assembly.GetExecutingAssembly().GetName();
-				text += $" in {name.Name} v{name.Version}";
-
-			} catch (Exception ex) {
-				_logger.Error(ex, "Exception in LogUnhandeledExceeption");
-			} finally {
-				_logger.Error(ex0, text);
-			}
+		} catch (Exception ex) {
+			await HandleStartupFailureAsync(ex);
 		}
 	}
+
+	public async Task RequestShutdownAsync(ShutdownReason reason) {
+		await StartCommittedLifecycleAsync(
+			reason,
+			restartReason: null,
+			interactive: reason == ShutdownReason.UserRequest,
+			confirmCommit: reason == ShutdownReason.UserRequest
+				? () => ShowOnUiThread(
+					provider => ApplicationLifecycleConfirmationPolicy.ConfirmShutdown(
+						provider.GetRequiredService<IApplicationWorkController>(),
+						provider.GetRequiredService<IApplicationDialogService>(),
+						provider.GetRequiredService<TranslationService>().Strings),
+					fallback: false)
+				: null);
+	}
+
+	public async Task RequestRestartAsync(RestartReason reason) {
+		await StartCommittedLifecycleAsync(
+			ShutdownReason.UserRequest,
+			reason,
+			interactive: true,
+			confirmCommit: () => ShowOnUiThread(
+				provider => ApplicationLifecycleConfirmationPolicy.ConfirmRestart(
+					reason,
+					provider.GetRequiredService<IApplicationWorkController>(),
+					provider.GetRequiredService<IApplicationDialogService>(),
+					provider.GetRequiredService<TranslationService>().Strings),
+				fallback: false));
+	}
+
+	protected override void OnSessionEnding(SessionEndingCancelEventArgs e) {
+		try {
+			ServiceProvider? provider = _provider;
+			if (provider is not null && Volatile.Read(ref _providerDisposed) == 0) {
+				ApplicationShutdownCoordinator shutdown =
+					provider.GetRequiredService<ApplicationShutdownCoordinator>();
+				IReadOnlyList<Exception> failures = shutdown.CompleteOperatingSystemShutdown();
+				if (failures.Count > 0) {
+					Log.Warning(
+						"Operating-system shutdown preparation completed with {FailureCount} recoverable failure(s).",
+						failures.Count);
+				}
+			}
+		} catch (Exception ex) {
+			if (IsSerilogOperational) {
+				Log.Error(ex, "Operating-system shutdown preparation failed.");
+			} else {
+				Debug.WriteLine($"[App] Operating-system shutdown preparation failed: {ex}");
+			}
+		} finally {
+			// SessionEnding is synchronous. Do not cancel Windows logoff/shutdown to await
+			// the ordinary async lifecycle; OnExit performs fallback provider disposal.
+			base.OnSessionEnding(e);
+		}
+	}
+
+	protected override void OnExit(ExitEventArgs e) {
+		// Normal shutdown disposes asynchronously before calling Application.Shutdown.
+		// This synchronous path is a last-resort fallback only.
+		if (Interlocked.Exchange(ref _providerDisposed, 1) == 0) {
+			Volatile.Write(ref _serilogOperational, 0);
+			try {
+				_provider?.Dispose();
+			} catch (Exception ex) {
+				Debug.WriteLine($"[App] Fallback provider disposal failed: {ex}");
+			} finally {
+				_provider = null;
+			}
+		}
+
+		UnsubscribeGlobalExceptionHandlers();
+		base.OnExit(e);
+	}
+
+	private async Task StartCommittedLifecycleAsync(
+		ShutdownReason reason,
+		RestartReason? restartReason,
+		bool interactive,
+		Func<bool>? confirmCommit = null) {
+		Task? lifecycleTask;
+		await _lifecycleGate.WaitAsync();
+		try {
+			if (_committedLifecycleTask is null) {
+				if (confirmCommit is not null && !confirmCommit()) {
+					return;
+				}
+				_committedLifecycleTask = RunCommittedLifecycleAsync(reason, restartReason, interactive);
+			}
+			lifecycleTask = _committedLifecycleTask;
+		} finally {
+			_lifecycleGate.Release();
+		}
+
+		if (lifecycleTask is not null) {
+			await lifecycleTask;
+		}
+	}
+
+	private async Task RunCommittedLifecycleAsync(
+		ShutdownReason reason,
+		RestartReason? restartReason,
+		bool interactive) {
+		bool replacementAuthorized = false;
+		try {
+			ServiceProvider? provider = _provider;
+			if (provider is null) {
+				return;
+			}
+
+			ApplicationShutdownCoordinator shutdown =
+				provider.GetRequiredService<ApplicationShutdownCoordinator>();
+			shutdown.BeginShutdown();
+
+			bool quiescent;
+			do {
+				quiescent = await shutdown.WaitForQuiescenceAsync(ShutdownInterval);
+				if (quiescent || !interactive) {
+					break;
+				}
+			} while (ShowOnUiThread(
+				provider => provider
+					.GetRequiredService<IApplicationDialogService>()
+					.ChooseDelayedShutdown() == DelayedShutdownChoice.ContinueWaiting,
+				fallback: false));
+
+			IReadOnlyList<Exception> failures = await shutdown.CompleteShutdownAsync();
+			if (failures.Count > 0) {
+				Log.Warning(
+					"Application shutdown completed with {FailureCount} recoverable cleanup failure(s).",
+					failures.Count);
+			}
+
+			Log.Information(
+				"Application lifecycle committed. ShutdownReason={ShutdownReason}, RestartReason={RestartReason}, Quiescent={Quiescent}.",
+				reason,
+				restartReason,
+				quiescent);
+			replacementAuthorized = restartReason is not null;
+		} catch (Exception ex) {
+			try {
+				Log.Error(ex, "Committed application lifecycle encountered an unexpected failure.");
+			} catch {
+				Debug.WriteLine($"[App] Committed lifecycle failure: {ex}");
+			}
+		} finally {
+			if (Current.MainWindow is MainWindow mainWindow) {
+				mainWindow.PrepareForApplicationShutdown();
+			}
+			await ApplicationExitFinalizer.CompleteAsync(
+				DisposeProviderOnceAsync,
+				replacementAuthorized ? StartReplacementProcess : null,
+				Shutdown,
+				ex => Debug.WriteLine($"[App] Final lifecycle step failed: {ex}"));
+		}
+	}
+
+	private async Task DisposeProviderOnceAsync() {
+		if (Interlocked.Exchange(ref _providerDisposed, 1) != 0) {
+			return;
+		}
+
+		Volatile.Write(ref _serilogOperational, 0);
+		ServiceProvider? provider = _provider;
+		_provider = null;
+		if (provider is not null) {
+			await provider.DisposeAsync();
+		}
+	}
+
+	private void StartReplacementProcess() {
+		string executablePath = Environment.ProcessPath
+			?? Process.GetCurrentProcess().MainModule?.FileName
+			?? throw new InvalidOperationException("The current executable path is unavailable.");
+		Process.Start(new ProcessStartInfo {
+			FileName = executablePath,
+			UseShellExecute = true
+		});
+	}
+
+	private async Task HandleStartupFailureAsync(Exception exception) {
+		try {
+			if (IsSerilogOperational) {
+				Log.Fatal(exception, "Fatal application startup failure.");
+				ShowFatalErrorOnUiThread("CalradiaForge could not start and will now close.");
+				await StartCommittedLifecycleAsync(
+					ShutdownReason.FatalStartup,
+					restartReason: null,
+					interactive: false);
+				return;
+			}
+		} catch (Exception cleanupException) {
+			Debug.WriteLine($"[App] Controlled startup cleanup failed: {cleanupException}");
+		}
+
+		EmergencyStartupLogWriter.TryWrite(
+			exception,
+			"Fatal application startup failure before the Serilog pipeline became operational.");
+		MessageBox.Show(
+			"CalradiaForge could not initialize and will now close.",
+			"CalradiaForge Fatal Error",
+			MessageBoxButton.OK,
+			MessageBoxImage.Error);
+		await ApplicationExitFinalizer.CompleteAsync(
+			DisposeProviderOnceAsync,
+			startReplacement: null,
+			Shutdown,
+			ex => Debug.WriteLine($"[App] Bootstrap cleanup failed: {ex}"));
+	}
+
+	private T ShowOnUiThread<T>(Func<ServiceProvider, T> show, T fallback) {
+		ServiceProvider? provider = _provider;
+		if (provider is null || Volatile.Read(ref _providerDisposed) != 0) {
+			return fallback;
+		}
+
+		T Invoke() => show(provider);
+		return Dispatcher.CheckAccess() ? Invoke() : Dispatcher.Invoke(Invoke);
+	}
+
+	private void ShowFatalErrorOnUiThread(string message) {
+		void Show() => MessageBox.Show(
+			message,
+			"CalradiaForge Fatal Error",
+			MessageBoxButton.OK,
+			MessageBoxImage.Error);
+
+		if (Dispatcher.CheckAccess()) {
+			Show();
+		} else {
+			Dispatcher.Invoke(Show);
+		}
+	}
+
+	private void SubscribeGlobalExceptionHandlers() {
+		DispatcherUnhandledException += OnDispatcherUnhandledException;
+		TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
+		AppDomain.CurrentDomain.UnhandledException += OnAppDomainUnhandledException;
+	}
+
+	private void UnsubscribeGlobalExceptionHandlers() {
+		DispatcherUnhandledException -= OnDispatcherUnhandledException;
+		TaskScheduler.UnobservedTaskException -= OnUnobservedTaskException;
+		AppDomain.CurrentDomain.UnhandledException -= OnAppDomainUnhandledException;
+	}
+
+	private async void OnDispatcherUnhandledException(
+		object sender,
+		DispatcherUnhandledExceptionEventArgs e) {
+		e.Handled = true;
+		try {
+			if (IsSerilogOperational) {
+				Log.Fatal(e.Exception, "Fatal WPF dispatcher exception.");
+			} else {
+				EmergencyStartupLogWriter.TryWrite(
+					e.Exception,
+					"Fatal WPF dispatcher exception before the Serilog pipeline became operational.");
+			}
+			ShowFatalErrorOnUiThread("CalradiaForge encountered a fatal error and will close.");
+			await StartCommittedLifecycleAsync(
+				ShutdownReason.FatalDispatcher,
+				restartReason: null,
+				interactive: false);
+		} catch (Exception cleanupException) {
+			Debug.WriteLine($"[App] Dispatcher fatal cleanup failed: {cleanupException}");
+			Shutdown();
+		}
+	}
+
+	private void OnUnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e) {
+		try {
+			if (IsSerilogOperational) {
+				Log.Error(e.Exception, "Unobserved task exception.");
+			} else if (Volatile.Read(ref _providerDisposed) == 0) {
+				EmergencyStartupLogWriter.TryWrite(
+					e.Exception,
+					"Unobserved task exception before the Serilog pipeline became operational.");
+			}
+		} catch {
+			Debug.WriteLine($"[App] Unobserved task exception: {e.Exception}");
+		} finally {
+			e.SetObserved();
+		}
+	}
+
+	private void OnAppDomainUnhandledException(object sender, UnhandledExceptionEventArgs e) {
+		Exception exception = e.ExceptionObject as Exception
+			?? new InvalidOperationException("AppDomain raised a non-Exception failure object.");
+		try {
+			if (IsSerilogOperational) {
+				Log.Fatal(exception, "Unhandled AppDomain exception. IsTerminating={IsTerminating}.", e.IsTerminating);
+			} else if (Volatile.Read(ref _providerDisposed) == 0) {
+				EmergencyStartupLogWriter.TryWrite(
+					exception,
+					$"Unhandled AppDomain exception before the Serilog pipeline became operational. IsTerminating={e.IsTerminating}.");
+			}
+		} catch {
+			Debug.WriteLine($"[App] AppDomain unhandled exception: {exception}");
+		}
+
+		if (!e.IsTerminating && Volatile.Read(ref _providerDisposed) == 0) {
+			_ = Dispatcher.InvokeAsync(
+				() => RequestShutdownAsync(ShutdownReason.FatalStartup));
+		}
+	}
+
+	private bool IsSerilogOperational =>
+		Volatile.Read(ref _serilogOperational) != 0
+		&& Volatile.Read(ref _providerDisposed) == 0;
 }

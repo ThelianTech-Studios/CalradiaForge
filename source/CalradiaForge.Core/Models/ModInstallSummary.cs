@@ -34,9 +34,11 @@
 		public ModInstallResult? BLSEResult => Results.FirstOrDefault(r => IsBLSEResult(r));
 
 		/// <summary>
-		/// Returns a user-friendly summary string suitable for a toast notification.
-		/// Appends BLSE status separately from mod counts.
+		/// Returns the retained English diagnostic summary used by Core logging and
+		/// compatibility tests. This is not an authoritative user-notification
+		/// formatter; localized install presentation belongs to the UI presenter.
 		/// </summary>
+		[Obsolete("Install notification formatting belongs to the UI install notification presenter.")]
 		public string ToSummaryString() {
 			List<string> parts = [];
 			if (InstalledCount > 0)
@@ -47,6 +49,17 @@
 				parts.Add($"{SkippedCount} skipped (already installed)");
 			if (FailedCount > 0)
 				parts.Add($"{FailedCount} failed");
+
+			// Surface one concise normal-archive failure reason through the existing
+			// status/toast pipeline without moving presentation ownership into Core.
+			ModInstallResult? firstNormalFailure = Results.FirstOrDefault(r =>
+				r.Status == ModInstallStatus.Failed && !IsBLSEResult(r));
+			if (firstNormalFailure is not null && !string.IsNullOrWhiteSpace(firstNormalFailure.Message)) {
+				string label = string.IsNullOrWhiteSpace(firstNormalFailure.ModuleName)
+					? firstNormalFailure.ArchiveFileName
+					: firstNormalFailure.ModuleName;
+				parts.Add($"{label}: {firstNormalFailure.Message}");
+			}
 
 			// Append BLSE result separately
 			ModInstallResult? blse = BLSEResult;

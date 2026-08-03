@@ -3,15 +3,22 @@
 	using System.Windows;
 	using System.Windows.Controls;
 
+	using CalradiaForge.Core.Infra.Localization;
+
 	/// <summary>
 	/// Interaction logic for FaqPage.xaml
 	/// </summary>
 	public partial class FaqPage : Page {
+		/// <summary>Gets the translation service used by page bindings.</summary>
+		public TranslationService Translator { get; }
+
 		/// <summary>
 		/// Initializes the FAQ page.
 		/// </summary>
-		public FaqPage() {
+		public FaqPage(TranslationService translator) {
+			Translator = translator ?? throw new ArgumentNullException(nameof(translator));
 			InitializeComponent();
+			DataContext = this;
 		}
 
 		/// <summary>

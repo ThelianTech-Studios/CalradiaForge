@@ -4,8 +4,9 @@
 	using System.Threading;
 	using System.Threading.Tasks;
 
-	using CalradiaForge.Core.Infra.Logging;
 	using CalradiaForge.Core.Models;
+
+	using Serilog;
 
 	/// <summary>
 	/// Removes the <c>Zone.Identifier</c> alternate data stream (ADS) from files
@@ -13,7 +14,6 @@
 	/// from the internet, which prevents Bannerlord from loading them.
 	/// </summary>
 	public static class DLLUnblocker {
-		private static readonly Logger _logger = Logger.Instance;
 		private const string ZoneIdentifierSuffix = ":Zone.Identifier";
 
 		/// <summary>
@@ -33,13 +33,7 @@
 		public static async Task<UnblockResult> UnblockAllAsync(
 			string directoryPath,
 			CancellationToken token = default) {
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("DllUnblocker: Starting unblock scan.", new { DirectoryPath = directoryPath });
-			}
-			if (string.IsNullOrWhiteSpace(directoryPath) || !Directory.Exists(directoryPath)) {
-				_logger.Warning($"DllUnblocker: Directory does not exist: '{directoryPath}'");
-				return new UnblockResult();
-			}
+			Log.Debug("DllUnblocker: Starting unblock scan in {DirectoryPath}.", directoryPath);
 			return await Task.Run(() => UnblockDirectory(directoryPath, token), token);
 		}
 
@@ -63,11 +57,9 @@
 		public static async Task<UnblockResult> UnblockBLSEFilesAsync(
 			string sourceBinDir,
 			CancellationToken token = default) {
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("DllUnblocker: Starting BLSE unblock scan.", new { SourceBinDir = sourceBinDir });
-			}
+			Log.Debug("DllUnblocker: Starting BLSE unblock scan in {SourceBinDirectory}.", sourceBinDir);
 			if (string.IsNullOrWhiteSpace(sourceBinDir) || !Directory.Exists(sourceBinDir)) {
-				_logger.Warning($"DllUnblocker: BLSE source directory does not exist: '{sourceBinDir}'");
+				Log.Warning("DllUnblocker: BLSE source directory does not exist: {SourceBinDirectory}.", sourceBinDir);
 				return new UnblockResult();
 			}
 			return await Task.Run(() => {
@@ -76,7 +68,7 @@
 				try {
 					allFiles = Directory.GetFiles(sourceBinDir, "*.*", SearchOption.TopDirectoryOnly);
 				} catch (Exception ex) {
-					_logger.Error(ex, $"DllUnblocker: Failed to enumerate BLSE files in: '{sourceBinDir}'");
+					Log.Error(ex, "DllUnblocker: Failed to enumerate BLSE files in {SourceBinDirectory}.", sourceBinDir);
 					return result;
 				}
 
@@ -84,9 +76,7 @@
 					token.ThrowIfCancellationRequested();
 
 					bool blocked = IsFileBlocked(filePath);
-					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-						_logger.Debug("DllUnblocker: Checking BLSE file.", new { FilePath = filePath, Blocked = blocked });
-					}
+					Log.Debug("DllUnblocker: Checking BLSE file {FilePath}; blocked: {IsBlocked}.", filePath, blocked);
 					if (!blocked) {
 						continue;
 					}
@@ -99,10 +89,15 @@
 					}
 				}
 
-				_logger.Info($"DllUnblocker: BLSE unblock — {result.ToSummaryString()} in '{sourceBinDir}'");
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("DllUnblocker: BLSE unblock complete.", new { SourceBinDir = sourceBinDir, Unblocked = result.UnblockedCount, Failed = result.FailedCount });
-				}
+				Log.Information(
+					"DllUnblocker: BLSE unblock {Summary} in {SourceBinDirectory}.",
+					result.ToSummaryString(),
+					sourceBinDir);
+				Log.Debug(
+					"DllUnblocker: BLSE unblock complete in {SourceBinDirectory}; unblocked: {UnblockedCount}; failed: {FailedCount}.",
+					sourceBinDir,
+					result.UnblockedCount,
+					result.FailedCount);
 				return result;
 			}, token);
 		}
@@ -118,7 +113,9 @@
 			try {
 				dllFiles = Directory.GetFiles(directoryPath, "*.dll", SearchOption.AllDirectories);
 			} catch (Exception ex) {
-				_logger.Error(ex, $"DllUnblocker: Failed to enumerate DLL files in: '{directoryPath}'");
+				Log.Error(ex, "DllUnblocker: Failed to enumerate DLL files in {DirectoryPath}.", directoryPath);
+				result.Succeeded = false;
+				result.TechnicalDiagnostic = ex.ToString();
 				return result;
 			}
 
@@ -126,9 +123,7 @@
 				token.ThrowIfCancellationRequested();
 
 				bool blocked = IsFileBlocked(dllPath);
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("DllUnblocker: Checking DLL file.", new { FilePath = dllPath, Blocked = blocked });
-				}
+				Log.Debug("DllUnblocker: Checking DLL file {FilePath}; blocked: {IsBlocked}.", dllPath, blocked);
 				if (!blocked) {
 					continue;
 				}
@@ -141,10 +136,12 @@
 				}
 			}
 
-			_logger.Info($"DllUnblocker: {result.ToSummaryString()} in '{directoryPath}'");
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("DllUnblocker: Unblock complete.", new { DirectoryPath = directoryPath, Unblocked = result.UnblockedCount, Failed = result.FailedCount });
-			}
+			Log.Information("DllUnblocker: {Summary} in {DirectoryPath}.", result.ToSummaryString(), directoryPath);
+			Log.Debug(
+				"DllUnblocker: Unblock complete in {DirectoryPath}; unblocked: {UnblockedCount}; failed: {FailedCount}.",
+				directoryPath,
+				result.UnblockedCount,
+				result.FailedCount);
 			return result;
 		}
 
@@ -172,11 +169,11 @@
 				bool deleted = DeleteFile(adsPath);
 				if (!deleted) {
 					int errorCode = Marshal.GetLastWin32Error();
-					_logger.Warning($"DllUnblocker: Failed to unblock '{filePath}'. Win32 error: {errorCode}");
+					Log.Warning("DllUnblocker: Failed to unblock {FilePath}. Win32 error: {Win32ErrorCode}.", filePath, errorCode);
 				}
 				return deleted;
 			} catch (Exception ex) {
-				_logger.Error(ex, $"DllUnblocker: Exception unblocking '{filePath}'");
+				Log.Error(ex, "DllUnblocker: Exception unblocking {FilePath}.", filePath);
 				return false;
 			}
 		}

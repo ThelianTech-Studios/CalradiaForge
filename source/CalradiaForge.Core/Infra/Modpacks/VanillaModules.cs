@@ -3,8 +3,9 @@
 	using System.Collections.Generic;
 	using System.Linq;
 
-	using CalradiaForge.Core.Infra.Logging;
 	using CalradiaForge.Core.Models;
+
+	using Serilog;
 
 	/// <summary>
 	/// Provides default Bannerlord module load order templates.
@@ -17,7 +18,6 @@
 	/// Otherwise, hardcoded fallback versions are used per entry.
 	/// </remarks>
 	public static class VanillaModules {
-		private static readonly Logger _logger = Logger.Instance;
 		/// <summary>
 		/// Display name used for the built-in vanilla modpack template.
 		/// </summary>
@@ -92,7 +92,7 @@
 		/// for modules not found in the installed list.
 		/// </summary>
 		/// <param name="installedMods">
-		/// Currently installed mods from <see cref="Mods.ModService.CurrentMods"/>.
+		/// Currently installed mods from one accepted pipeline snapshot.
 		/// When <c>null</c> or empty, fallback versions are used for all entries.
 		/// </param>
 		public static List<ModpackEntryModel> GetDefaultLoadOrder(List<ModuleModel>? installedMods) {
@@ -123,7 +123,7 @@
 		/// for modules not found in the installed list.
 		/// </summary>
 		/// <param name="installedMods">
-		/// Currently installed mods from <see cref="Mods.ModService.CurrentMods"/>.
+		/// Currently installed mods from one accepted pipeline snapshot.
 		/// When <c>null</c> or empty, fallback versions are used for all entries.
 		/// </param>
 		public static List<ModpackEntryModel> GetButterLibLoadOrder(List<ModuleModel>? installedMods) {
@@ -207,7 +207,7 @@
 			// Build a lookup by ModuleId for O(1) resolution
 			Dictionary<string, ModuleModel>? lookup = installedMods?
 				.Where(m => !string.IsNullOrEmpty(m.ModuleId))
-				.GroupBy(m => m.ModuleId, StringComparer.OrdinalIgnoreCase)
+				.GroupBy(m => m.ModuleId!, StringComparer.OrdinalIgnoreCase)
 				.ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
 
 			List<ModpackEntryModel> result = [];
@@ -221,9 +221,11 @@
 						installed.ModuleURL));
 				} else {
 					result.Add(new ModpackEntryModel(id, name, fallbackVersion));
-					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-						_logger.Debug("VanillaModules: Using fallback module version.", new { ModuleId = id, ModuleName = name, FallbackVersion = fallbackVersion });
-					}
+					Log.Debug(
+						"VanillaModules: Using fallback module version for {ModuleId} ({ModuleName}): {FallbackVersion}.",
+						id,
+						name,
+						fallbackVersion);
 				}
 			}
 

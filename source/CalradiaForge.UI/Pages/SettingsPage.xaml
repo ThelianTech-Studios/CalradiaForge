@@ -3,7 +3,6 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-      xmlns:local="clr-namespace:CalradiaForge.UI"
       xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
       xmlns:mahIcons="http://metro.mahapps.com/winfx/xaml/iconpacks"
       mc:Ignorable="d"
@@ -25,35 +24,35 @@
 						 SelectionChanged="SettingsNav_SelectionChanged">
 
 			<ListBoxItem Style="{StaticResource SettingsNavItem}"
-									 Content="{Binding Strings.Settings_GeneralTab, Source={x:Static local:App.Translator}}">
+									 Content="{Binding Translator.Strings.Settings_GeneralTab}">
 				<ListBoxItem.Tag>
 					<mahIcons:PackIconMaterial Kind="CogOutline" Width="18" Height="18" />
 				</ListBoxItem.Tag>
 			</ListBoxItem>
 
 			<ListBoxItem Style="{StaticResource SettingsNavItem}"
-									 Content="{Binding Strings.Settings_GameConfigTab, Source={x:Static local:App.Translator}}">
+									 Content="{Binding Translator.Strings.Settings_GameConfigTab}">
 				<ListBoxItem.Tag>
 					<mahIcons:PackIconMaterial Kind="GamepadVariantOutline" Width="18" Height="18" />
 				</ListBoxItem.Tag>
 			</ListBoxItem>
 
 			<ListBoxItem Style="{StaticResource SettingsNavItem}"
-									 Content="{Binding Strings.Settings_ToolsTab, Source={x:Static local:App.Translator}}">
+									 Content="{Binding Translator.Strings.Settings_ToolsTab}">
 				<ListBoxItem.Tag>
 					<mahIcons:PackIconMaterial Kind="WrenchOutline" Width="18" Height="18" />
 				</ListBoxItem.Tag>
 			</ListBoxItem>
 
 			<ListBoxItem Style="{StaticResource SettingsNavItem}"
-									 Content="{Binding Strings.Settings_WipTab, Source={x:Static local:App.Translator}}">
+									 Content="{Binding Translator.Strings.Settings_WipTab}">
 				<ListBoxItem.Tag>
 					<mahIcons:PackIconMaterial Kind="HardHat" Width="18" Height="18" />
 				</ListBoxItem.Tag>
 			</ListBoxItem>
 
 			<ListBoxItem Style="{StaticResource SettingsNavItemRight}"
-									 Content="{Binding Strings.Settings_AboutTab, Source={x:Static local:App.Translator}}">
+									 Content="{Binding Translator.Strings.Settings_AboutTab}">
 				<ListBoxItem.Tag>
 					<mahIcons:PackIconMaterial Kind="InformationOutline" Width="18" Height="18" />
 				</ListBoxItem.Tag>
@@ -75,7 +74,7 @@
 
 					<Border Style="{StaticResource SettingsSectionBorder}">
 						<StackPanel>
-							<TextBlock Text="{Binding Strings.Settings_LanguageHeader, Source={x:Static local:App.Translator}}"
+							<TextBlock Text="{Binding Translator.Strings.Settings_LanguageHeader}"
 												 Style="{StaticResource SettingsSectionHeader}" />
 							<Grid>
 								<Grid.ColumnDefinitions>
@@ -83,14 +82,16 @@
 									<ColumnDefinition Width="200" />
 								</Grid.ColumnDefinitions>
 								<TextBlock Grid.Column="0"
-													 Text="{Binding Strings.Settings_LanguageLabel, Source={x:Static local:App.Translator}}"
+													 Text="{Binding Translator.Strings.Settings_LanguageLabel}"
 													 Style="{StaticResource SettingsLabel}" />
 								<ComboBox x:Name="LanguageComboBox" Grid.Column="1"
-													Style="{StaticResource ModsPageComboBox}"
+													Style="{StaticResource LauncherPageComboBox}"
 													DisplayMemberPath="DisplayName"
-													SelectionChanged="LanguageComboBox_SelectionChanged" />
+													ItemsSource="{Binding AvailableLanguages}"
+													SelectedIndex="{Binding SelectedLanguageIndex, Mode=TwoWay}"
+													IsEnabled="{Binding IsLanguageSelectionEnabled}" />
 							</Grid>
-							<TextBlock Text="{Binding Strings.Settings_LanguageHint, Source={x:Static local:App.Translator}}"
+							<TextBlock Text="{Binding Translator.Strings.Settings_LanguageHint}"
 												 Style="{StaticResource SettingsHint}"
 												 Margin="0,6,0,0" />
 						</StackPanel>
@@ -98,27 +99,27 @@
 
 					<Border Style="{StaticResource SettingsSectionBorder}">
 						<StackPanel>
-							<TextBlock Text="{Binding Strings.Settings_StartupHeader, Source={x:Static local:App.Translator}}"
+							<TextBlock Text="{Binding Translator.Strings.Settings_StartupHeader}"
 												 Style="{StaticResource SettingsSectionHeader}" />
-							<TextBlock Text="{Binding Strings.Settings_StartupLabel, Source={x:Static local:App.Translator}}"
+							<TextBlock Text="{Binding Translator.Strings.Settings_StartupLabel}"
 												 Style="{StaticResource SettingsLabel}"
 												 Margin="0,0,0,6" />
 							<RadioButton x:Name="RadioLastUsed"
-													 Content="{Binding Strings.Settings_StartupLastUsed, Source={x:Static local:App.Translator}}"
+													 Content="{Binding Translator.Strings.Settings_StartupLastUsed}"
 													 GroupName="ModpackStartup"
 													 Style="{StaticResource SettingsRadioButton}"
-													 Checked="ModpackStartupMode_Changed" />
+													 IsChecked="{Binding IsLastUsedStartupMode, Mode=TwoWay}" />
 							<RadioButton x:Name="RadioAlwaysDefault"
-													 Content="{Binding Strings.Settings_StartupAlwaysDefault, Source={x:Static local:App.Translator}}"
+													 Content="{Binding Translator.Strings.Settings_StartupAlwaysDefault}"
 													 GroupName="ModpackStartup"
 													 Style="{StaticResource SettingsRadioButton}"
-													 Checked="ModpackStartupMode_Changed" />
+													 IsChecked="{Binding IsAlwaysDefaultStartupMode, Mode=TwoWay}" />
 							<RadioButton x:Name="RadioAlwaysAsk"
-													 Content="{Binding Strings.Settings_StartupAlwaysAsk, Source={x:Static local:App.Translator}}"
+													 Content="{Binding Translator.Strings.Settings_StartupAlwaysAsk}"
 													 GroupName="ModpackStartup"
 													 Style="{StaticResource SettingsRadioButton}"
-													 Checked="ModpackStartupMode_Changed" />
-							<TextBlock Text="{Binding Strings.Settings_StartupHint, Source={x:Static local:App.Translator}}"
+													 IsChecked="{Binding IsAlwaysAskStartupMode, Mode=TwoWay}" />
+							<TextBlock Text="{Binding Translator.Strings.Settings_StartupHint}"
 												 Style="{StaticResource SettingsHint}"
 												 Margin="0,6,0,0" />
 						</StackPanel>
@@ -126,14 +127,15 @@
 
 					<Border Style="{StaticResource SettingsSectionBorder}">
 						<StackPanel>
-							<TextBlock Text="{Binding Strings.Settings_DiagnosticsHeader, Source={x:Static local:App.Translator}}"
+							<TextBlock Text="{Binding Translator.Strings.Settings_DiagnosticsHeader}"
 												 Style="{StaticResource SettingsSectionHeader}" />
 							<CheckBox x:Name="DebugModeToggle"
-							Content="{Binding Strings.Settings_DebugModeLabel, Source={x:Static local:App.Translator}}"
+							Content="{Binding Translator.Strings.Settings_DebugModeLabel}"
 							Style="{StaticResource SettingsToggleSwitch}"
-							Checked="DebugMode_Toggled"
-							Unchecked="DebugMode_Toggled" />
-							<TextBlock Text="{Binding Strings.Settings_DebugModeHint, Source={x:Static local:App.Translator}}"
+							IsChecked="{Binding IsDebugModeEnabled, Mode=OneWay}"
+							Command="{Binding SetDebugModeCommand}"
+							CommandParameter="{Binding IsChecked, RelativeSource={RelativeSource Self}}" />
+							<TextBlock Text="{Binding Translator.Strings.Settings_DebugModeHint}"
 												 Style="{StaticResource SettingsHint}"
 												 Margin="0,4,0,0" />
 						</StackPanel>
@@ -152,10 +154,10 @@
 					<!-- Game Installation Section -->
 					<Border Style="{StaticResource SettingsSectionBorder}">
 						<StackPanel>
-							<TextBlock Text="{Binding Strings.Settings_GameInstallHeader, Source={x:Static local:App.Translator}}"
+							<TextBlock Text="{Binding Translator.Strings.Settings_GameInstallHeader}"
 												 Style="{StaticResource SettingsSectionHeader}" />
 
-							<TextBlock Text="{Binding Strings.Settings_GameFolderLabel, Source={x:Static local:App.Translator}}"
+							<TextBlock Text="{Binding Translator.Strings.Settings_GameFolderLabel}"
 												 Style="{StaticResource SettingsLabel}"
 												 Margin="0,0,0,4" />
 							<Grid>
@@ -169,17 +171,28 @@
 														 Text="{Binding GameFolderPath}" />
 								</Border>
 								<Button Grid.Column="1"
-												Content="{Binding Strings.Settings_SelectFolderButton, Source={x:Static local:App.Translator}}"
+												Content="{Binding Translator.Strings.Settings_SelectFolderButton}"
 												Style="{StaticResource SettingsActionButton}"
 												Margin="8,0,0,0"
-												Click="SelectGameFolder_Click" />
+												Command="{Binding SelectGameFolderCommand}" />
 							</Grid>
 							<TextBlock x:Name="GameFolderValidation"
-												 Style="{StaticResource SettingsValidationOk}"
-												 Text="" />
+												 Text="{Binding GameFolderValidationText}">
+								<TextBlock.Style>
+									<Style TargetType="TextBlock"
+												 BasedOn="{StaticResource SettingsValidationOk}">
+										<Style.Triggers>
+											<DataTrigger Binding="{Binding IsGameFolderValid}" Value="False">
+												<Setter Property="Foreground" Value="{StaticResource TB.Acc.Red}" />
+											</DataTrigger>
+										</Style.Triggers>
+									</Style>
+								</TextBlock.Style>
+							</TextBlock>
 
-							<StackPanel x:Name="ExePathSection" Margin="0,12,0,0">
-								<TextBlock Text="{Binding Strings.Settings_GameExeLabel, Source={x:Static local:App.Translator}}"
+							<StackPanel x:Name="ExePathSection" Margin="0,12,0,0"
+												Visibility="{Binding ShowGameExecutablePath, Converter={StaticResource BoolToVis}}">
+								<TextBlock Text="{Binding Translator.Strings.Settings_GameExeLabel}"
 													 Style="{StaticResource SettingsLabel}"
 													 Margin="0,0,0,4" />
 								<Grid>
@@ -193,15 +206,16 @@
 															 Text="{Binding GameLauncherFilePath}" />
 									</Border>
 									<Button Grid.Column="1"
-													Content="{Binding Strings.Settings_SelectFileButton, Source={x:Static local:App.Translator}}"
+													Content="{Binding Translator.Strings.Settings_SelectFileButton}"
 													Style="{StaticResource SettingsActionButton}"
 													Margin="8,0,0,0"
-													Click="SelectGameExe_Click" />
+													Command="{Binding SelectGameExecutableCommand}" />
 								</Grid>
 							</StackPanel>
 
-							<StackPanel x:Name="WorkshopPathSection" Margin="0,12,0,0">
-								<TextBlock Text="{Binding Strings.Settings_WorkshopFolderLabel, Source={x:Static local:App.Translator}}"
+							<StackPanel x:Name="WorkshopPathSection" Margin="0,12,0,0"
+												Visibility="{Binding ShowWorkshopPath, Converter={StaticResource BoolToVis}}">
+								<TextBlock Text="{Binding Translator.Strings.Settings_WorkshopFolderLabel}"
 													 Style="{StaticResource SettingsLabel}"
 													 Margin="0,0,0,4" />
 								<Grid>
@@ -214,12 +228,25 @@
 															 Style="{StaticResource SettingsPathDisplay}"
 															 Text="{Binding SteamWorkshopFolderPath}" />
 									</Border>
-									<Button Grid.Column="1"
-													Content="{Binding Strings.Settings_SelectFolderButton, Source={x:Static local:App.Translator}}"
+									<Button x:Name="SelectWorkshopFolderButton" Grid.Column="1"
+													Content="{Binding Translator.Strings.Settings_SelectFolderButton}"
 													Style="{StaticResource SettingsActionButton}"
 													Margin="8,0,0,0"
-													Click="SelectWorkshopFolder_Click" />
+													Command="{Binding SelectWorkshopFolderCommand}" />
 								</Grid>
+								<TextBlock x:Name="WorkshopFolderValidation"
+												 Text="{Binding WorkshopFolderValidationText}">
+									<TextBlock.Style>
+										<Style TargetType="TextBlock"
+												 BasedOn="{StaticResource SettingsValidationOk}">
+											<Style.Triggers>
+												<DataTrigger Binding="{Binding IsWorkshopFolderValid}" Value="False">
+													<Setter Property="Foreground" Value="{StaticResource TB.Acc.Red}" />
+												</DataTrigger>
+											</Style.Triggers>
+										</Style>
+									</TextBlock.Style>
+								</TextBlock>
 							</StackPanel>
 
 						</StackPanel>
@@ -228,10 +255,10 @@
 					<!-- Script Extender (BLSE) Section -->
 					<Border Style="{StaticResource SettingsSectionBorder}">
 						<StackPanel>
-							<TextBlock Text="{Binding Strings.Settings_BLSEHeader, Source={x:Static local:App.Translator}}"
+							<TextBlock Text="{Binding Translator.Strings.Settings_BLSEHeader}"
 												 Style="{StaticResource SettingsSectionHeader}" />
 
-							<TextBlock Text="{Binding Strings.Settings_BLSEExeLabel, Source={x:Static local:App.Translator}}"
+							<TextBlock Text="{Binding Translator.Strings.Settings_BLSEExeLabel}"
 												 Style="{StaticResource SettingsLabel}"
 												 Margin="0,0,0,4" />
 							<Grid>
@@ -245,15 +272,25 @@
 														 Text="{Binding BLSEExePath}" />
 								</Border>
 								<Button Grid.Column="1"
-												Content="{Binding Strings.Settings_SelectFileButton, Source={x:Static local:App.Translator}}"
+												Content="{Binding Translator.Strings.Settings_SelectFileButton}"
 												Style="{StaticResource SettingsActionButton}"
 												Margin="8,0,0,0"
-												Click="SelectBLSEExe_Click" />
+												Command="{Binding SelectBlseExecutableCommand}" />
 							</Grid>
 							<TextBlock x:Name="BLSEValidation"
-												 Style="{StaticResource SettingsValidationOk}"
-												 Text="" />
-							<TextBlock Text="{Binding Strings.Settings_BLSEHint, Source={x:Static local:App.Translator}}"
+												 Text="{Binding BlseValidationText}">
+								<TextBlock.Style>
+									<Style TargetType="TextBlock"
+												 BasedOn="{StaticResource SettingsValidationOk}">
+										<Style.Triggers>
+											<DataTrigger Binding="{Binding IsBlsePathValidOrOptional}" Value="False">
+												<Setter Property="Foreground" Value="{StaticResource TB.Acc.Red}" />
+											</DataTrigger>
+										</Style.Triggers>
+									</Style>
+								</TextBlock.Style>
+							</TextBlock>
+							<TextBlock Text="{Binding Translator.Strings.Settings_BLSEHint}"
 													 Style="{StaticResource SettingsHint}"
 													 Margin="0,6,0,0" />
 						</StackPanel>
@@ -262,13 +299,13 @@
 					<!-- Detection Section -->
 					<Border Style="{StaticResource SettingsSectionBorder}">
 						<StackPanel>
-							<TextBlock Text="{Binding Strings.Settings_DetectionHeader, Source={x:Static local:App.Translator}}"
+							<TextBlock Text="{Binding Translator.Strings.Settings_DetectionHeader}"
 												 Style="{StaticResource SettingsSectionHeader}" />
 							<StackPanel Orientation="Horizontal">
-								<Button Content="{Binding Strings.Settings_DetectGameButton, Source={x:Static local:App.Translator}}"
+								<Button Content="{Binding Translator.Strings.Settings_DetectGameButton}"
 												Style="{StaticResource SettingsToolButton}"
-												Click="RedetectGame_Click" />
-								<TextBlock Text="{Binding Strings.Settings_DetectGameHint, Source={x:Static local:App.Translator}}"
+												Command="{Binding RedetectGameCommand}" />
+								<TextBlock Text="{Binding Translator.Strings.Settings_DetectGameHint}"
 													 Style="{StaticResource SettingsHint}"
 													 VerticalAlignment="Center"
 													 Margin="12,0,0,0"
@@ -290,13 +327,13 @@
 
 					<Border Style="{StaticResource SettingsSectionBorder}">
 						<StackPanel>
-							<TextBlock Text="{Binding Strings.Settings_ModMaintenanceHeader, Source={x:Static local:App.Translator}}"
+							<TextBlock Text="{Binding Translator.Strings.Settings_ModMaintenanceHeader}"
 												 Style="{StaticResource SettingsSectionHeader}" />
 							<StackPanel Orientation="Horizontal">
-								<Button Content="{Binding Strings.Settings_UnblockDllsButton, Source={x:Static local:App.Translator}}"
+								<Button Content="{Binding Translator.Strings.Settings_UnblockDllsButton}"
 												Style="{StaticResource SettingsToolButton}"
-												Click="UnblockDlls_Click" />
-								<TextBlock Text="{Binding Strings.Settings_UnblockDllsHint, Source={x:Static local:App.Translator}}"
+												Command="{Binding UnblockDllsCommand}" />
+								<TextBlock Text="{Binding Translator.Strings.Settings_UnblockDllsHint}"
 													 Style="{StaticResource SettingsHint}"
 													 VerticalAlignment="Center"
 													 Margin="12,0,0,0"
@@ -305,9 +342,11 @@
 							<StackPanel Margin="0,8,0,0">
 								<TextBlock x:Name="UnblockLastRunText"
 													 Style="{StaticResource SettingsHint}"
+													 Text="{Binding UnblockLastRunText}"
 													 FontStyle="Normal" />
 								<TextBlock x:Name="UnblockResultText"
 													 Style="{StaticResource SettingsHint}"
+													 Text="{Binding UnblockResultText}"
 													 FontStyle="Normal" />
 							</StackPanel>
 						</StackPanel>
@@ -315,14 +354,14 @@
 
 					<Border Style="{StaticResource SettingsSectionBorder}">
 						<StackPanel>
-							<TextBlock Text="{Binding Strings.Settings_DataManagementHeader, Source={x:Static local:App.Translator}}"
+							<TextBlock Text="{Binding Translator.Strings.Settings_DataManagementHeader}"
 												 Style="{StaticResource SettingsSectionHeader}" />
 
 							<StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-								<Button Content="{Binding Strings.Settings_ClearCacheButton, Source={x:Static local:App.Translator}}"
+								<Button Content="{Binding Translator.Strings.Settings_ClearCacheButton}"
 												Style="{StaticResource SettingsToolButton}"
-												Click="ClearModCache_Click" />
-								<TextBlock Text="{Binding Strings.Settings_ClearCacheHint, Source={x:Static local:App.Translator}}"
+												Command="{Binding ClearModCacheCommand}" />
+								<TextBlock Text="{Binding Translator.Strings.Settings_ClearCacheHint}"
 													 Style="{StaticResource SettingsHint}"
 													 VerticalAlignment="Center"
 													 Margin="12,0,0,0"
@@ -330,10 +369,10 @@
 							</StackPanel>
 
 							<StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-								<Button Content="{Binding Strings.Settings_OpenConfigButton, Source={x:Static local:App.Translator}}"
+								<Button Content="{Binding Translator.Strings.Settings_OpenConfigButton}"
 												Style="{StaticResource SettingsToolButton}"
-												Click="OpenConfigFolder_Click" />
-								<TextBlock Text="{Binding Strings.Settings_OpenConfigHint, Source={x:Static local:App.Translator}}"
+												Command="{Binding OpenConfigFolderCommand}" />
+								<TextBlock Text="{Binding Translator.Strings.Settings_OpenConfigHint}"
 													 Style="{StaticResource SettingsHint}"
 													 VerticalAlignment="Center"
 													 Margin="12,0,0,0"
@@ -341,10 +380,10 @@
 							</StackPanel>
 
 							<StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-								<Button Content="{Binding Strings.Settings_OpenLogsButton, Source={x:Static local:App.Translator}}"
+								<Button Content="{Binding Translator.Strings.Settings_OpenLogsButton}"
 												Style="{StaticResource SettingsToolButton}"
-												Click="OpenLogsFolder_Click" />
-								<TextBlock Text="{Binding Strings.Settings_OpenLogsHint, Source={x:Static local:App.Translator}}"
+												Command="{Binding OpenLogsFolderCommand}" />
+								<TextBlock Text="{Binding Translator.Strings.Settings_OpenLogsHint}"
 													 Style="{StaticResource SettingsHint}"
 													 VerticalAlignment="Center"
 													 Margin="12,0,0,0"
@@ -352,10 +391,10 @@
 							</StackPanel>
 
 							<StackPanel Orientation="Horizontal">
-								<Button Content="{Binding Strings.Settings_OpenModpacksButton, Source={x:Static local:App.Translator}}"
+								<Button Content="{Binding Translator.Strings.Settings_OpenModpacksButton}"
 												Style="{StaticResource SettingsToolButton}"
-												Click="OpenModpacksFolder_Click" />
-								<TextBlock Text="{Binding Strings.Settings_OpenModpacksHint, Source={x:Static local:App.Translator}}"
+												Command="{Binding OpenModpacksFolderCommand}" />
+								<TextBlock Text="{Binding Translator.Strings.Settings_OpenModpacksHint}"
 													 Style="{StaticResource SettingsHint}"
 													 VerticalAlignment="Center"
 													 Margin="12,0,0,0"
@@ -375,13 +414,13 @@
 																		 Foreground="{StaticResource TB.Txt.Dim}"
 																		 HorizontalAlignment="Center"
 																		 Margin="0,0,0,16" />
-					<TextBlock Text="{Binding Strings.Settings_WipTitle, Source={x:Static local:App.Translator}}"
+					<TextBlock Text="{Binding Translator.Strings.Settings_WipTitle}"
 										 Foreground="{StaticResource TB.Txt.Mid}"
 										 FontFamily="{StaticResource Font.Secondary}"
 										 FontSize="16" FontWeight="SemiBold"
 										 HorizontalAlignment="Center"
 										 TextAlignment="Center" />
-					<TextBlock Text="{Binding Strings.Settings_WipDescription, Source={x:Static local:App.Translator}}"
+					<TextBlock Text="{Binding Translator.Strings.Settings_WipDescription}"
 										 Foreground="{StaticResource TB.Txt.Dim}"
 										 FontFamily="{StaticResource Font.Secondary}"
 										 FontSize="13"
@@ -389,7 +428,7 @@
 										 TextAlignment="Center"
 										 Margin="0,12,0,0"
 										 LineHeight="20" />
-					<TextBlock Text="{Binding Strings.Settings_WipStayTuned, Source={x:Static local:App.Translator}}"
+					<TextBlock Text="{Binding Translator.Strings.Settings_WipStayTuned}"
 										 Foreground="{StaticResource TB.Acc.Gold}"
 										 FontFamily="{StaticResource Font.Secondary}"
 										 FontSize="13" FontWeight="SemiBold"
@@ -410,17 +449,18 @@
 					<TextBlock Text="CalradiaForge"
 										 Style="{StaticResource SettingsAboutTitle}" />
 					<TextBlock x:Name="VersionText"
+										 Text="{Binding VersionText}"
 										 Style="{StaticResource SettingsAboutVersion}" />
 
 					<Separator Margin="0,16" Background="{StaticResource TB.Sfc.MedDark.50}" />
 
-					<TextBlock Text="{Binding Strings.Settings_AboutDescription, Source={x:Static local:App.Translator}}"
+					<TextBlock Text="{Binding Translator.Strings.Settings_AboutDescription}"
 										 Foreground="{StaticResource TB.Txt.Bright}"
 										 FontFamily="{StaticResource Font.Secondary}"
 										 FontSize="14"
 										 HorizontalAlignment="Center"
 										 TextAlignment="Center" />
-					<TextBlock Text="{Binding Strings.Settings_AboutTagline, Source={x:Static local:App.Translator}}"
+					<TextBlock Text="{Binding Translator.Strings.Settings_AboutTagline}"
 										 Foreground="{StaticResource TB.Acc.Gold}"
 										 FontFamily="{StaticResource Font.Secondary}"
 										 FontSize="13" FontStyle="Italic"
@@ -441,26 +481,26 @@
 						</Grid.RowDefinitions>
 
 						<TextBlock Grid.Row="0" Grid.Column="0"
-											 Text="{Binding Strings.Settings_AboutPublisherLabel, Source={x:Static local:App.Translator}}"
+											 Text="{Binding Translator.Strings.Settings_AboutPublisherLabel}"
 											 Style="{StaticResource SettingsAboutLabel}" Margin="0,0,0,8" />
 						<TextBlock Grid.Row="0" Grid.Column="1" Text="ThelianTech™"
 											 Style="{StaticResource SettingsAboutValue}" Margin="8,0,0,8" />
 
 						<TextBlock Grid.Row="1" Grid.Column="0"
-											 Text="{Binding Strings.Settings_AboutLicenseLabel, Source={x:Static local:App.Translator}}"
+											 Text="{Binding Translator.Strings.Settings_AboutLicenseLabel}"
 											 Style="{StaticResource SettingsAboutLabel}" Margin="0,0,0,8" />
 						<Button Grid.Row="1" Grid.Column="1"
-										Content="{Binding Strings.Settings_AboutViewLicense, Source={x:Static local:App.Translator}}"
+										Content="{Binding Translator.Strings.Settings_AboutViewLicense}"
 										Style="{StaticResource SettingsToolButton}"
 										Height="28" Padding="10,4" FontSize="12"
 										Margin="8,0,0,8"
 										Click="ViewLicense_Click" />
 
 						<TextBlock Grid.Row="2" Grid.Column="0"
-											 Text="{Binding Strings.Settings_AboutGitHubLabel, Source={x:Static local:App.Translator}}"
+											 Text="{Binding Translator.Strings.Settings_AboutGitHubLabel}"
 											 Style="{StaticResource SettingsAboutLabel}" />
 						<Button Grid.Row="2" Grid.Column="1"
-										Content="{Binding Strings.Settings_AboutViewGitHub, Source={x:Static local:App.Translator}}"
+										Content="{Binding Translator.Strings.Settings_AboutViewGitHub}"
 										Style="{StaticResource SettingsToolButton}"
 										Height="28" Padding="10,4" FontSize="12"
 										Margin="8,0,0,0"
@@ -469,12 +509,12 @@
 
 					<Separator Margin="0,16" Background="{StaticResource TB.Sfc.MedDark.50}" />
 
-					<TextBlock Text="{Binding Strings.Settings_AboutCopyright, Source={x:Static local:App.Translator}}"
+					<TextBlock Text="{Binding Translator.Strings.Settings_AboutCopyright}"
 										 Foreground="{StaticResource TB.Txt.Dim}"
 										 FontFamily="{StaticResource Font.Secondary}"
 										 FontSize="11"
 										 HorizontalAlignment="Center" />
-					<TextBlock Text="{Binding Strings.Settings_AboutDisclaimer, Source={x:Static local:App.Translator}}"
+					<TextBlock Text="{Binding Translator.Strings.Settings_AboutDisclaimer}"
 										 Foreground="{StaticResource TB.Txt.Dim}"
 										 FontFamily="{StaticResource Font.Secondary}"
 										 FontSize="11"

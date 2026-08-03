@@ -2,10 +2,15 @@ namespace CalradiaForge.UI.Views {
 	using System.Windows;
 	using System.Windows.Input;
 
+	using CalradiaForge.Core.Infra.Localization;
+
 	/// <summary>
 	/// Modal EULA acceptance window shown on first launch before the main window loads.
 	/// </summary>
 	public partial class EulaWindow : Window {
+		/// <summary>Gets the translation service used by window bindings.</summary>
+		public TranslationService Translator { get; }
+
 		/// <summary>
 		/// Gets whether the user accepted the EULA.
 		/// </summary>
@@ -14,8 +19,10 @@ namespace CalradiaForge.UI.Views {
 		/// <summary>
 		/// Initializes the EULA window and populates the agreement text.
 		/// </summary>
-		public EulaWindow(string eulaText) {
+		public EulaWindow(string eulaText, TranslationService translator) {
+			Translator = translator ?? throw new ArgumentNullException(nameof(translator));
 			InitializeComponent();
+			DataContext = this;
 			EulaTextBox.Text = eulaText;
 		}
 

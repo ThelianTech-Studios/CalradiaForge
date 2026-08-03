@@ -29,9 +29,31 @@ internal class Program {
 
 			manager.DefaultEnglishLanguageFile(TranslationStrings.GetDefaultTranslations(), filepath);
 
-			Console.WriteLine($"Default English language file created at: {filepath}");
+			var repositoryLanguagesDirectory = Path.GetFullPath(
+				Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "Languages"));
+			var destinationFilepath = Path.Combine(repositoryLanguagesDirectory, Path.GetFileName(filepath));
+			Directory.CreateDirectory(repositoryLanguagesDirectory);
+			File.Move(filepath, destinationFilepath, overwrite: true);
+
+			Console.Clear();
+			Console.WriteLine($"\nDefault English language file created at: {destinationFilepath}");
+			Console.WriteLine("\nPress any key to continue...");
 			Console.ReadKey();
 			Console.Clear();
 		}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	}
 }

@@ -2,7 +2,8 @@
 	using System;
 	using System.Reflection;
 
-	using CalradiaForge.Core.Infra.Logging;
+	using Serilog;
+	using Serilog.Events;
 
 	/// <summary>
 	/// Provides resolved application paths and ensures required folders exist.
@@ -32,8 +33,9 @@
 		private const string ModsBackupFileName = "mods_backup.data";
 		private const string LastUsedModsFileName = "last_used_mods.data";
 		private const string ConfigFileName = "config.json";
+		private const string LogsFileName = "CalradiaForge_Latest.log";
 		private const string LanguagesManifestFileName = "languages.json";
-		private const string DefaulLanguageFileName = "en-US.json";
+		private const string DefaultLanguageFileName = "en-US.json";
 		private const string EulaFileName = "Eula.txt";
 
 		#region Resolved Paths
@@ -43,14 +45,15 @@
 		private static readonly Lazy<ResolvedDirectory> _modpacksDirectory = new(() => ResolveDirectory(Path.Combine(RootDirectory, ModpacksFolderName)));
 		private static readonly Lazy<ResolvedDirectory> _dataDirectory = new(() => ResolveDirectory(Path.Combine(RootDirectory, DataFolderName)));
 		private static readonly Lazy<ResolvedDirectory> _languagesDirectory = new(() => ResolveDirectory(Path.Combine(RootDirectory, LanguagesFolderName)));
-		private static readonly Lazy<ResolvedDirectory> _DownloadsDirectory = new(() => ResolveDirectory(Path.Combine(RootDirectory, NexusModsFolderName, ModArchivesFolderName)));
-		private static readonly Lazy<ResolvedDirectory> _DownloadsMetadataDirectory = new(() => ResolveDirectory(Path.Combine(RootDirectory, NexusModsFolderName, DownloadsMetadataFolderName)));
+		private static readonly Lazy<ResolvedDirectory> _downloadsDirectory = new(() => ResolveDirectory(Path.Combine(RootDirectory, NexusModsFolderName, ModArchivesFolderName)));
+		private static readonly Lazy<ResolvedDirectory> _downloadsMetadataDirectory = new(() => ResolveDirectory(Path.Combine(RootDirectory, NexusModsFolderName, DownloadsMetadataFolderName)));
 
 		// Resolved Hidden Paths
-		private static readonly Lazy<ResolvedHiddenDirectory> _ExtractionDirectory = new(() => ResolveHiddenDirectory(Path.Combine(RootDirectory, ExtractionFolderName)));
+		private static readonly Lazy<ResolvedHiddenDirectory> _extractionDirectory = new(() => ResolveHiddenDirectory(Path.Combine(RootDirectory, ExtractionFolderName)));
 		#endregion
 
-		#region Directory Properties
+		#region Path Properties
+		// The Filepath properties need to be resolved so we reduce the need of calling Path.Combine() every time the property is accessed. 
 		/// <summary>
 		/// Gets the configuration directory path.
 		/// </summary>
@@ -72,17 +75,17 @@
 		/// </summary>
 		public static string LanguagesDirectory => _languagesDirectory.Value.Path;
 		/// <summary>
-		/// Gets the path to the downloads directory in LocalAppData.
+		/// Gets the path to the downloads directory under the app root.
 		/// </summary>
-		public static string DownloadsDirectory => _DownloadsDirectory.Value.Path;
+		public static string DownloadsDirectory => _downloadsDirectory.Value.Path;
 		/// <summary>
-		/// Gets the path to the temporary extraction directory in LocalAppData.
+		/// Gets the path to the temporary extraction directory under the app root.
 		/// </summary>
-		public static string ExtractionDirectory => _ExtractionDirectory.Value.Path;
+		public static string ExtractionDirectory => _extractionDirectory.Value.Path;
 		/// <summary>
 		/// Gets the path to the downloads metadata directory.
 		/// </summary>
-		public static string DownloadsMetadataDirectory => _DownloadsMetadataDirectory.Value.Path;
+		public static string DownloadsMetadataDirectory => _downloadsMetadataDirectory.Value.Path;
 		/// <summary>
 		/// Gets the path to the current mods cache file.
 		/// </summary>
@@ -99,12 +102,18 @@
 		/// Gets the path to the configuration JSON file.
 		/// </summary>
 		public static string ConfigFilePath => Path.Combine(ConfigDirectory, ConfigFileName);
-
+		/// <summary>
+		/// Gets the path to the log file.
+		/// </summary>
+		public static string LogsFilePath => Path.Combine(LogsDirectory, LogsFileName);
+		/// <summary>
+		/// Gets the path to the languages manifest file.
+		/// </summary>
 		public static string LanguagesManifestFilePath => Path.Combine(LanguagesDirectory, LanguagesManifestFileName);
 		/// <summary>
 		/// Gets the path to the default language JSON file (e.g. <c>en-US.json</c>) in the languages directory.
 		/// </summary>
-		public static string DefaultLanguageFilePath => Path.Combine(LanguagesDirectory, DefaulLanguageFileName);
+		public static string DefaultLanguageFilePath => Path.Combine(LanguagesDirectory, DefaultLanguageFileName);
 
 		/// <summary>
 		/// Gets the path to the EULA text file deployed with the application.
@@ -116,36 +125,40 @@
 		/// <summary>
 		/// Logs resolved paths with creation metadata.
 		/// </summary>
-		/// <param name="logger">The logger instance used for logging.</param>
-		public static void LogResolvedPaths(Logger logger) {
-			if (logger.MinimumLevel != Logger.LogLevel.Debug) {
+		public static void LogResolvedPaths() {
+			if (!Log.IsEnabled(LogEventLevel.Debug)) {
 				return;
 			}
-			LogResolvedPath(logger, _configDirectory.Value);
-			LogResolvedPath(logger, _logsDirectory.Value);
-			LogResolvedPath(logger, _modpacksDirectory.Value);
-			LogResolvedPath(logger, _dataDirectory.Value);
-			LogResolvedPath(logger, _languagesDirectory.Value);
-			LogResolvedPath(logger, _DownloadsDirectory.Value);
-			LogResolvedPath(logger, _DownloadsMetadataDirectory.Value);
-			LogResolvedHiddenPath(logger, _ExtractionDirectory.Value);
+			LogResolvedPath(_configDirectory.Value);
+			LogResolvedPath(_logsDirectory.Value);
+			LogResolvedPath(_modpacksDirectory.Value);
+			LogResolvedPath(_dataDirectory.Value);
+			LogResolvedPath(_languagesDirectory.Value);
+			LogResolvedPath(_downloadsDirectory.Value);
+			LogResolvedPath(_downloadsMetadataDirectory.Value);
+			LogResolvedHiddenPath(_extractionDirectory.Value);
 
 		}
 		/// <summary>
 		/// Methods for logging a resolved directory path with creation metadata. Supports regular directories.
 		/// </summary>
-		/// <param name="logger">The logger instance to use for logging.</param>
 		/// <param name="directory">The resolved directory to log.</param>
-		private static void LogResolvedPath(Logger logger, ResolvedDirectory directory) {
-			logger.Debug("AppPaths: Resolved path.", new { directory.Path, directory.Created });
+		private static void LogResolvedPath(ResolvedDirectory directory) {
+			Log.Debug(
+				"AppPaths: Resolved path. Path={Path} Created={Created}",
+				directory.Path,
+				directory.Created);
 		}
 		/// <summary>
 		/// Methods for logging a resolved directory path with creation metadata. Supports hidden directories.
 		/// </summary>
-		/// <param name="logger">The logger instance to use for logging.</param>
 		/// <param name="directory">The resolved hidden directory to log.</param>
-		private static void LogResolvedHiddenPath(Logger logger, ResolvedHiddenDirectory directory) {
-			logger.Debug("AppPaths: Resolved hidden path.", new { directory.Path, directory.Created, directory.Hidden });
+		private static void LogResolvedHiddenPath(ResolvedHiddenDirectory directory) {
+			Log.Debug(
+				"AppPaths: Resolved hidden path. Path={Path} Created={Created} Hidden={Hidden}",
+				directory.Path,
+				directory.Created,
+				directory.Hidden);
 		}
 		#endregion
 

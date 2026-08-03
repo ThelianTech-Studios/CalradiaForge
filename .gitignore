@@ -1,11 +1,11 @@
 ﻿# Visual Studio cache
 .vs/
 
-# Visual Studio files
-
 # Build output
 bin/
 obj/
+TestResults/
+BenchmarkDotNet.Artifacts/
 
 # User-specific files
 *.user
@@ -20,18 +20,10 @@ obj/
 *.log
 /CalradiaForge.Core/GlobalSuppressions.cs
 
-# Internal docs
-CalradiaForge.UI/Docs/
-
 # Auto-generated
 /global.json
-/TODO_v1.md
 /CalradiaForge.UI/Properties/PublishProfiles
-/CalradiaForge.Core/Infra/Translation/TranslationDataManager.cs
-/CalradiaForge.Core/Models/TranslationModel.cs
-/CalradiaForge_beta-v0.9.22_win-x64.zip
-/desktop.ini
-/migration-sevenzipwrapper-integration.md
+/CalradiaForge_*.zip
 /releases
 /CalradiaForge_App_Icon_Design
 /Calradia Forge Collection
@@ -40,3 +32,5 @@ CalradiaForge.UI/Docs/
 /Calradia Forge Collection.zip
 /sourcecode.zip
 /source/releases
+/source/Languages/*.zip
+/source/CalradiaForge.UI/Properties/PublishProfiles/FolderProfile.pubxml

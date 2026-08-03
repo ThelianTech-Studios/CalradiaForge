@@ -3,7 +3,6 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-      xmlns:local="clr-namespace:CalradiaForge.UI"
       xmlns:mahIcons="http://metro.mahapps.com/winfx/xaml/iconpacks"
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
@@ -21,7 +20,7 @@
             <mahIcons:PackIconMaterial Kind="ChatQuestion" Width="24" Height="24"
                                                                  Foreground="{StaticResource TB.Acc.Gold}"
                                                                  VerticalAlignment="Center" Margin="0,0,10,0" />
-            <TextBlock Text="{Binding Strings.Faq_PageTitle, Source={x:Static local:App.Translator}}"
+            <TextBlock Text="{Binding Translator.Strings.Faq_PageTitle}"
                                      Foreground="{StaticResource TB.Txt.Bright}"
                                      FontFamily="{StaticResource Font.Secondary}"
                                      FontSize="20" FontWeight="SemiBold"
@@ -37,119 +36,119 @@
                 <!-- Q1 -->
                 <Border Style="{StaticResource SettingsSectionBorder}">
                     <StackPanel>
-                        <TextBlock Text="{Binding Strings.Faq_Q1_Title, Source={x:Static local:App.Translator}}"
+                        <TextBlock Text="{Binding Translator.Strings.Faq_Q1_Title}"
                                              Style="{StaticResource SettingsSectionHeader}" />
                         <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
-                                             Text="{Binding Strings.Faq_Q1_Answer1, Source={x:Static local:App.Translator}}" />
+                                             Text="{Binding Translator.Strings.Faq_Q1_Answer1}" />
                         <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
-                                             Text="{Binding Strings.Faq_Q1_Answer2, Source={x:Static local:App.Translator}}" />
+                                             Text="{Binding Translator.Strings.Faq_Q1_Answer2}" />
                         <TextBlock Style="{StaticResource SettingsHint}" TextWrapping="Wrap"
-                                             Text="{Binding Strings.Faq_Q1_Hint, Source={x:Static local:App.Translator}}" />
+                                             Text="{Binding Translator.Strings.Faq_Q1_Hint}" />
                     </StackPanel>
                 </Border>
 
                 <!-- Q2 -->
                 <Border Style="{StaticResource SettingsSectionBorder}">
                     <StackPanel>
-                        <TextBlock Text="{Binding Strings.Faq_Q2_Title, Source={x:Static local:App.Translator}}"
+                        <TextBlock Text="{Binding Translator.Strings.Faq_Q2_Title}"
                                              Style="{StaticResource SettingsSectionHeader}" />
                         <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
-                                             Text="{Binding Strings.Faq_Q2_Answer1, Source={x:Static local:App.Translator}}" />
+                                             Text="{Binding Translator.Strings.Faq_Q2_Answer1}" />
                         <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap"
-                                             Text="{Binding Strings.Faq_Q2_Answer2, Source={x:Static local:App.Translator}}" />
+                                             Text="{Binding Translator.Strings.Faq_Q2_Answer2}" />
                     </StackPanel>
                 </Border>
 
                 <!-- Q3 -->
                 <Border Style="{StaticResource SettingsSectionBorder}">
                     <StackPanel>
-                        <TextBlock Text="{Binding Strings.Faq_Q3_Title, Source={x:Static local:App.Translator}}"
+                        <TextBlock Text="{Binding Translator.Strings.Faq_Q3_Title}"
                                              Style="{StaticResource SettingsSectionHeader}" />
                         <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
-                                             Text="{Binding Strings.Faq_Q3_Answer1, Source={x:Static local:App.Translator}}" />
+                                             Text="{Binding Translator.Strings.Faq_Q3_Answer1}" />
                         <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
-                                             Text="{Binding Strings.Faq_Q3_Answer2, Source={x:Static local:App.Translator}}" />
+                                             Text="{Binding Translator.Strings.Faq_Q3_Answer2}" />
                         <TextBlock Style="{StaticResource SettingsHint}" TextWrapping="Wrap"
-                                             Text="{Binding Strings.Faq_Q3_Hint, Source={x:Static local:App.Translator}}" />
+                                             Text="{Binding Translator.Strings.Faq_Q3_Hint}" />
                     </StackPanel>
                 </Border>
 
                 <!-- Q4 -->
                 <Border Style="{StaticResource SettingsSectionBorder}">
                     <StackPanel>
-                        <TextBlock Text="{Binding Strings.Faq_Q4_Title, Source={x:Static local:App.Translator}}"
+                        <TextBlock Text="{Binding Translator.Strings.Faq_Q4_Title}"
                                              Style="{StaticResource SettingsSectionHeader}" />
                         <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
-                                             Text="{Binding Strings.Faq_Q4_Answer1, Source={x:Static local:App.Translator}}" />
+                                             Text="{Binding Translator.Strings.Faq_Q4_Answer1}" />
                         <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
-                                             Text="{Binding Strings.Faq_Q4_Answer2, Source={x:Static local:App.Translator}}" />
+                                             Text="{Binding Translator.Strings.Faq_Q4_Answer2}" />
 						<TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
-                                             Text="{Binding Strings.Faq_Q4_Answer3, Source={x:Static local:App.Translator}}" />
+                                             Text="{Binding Translator.Strings.Faq_Q4_Answer3}" />
 						<TextBlock Style="{StaticResource SettingsHint}" TextWrapping="Wrap"
-											 Text="{Binding Strings.Faq_Q4_Hint, Source={x:Static local:App.Translator}}" />
+											 Text="{Binding Translator.Strings.Faq_Q4_Hint}" />
 					</StackPanel>
                 </Border>
 
                 <!-- Q5 -->
                 <Border Style="{StaticResource SettingsSectionBorder}">
                     <StackPanel>
-                        <TextBlock Text="{Binding Strings.Faq_Q5_Title, Source={x:Static local:App.Translator}}"
+                        <TextBlock Text="{Binding Translator.Strings.Faq_Q5_Title}"
                                              Style="{StaticResource SettingsSectionHeader}" />
                         <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
-                                             Text="{Binding Strings.Faq_Q5_Answer1, Source={x:Static local:App.Translator}}" />
+                                             Text="{Binding Translator.Strings.Faq_Q5_Answer1}" />
                         <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
-                                             Text="{Binding Strings.Faq_Q5_Answer2, Source={x:Static local:App.Translator}}" />
+                                             Text="{Binding Translator.Strings.Faq_Q5_Answer2}" />
                         <TextBlock Style="{StaticResource SettingsHint}" TextWrapping="Wrap"
-                                             Text="{Binding Strings.Faq_Q5_Hint, Source={x:Static local:App.Translator}}" />
+                                             Text="{Binding Translator.Strings.Faq_Q5_Hint}" />
                     </StackPanel>
                 </Border>
 
                 <!-- Q6 -->
                 <Border Style="{StaticResource SettingsSectionBorder}">
                     <StackPanel>
-                        <TextBlock Text="{Binding Strings.Faq_Q6_Title, Source={x:Static local:App.Translator}}"
+                        <TextBlock Text="{Binding Translator.Strings.Faq_Q6_Title}"
                                              Style="{StaticResource SettingsSectionHeader}" />
                         <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
-                                             Text="{Binding Strings.Faq_Q6_Answer1, Source={x:Static local:App.Translator}}" />
+                                             Text="{Binding Translator.Strings.Faq_Q6_Answer1}" />
 						<TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
-                                             Text="{Binding Strings.Faq_Q6_Answer2, Source={x:Static local:App.Translator}}" />
+                                             Text="{Binding Translator.Strings.Faq_Q6_Answer2}" />
 						<TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
-																 Text="{Binding Strings.Faq_Q6_Answer3, Source={x:Static local:App.Translator}}" />
+																 Text="{Binding Translator.Strings.Faq_Q6_Answer3}" />
 						<TextBlock Style="{StaticResource SettingsHint}" TextWrapping="Wrap"
-																 Text="{Binding Strings.Faq_Q6_Hint, Source={x:Static local:App.Translator}}" />
+																 Text="{Binding Translator.Strings.Faq_Q6_Hint}" />
 					</StackPanel>
                 </Border>
 
                 <!-- Q7 -->
                 <Border Style="{StaticResource SettingsSectionBorder}">
                     <StackPanel>
-                        <TextBlock Text="{Binding Strings.Faq_Q7_Title, Source={x:Static local:App.Translator}}"
+                        <TextBlock Text="{Binding Translator.Strings.Faq_Q7_Title}"
                                              Style="{StaticResource SettingsSectionHeader}" />
                         <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
-                                             Text="{Binding Strings.Faq_Q7_Answer1, Source={x:Static local:App.Translator}}" />
+                                             Text="{Binding Translator.Strings.Faq_Q7_Answer1}" />
                         <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap"
-                                             Text="{Binding Strings.Faq_Q7_Answer2, Source={x:Static local:App.Translator}}" />
+                                             Text="{Binding Translator.Strings.Faq_Q7_Answer2}" />
                     </StackPanel>
                 </Border>
 
                 <!-- Q8 -->
                 <Border Style="{StaticResource SettingsSectionBorder}">
                     <StackPanel>
-                        <TextBlock Text="{Binding Strings.Faq_Q8_Title, Source={x:Static local:App.Translator}}"
+                        <TextBlock Text="{Binding Translator.Strings.Faq_Q8_Title}"
                                              Style="{StaticResource SettingsSectionHeader}" />
                         <TextBlock Style="{StaticResource SettingsLabel}" TextWrapping="Wrap" Margin="0,0,0,6"
-                                             Text="{Binding Strings.Faq_Q8_Answer1, Source={x:Static local:App.Translator}}" />
+                                             Text="{Binding Translator.Strings.Faq_Q8_Answer1}" />
                         <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
                             <Button x:Name="OpenGitHubIssuesButton"
-                                            Content="{Binding Strings.Faq_Q8_OpenIssuesButton, Source={x:Static local:App.Translator}}"
+                                            Content="{Binding Translator.Strings.Faq_Q8_OpenIssuesButton}"
                                             Style="{StaticResource SettingsToolButton}"
                                             Click="OpenGitHubIssues_Click" />
                             <TextBlock Style="{StaticResource SettingsHint}"
                                                  VerticalAlignment="Center" Margin="12,0,0,0"
-                                                 Text="{Binding Strings.Faq_Q8_OpenIssuesHint, Source={x:Static local:App.Translator}}" />
+                                                 Text="{Binding Translator.Strings.Faq_Q8_OpenIssuesHint}" />
                         </StackPanel>
                         <TextBlock Style="{StaticResource SettingsHint}" Margin="0,8,0,0" TextWrapping="Wrap"
-                                             Text="{Binding Strings.Faq_Q8_Hint, Source={x:Static local:App.Translator}}" />
+                                             Text="{Binding Translator.Strings.Faq_Q8_Hint}" />
                     </StackPanel>
                 </Border>
             </StackPanel>

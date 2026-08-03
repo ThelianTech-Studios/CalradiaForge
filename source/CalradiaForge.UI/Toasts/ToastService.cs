@@ -3,6 +3,7 @@ namespace CalradiaForge.UI.Toasts {
 	using System.Collections.Generic;
 	using System.Collections.ObjectModel;
 	using System.Linq;
+	using System.Threading;
 	using System.Threading.Tasks;
 	using System.Windows;
 	using System.Windows.Media;
@@ -15,10 +16,12 @@ namespace CalradiaForge.UI.Toasts {
 	/// visible toasts with auto-dismiss timers, pause/resume, and progress updates.
 	/// Must be created on the UI thread or provided the UI dispatcher.
 	/// </summary>
-	public sealed class ToastService {
+	public sealed class ToastService : IDisposable {
 		private readonly Dispatcher _dispatcher;
 		private readonly Dictionary<Guid, DispatcherTimer> _timers = [];
 		private readonly TimeSpan _closeAnimationDuration = TimeSpan.FromMilliseconds(160);
+		private readonly CancellationTokenSource _shutdownCancellation = new();
+		private bool _disposed;
 
 		/// <summary>
 		/// Gets the collection of currently visible toasts.
@@ -40,6 +43,8 @@ namespace CalradiaForge.UI.Toasts {
 		/// Shows a toast notification and returns its unique Id.
 		/// </summary>
 		public Guid Show(ToastRequest request) {
+			ArgumentNullException.ThrowIfNull(request);
+			ThrowIfDisposed();
 			return RunOnUiThread(() => {
 				ToastViewModel viewModel = CreateViewModel(request);
 				InsertToast(viewModel);
@@ -53,23 +58,55 @@ namespace CalradiaForge.UI.Toasts {
 			});
 		}
 
+		/// <summary>
+		/// Atomically replaces an existing toast with a new request and returns the
+		/// replacement Id. If the original toast is no longer visible, the request
+		/// is shown as a new toast.
+		/// </summary>
+		public Guid Replace(Guid toastId, ToastRequest request) {
+			ArgumentNullException.ThrowIfNull(request);
+			ThrowIfDisposed();
+			return RunOnUiThread(() => {
+				ToastViewModel replacement = CreateViewModel(request);
+				ToastViewModel? current = VisibleToasts.FirstOrDefault(t => t.Id == toastId);
+				if (current is null) {
+					InsertToast(replacement);
+				} else {
+					int index = VisibleToasts.IndexOf(current);
+					StopTimer(toastId);
+					VisibleToasts[index] = replacement;
+				}
+
+				if (!replacement.IsPersistent) {
+					TimeSpan duration = request.Duration ?? GetDefaultDuration(request.Severity);
+					StartTimer(replacement, duration);
+				}
+
+				return replacement.Id;
+			});
+		}
+
 		/// <summary>Closes a toast by Id with a fade-out animation.</summary>
 		public void Close(Guid toastId) {
+			ThrowIfDisposed();
 			RunOnUiThread(() => CloseInternal(toastId, animate: true));
 		}
 
 		/// <summary>Pauses the auto-dismiss timer for a toast (e.g. on mouse hover).</summary>
 		public void Pause(Guid toastId) {
+			ThrowIfDisposed();
 			RunOnUiThread(() => PauseInternal(toastId));
 		}
 
 		/// <summary>Resumes a paused auto-dismiss timer.</summary>
 		public void Resume(Guid toastId) {
+			ThrowIfDisposed();
 			RunOnUiThread(() => ResumeInternal(toastId));
 		}
 
 		/// <summary>Updates progress and optionally the message on a progress toast.</summary>
 		public void UpdateProgress(Guid toastId, double value, double max, string? message = null) {
+			ThrowIfDisposed();
 			RunOnUiThread(() => {
 				ToastViewModel? viewModel = VisibleToasts.FirstOrDefault(t => t.Id == toastId);
 				if (viewModel is null) {
@@ -162,10 +199,18 @@ namespace CalradiaForge.UI.Toasts {
 		/// Removes a toast after the close animation delay.
 		/// </summary>
 		private async Task RemoveAfterDelayAsync(ToastViewModel viewModel) {
-			await Task.Delay(_closeAnimationDuration);
-			_dispatcher.Invoke(() => {
-				VisibleToasts.Remove(viewModel);
-			});
+			try {
+				await Task.Delay(_closeAnimationDuration, _shutdownCancellation.Token);
+				if (_dispatcher.HasShutdownStarted || _dispatcher.HasShutdownFinished) {
+					return;
+				}
+				await _dispatcher.InvokeAsync(
+					() => VisibleToasts.Remove(viewModel),
+					DispatcherPriority.Normal,
+					_shutdownCancellation.Token);
+			} catch (OperationCanceledException) when (_shutdownCancellation.IsCancellationRequested) {
+				// Provider-owned shutdown cancels pending toast animations.
+			}
 		}
 
 		/// <summary>
@@ -220,13 +265,9 @@ namespace CalradiaForge.UI.Toasts {
 		/// <summary>
 		/// Returns a default display duration for the specified severity.
 		/// </summary>
-		private static TimeSpan GetDefaultDuration(ToastSeverity severity) {
-			return severity switch {
-				ToastSeverity.Success => TimeSpan.FromSeconds(5),
-				ToastSeverity.Warning => TimeSpan.FromSeconds(3),
-				ToastSeverity.Error => TimeSpan.FromSeconds(8),
-				_ => TimeSpan.FromSeconds(5)
-			};
+		internal static TimeSpan GetDefaultDuration(ToastSeverity severity) {
+			_ = severity;
+			return TimeSpan.FromSeconds(8);
 		}
 
 		/// <summary>
@@ -283,5 +324,37 @@ namespace CalradiaForge.UI.Toasts {
 		}
 
 		#endregion
+
+		/// <summary>Stops provider-owned timers and pending animation work.</summary>
+		public void Dispose() {
+			if (_disposed) {
+				return;
+			}
+			_disposed = true;
+			_shutdownCancellation.Cancel();
+
+			void StopAllTimers() {
+				foreach (DispatcherTimer timer in _timers.Values) {
+					timer.Stop();
+				}
+				_timers.Clear();
+			}
+
+			if (!_dispatcher.HasShutdownStarted && !_dispatcher.HasShutdownFinished) {
+				if (_dispatcher.CheckAccess()) {
+					StopAllTimers();
+				} else {
+					_dispatcher.Invoke(StopAllTimers);
+				}
+			} else {
+				StopAllTimers();
+			}
+
+			_shutdownCancellation.Dispose();
+		}
+
+		private void ThrowIfDisposed() {
+			ObjectDisposedException.ThrowIf(_disposed, this);
+		}
 	}
 }

@@ -2,15 +2,16 @@ namespace CalradiaForge.Core.Infra.Eula {
 	using System.Reflection;
 
 	using CalradiaForge.Core.Infra.Config;
-	using CalradiaForge.Core.Infra.Logging;
+
+	using Serilog;
+	using Serilog.Events;
 
 	/// <summary>
 	/// Reads the embedded EULA text and provides acceptance checking against persisted config.
-	/// Core-only — no UI references. Receives <see cref="AppConfigSettings"/> by parameter.
+	/// Core-only â€” no UI references. Receives <see cref="AppSettings"/> by parameter.
 	/// </summary>
 	public sealed class EulaService {
 		private const string EulaEmbeddedResourceName = "CalradiaForge.Resources.EULA.txt";
-		private readonly Logger _logger = Logger.Instance;
 
 		/// <summary>
 		/// Gets the full EULA text loaded from the entry assembly.
@@ -23,23 +24,25 @@ namespace CalradiaForge.Core.Infra.Eula {
 		public void Load() {
 			Assembly? entryAssembly = Assembly.GetEntryAssembly();
 			if (entryAssembly is null) {
-				_logger.Error("EulaService: Could not resolve entry assembly for embedded EULA.");
+				Log.Error("EulaService: Could not resolve entry assembly for embedded EULA.");
 				EulaText = "EULA could not be loaded. Please reinstall the application.";
 				return;
 			}
 
 			using Stream? stream = entryAssembly.GetManifestResourceStream(EulaEmbeddedResourceName);
 			if (stream is null) {
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
+				if (Log.IsEnabled(LogEventLevel.Debug)) {
 					string[] resources = entryAssembly.GetManifestResourceNames();
-					_logger.Debug("EulaService: Embedded EULA resource not found.", new {
-						Expected = EulaEmbeddedResourceName,
-						Assembly = entryAssembly.FullName,
-						Resources = resources
-					});
+					Log.Debug(
+						"EulaService: Embedded EULA resource not found. Expected={ExpectedResource} Assembly={Assembly} Resources={Resources}",
+						EulaEmbeddedResourceName,
+						entryAssembly.FullName,
+						resources);
 				}
 
-				_logger.Error($"EulaService: Embedded EULA resource not found: '{EulaEmbeddedResourceName}'.");
+				Log.Error(
+					"EulaService: Embedded EULA resource not found: {ResourceName}.",
+					EulaEmbeddedResourceName);
 				EulaText = "EULA could not be loaded. Please reinstall the application.";
 				return;
 			}
@@ -47,30 +50,26 @@ namespace CalradiaForge.Core.Infra.Eula {
 			using StreamReader reader = new(stream);
 			EulaText = reader.ReadToEnd();
 
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("EulaService: Embedded EULA loaded.", new {
-					Resource = EulaEmbeddedResourceName,
-					Length = EulaText.Length
-				});
-			}
+			Log.Debug(
+				"EulaService: Embedded EULA loaded. Resource={Resource} Length={Length}",
+				EulaEmbeddedResourceName,
+				EulaText.Length);
 		}
 
 		/// <summary>
 		/// Determines whether the user needs to accept the EULA.
 		/// Returns <c>true</c> when the persisted flag is <c>false</c>.
 		/// </summary>
-		public bool RequiresAcceptance(AppConfigSettings config) {
+		public bool RequiresAcceptance(AppSettings config) {
 			return !config.EulaAccepted;
 		}
 
 		/// <summary>
 		/// Records EULA acceptance in the provided configuration store.
 		/// </summary>
-		public void RecordAcceptance(AppConfigSettings config) {
+		public void RecordAcceptance(AppSettings config) {
 			config.EulaAccepted = true;
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("EulaService: Acceptance recorded.");
-			}
+			Log.Debug("EulaService: Acceptance recorded.");
 		}
 	}
 }

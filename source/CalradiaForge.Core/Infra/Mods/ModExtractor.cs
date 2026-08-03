@@ -1,15 +1,13 @@
 ﻿namespace CalradiaForge.Core.Infra.Mods {
 	using System;
+	using System.Collections.Generic;
 	using System.Threading;
 	using System.Threading.Tasks;
 
-	using CalradiaForge.Core.Infra.Logging;
 	using CalradiaForge.Core.Infra.Paths;
+	using CalradiaForge.Core.Models;
 
-	// DEPRECATED: SharpCompress implementation (replaced by SevenZipWrapper)
-	// using SharpCompress.Archives;
-	// using SharpCompress.Common;
-
+	using Serilog;
 	using SevenZipWrapper;
 
 	/// <summary>
@@ -17,8 +15,6 @@
 	/// and locates the true mod root directory (handling lazy nested folder structures).
 	/// </summary>
 	public static class ModExtractor {
-		private static readonly Logger _logger = Logger.Instance;
-
 		/// <summary>
 		/// Heuristic for estimating file count from archive size.
 		/// Used as a fallback if the archive cannot be opened for exact counting.
@@ -31,19 +27,18 @@
 		/// Falls back to a size-based heuristic if the archive cannot be read.
 		/// </summary>
 		/// <param name="archivePath">Full path to the archive file.</param>
-		/// <returns>Exact file count from the archive, minimum 10.</returns>
+		/// <returns>Exact file count from the archive, minimum 1.</returns>
 		public static int EstimateFileCount(string archivePath) {
 			try {
 				using ArchiveFile archive = new(archivePath);
 				return Math.Max(1, archive.Entries.Count);
 			} catch {
-				// Fallback to heuristic if archive cannot be opened (corrupt, locked, etc.)
 				try {
 					long bytes = new FileInfo(archivePath).Length;
 					double megabytes = bytes / (1024.0 * 1024.0);
-					return Math.Max(10, (int)(megabytes * FilesPerMBEstimate));
+					return Math.Max(1, (int)(megabytes * FilesPerMBEstimate));
 				} catch {
-					return 100; // Safe fallback
+					return 1; // Safe fallback
 				}
 			}
 		}
@@ -64,39 +59,121 @@
 			string archivePath,
 			CancellationToken token = default,
 			Action<int>? onFileExtracted = null) {
+			ArchiveExtractionResult result = await ExtractToTempResultAsync(
+				archivePath, token, onFileExtracted);
+			return result.TempDirectory;
+		}
+
+		/// <summary>
+		/// Opens an archive, validates that every entry resolves inside the managed
+		/// temporary destination, and only then extracts it.
+		/// </summary>
+		public static async Task<ArchiveExtractionResult> ExtractToTempResultAsync(
+			string archivePath,
+			CancellationToken token = default,
+			Action<int>? onFileExtracted = null) {
 
 			if (string.IsNullOrWhiteSpace(archivePath) || !File.Exists(archivePath)) {
-				_logger.Warning($"ModExtractor: Archive not found: '{archivePath}'");
-				return null;
+				Log.Warning("ModExtractor: Archive not found: {ArchivePath}.", archivePath);
+				return ArchiveExtractionResult.Fail("Archive file was not found.");
 			}
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ModExtractor: Starting extraction.", new { ArchivePath = archivePath });
-			}
+			Log.Debug("ModExtractor: Starting extraction of {ArchivePath}.", archivePath);
 			string tempDir = Path.Combine(AppPaths.ExtractionDirectory, Guid.NewGuid().ToString());
 			try {
-				Directory.CreateDirectory(tempDir);
 				await Task.Run(() => {
 					using (ArchiveFile archive = new(archivePath)) {
-						archive.Extract(tempDir, overwrite: true, onFileExtracted, token);
-						if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-							_logger.Debug("ModExtractor: Extraction complete.", new { ArchivePath = archivePath, TempDir = tempDir });
+						// Entries is lazy. Enumerating it proves the archive can be opened
+						// and gives us every relative output name before any write occurs.
+						IReadOnlyList<ArchiveEntry> entries = archive.Entries;
+						if (!TryValidateEntryContainment(entries, tempDir, out string validationError)) {
+							throw new UnsafeArchiveEntryException(validationError);
 						}
+
+						Directory.CreateDirectory(tempDir);
+						archive.Extract(tempDir, overwrite: true, onFileExtracted, token);
+						Log.Debug(
+							"ModExtractor: Extraction complete for {ArchivePath} in {TempDirectory}.",
+							archivePath,
+							tempDir);
 					}
 				}, token);
 
-				_logger.Info($"ModExtractor: Extracted '{Path.GetFileName(archivePath)}' to temp: '{tempDir}'");
-				return tempDir;
+				Log.Information(
+					"ModExtractor: Extracted {ArchiveFileName} to temporary directory {TempDirectory}.",
+					Path.GetFileName(archivePath),
+					tempDir);
+				return ArchiveExtractionResult.Ok(tempDir);
 			} catch (OperationCanceledException) {
 				CleanupTempDirectory(tempDir);
 				throw;
-			} catch (Exception ex) {
-				_logger.Error(ex, $"ModExtractor: Failed to extract '{archivePath}'");
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("ModExtractor: Extraction failed.", new { ArchivePath = archivePath, TempDir = tempDir }, ex);
-				}
+			} catch (UnsafeArchiveEntryException ex) {
+				Log.Warning(
+					ex,
+					"ModExtractor: Blocked unsafe archive {ArchiveFileName}.",
+					Path.GetFileName(archivePath));
 				CleanupTempDirectory(tempDir);
-				return null;
+				return ArchiveExtractionResult.Fail($"Unsafe archive blocked: {ex.Message}");
+			} catch (Exception ex) {
+				Log.Error(ex, "ModExtractor: Failed to extract {ArchivePath}.", archivePath);
+				Log.Debug(
+					ex,
+					"ModExtractor: Extraction failed for {ArchivePath} in {TempDirectory}.",
+					archivePath,
+					tempDir);
+				CleanupTempDirectory(tempDir);
+				return ArchiveExtractionResult.Fail($"Archive could not be opened or extracted: {ex.Message}");
 			}
+		}
+
+		private static bool TryValidateEntryContainment(
+			IReadOnlyList<ArchiveEntry> entries,
+			string destinationRoot,
+			out string error) {
+			string canonicalRoot = Path.GetFullPath(destinationRoot)
+				.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+			string rootPrefix = canonicalRoot + Path.DirectorySeparatorChar;
+			char[] separators = [Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar];
+			char[] invalidFileNameChars = Path.GetInvalidFileNameChars();
+
+			foreach (ArchiveEntry entry in entries) {
+				string? entryName = entry.FileName;
+				if (string.IsNullOrWhiteSpace(entryName)) {
+					error = "An archive entry has no relative file name.";
+					return false;
+				}
+
+				if (Path.IsPathRooted(entryName) || Path.IsPathFullyQualified(entryName)) {
+					error = $"Entry '{entryName}' uses a rooted path.";
+					return false;
+				}
+
+				foreach (string segment in entryName.Split(separators, StringSplitOptions.RemoveEmptyEntries)) {
+					if (segment == "..") {
+						error = $"Entry '{entryName}' attempts parent-directory traversal.";
+						return false;
+					}
+					if (segment.IndexOfAny(invalidFileNameChars) >= 0) {
+						error = $"Entry '{entryName}' contains an invalid Windows path component.";
+						return false;
+					}
+				}
+
+				string outputPath;
+				try {
+					outputPath = Path.GetFullPath(Path.Combine(canonicalRoot, entryName));
+				} catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException) {
+					error = $"Entry '{entryName}' does not resolve to a valid output path.";
+					return false;
+				}
+
+				if (!outputPath.StartsWith(rootPrefix, StringComparison.OrdinalIgnoreCase)) {
+					error = $"Entry '{entryName}' resolves outside the extraction directory.";
+					return false;
+				}
+			}
+
+			error = string.Empty;
+			return true;
 		}
 
 		/// <summary>
@@ -111,14 +188,10 @@
 				return null;
 			}
 
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ModExtractor: Searching for mod root.", new { ExtractedDir = extractedDir });
-			}
+			Log.Debug("ModExtractor: Searching for mod root in {ExtractedDirectory}.", extractedDir);
 			// Check if SubModule.xml is directly in the extracted directory
 			if (File.Exists(Path.Combine(extractedDir, "SubModule.xml"))) {
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("ModExtractor: Found SubModule.xml at root.", new { ExtractedDir = extractedDir });
-				}
+				Log.Debug("ModExtractor: Found SubModule.xml at extraction root {ExtractedDirectory}.", extractedDir);
 				return extractedDir;
 			}
 
@@ -136,9 +209,10 @@
 				// Check each subdirectory for SubModule.xml
 				foreach (string subDir in subDirs) {
 					if (File.Exists(Path.Combine(subDir, "SubModule.xml"))) {
-						if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-							_logger.Debug("ModExtractor: Found SubModule.xml in subdirectory.", new { ExtractedDir = extractedDir, ModRoot = subDir });
-						}
+						Log.Debug(
+							"ModExtractor: Found SubModule.xml under {ExtractedDirectory} at mod root {ModRoot}.",
+							extractedDir,
+							subDir);
 						return subDir;
 					}
 				}
@@ -154,10 +228,8 @@
 				break;
 			}
 
-			_logger.Warning($"ModExtractor: No SubModule.xml found in extracted archive at: '{extractedDir}'");
-			if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-				_logger.Debug("ModExtractor: Mod root not found.", new { ExtractedDir = extractedDir });
-			}
+			Log.Warning("ModExtractor: No SubModule.xml found in extracted archive at {ExtractedDirectory}.", extractedDir);
+			Log.Debug("ModExtractor: Mod root not found in {ExtractedDirectory}.", extractedDir);
 			return null;
 		}
 
@@ -165,19 +237,50 @@
 		/// Safely deletes a temporary extraction directory.
 		/// </summary>
 		public static void CleanupTempDirectory(string tempDir) {
+			if (!TryResolveManagedTempDirectory(tempDir, out string managedTempDir)) {
+				Log.Warning("ModExtractor: Refused to clean unmanaged temp directory {TempDirectory}.", tempDir);
+				return;
+			}
+
 			try {
-				if (Directory.Exists(tempDir)) {
-					Directory.Delete(tempDir, recursive: true);
-					if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-						_logger.Debug("ModExtractor: Cleaned temp directory.", new { TempDir = tempDir });
-					}
+				if (Directory.Exists(managedTempDir)) {
+					Directory.Delete(managedTempDir, recursive: true);
+					Log.Debug("ModExtractor: Cleaned temporary directory {TempDirectory}.", managedTempDir);
 				}
 			} catch (Exception ex) {
-				_logger.Warning($"ModExtractor: Failed to clean up temp directory '{tempDir}': {ex.Message}");
-				if (_logger.MinimumLevel == Logger.LogLevel.Debug) {
-					_logger.Debug("ModExtractor: Temp cleanup failed.", new { TempDir = tempDir }, ex);
-				}
+				Log.Warning(ex, "ModExtractor: Failed to clean up temporary directory {TempDirectory}.", managedTempDir);
+				Log.Debug(ex, "ModExtractor: Temporary cleanup failed for {TempDirectory}.", managedTempDir);
 			}
+		}
+
+		private static bool TryResolveManagedTempDirectory(string tempDir, out string managedTempDir) {
+			managedTempDir = string.Empty;
+			if (string.IsNullOrWhiteSpace(tempDir)) {
+				return false;
+			}
+
+			try {
+				string extractionRoot = Path.GetFullPath(AppPaths.ExtractionDirectory)
+					.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+				string candidate = Path.GetFullPath(tempDir)
+					.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+				string? parent = Path.GetDirectoryName(candidate);
+				string directoryName = Path.GetFileName(candidate);
+
+				if (!string.Equals(parent, extractionRoot, StringComparison.OrdinalIgnoreCase) ||
+					!Guid.TryParseExact(directoryName, "D", out _)) {
+					return false;
+				}
+
+				managedTempDir = candidate;
+				return true;
+			} catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException) {
+				return false;
+			}
+		}
+
+		private sealed class UnsafeArchiveEntryException : Exception {
+			public UnsafeArchiveEntryException(string message) : base(message) { }
 		}
 	}
 }
