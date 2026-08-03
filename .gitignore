@@ -1,8 +1,6 @@
 ﻿# Visual Studio cache
 .vs/
 
-# Visual Studio files
-
 # Build output
 bin/
 obj/
@@ -24,7 +22,6 @@ BenchmarkDotNet.Artifacts/
 
 # Auto-generated
 /global.json
-/TODO_v1.md
 /CalradiaForge.UI/Properties/PublishProfiles
 /CalradiaForge_*.zip
 /releases
@@ -35,9 +32,4 @@ BenchmarkDotNet.Artifacts/
 /Calradia Forge Collection.zip
 /sourcecode.zip
 /source/releases
-/docs/audit
-/docs/refactor.zip
-/docs/refactor_*.zip
-/docs/TEMP_Codex_Instructions
-/docs/docs_*.zip
 /source/Languages/*.zip
