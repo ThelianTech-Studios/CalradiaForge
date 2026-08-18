@@ -7,187 +7,153 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## 0.12.15 - 2026-03-16
+## 0.14.0 - Public Release | 2026-08-02
 
-> EULA packaging hardening — moved from deployed disk file to embedded resource so single-file publish keeps license text internal to the executable.
-
-### Changed
-
-- `CalradiaForge.UI\CalradiaForge.UI.csproj` EULA build item switched from publish-time content copy:
-  - removed `Content Include="Resources\EULA.txt"` with `CopyToOutputDirectory`
-  - added `EmbeddedResource Include="Resources\EULA.txt"` with logical name `CalradiaForge.Resources.EULA.txt`
-- `CalradiaForge.Core\Infra\Eula\EulaService.cs` loading strategy changed from filesystem path (`AppPaths.EulaFilePath` + `File.ReadAllText`) to embedded-resource stream loading via `Assembly.GetEntryAssembly().GetManifestResourceStream(...)`.
-
-### Fixed
-
-- Single-file publish behavior now aligns with release intent: EULA text is bundled inside `CalradiaForge.exe` instead of relying on an external `Resources\EULA.txt` file at runtime.
-- Startup EULA prompt is resilient to missing deployed resource files by reading from the executable payload directly.
-
----
-
-## 0.12.14 - 2026-03-16
-
-> Localization release-note follow-up — language pack inventory and manifest updates documented under a dedicated patch bump.
+> Pre-release stabilization: added defaults-first configuration recovery, fail-closed Steam process inspection, centralized beta version metadata, accepted Phase 9 benchmark infrastructure, and updated third-party software notices.
 
 ### Added
 
-- Language pack files now documented in release notes as part of the localization rollout:
-  - `Languages\en-US.json`
-  - `Languages\es-ES.json`
-  - `Languages\de-DE.json`
-  - `Languages\ru-RU.json`
-  - `Languages\it-IT.json`
-  - `Languages\pl-PL.json`
-  - `Languages\sv-SE.json`
-  - `Languages\tr-TR.json`
-  - `Languages\zh-CN.json`
+- Added one canonical configuration-defaults source, typed load/save/persistence outcomes, and a narrow persistence seam for deterministic recovery testing. Configuration durability loss now produces one actionable startup or runtime warning through the existing notification lifecycle.
+- Added explicit Steam process states (`Running`, `NotRunning`, and `Unknown`) with injectable process-inspection, process-start, and delay boundaries. Added deterministic coverage for inspection failures, process disposal, bounded startup polling, Bannerlord/BLSE launch blocking, initialization delay, and unchanged Standalone/GOG launching.
+- Added `source/Directory.Build.props` as the shared version source for all projects, with application version `0.14.0-beta`, assembly/file version `0.14.0.0`, and informational version `0.14.0-beta` without a source-revision suffix. Added testable Settings/About formatting that preserves prerelease labels and removes build metadata from display.
+- Added the authoritative Phase 9 generated-fixture benchmark categories and runners, plus an explicit-consent, offline, read-only real-installation parser/scanner suite with corpus-stability checks and path-redaction controls.
+- Added focused configuration, startup-notification, Steam-launch, and application-version tests.
 
 ### Changed
 
-- `Languages\languages.json` manifest updated/verified to register all currently shipped language packs and display names.
-- Changelog coverage expanded to reflect first-launch language selection + manifest-backed language list behavior.
-- Startup localization flow notes aligned with current app behavior (`InitializeLangSelection(TranslationManager)` before translator initialization on first run).
+- Changed configuration loading to construct a complete in-memory defaults map before overlaying persisted values. Valid and unknown settings survive; missing, null, or invalid recognized values are repaired; obsolete retention data is removed; and malformed JSON is preserved to a collision-safe sibling backup before replacement.
+- Changed expected configuration read/write failure handling so inaccessible files remain untouched, startup can continue with in-memory defaults, current-session setting changes survive failed saves, repeated writes stop after persistence becomes unavailable, and failed EULA persistence does not terminate the current session.
+- Changed Steam launch readiness so process-enumeration or disposal failures are warning-logged as `Unknown` instead of being treated as success. Steam is started once when appropriate, polling remains bounded, and Steam installations cannot launch Bannerlord or BLSE without a positive `Running` result.
+- Changed Core and UI project metadata to inherit the shared beta version and changed Settings/About to read the entry assembly informational version with a numeric fallback. The prior hardcoded `0.12.15` project versions and misleading `1.0.0` display fallback were removed.
+- Renamed the current benchmark runner for the Phase 9 baseline, categorized existing benchmark cases accordingly, and added fixture, input-discovery, consent, redaction, and artifact-validation controls for the supplemental owner-installation measurements. No production performance optimization was implemented.
+- Organized `TranslationStrings.ApplyTranslationDictionary` under an explicit source region without changing localization behavior.
+- Updated the CalradiaForge software license to version 1.3 for 2026 and added individually formatted third-party notices for the previously unlisted Core/UI runtime dependencies. Test and benchmark package notices remain excluded because those packages are not distributed with the application.
 
 ### Fixed
 
-- Patch note completeness gap: prior entry did not explicitly list all language files and manifest scope now present in the repository.
-- Release documentation alignment with current `dev-release` state after recent localization commits.
+- Prevented malformed, unreadable, locked, access-denied, or unwritable configuration storage from turning recoverable persistence failures into fatal startup or typed-setting exceptions.
+- Prevented Steam inspection failures from falsely authorizing a game launch or producing an inaccurate Steam-detected claim.
+- Fixed application-version drift between Core, UI, inherited project metadata, and the Settings/About display.
+
+### Verification
+
+- The Phase 9 implementation evidence records successful Debug and Release correctness runs with 272 tests passing in each configuration, 14/14 generated-fixture benchmark cases, and 6/6 consent-gated real-installation parser/scanner cases. Those measurements are offline, warm-cache evidence and are not WPF responsiveness or universal performance baselines.
+- The accepted stabilization implementation record reports zero-error Debug and Release solution builds and all 300 tests passing in each configuration, including 18 focused configuration/lifecycle tests, 12 focused Steam-launch tests, and application-version display coverage. It also records `0.14.0-beta` informational metadata across the project set and preservation of the Core WPF boundary.
+- The owner manually inspected and approved the accepted source endpoint before this documentation-only closeout. This closeout did not rerun application runtime behavior and does not claim live Steam/Bannerlord, manual WPF, packaged-runtime, or release-candidate validation.
+- The existing publish profile's `Any CPU` platform and machine-specific output path were not changed in the accepted source range. This build does not claim versioned repository-relative publish-profile alignment.
+- Destructive mod-upgrade recovery, archive resource limits, all pending Phase 10 performance findings, Nexus functionality, credentials, polling, and the broader documentation overhaul remain deferred or excluded.
 
 ---
 
-## 0.12.13 - 2026-03-15
+## 0.13.105 - Internal | 2026-08-01
 
-> First-launch localization completion — pre-EULA language selector shipped, EULA chrome localized, and startup wiring finalized.
+> Refactor Phase 8: moved the retained Launcher, Mod Packs, and Settings presentation workflows into lifecycle-aware ViewModels, completed the approved Settings path feedback and toast-duration follow-up, and retained existing Core workflow ownership.
 
 ### Added
 
-- First-launch language selection window implementation:
-  - `CalradiaForge.UI\Views\LanguageSelectWindow.xaml`
-  - `CalradiaForge.UI\Views\LanguageSelectWindow.xaml.cs`
-  - `CalradiaForge.UI\Resources\LangSelectWindowStyles.xaml`
-- Startup language pre-selection flow in `App.InitializeLangSelection(TranslationManager)`:
-  - Loads language options from `languages.json`
-  - Opens modal selector before EULA on first run (`!AppConfig.EulaAccepted`)
-  - Persists selected code to `AppConfigSettings.Language`
-- EULA localization key coverage added to translation model:
-  - `Eula_WindowTitle`
-  - `Eula_CloseTooltip`
-  - `Eula_Header`
-  - `Eula_VersionLabel`
-  - `Eula_AcceptanceText`
-  - `Eula_DeclineButton`
-  - `Eula_AcceptButton`
-- English language file entries added for all new EULA keys in `Languages\en-US.json`
+- Added retained singleton `LauncherViewModel`, `ModpacksViewModel`, and `SettingsViewModel` presentation owners on a shared awaitable lifecycle foundation, backed by CommunityToolkit.Mvvm commands and observable state.
+- Added an awaitable WPF UI-dispatch boundary and narrow UI interaction contracts/adapters for mod-archive selection, modpack import, Settings folder/executable selection, DLL unblocking, and shell folder opening without moving the underlying Core workflows into UI.
+- Added focused ViewModel, dispatcher, lifecycle/navigation, composition, toast, and localization coverage, including serialized navigation, accepted-snapshot reconciliation, command availability, manual Workshop selection, language refresh, and dated log-archive behavior.
+- Added localized English fallback and generated runtime-language entries for the Launcher ghost-modpack prompt and Steam Workshop valid/invalid indicators.
 
 ### Changed
 
-- `App.InitializeTranslatorService()` startup wiring updated to:
-  - Construct `TranslationManager` first
-  - Run first-launch language selection before translator initialization
-  - Initialize translator after persisted language selection
-- `EulaWindow.xaml` hardcoded chrome text replaced with static translation bindings via `App.Translator.Strings.*`
-- EULA window title and close tooltip now use localization bindings instead of literals
-- Updated `zh-CN.json` with new EULA translation keys
+- Moved Launcher install, refresh, launch, filtering, drag/drop, launch-target, and modpack-selection presentation orchestration from `LauncherPage` code-behind into `LauncherViewModel`; moved modpack editing/import/create/save presentation into `ModpacksViewModel`; and moved Settings state, validation, redetection, maintenance, and restart presentation into `SettingsViewModel`.
+- Reduced the three retained page code-behind files to one-time `DataContext` wiring and WPF-specific gesture/layout adapters. Their existing `.xaml` filenames and page identities remain unchanged.
+- Changed `MainWindow` navigation to serialize initialization, deactivation, display, and activation of retained ViewModels, including deterministic failure handling and one-time startup-ready signaling after successful initial navigation.
+- Standardized the fallback duration for non-persistent toasts without an explicit duration to eight seconds. Install terminal notifications now use that shared default, while active install-progress notifications remain persistent until their terminal transition.
+- Kept visible Bannerlord and Steam Workshop folder-selection buttons disabled when their configured paths are valid. Steam installations without a valid Workshop folder retain the manual Workshop recovery action, and successful manual selection refreshes the localized validation indicator and command state.
+- Changed the visible navigation label and related FAQ text from Launcher to Home, added a localized ghost-modpack label, and regenerated `source/Languages/en-US.json` with the current Launcher, Phase 7 install-notification, and Phase 8 Settings translation keys.
+- Changed the ConsoleUtils English-language generator to move the generated file directly into `source/Languages` with overwrite support. The test project now explicitly excludes the reserved `Nexus.Tests` tree, and the solution lists `.gitignore` as a solution item.
 
 ### Fixed
 
-- Namespace/type wiring for language selector backend corrected to use in-solution localization model (`LanguageOption` in `CalradiaForge.Core.Infra.Localization`)
-- Startup method-call mismatch fixed by aligning `InitializeLangSelection` call site with its `TranslationManager` parameter signature
-- Modal shutdown safety preserved for language selector (`ShutdownMode.OnExplicitShutdown` during dialog lifetime), preventing premature app termination when the selector closes
+- Fixed the successful manual Steam Workshop selection path so it immediately displays the valid green Workshop indicator and continues to use translated validation text after a language change.
+- Fixed unnecessary manual path reselection after valid detection by binding button availability to the Settings validation state without hiding the controls.
+- Fixed the dated log-lifecycle test so its fixed archive timestamp is evaluated with a matching injected clock instead of the machine's current date.
+
+### Verification
+
+- The accepted implementation record reports zero-error Debug and Release solution builds, all 272 tests passing in each configuration, and all 53 focused Phase 8.E tests passing. It also records successful Core WPF-boundary, toast-duration, affected `async void`, and diff checks; this documentation-only closeout did not rerun runtime behavior.
+- The owner manually inspected and approved the accepted source state before this closeout. The underlying Core automatic game-platform-detection and Steam Workshop scanner/path-resolution algorithms, the inherited DLL-unblock result mapping, performance optimization, Nexus functionality, credentials, polling, and application major/minor version metadata were not changed by this build.
 
 ---
 
-## 0.11.16 - 2026-03-14
+## 0.13.90 - Internal | 2026-07-24
 
-> Localization pipeline modernization — default English generation tooling, translation model rewrite, startup localization flow prep, and new Simplified Chinese language pack.
+> Refactor Phase 7: added install-specific terminal outcomes and correlated application notifications, moved required post-install consistency work into the authoritative pipeline, and completed the retained Launcher page naming foundation.
 
 ### Added
 
-- `CalradiaForge.ConsoleUtils` project (net10.0) added to solution for developer-only utility workflows
-- Console utility tool to regenerate `Languages\en-US.json` from code defaults using:
-  - `TranslationStrings.GetDefaultTranslations()`
-  - `TranslationManager.DefaultEnglishLanguageFile(...)`
-- `zh-CN` (Simplified Chinese) language support:
-  - Added `Languages\zh-CN.json`
-  - Added `zh-CN` entry (`简体中文`) in `Languages\languages.json`
-- New language path helpers in `AppPaths`:
-  - `AppPaths.LanguagesManifestFilePath`
-  - `AppPaths.DefaultLanguageFilePath`
+- Added immutable `ModInstallOperationResult` and `ModInstallProgress` contracts, stable terminal statuses/diagnostic codes, operation and archive correlation, and notification-source interfaces for install progress and completion.
+- Added an application-lifetime `InstallNotificationPresenter` and toast sink that translate correlated Core progress and terminal outcomes into one notification lifecycle, including stale-progress rejection and launcher-completion ordering.
+- Added manager-owned module DLL-unblocking and install reconciliation seams, plus focused Core/UI tests for terminal classification, cancellation/finalization, progress correlation, presenter behavior, DI activation, startup, and localization.
 
 ### Changed
 
-- `TranslationStrings` rewritten to make hardcoded English defaults the single source of truth via `private const string Default...` fields per key
-- `TranslationStrings` now exposes `GetDefaultTranslations()` to build a full key/value English dictionary via reflection
-- `TranslationManager` constructor updated to accept explicit paths:
-  - `languagesDirectory`
-  - `manifestFilepath`
-  - `defaultLangFilepath`
-- `TranslationManager.LoadManifest()` now reads from configured manifest filepath instead of recomputing internally
-- `App.InitializeTranslatorService()` now initializes `TranslationManager` with `AppPaths.LanguagesManifestFilePath` and `AppPaths.DefaultLanguageFilePath`
-- Startup initialization order adjusted so translation service initialization occurs earlier (prep for first-run language selection flow)
+- Changed `ModPipelineManager.InstallAsync` to return a non-null terminal result and to own validation/admission, installer execution, bounded consistency finalization, DLL unblocking, accepted-snapshot reconciliation, terminal publication, and quiescence release without replacing `ModInstaller` or `ModExtractor`.
+- Renamed the retained primary surface from `ModsPage` to `LauncherPage`, including navigation, styles, DI references, localization bindings, configuration comments, and launcher-specific translation identifiers; `ModsPage` remains reserved for future dedicated mod management.
+- Updated launcher, modpack, settings, main-window, language-selection, toast, and startup-composition integration for the new presenter and retained Launcher identity. Shared ComboBox styling now comes from the Launcher resource dictionary.
 
-### Fixed
+### Verification
 
-- Translation filename/path wiring issue from prior release cycle (language file typo/path consistency correction)
-- Translation manager naming/structure cleanup (legacy naming drift corrected)
-- `en-US.json` access coordination logic introduced in `TranslationManager` so default-file read/write paths can use lock-based synchronization
+- The accepted source endpoint recorded successful Debug and Release solution builds and 195 passing tests in each configuration, including Phase 7 manager/result/presenter/rename coverage. Owner approval occurred before this documentation-only closeout; no runtime validation is newly claimed here.
+- No Nexus implementation, credential persistence, automatic update check, polling, generic result abstraction, MVVM extraction, or Steam Workshop/path-resolution fix is represented by this build.
 
 ---
 
-## 0.11.5 - 2026-03-09
+## 0.13.83 - Internal | 2026-07-23
 
-> EULA window bug fixes — resource dictionary wiring, WPF shutdown mode, title bar drag support, and toggle switch styling.
+> Refactor Phase 6.C: completed the application-wide migration from the retired legacy logger to the provider-owned Serilog pipeline, added the narrow pre-Serilog startup-failure fallback, and preserved the single provider-disposal close path.
 
 ### Added
 
-- `EulaWindow` title bar — draggable title bar with app icon, branded text, and close button reusing `TitleBarCloseButton` style from `TitleBar.xaml`; close button wired to decline the EULA (`Accepted = false`, `DialogResult = false`)
-- `EulaTitleBar` and `EulaTitleBarText` styles added to `EulaWindowStyles.xaml`
-- `TitleBar_MouseLeftButtonDown` drag handler and `CloseButton_Click` decline handler added to `EulaWindow.xaml.cs`
+- Added `EmergencyStartupLogWriter` for fatal failures before the provider-owned Serilog pipeline becomes operational. It lazily appends UTC-stamped exception details to `CalradiaForge_StartupFailure.log`, tries the application Logs directory followed by narrow Local AppData and temporary-directory fallbacks, and contains all secondary write failures so diagnostics cannot block fatal shutdown.
+- Added focused tests for primary emergency-log writes, fallback-directory selection, all-candidates-failed containment, persisted Debug Mode after configuration reload, and the absence of an emergency file during successful provider construction.
 
 ### Changed
 
-- `App.xaml` — added `ShutdownMode="OnMainWindowClose"` to `<Application>` element to prevent automatic shutdown when the EULA dialog closes before `MainWindow` is created
-- `EulaAcceptance()` — temporarily switches `ShutdownMode` to `OnExplicitShutdown` for the duration of `EulaWindow.ShowDialog()` and restores the previous mode after, preventing WPF from auto-assigning `EulaWindow` as `MainWindow` and terminating on close
-- `EulaWindow.xaml` — replaced plain `CheckBox` with `SettingsToggleSwitch` style (orange track / gold thumb) for visual consistency with the Settings page debug mode toggle; window height increased from 580 to 620 to accommodate the new title bar
+- Migrated every normal Core and UI legacy logger caller to structured `Serilog.Log` events across configuration, EULA, platform detection, launch, localization, paths, modpack persistence/import, scanning, parsing, extraction, installation, BLSE, DLL unblocking, cache management, the accepted pipeline, retained pages, and the main window.
+- Replaced interpolated and anonymous diagnostic payloads with named Serilog properties and exception-first overloads. Routine Debug filtering now belongs to the configured Serilog minimum level; explicit guards remain only where diagnostic payload construction is meaningfully expensive.
+- Kept `ConfigFileManager` and `LoggingSettings` independent of ordinary logging during pre-provider bootstrap, reduced duplicate exception and routine language-application events, and preserved their persistence, recovery, notification, and localization behavior.
+- Added explicit Serilog-operational state to `App`: fatal startup, dispatcher, task, and AppDomain failures use the emergency writer only before the shared pipeline is available, use Serilog while it is operational, and avoid logging through it after provider disposal begins.
+- Changed `AppPaths.LogResolvedPaths(Logger)` to the parameterless `AppPaths.LogResolvedPaths()` structured-logging boundary and migrated its application startup caller.
+- Regenerated the committed `en-US.json` runtime language artifact with the accepted lifecycle-confirmation and Steam Workshop-not-found strings already represented by the current translation contract.
 
 ### Removed
 
-- `EulaAcceptCheckBox` style removed from `EulaWindowStyles.xaml` — no longer referenced after toggle switch replacement
+- Removed the obsolete `Logger` singleton, its parallel `LogLevel` and `MinimumLevel` state, custom session-log files, debugger mirroring, legacy retention cleanup, and debug-payload JSON serialization after the zero-caller inventory passed.
+- Removed transitional legacy-level synchronization from `SerilogLoggerFactory`; persisted `LoggingSettings.DebugMode` now configures the shared Serilog pipeline as the sole runtime logging-level authority.
 
-### Fixed
+### Verification
 
-- `EulaWindowStyles.xaml` not loaded at runtime — resource dictionary was missing from `App.xaml` merged dictionaries, causing `XamlParseException: Cannot find resource named 'EulaWindowTitle'` during `EulaWindow.InitializeComponent()`
-- App shutdown on EULA acceptance — default `ShutdownMode.OnLastWindowClose` caused WPF to terminate when `EulaWindow` (the only window) closed before `MainWindow` was created by `StartupUri`
-- App shutdown on EULA acceptance (second occurrence) — WPF auto-assigned `EulaWindow` as `Application.MainWindow` because it was the first window instantiated; `OnMainWindowClose` then triggered shutdown when it closed; fixed by temporarily switching to `OnExplicitShutdown` during the dialog lifetime
-- `EulaWindow` appearing on wrong monitor with no way to reposition — chromeless window with `WindowStyle="None"` had no drag surface; added draggable title bar matching `MainWindow` design
-- Unused `EulaAcceptCheckBox` style left in `EulaWindowStyles.xaml` after toggle switch replacement — removed dead resource
+- Built the full solution in Debug and Release with zero compilation errors and passed all 156 tests in both configurations. The focused logging/composition set passed all 19 tests.
+- Confirmed the Release output excludes `Serilog.Sinks.Debug.dll`, the Debug output retains it, Core remains free of WPF references, and provider disposal remains the only normal Serilog close path.
+- Confirmed static inventories contain no normal `Logger.Instance`, `Logger.LogLevel`, legacy logger construction, or competing close path. The four retained level guards protect expensive diagnostic construction.
+- The owner manually inspected and approved the accepted source state before this documentation closeout. This docs-only workflow did not perform additional runtime smoke testing and does not claim a Steam Workshop scanner/path-resolution fix.
+- Confirmed the accepted build adds no Nexus functionality, startup update checks, timed polling, silent scans, package changes, application major/minor version changes, or credential persistence through `AppConfig`.
 
 ---
 
-## 0.11.0 - 2026-03-09
+## 0.13.73 - Internal | 2026-07-23
 
-> EULA acceptance gate — first-launch EULA window blocks app until accepted, persisted to config.
+> Refactor Phase 6.B: established one validated Core/UI dependency-injection provider and an application-owned startup, shutdown, restart, and logging lifecycle, then completed the accepted themed XAML lifecycle-dialog patch while retaining the legacy logger-call migration for Phase 6.C.
 
 ### Added
 
-- `EulaService` Core service — reads EULA text from `AppPaths.EulaFilePath`, checks `AppConfigSettings.EulaAccepted` flag, records acceptance on user confirm
-- `AppPaths.EulaFilePath` — single const-based path property for the deployed `Resources\EULA.txt` file, following the existing `ConfigFilePath` / `ModsCurrentFilePath` pattern
-- `AppConfigSettings.EulaAccepted` — boolean config property persisted to `config.json`; no `OnPropertyChanged` since the value is never bound to live UI
-- `EulaWindow` — chromeless modal window matching `MainWindow` gradient background, with scrollable read-only EULA text, acceptance checkbox gating the Accept button, and Decline button
-- `EulaWindowStyles.xaml` — dedicated resource dictionary with styles for scroll container, text display, checkbox, accept button (gold/amber), and decline button (surface/red hover), following the existing per-page resource dictionary pattern
-- `EulaAccepted` default key seeded in `AppConfigSettings.InitDefaults()`
+- Added Core and UI service-registration modules with validated storage-path options, one singleton root provider, retained singleton shell/pages, and deferred `MainWindow` resolution so language selection, EULA acceptance, detection, cache loading, the authoritative startup scan, modpack validation, and notification setup finish before the main shell is constructed.
+- Added explicit application-lifecycle contracts and coordinators for startup, shutdown, restart, state persistence, tracked-work cancellation and quiescence, startup-notification draining, final provider disposal, replacement-process launch, and best-effort Windows session-ending handling.
+- Added a themed, XAML-backed `ConfirmDialogWindow` with its presentation rules isolated in `ConfirmDialogWindowStyles.xaml`. Each invocation creates a fresh owner-assigned modal window with application-theme resources, custom title bar and controls, focus/hover/pressed/disabled visuals, optional scrollable operation details, and center-screen fallback when no usable owner exists.
+- Added WPF-neutral confirmation purposes and display models in Core, current-language resolution with English fallback strings for shutdown, restart, delayed shutdown, and active scan/install warnings, plus UI dialog services and policy mapping for those models.
+- Added UI-facing seams for deferred shell creation, modal EULA and language selection, application lifetime, startup-notification presentation, and active-work coordination without adding WPF references to Core.
+- Added automated UI coverage for validated provider composition, singleton lifetimes, dialog model and policy mapping, lifecycle enum stability, shutdown/finalization behavior, and readiness-gated notification draining. Added Core coverage for logging lifecycle, Serilog construction and disposal, configuration migration, confirmation localization/models, and the already-supported alternate Steam-library layout.
 
 ### Changed
 
-- `App.OnStartup` — EULA gate inserted after `InitializeConfiguration()` and before all service initialization; on decline, logs shutdown reason and calls `Shutdown()` with early `return` to prevent service initialization
-- `EulaAcceptance()` helper returns a pure boolean — caller (`OnStartup`) owns the log message and `Shutdown()` decision, following the "UI decides when, core decides how" principle from `CONTRIBUTING.md`
-- `App.xaml` — `EulaWindowStyles.xaml` added to merged resource dictionaries
-
----
-
-## 0.10.8 - 2026-03-08
-
-> Native 7-Zip extraction — SharpCompress replaced with SevenZipWrapper, restoring full `.7z` support. | Third-party software notices added to LICENSE.md for all dependencies.
+- Removed WPF `StartupUri`, set explicit application shutdown mode, and made `App` the sole composition and lifecycle root. It now builds one validated provider, owns ordered startup, routes fatal startup and dispatcher failures through native WPF error presentation, and performs controlled provider disposal exactly once.
+- Migrated retained pages, `MainWindow`, EULA, language selection, toast delivery, and their existing Core workflows from static `App` service access and local construction to explicit constructor dependencies. Page localization bindings now use injected `TranslationService` instances while preserving retained-page behavior.
+- Moved the initial authoritative mod scan from `ModsPage` into the startup coordinator. The page now consumes the accepted pipeline snapshot while retaining explicit refresh, install, launch, modpack, and settings workflows through injected services.
+- Changed normal close to proceed without a prompt while the authoritative mod pipeline is idle and to show one themed warning while tracked work is activ…9391 tokens truncated…ess replaced with SevenZipWrapper, restoring full `.7z` support. | Third-party software notices added to LICENSE.md for all dependencies.
 
 ### Added
 
@@ -214,7 +180,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## 0.9.22 - 2026-02-25
+## 0.9.22 - Public Release | 2026-02-25
 
 > Open beta release — feature-complete for v1.0 scope with known `.7z` limitation.
 
@@ -232,7 +198,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## 0.9.19 - 2026-02-20
+## 0.9.19 - Internal | 2026-02-20
 
 > Code cleanup, debug logging, finalized `.editorconfig`, and open beta preparation.
 
@@ -274,7 +240,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## 0.9.3 - 2026-02-19
+## 0.9.3 - Internal | 2026-02-19
 
 > Full translation/localization system — live language switching without restart.
 
@@ -298,7 +264,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## 0.8.15 - 2026-02-18
+## 0.8.15 - Internal | 2026-02-18
 
 > Toast notification system, extraction progress reporting, and archive format validation.
 
@@ -318,7 +284,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## 0.7.7 - 2026-02-17
+## 0.7.7 - Internal | 2026-02-17
 
 > Create New Modpack split button, Epic/GamePass deferral, and modpack template system.
 
@@ -337,7 +303,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## 0.6.18 - 2026-02-16
+## 0.6.18 - Internal | 2026-02-16
 
 > BLSE support, Play button split-button, and mod install lifecycle management.
 
@@ -365,7 +331,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## 0.5.26 - 2026-02-15
+## 0.5.26 - Internal | 2026-02-15
 
 > Settings page, FAQ page, game launcher, modpack startup modes, and major bug fixes.
 
@@ -411,7 +377,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## 0.4.12 - 2026-02-14
+## 0.4.12 - Internal | 2026-02-14
 
 > Modpacks page, mod installer/extractor, Novus Launcher import, and core infrastructure.
 
@@ -439,7 +405,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## 0.3.9 - 2026-02-13
+## 0.3.9 - Internal | 2026-02-13
 
 > Modpacks backend, mod scanner/parser, drag-and-drop reorder, and modpack ComboBox on ModsPage.
 
@@ -463,7 +429,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## 0.2.5 - 2026-02-11
+## 0.2.5 - Internal | 2026-02-11
 
 > Core infrastructure — mod scanning/parsing, centralized paths, theme system, and main window navigation.
 
@@ -487,7 +453,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## 0.1.7 - 2026-02-08
+## 0.1.7 - Internal | 2026-02-08
 
 > WPF app foundation — main window, navigation, models, and core services.
 
@@ -507,7 +473,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## 0.0.1 - 2026-02-04
+## 0.0.1 - Internal | 2026-02-04
 
 > Initial project setup.
 
@@ -515,3 +481,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial commit — solution and project structure
 - `.gitignore`
+
